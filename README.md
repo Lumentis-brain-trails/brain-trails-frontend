@@ -1,0 +1,1 @@
+Brain Trails is the early prototype to showcase the potential of LuMentis. It takes an EEG recording during a certain task and tranforms it in a topographic map, with the trail that the person has traveled during the task. This is the repository that will handle the frontend side of the webapp.
