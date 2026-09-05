@@ -3,7 +3,7 @@ on:
   pull_request:
   merge_group:
   push:
-    branches: [beta, main]
+    branches: [dev, beta, main]
 jobs:
   checks:
     runs-on: ubuntu-latest

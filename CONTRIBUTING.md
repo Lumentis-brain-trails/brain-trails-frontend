@@ -226,3 +226,12 @@ milestone; never more than last sprint's throughput +20%). Friday: check `beta` 
 update `CHANGELOG.md` Unreleased. Release `beta → main` when beta ran a full sprint
 without `p0/p1` bugs. Every sprint ends with one retrospective line in the sprint's
 README: what slowed us down.
+
+---
+
+## INTERIM MODE (active since 2026-09-05)
+
+Until org admin rights allow proper repo/workflow management, the flow above is
+suspended in favor of a manual one: feature branches are merged by hand into `dev`;
+`beta` and `main` are promoted manually; CI runs on pushes to dev/beta/main;
+dependabot targets `dev`, monthly. The rebuild-dev workflow was removed for now.
