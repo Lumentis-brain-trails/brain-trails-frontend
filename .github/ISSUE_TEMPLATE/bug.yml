@@ -1,0 +1,22 @@
+name: Bug
+description: Something broken
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: repro
+    attributes: { label: Steps to reproduce }
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes: { label: Expected }
+    validations: { required: true }
+  - type: textarea
+    id: observed
+    attributes: { label: Observed (with logs) }
+    validations: { required: true }
+  - type: dropdown
+    id: env
+    attributes:
+      label: Environment
+      options: [local, dev, beta, prod]
+    validations: { required: true }

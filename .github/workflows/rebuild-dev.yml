@@ -1,0 +1,98 @@
+# Assembles the machine-owned `dev` branch = beta + every open, non-draft, green PR
+# targeting beta labeled `in-dev` (auto-added on open) and not labeled `skip-dev`.
+# See docs/plans/V0.0.0/decisions/0011-integration-dev-branch.md.
+name: rebuild-dev
+on:
+  pull_request:
+    types:
+      [
+        opened,
+        reopened,
+        synchronize,
+        closed,
+        labeled,
+        unlabeled,
+        ready_for_review,
+        converted_to_draft,
+      ]
+  push:
+    branches: [beta]
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+concurrency:
+  group: rebuild-dev
+  cancel-in-progress: true
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  label-new-pr:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.event.pull_request.base.ref == 'beta'
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label in-dev
+
+  rebuild:
+    if: github.event_name != 'pull_request' || github.event.pull_request.base.ref == 'beta'
+    needs: []
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: beta
+      - name: Assemble dev
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B integration origin/beta
+
+          prs=$(gh pr list --repo "$REPO" --base beta --state open --label in-dev \
+            --json number,isDraft,labels,headRefOid --jq \
+            '[.[] | select(.isDraft | not)
+                  | select([.labels[].name] | index("skip-dev") | not)]
+             | sort_by(.number)')
+          echo "Candidate PRs: $(echo "$prs" | jq -c '[.[].number]')"
+
+          included=()
+          for row in $(echo "$prs" | jq -r '.[] | @base64'); do
+            num=$(echo "$row" | base64 -d | jq -r .number)
+            sha=$(echo "$row" | base64 -d | jq -r .headRefOid)
+
+            # Only include PRs whose latest checks are all green (or skipped/neutral).
+            checks=$(gh pr view "$num" --repo "$REPO" --json statusCheckRollup --jq '
+              [.statusCheckRollup[]?
+                | (.conclusion // .state // "PENDING")] ')
+            total=$(echo "$checks" | jq 'length')
+            bad=$(echo "$checks" | jq '[.[] | select(. != "SUCCESS" and . != "NEUTRAL" and . != "SKIPPED")] | length')
+            if [ "$total" -eq 0 ] || [ "$bad" -gt 0 ]; then
+              echo "PR #$num skipped: checks not green ($checks)"
+              continue
+            fi
+
+            git fetch origin "pull/$num/head" >/dev/null 2>&1 || true
+            if git merge --no-ff --no-edit "$sha" >/dev/null 2>&1; then
+              included+=("$num")
+              gh pr edit "$num" --repo "$REPO" --remove-label merge-conflict 2>/dev/null || true
+            else
+              git merge --abort || true
+              echo "PR #$num skipped: merge conflict"
+              has=$(gh pr view "$num" --repo "$REPO" --json labels --jq '[.labels[].name] | index("merge-conflict")')
+              if [ "$has" = "null" ]; then
+                gh pr edit "$num" --repo "$REPO" --add-label merge-conflict
+                gh pr comment "$num" --repo "$REPO" --body \
+                  "rebuild-dev: this PR conflicts with \`beta\` + the other open PRs and was left out of the \`dev\` build. Rebase on \`beta\` to re-enter. (This comment is posted once; the \`merge-conflict\` label is removed automatically when the conflict is gone.)"
+              fi
+            fi
+          done
+
+          echo "Included PRs: ${included[*]:-none}"
+          git push -f origin integration:dev
+          echo "dev rebuilt at $(git rev-parse --short HEAD)"

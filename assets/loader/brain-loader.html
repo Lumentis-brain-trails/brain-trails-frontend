@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain Trails — loader</title>
+<!--
+  BRAIN TRAILS LOADER  (bianco + viola)
+  Un solo file, zero dipendenze: SVG + CSS + SMIL. Nessuna immagine esterna.
+
+  Per usarlo in una pagina: copia <style id="brain-loader-style"> e il
+  <div class="brain-loader">…</div>. Tutto è scoped su .brain-loader.
+
+  Variabili CSS (sul contenitore .brain-loader):
+    --bl-width      larghezza del loader                 (default 440px)
+    --bl-speed      durata di un ciclo di passi          (default 0.9s)
+    --bl-purple     viola principale                     (default #6d4fd1)
+    --bl-purple-2   viola scuro (ombre, testo)           (default #4a2fb5)
+    --bl-brain      colore del cervello                  (default #ffb3cf)
+  Classe .is-paused sul contenitore per congelare tutto.
+
+  Cosa si muove:
+    · camminata a due segmenti (anca + ginocchio), braccia in controfase, squash&stretch
+      del corpo a ogni appoggio, sbattito di ciglia e sguardo verso la discesa
+    · 4 livelli di parallasse (nuvole, montagne lontane, medie, crinale) con periodo
+      esatto → loop invisibile; il terreno scorre di 80px per ciclo = una falcata
+    · pini sul crinale, sassolino calciato che rimbalza in discesa, polvere sotto i piedi
+    · scia EEG viola lasciata dietro al cervello, con impulso che corre lungo la scia
+    · scintille "sinaptiche" attorno alla testa, sole con raggi che ruotano
+-->
+<style id="brain-loader-style">
+  .brain-loader {
+    --bl-width: 440px;
+    --bl-speed: 0.9s;
+    --bl-purple: #6d4fd1;
+    --bl-purple-2: #4a2fb5;
+    --bl-purple-soft: #b9a6f2;
+    --bl-lavender: #e9e3ff;
+    --bl-brain: #ffb3cf;
+    --bl-brain-dark: #c04f85;
+    --bl-limb: #f08db1;
+    --bl-ink: #3b2a6e;
+
+    width: min(var(--bl-width), 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    user-select: none;
+    color: var(--bl-purple-2);
+  }
+
+  .brain-loader__stage {
+    width: 100%;
+    display: block;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--bl-lavender);
+    box-shadow: 0 24px 50px -24px rgba(74, 47, 181, .35), 0 2px 6px rgba(74, 47, 181, .08);
+  }
+
+  /* ---- parallasse: ogni livello ha un periodo esatto, quindi il loop non si vede ---- */
+  @keyframes bl-scroll-near  { to { transform: translate(-80px,  -40px); } }   /* periodo 80×40  */
+  @keyframes bl-scroll-trees { to { transform: translate(-240px, -120px); } }  /* periodo 240×120 (stessa velocità) */
+  @keyframes bl-scroll-mid   { to { transform: translate(-120px, -30px); } }   /* periodo 120×30 */
+  @keyframes bl-scroll-far   { to { transform: translate(-120px, -30px); } }
+  @keyframes bl-scroll-cloud { to { transform: translate(-400px, 0); } }
+  @keyframes bl-pulse        { to { stroke-dashoffset: -1612; } }
+
+  .brain-loader .ground-near  { animation: bl-scroll-near  var(--bl-speed) linear infinite; }
+  .brain-loader .ground-trees { animation: bl-scroll-trees calc(var(--bl-speed) * 3) linear infinite; }
+  .brain-loader .ground-mid   { animation: bl-scroll-mid   calc(var(--bl-speed) * 2) linear infinite; }
+  .brain-loader .ground-far   { animation: bl-scroll-far   calc(var(--bl-speed) * 4) linear infinite; }
+  .brain-loader .clouds       { animation: bl-scroll-cloud 48s linear infinite; }
+  .brain-loader .trail-pulse  { stroke-dasharray: 14 1598; animation: bl-pulse 2.8s linear infinite; }
+
+  /* ---- didascalia ---- */
+  .brain-loader__caption {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: .2px;
+  }
+  .brain-loader__dots { display: inline-flex; gap: 3px; margin-left: 4px; }
+  .brain-loader__dots i {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: currentColor;
+    animation: bl-dot 1.05s ease-in-out infinite;
+  }
+  .brain-loader__dots i:nth-child(2) { animation-delay: .15s; }
+  .brain-loader__dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes bl-dot { 0%, 60%, 100% { opacity: .25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+  /* ---- barra indeterminata ---- */
+  .brain-loader__bar {
+    width: 60%;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--bl-lavender);
+    overflow: hidden;
+  }
+  .brain-loader__bar span {
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent, var(--bl-purple), transparent);
+    animation: bl-bar 1.6s ease-in-out infinite;
+  }
+  @keyframes bl-bar { 0% { transform: translateX(-110%); } 100% { transform: translateX(300%); } }
+
+  /* ---- pausa / accessibilità ---- */
+  .brain-loader.is-paused *,
+  .brain-loader.is-paused { animation-play-state: paused !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brain-loader * { animation-duration: 6s !important; }
+  }
+
+  /* pagina demo */
+  body {
+    margin: 0; min-height: 100dvh;
+    display: grid; place-items: center;
+    padding: 32px;
+    background: #fbfaff;
+    background-image: radial-gradient(90% 60% at 50% 0%, #efeaff 0%, #fbfaff 70%);
+  }
+</style>
+</head>
+<body>
+
+<div class="brain-loader" role="status" aria-live="polite" aria-label="Caricamento in corso">
+  <svg class="brain-loader__stage" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="blSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#ffffff"/>
+        <stop offset="100%" stop-color="#e6dfff"/>
+      </linearGradient>
+      <radialGradient id="blBrainFill" cx="35%" cy="28%" r="80%">
+        <stop offset="0%"   stop-color="#ffd9e8"/>
+        <stop offset="100%" stop-color="var(--bl-brain)"/>
+      </radialGradient>
+      <radialGradient id="blSunGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#ffd166" stop-opacity=".55"/>
+        <stop offset="60%"  stop-color="#ffd166" stop-opacity=".12"/>
+        <stop offset="100%" stop-color="#ffd166" stop-opacity="0"/>
+      </radialGradient>
+      <!-- la scia è visibile solo dietro al cervello e sfuma verso sinistra -->
+      <linearGradient id="blTrailFade" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="203" y2="0">
+        <stop offset="0"     stop-color="#fff" stop-opacity="0"/>
+        <stop offset="0.75"  stop-color="#fff" stop-opacity="1"/>
+        <stop offset="0.985" stop-color="#fff" stop-opacity="1"/>
+        <stop offset="0.99"  stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      <mask id="blTrailMask" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="240">
+        <rect x="0" y="0" width="400" height="240" fill="url(#blTrailFade)"/>
+      </mask>
+      <clipPath id="blFrame"><rect x="0" y="0" width="400" height="240" rx="20"/></clipPath>
+
+      <!-- pino: base in (0,0), punta verso l'alto -->
+      <g id="blPine">
+        <rect x="-1.6" y="-7" width="3.2" height="7.5" rx="1" fill="var(--bl-purple-2)"/>
+        <path d="M0 -40 L11 -20 L-11 -20Z"  fill="var(--bl-purple)"/>
+        <path d="M0 -31 L13.5 -11 L-13.5 -11Z" fill="var(--bl-purple)"/>
+        <path d="M0 -22 L16 -3 L-16 -3Z" fill="var(--bl-purple)"/>
+        <path d="M0 -40 L11 -20 L0 -20Z M0 -31 L13.5 -11 L0 -11Z M0 -22 L16 -3 L0 -3Z" fill="var(--bl-purple-2)" opacity=".35"/>
+      </g>
+      <!-- nuvola: centro in (0,0) -->
+      <g id="blCloud" fill="#fff">
+        <ellipse cx="0" cy="0" rx="26" ry="10"/>
+        <circle cx="-9" cy="-6" r="10"/>
+        <circle cx="5" cy="-9" r="12"/>
+        <circle cx="16" cy="-3" r="8"/>
+      </g>
+      <!-- scintilla a 4 punte, centro in (0,0) -->
+      <path id="blSpark" d="M0 -5.5 L1.4 -1.4 L5.5 0 L1.4 1.4 L0 5.5 L-1.4 1.4 L-5.5 0 L-1.4 -1.4Z"/>
+    </defs>
+
+    <g clip-path="url(#blFrame)">
+      <!-- cielo -->
+      <rect width="400" height="240" fill="url(#blSky)"/>
+
+      <!-- sole con raggi che ruotano piano -->
+      <g transform="translate(318,52)">
+        <circle r="46" fill="url(#blSunGlow)">
+          <animate attributeName="r" values="42;50;42" dur="4s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+        </circle>
+        <g stroke="#ffd166" stroke-width="2" stroke-linecap="round" opacity=".55">
+          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="40s" repeatCount="indefinite"/>
+          <path d="M0 -24 L0 -30 M17 -17 L21 -21 M24 0 L30 0 M17 17 L21 21 M0 24 L0 30 M-17 17 L-21 21 M-24 0 L-30 0 M-17 -17 L-21 -21"/>
+        </g>
+        <circle r="16" fill="#ffd166"/>
+        <circle r="16" fill="#fff" opacity=".25"/>
+      </g>
+
+      <!-- nuvole (periodo 400) -->
+      <g class="clouds" opacity=".95">
+        <use href="#blCloud" transform="translate(70,58) scale(1)"/>
+        <use href="#blCloud" transform="translate(215,34) scale(.65)"/>
+        <use href="#blCloud" transform="translate(150,96) scale(.5)" opacity=".7"/>
+        <use href="#blCloud" transform="translate(470,58) scale(1)"/>
+        <use href="#blCloud" transform="translate(615,34) scale(.65)"/>
+        <use href="#blCloud" transform="translate(550,96) scale(.5)" opacity=".7"/>
+      </g>
+
+      <!-- montagne lontane (periodo 120×30) -->
+      <g class="ground-far">
+        <path fill="#dcd2fb"
+          d="M -120 66
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             L 600 620 L -120 620 Z"/>
+      </g>
+      <!-- montagne medie: stesso profilo, spostato e più veloce -->
+      <g class="ground-mid">
+        <path fill="#b9a6f2" transform="translate(58,44)"
+          d="M -120 66
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             c 25 -45 45 -35 60 15 c 15 50 40 45 60 15
+             L 600 620 L -120 620 Z"/>
+      </g>
+
+      <!-- crinale in primo piano: motivo periodico 80×40 -->
+      <g class="ground-near">
+        <g transform="translate(0,90)">
+          <!-- fascia di neve sotto la cresta -->
+          <path fill="#cfc3f7" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"
+            d="M -240 -160 L -220 -152 L -206 -141 L -188 -135 L -174 -126
+               L -160 -120 L -140 -112 L -126 -101 L -108 -95 L -94 -86
+               L -80 -80 L -60 -72 L -46 -61 L -28 -55 L -14 -46
+               L 0 -40 L 20 -32 L 34 -21 L 52 -15 L 66 -6
+               L 80 0 L 100 8 L 114 19 L 132 25 L 146 34
+               L 160 40 L 180 48 L 194 59 L 212 65 L 226 74
+               L 240 80 L 260 88 L 274 99 L 292 105 L 306 114
+               L 320 120 L 340 128 L 354 139 L 372 145 L 386 154
+               L 400 160 L 420 168 L 434 179 L 452 185 L 466 194
+               L 480 200 L 500 208 L 514 219 L 532 225 L 546 234
+               L 560 240 L 580 248 L 594 259 L 612 265 L 626 274
+               L 640 280 L 660 288 L 674 299 L 692 305 L 706 314
+               L 720 320 L 720 620 L -240 620 Z"/>
+          <!-- roccia viola, 10px sotto la cresta -->
+          <path fill="var(--bl-purple)" transform="translate(0,10)"
+            d="M -240 -160 L -220 -152 L -206 -141 L -188 -135 L -174 -126
+               L -160 -120 L -140 -112 L -126 -101 L -108 -95 L -94 -86
+               L -80 -80 L -60 -72 L -46 -61 L -28 -55 L -14 -46
+               L 0 -40 L 20 -32 L 34 -21 L 52 -15 L 66 -6
+               L 80 0 L 100 8 L 114 19 L 132 25 L 146 34
+               L 160 40 L 180 48 L 194 59 L 212 65 L 226 74
+               L 240 80 L 260 88 L 274 99 L 292 105 L 306 114
+               L 320 120 L 340 128 L 354 139 L 372 145 L 386 154
+               L 400 160 L 420 168 L 434 179 L 452 185 L 466 194
+               L 480 200 L 500 208 L 514 219 L 532 225 L 546 234
+               L 560 240 L 580 248 L 594 259 L 612 265 L 626 274
+               L 640 280 L 660 288 L 674 299 L 692 305 L 706 314
+               L 720 320 L 720 620 L -240 620 Z"/>
+        </g>
+      </g>
+
+      <!-- pini sul crinale (periodo 240×120, stessa velocità del crinale) -->
+      <g class="ground-trees">
+        <g transform="translate(0,90)">
+          <use href="#blPine" transform="translate(-206,-141) scale(.9)"/>
+          <use href="#blPine" transform="translate(34,-21)    scale(.9)"/>
+          <use href="#blPine" transform="translate(274,99)    scale(.9)"/>
+          <use href="#blPine" transform="translate(514,219)   scale(.9)"/>
+
+          <use href="#blPine" transform="translate(-94,-86)   scale(.65)"/>
+          <use href="#blPine" transform="translate(146,34)    scale(.65)"/>
+          <use href="#blPine" transform="translate(386,154)   scale(.65)"/>
+          <use href="#blPine" transform="translate(626,274)   scale(.65)"/>
+
+          <use href="#blPine" transform="translate(0,-40)     scale(.5)"/>
+          <use href="#blPine" transform="translate(240,80)    scale(.5)"/>
+          <use href="#blPine" transform="translate(480,200)   scale(.5)"/>
+          <use href="#blPine" transform="translate(720,320)   scale(.5)"/>
+        </g>
+      </g>
+
+      <!-- scia EEG lasciata dal cervello: scorre col terreno, mascherata dietro al personaggio -->
+      <g mask="url(#blTrailMask)">
+        <g class="ground-near">
+          <g transform="translate(0,90)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="var(--bl-purple)" stroke-width="7" opacity=".18"
+              d="M -240 -164 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18"/>
+            <path stroke="var(--bl-purple)" stroke-width="2.2" opacity=".85"
+              d="M -240 -164 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18"/>
+            <!-- impulso che corre lungo la scia, allontanandosi dal cervello -->
+            <path class="trail-pulse" stroke="#fff" stroke-width="3.2"
+              d="M -240 -164 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18 c 5 -9 13 -6 18 2 c 4 6 11 12 22 18"/>
+          </g>
+        </g>
+      </g>
+
+      <!-- ================= il cervello camminatore ================= -->
+      <g transform="translate(196,151) rotate(4) scale(1.15)">
+
+        <!-- ombra -->
+        <ellipse cx="0" cy="1" rx="26" ry="5" fill="var(--bl-purple-2)" opacity=".22">
+          <animate attributeName="rx" values="26;21;26;21;26" dur="0.9s" repeatCount="indefinite"/>
+        </ellipse>
+
+        <!-- polvere sotto i piedi -->
+        <g fill="var(--bl-purple-soft)">
+          <circle cy="-3" r="0" cx="-24">
+            <animate attributeName="r" values="0;7;0" dur="0.9s" repeatCount="indefinite"/>
+            <animate attributeName="cx" values="-20;-46;-62" dur="0.9s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".7;.3;0" dur="0.9s" repeatCount="indefinite"/>
+          </circle>
+          <circle cy="-6" r="0" cx="-24">
+            <animate attributeName="r" values="0;5;0" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+            <animate attributeName="cx" values="-18;-40;-54" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".6;.25;0" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- sassolino calciato che rimbalza in discesa -->
+        <circle r="2.6" fill="var(--bl-purple-2)" opacity="0">
+          <animateTransform attributeName="transform" type="translate"
+            values="8 0; 14 -6; 20 -3; 26 4; 32 14; 38 12; 44 14; 50 19; 56 24; 64 27; 72 31"
+            dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0;1;1;1;1;1;1;1;.9;.5;0" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+
+        <!-- gruppo che rimbalza a ogni passo -->
+        <g>
+          <animateTransform attributeName="transform" type="translate"
+            values="0 0; 0 -4; 0 0" keyTimes="0;0.5;1"
+            calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"
+            dur="0.45s" repeatCount="indefinite"/>
+
+          <!-- GAMBA POSTERIORE -->
+          <g stroke-linecap="round" fill="none" opacity=".8">
+            <animateTransform attributeName="transform" type="rotate"
+              values="-28 -7 -34; -6 -7 -34; 24 -7 -34; 6 -7 -34; -28 -7 -34"
+              keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" repeatCount="indefinite"/>
+            <path d="M-7 -34 L-7 -18" stroke="var(--bl-limb)" stroke-width="6.5"/>
+            <g>
+              <animateTransform attributeName="transform" type="rotate"
+                values="0 -7 -18; 8 -7 -18; 32 -7 -18; 48 -7 -18; 14 -7 -18; 0 -7 -18"
+                keyTimes="0;0.2;0.45;0.62;0.85;1" dur="0.9s" repeatCount="indefinite"/>
+              <path d="M-7 -18 L-7 -4" stroke="var(--bl-limb)" stroke-width="6"/>
+              <ellipse cx="-4" cy="-2" rx="7.5" ry="3.8" fill="#fff" stroke="var(--bl-brain-dark)" stroke-width="1.6"/>
+            </g>
+          </g>
+
+          <!-- GAMBA ANTERIORE (stesso ciclo, sfasata di mezzo passo) -->
+          <g stroke-linecap="round" fill="none">
+            <animateTransform attributeName="transform" type="rotate"
+              values="-28 7 -34; -6 7 -34; 24 7 -34; 6 7 -34; -28 7 -34"
+              keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+            <path d="M7 -34 L7 -18" stroke="var(--bl-limb)" stroke-width="7.5"/>
+            <g>
+              <animateTransform attributeName="transform" type="rotate"
+                values="0 7 -18; 8 7 -18; 32 7 -18; 48 7 -18; 14 7 -18; 0 7 -18"
+                keyTimes="0;0.2;0.45;0.62;0.85;1" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+              <path d="M7 -18 L7 -4" stroke="var(--bl-limb)" stroke-width="7"/>
+              <ellipse cx="10" cy="-2" rx="8" ry="4" fill="#fff" stroke="var(--bl-brain-dark)" stroke-width="1.6"/>
+            </g>
+          </g>
+
+          <!-- BRACCIO POSTERIORE -->
+          <g stroke-linecap="round" fill="none" opacity=".75">
+            <animateTransform attributeName="transform" type="rotate"
+              values="30 -29 -55; 0 -29 -55; -30 -29 -55; 0 -29 -55; 30 -29 -55"
+              keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" repeatCount="indefinite"/>
+            <path d="M-29 -55 L-38 -44" stroke="var(--bl-limb)" stroke-width="6"/>
+            <circle cx="-38" cy="-44" r="3.6" fill="var(--bl-limb)" stroke="none"/>
+          </g>
+
+          <!-- CORPO: il cervello, con squash & stretch attorno alle anche -->
+          <g transform="translate(0,-34)">
+            <g>
+              <animateTransform attributeName="transform" type="scale"
+                values="1.06 .94; 1 1; .97 1.04; 1 1; 1.06 .94" keyTimes="0;0.2;0.5;0.8;1"
+                dur="0.45s" repeatCount="indefinite"/>
+              <g transform="translate(0,-25)">
+                <path fill="url(#blBrainFill)" stroke="var(--bl-brain-dark)" stroke-width="2.6" stroke-linejoin="round"
+                  d="M -30 2
+                     C -34 -10, -24 -21, -14 -18
+                     C -10 -28, 6 -29, 12 -20
+                     C 24 -23, 33 -11, 28 2
+                     C 34 10, 26 21, 14 20
+                     C 6 27, -8 27, -16 19
+                     C -28 20, -35 10, -30 2 Z"/>
+
+                <!-- circonvoluzioni -->
+                <g fill="none" stroke="var(--bl-brain-dark)" stroke-width="1.7" stroke-linecap="round" opacity=".55">
+                  <path d="M 0 -26 C 4 -20, -3 -15, 1 -9"/>
+                  <path d="M -22 -12 c 6 -5, 11 1, 16 -3"/>
+                  <path d="M -25 -3 c 7 -5, 12 2, 17 -2"/>
+                  <path d="M 22 -12 c -6 -5, -11 1, -16 -3"/>
+                  <path d="M 25 -3 c -7 -5, -12 2, -17 -2"/>
+                  <path d="M -14 14 c 4 -4, 8 0, 11 -3"/>
+                  <path d="M 14 14 c -4 -4, -8 0, -11 -3"/>
+                </g>
+
+                <!-- guance -->
+                <ellipse cx="-20" cy="10" rx="5.5" ry="3.4" fill="#ff7fae" opacity=".45"/>
+                <ellipse cx="20"  cy="10" rx="5.5" ry="3.4" fill="#ff7fae" opacity=".45"/>
+
+                <!-- occhi: sbattono le ciglia e ogni tanto guardano la discesa -->
+                <g>
+                  <ellipse cx="-10" cy="4" rx="5.6" ry="6.6" fill="#fff">
+                    <animate attributeName="ry" values="6.6;6.6;0.6;6.6;6.6" keyTimes="0;0.9;0.935;0.97;1" dur="3.6s" repeatCount="indefinite"/>
+                  </ellipse>
+                  <ellipse cx="10" cy="4" rx="5.6" ry="6.6" fill="#fff">
+                    <animate attributeName="ry" values="6.6;6.6;0.6;6.6;6.6" keyTimes="0;0.9;0.935;0.97;1" dur="3.6s" repeatCount="indefinite"/>
+                  </ellipse>
+                  <circle cx="-8" cy="5" r="2.7" fill="var(--bl-ink)">
+                    <animate attributeName="r"  values="2.7;2.7;0.4;2.7;2.7" keyTimes="0;0.9;0.935;0.97;1" dur="3.6s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="-8;-8;-6.6;-6.6;-8;-8" keyTimes="0;0.55;0.6;0.86;0.91;1" dur="5.2s" repeatCount="indefinite"/>
+                    <animate attributeName="cy" values="5;5;6.6;6.6;5;5"       keyTimes="0;0.55;0.6;0.86;0.91;1" dur="5.2s" repeatCount="indefinite"/>
+                  </circle>
+                  <circle cx="12" cy="5" r="2.7" fill="var(--bl-ink)">
+                    <animate attributeName="r"  values="2.7;2.7;0.4;2.7;2.7" keyTimes="0;0.9;0.935;0.97;1" dur="3.6s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="12;12;13.4;13.4;12;12" keyTimes="0;0.55;0.6;0.86;0.91;1" dur="5.2s" repeatCount="indefinite"/>
+                    <animate attributeName="cy" values="5;5;6.6;6.6;5;5"       keyTimes="0;0.55;0.6;0.86;0.91;1" dur="5.2s" repeatCount="indefinite"/>
+                  </circle>
+                  <circle cx="-9.2" cy="3.4" r=".9" fill="#fff"/>
+                  <circle cx="10.8" cy="3.4" r=".9" fill="#fff"/>
+                </g>
+
+                <!-- bocca -->
+                <path d="M -4 14 q 5 5.5 10 0" fill="none" stroke="var(--bl-ink)" stroke-width="1.8" stroke-linecap="round"/>
+
+                <!-- scintille sinaptiche -->
+                <g fill="var(--bl-purple)">
+                  <g transform="translate(-36,-24)">
+                    <use href="#blSpark">
+                      <animateTransform attributeName="transform" type="scale" values="0;0;1.1;0;0" keyTimes="0;0.62;0.7;0.8;1" dur="3.1s" repeatCount="indefinite"/>
+                      <animateTransform attributeName="transform" type="rotate" values="0;90" dur="3.1s" repeatCount="indefinite" additive="sum"/>
+                    </use>
+                  </g>
+                  <g transform="translate(34,-30)">
+                    <use href="#blSpark">
+                      <animateTransform attributeName="transform" type="scale" values="0;0;.9;0;0" keyTimes="0;0.3;0.38;0.48;1" dur="4.3s" repeatCount="indefinite"/>
+                      <animateTransform attributeName="transform" type="rotate" values="0;-90" dur="4.3s" repeatCount="indefinite" additive="sum"/>
+                    </use>
+                  </g>
+                  <g transform="translate(4,-40)">
+                    <use href="#blSpark">
+                      <animateTransform attributeName="transform" type="scale" values="0;0;1.3;0;0" keyTimes="0;0.8;0.87;0.95;1" dur="5.7s" repeatCount="indefinite"/>
+                      <animateTransform attributeName="transform" type="rotate" values="0;120" dur="5.7s" repeatCount="indefinite" additive="sum"/>
+                    </use>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+
+          <!-- BRACCIO ANTERIORE -->
+          <g stroke-linecap="round" fill="none">
+            <animateTransform attributeName="transform" type="rotate"
+              values="30 27 -55; 0 27 -55; -30 27 -55; 0 27 -55; 30 27 -55"
+              keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+            <path d="M27 -55 L37 -44" stroke="var(--bl-limb)" stroke-width="6.5"/>
+            <circle cx="37" cy="-44" r="3.9" fill="var(--bl-limb)" stroke="none"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </svg>
+
+  <p class="brain-loader__caption">
+    <span data-bl-message>Sto scendendo dalla montagna</span>
+    <span class="brain-loader__dots"><i></i><i></i><i></i></span>
+  </p>
+  <div class="brain-loader__bar"><span></span></div>
+</div>
+
+<script>
+  // Messaggi a rotazione (facoltativo: senza questo script resta il testo statico)
+  (function () {
+    var messages = [
+      "Sto scendendo dalla montagna",
+      "Sto collegando i neuroni",
+      "Seguo la scia del pensiero",
+      "Ancora due tornanti",
+      "Quasi in fondo alla valle"
+    ];
+    var el = document.querySelector("[data-bl-message]");
+    if (!el) return;
+    var i = 0;
+    setInterval(function () {
+      i = (i + 1) % messages.length;
+      el.textContent = messages[i];
+    }, 2600);
+  })();
+
+  // Rispetta "riduci movimento": mette in pausa anche le animazioni SMIL
+  (function () {
+    if (!window.matchMedia) return;
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.querySelectorAll("svg.brain-loader__stage").forEach(function (svg) {
+      if (svg.pauseAnimations) svg.pauseAnimations();
+    });
+  })();
+</script>
+
+</body>
+</html>
