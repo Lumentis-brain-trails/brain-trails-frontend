@@ -66,8 +66,10 @@ jobs:
             sha=$(echo "$row" | base64 -d | jq -r .headRefOid)
 
             # Only include PRs whose latest checks are all green (or skipped/neutral).
+            # Ignore this workflow's own runs (their cancelled/pending states are noise).
             checks=$(gh pr view "$num" --repo "$REPO" --json statusCheckRollup --jq '
               [.statusCheckRollup[]?
+                | select((.workflowName // "") != "rebuild-dev")
                 | (.conclusion // .state // "PENDING")] ')
             total=$(echo "$checks" | jq 'length')
             bad=$(echo "$checks" | jq '[.[] | select(. != "SUCCESS" and . != "NEUTRAL" and . != "SKIPPED")] | length')
