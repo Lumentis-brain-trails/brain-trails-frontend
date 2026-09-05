@@ -33,7 +33,7 @@ jobs:
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label in-dev
+        run: gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" -f "labels[]=in-dev" --silent
 
   rebuild:
     if: github.event_name != 'pull_request' || github.event.pull_request.base.ref == 'beta'
@@ -84,15 +84,14 @@ jobs:
             git fetch origin "pull/$num/head" >/dev/null 2>&1 || true
             if git merge --no-ff --no-edit "$sha" >/dev/null 2>&1; then
               included+=("$num")
-              gh pr edit "$num" --repo "$REPO" --remove-label merge-conflict 2>/dev/null || true
+              gh api -X DELETE "repos/$REPO/issues/$num/labels/merge-conflict" --silent 2>/dev/null || true
             else
               git merge --abort || true
               echo "PR #$num skipped: merge conflict"
-              has=$(gh pr view "$num" --repo "$REPO" --json labels --jq '[.labels[].name] | index("merge-conflict")')
+              has=$(gh api "repos/$REPO/issues/$num/labels" --jq '[.[].name] | index("merge-conflict")')
               if [ "$has" = "null" ]; then
-                gh pr edit "$num" --repo "$REPO" --add-label merge-conflict
-                gh pr comment "$num" --repo "$REPO" --body \
-                  "rebuild-dev: this PR conflicts with \`beta\` + the other open PRs and was left out of the \`dev\` build. Rebase on \`beta\` to re-enter. (This comment is posted once; the \`merge-conflict\` label is removed automatically when the conflict is gone.)"
+                gh api "repos/$REPO/issues/$num/labels" -f "labels[]=merge-conflict" --silent
+                gh api "repos/$REPO/issues/$num/comments" --silent -f body="rebuild-dev: this PR conflicts with \`beta\` + the other open PRs and was left out of the \`dev\` build. Rebase on \`beta\` to re-enter. (Posted once; the \`merge-conflict\` label is removed automatically when the conflict is gone.)"
               fi
             fi
           done
