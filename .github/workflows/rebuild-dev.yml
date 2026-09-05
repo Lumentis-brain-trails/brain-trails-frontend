@@ -20,9 +20,6 @@ on:
   workflow_run:
     workflows: [ci]
     types: [completed]
-concurrency:
-  group: rebuild-dev
-  cancel-in-progress: true
 permissions:
   contents: write
   pull-requests: write
@@ -37,7 +34,9 @@ jobs:
 
   rebuild:
     if: github.event_name != 'pull_request' || github.event.pull_request.base.ref == 'beta'
-    needs: []
+    concurrency:
+      group: rebuild-dev
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
