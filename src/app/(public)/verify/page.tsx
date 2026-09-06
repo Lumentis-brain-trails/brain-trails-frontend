@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
 import { Card, ErrorBanner } from "@/components/ui";
 
@@ -11,11 +11,17 @@ function VerifyContent() {
   const token = params.get("token");
   const [state, setState] = useState<"working" | "ok" | "error">("working");
   const [message, setMessage] = useState("");
+  const started = useRef(false);
 
   useEffect(() => {
+    // The token is single-use: guard against React StrictMode double-invocation.
+    if (started.current) return;
+    started.current = true;
     if (!token) {
-      setState("error");
-      setMessage("Missing verification token.");
+      queueMicrotask(() => {
+        setState("error");
+        setMessage("Missing verification token.");
+      });
       return;
     }
     api
