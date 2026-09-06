@@ -6,6 +6,9 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.API_URL ?? "http://localhost:8000";
+const API_DEPLOYED =
+  (process.env.API_URL ?? "").length > 0 ||
+  process.env.NODE_ENV !== "production";
 const ALLOWED_PREFIXES = ["auth/", "recordings", "admin/"];
 
 async function forward(

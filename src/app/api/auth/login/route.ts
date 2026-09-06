@@ -5,6 +5,21 @@ const API_URL = process.env.API_URL ?? "http://localhost:8000";
 const SECURE = process.env.COOKIE_SECURE !== "false";
 
 export async function POST(request: NextRequest) {
+  if (
+    !(process.env.API_URL ?? "").length &&
+    process.env.NODE_ENV === "production"
+  ) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "backend_unavailable",
+          message:
+            "The Brain Trails API is not deployed for this environment yet.",
+        },
+      },
+      { status: 503 }
+    );
+  }
   const credentials = await request.json();
   const upstream = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
