@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain Trails — Motion Kit</title>
+<!--
+  BRAIN TRAILS — MOTION KIT
+  Riferimento visivo del linguaggio di movimento della UI. Un file solo, zero
+  dipendenze: si apre con doppio click.
+
+  I token qui sotto sono una COPIA di ../motion/motion.css, che resta la
+  sorgente di verità per il codice di produzione. Se cambi un valore, cambialo
+  lì e riportalo qui.
+-->
+<style>
+/* ===========================================================================
+   1. TOKEN — copia di ../motion/motion.css
+   ========================================================================= */
+:root {
+  --m-instant: 100ms;
+  --m-fast: 160ms;
+  --m-base: 240ms;
+  --m-slow: 400ms;
+  --m-story: 900ms;
+
+  --m-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --m-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --m-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --m-asymptotic: cubic-bezier(0, 0.7, 0.15, 1);
+
+  --m-lift-1: 8px;
+  --m-lift-2: 16px;
+  --m-lift-3: 24px;
+  --m-stagger: 40ms;
+
+  /* colori — proposta derivata dal loader; il piano colori definitivo è a parte */
+  --purple: #6d4fd1;
+  --purple-2: #4a2fb5;
+  --purple-soft: #b9a6f2;
+  --lavender: #e9e3ff;
+  --lavender-2: #f4f1ff;
+  --ink: #3b2a6e;
+  --ink-soft: #7c6ba8;
+  --brain: #ffb3cf;
+  --brain-dark: #c04f85;
+  --limb: #f08db1;
+  --danger: #e0405f;
+  --ok: #2ea36b;
+  --paper: #fbfaff;
+}
+
+@keyframes m-fade-up { from { opacity: 0; transform: translateY(var(--m-lift-1)); } to { opacity: 1; transform: none; } }
+@keyframes m-pop     { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes m-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes m-ping    { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes m-spin    { to { transform: rotate(360deg); } }
+
+/* simulatore di prefers-reduced-motion (toggle in alto) */
+body.sim-reduced {
+  --m-instant: 1ms; --m-fast: 1ms; --m-base: 1ms; --m-slow: 1ms; --m-story: 1ms;
+  --m-lift-1: 0px; --m-lift-2: 0px; --m-lift-3: 0px; --m-stagger: 0ms;
+}
+body.sim-reduced [data-motion="decor"],
+body.sim-reduced [data-motion="decor"] * { animation: none !important; }
+
+body.sim-paused *, body.sim-paused { animation-play-state: paused !important; }
+
+/* ===========================================================================
+   2. PAGINA
+   ========================================================================= */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  background-image: radial-gradient(80% 50% at 50% 0%, #f0ecff 0%, var(--paper) 60%);
+  color: var(--ink);
+  font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px 96px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 14px 24px;
+  background: rgba(251, 250, 255, .85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--lavender);
+}
+.topbar h1 { font-size: 15px; margin: 0; letter-spacing: .2px; }
+.topbar .spacer { flex: 1; }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); cursor: pointer; }
+.switch input { appearance: none; width: 34px; height: 20px; border-radius: 99px; background: var(--lavender); position: relative; cursor: pointer; transition: background var(--m-fast) var(--m-out); margin: 0; }
+.switch input::after { content: ""; position: absolute; inset: 2px auto 2px 2px; width: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(74,47,181,.35); transition: transform var(--m-fast) var(--m-out); }
+.switch input:checked { background: var(--purple); }
+.switch input:checked::after { transform: translateX(14px); }
+
+.hero { padding: 56px 0 32px; }
+.hero h2 { font-size: 32px; margin: 0 0 8px; letter-spacing: -.5px; }
+.hero p { margin: 0; max-width: 62ch; color: var(--ink-soft); }
+
+section { margin-top: 56px; }
+section > h3 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--purple); margin: 0 0 4px;
+}
+section > h3 + p.lede { margin: 0 0 20px; color: var(--ink-soft); max-width: 68ch; }
+
+.card {
+  background: #fff; border: 1px solid var(--lavender); border-radius: 18px;
+  box-shadow: 0 18px 40px -28px rgba(74,47,181,.35);
+}
+.pad { padding: 22px; }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.muted { color: var(--ink-soft); }
+.tiny { font-size: 12.5px; }
+
+.btn {
+  appearance: none; border: 1px solid transparent; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 500;
+  padding: 9px 16px; border-radius: 11px;
+  background: var(--purple); color: #fff;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform var(--m-instant) var(--m-out),
+              box-shadow var(--m-fast) var(--m-out),
+              background var(--m-fast) var(--m-out);
+  box-shadow: 0 2px 0 rgba(74,47,181,.35), 0 8px 20px -12px rgba(74,47,181,.8);
+}
+.btn:hover { background: #7d61dd; transform: translateY(-1px); box-shadow: 0 3px 0 rgba(74,47,181,.35), 0 12px 24px -12px rgba(74,47,181,.9); }
+.btn:active { transform: translateY(1px); box-shadow: 0 0 0 rgba(74,47,181,.35), 0 4px 10px -8px rgba(74,47,181,.9); }
+.btn:focus-visible { outline: 2px solid var(--purple-2); outline-offset: 2px; }
+.btn.ghost { background: #fff; color: var(--purple-2); border-color: var(--lavender); box-shadow: none; }
+.btn.ghost:hover { background: var(--lavender-2); }
+.btn[disabled] { opacity: .55; pointer-events: none; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  background: var(--lavender); color: var(--purple-2);
+}
+.badge.run { background: #efe9ff; }
+.badge.ok { background: #e3f6ec; color: #1d7a4c; }
+.badge.err { background: #fdeaee; color: #a81f3a; }
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.note { border-left: 3px solid var(--lavender); padding-left: 14px; color: var(--ink-soft); }
+.kbd { font-family: ui-monospace, monospace; font-size: 11.5px; background: var(--lavender-2); border: 1px solid var(--lavender); border-radius: 6px; padding: 1px 6px; color: var(--purple-2); }
+
+/* ===========================================================================
+   3. TOKEN — visualizzatori
+   ========================================================================= */
+.ease-card { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--lavender); border-radius: 14px; }
+.ease-card svg { width: 64px; height: 64px; background: var(--lavender-2); border-radius: 10px; }
+.ease-card .name { font-weight: 600; font-size: 13.5px; }
+.ease-track { position: relative; height: 10px; border-radius: 99px; background: var(--lavender-2); margin-top: 8px; }
+.ease-track b { position: absolute; top: -3px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--purple); }
+.ease-card.run .ease-track b { transform: translateX(calc(100% * var(--travel, 0) - 0px)); }
+
+.dur-row { display: grid; grid-template-columns: 82px 1fr 62px; gap: 12px; align-items: center; padding: 7px 0; }
+.dur-track { position: relative; height: 8px; border-radius: 99px; background: var(--lavender-2); }
+.dur-track b { position: absolute; top: -4px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--purple); transition-property: transform; transition-timing-function: var(--m-out); }
+.dur-row.run .dur-track b { transform: translateX(var(--far)); }
+
+.swatch { border-radius: 12px; height: 56px; border: 1px solid rgba(74,47,181,.12); }
+
+/* ===========================================================================
+   4. MASCOTTE
+   ========================================================================= */
+.pose { text-align: center; padding: 10px 10px 16px; border: 1px solid var(--lavender); border-radius: 16px; background: linear-gradient(#fff, var(--lavender-2)); }
+.pose svg { width: 100%; height: 132px; display: block; }
+.pose b { display: block; font-size: 13px; margin-top: 4px; }
+.pose span { font-size: 12px; color: var(--ink-soft); }
+
+/* ===========================================================================
+   5. SKELETON + STAGGER
+   ========================================================================= */
+.list { border: 1px solid var(--lavender); border-radius: 14px; overflow: hidden; }
+.list .item { display: grid; grid-template-columns: 1fr 92px 96px; gap: 12px; align-items: center; padding: 13px 16px; border-top: 1px solid var(--lavender); }
+.list .item:first-child { border-top: 0; }
+.sk { position: relative; overflow: hidden; background: var(--lavender-2); border-radius: 7px; height: 11px; }
+.sk::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(109,79,209,.14), transparent);
+  animation: m-shimmer 1.25s var(--m-inout) infinite;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+.real { animation: m-fade-up var(--m-base) var(--m-out) both; animation-delay: calc(var(--i, 0) * var(--m-stagger)); }
+.title-line { font-weight: 550; }
+
+/* ===========================================================================
+   6. JOB STEPPER
+   ========================================================================= */
+.stepper { position: relative; padding: 30px 6px 36px; }
+.rail { position: relative; height: 4px; border-radius: 99px; background: var(--lavender); margin: 0 6%; }
+.rail .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 99px; background: var(--purple); transition: width var(--m-slow) var(--m-inout); }
+.nodes { position: absolute; inset: 0; }
+.node { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 26px; height: 26px; }
+.node .disc {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: #fff; border: 2px solid var(--lavender);
+  display: grid; place-items: center;
+  transition: background var(--m-base) var(--m-out), border-color var(--m-base) var(--m-out), transform var(--m-base) var(--m-out);
+}
+.node.is-run .disc { border-color: var(--purple); background: var(--purple); transform: scale(1.12); }
+.node.is-done .disc { border-color: var(--purple); background: var(--purple); }
+.node.is-err .disc { border-color: var(--danger); background: var(--danger); }
+.node .ping { position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--purple); opacity: 0; }
+.node.is-run .ping { animation: m-ping 1.5s var(--m-out) infinite; }
+.node .check { stroke: #fff; stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; transition: stroke-dashoffset var(--m-slow) var(--m-out); }
+.node.is-done .check { stroke-dashoffset: 0; }
+.node .bang { opacity: 0; transition: opacity var(--m-fast); }
+.node.is-err .bang { opacity: 1; }
+.node .lbl { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); font-size: 11.5px; white-space: nowrap; color: var(--ink-soft); transition: color var(--m-base), font-weight var(--m-base); }
+.node.is-run .lbl, .node.is-done .lbl { color: var(--purple-2); font-weight: 600; }
+
+.walker-track { position: absolute; top: 30px; left: 6%; right: 6%; height: 0; }
+.walker { position: absolute; left: 0; bottom: 4px; width: 44px; margin-left: -22px; transition: left var(--m-slow) var(--m-inout); }
+.walker svg { width: 100%; display: block; }
+
+.job-bar { height: 6px; border-radius: 99px; background: var(--lavender); overflow: hidden; margin-top: 26px; }
+.job-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--purple-soft), var(--purple)); }
+.job-bar i.creep { width: 92%; transition: width 14s var(--m-asymptotic); }
+.job-bar i.done { width: 100%; transition: width var(--m-fast) var(--m-out); }
+.job-bar i.err { width: 100%; background: var(--danger); transition: width var(--m-fast) var(--m-out); }
+
+/* ===========================================================================
+   7. TRAIL
+   ========================================================================= */
+.trail-wrap { position: relative; max-width: 620px; margin: 0 auto; border: 1px solid var(--lavender); border-radius: 14px; background: linear-gradient(#fff, var(--lavender-2)); overflow: hidden; }
+.trail-wrap svg { display: block; width: 100%; }
+#trailSegs path { transition: stroke-dashoffset 90ms linear, opacity var(--m-fast) linear; }
+.trail-tip {
+  position: absolute; padding: 3px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
+  background: var(--purple-2); color: #fff; pointer-events: none;
+  transform: translate(-50%, -150%); white-space: nowrap;
+  opacity: 0; transition: opacity var(--m-fast) var(--m-out);
+}
+.trail-tip.on { opacity: 1; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 99px; background: var(--lavender); outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--purple); border: 3px solid #fff; box-shadow: 0 2px 8px rgba(74,47,181,.4); cursor: grab; transition: transform var(--m-instant) var(--m-out); }
+input[type=range]::-webkit-slider-thumb:active { transform: scale(1.15); cursor: grabbing; }
+
+/* ===========================================================================
+   8. FORM MULTI-STEP
+   ========================================================================= */
+.steps-head { display: flex; gap: 6px; margin-bottom: 18px; }
+.steps-head i { flex: 1; height: 4px; border-radius: 99px; background: var(--lavender); overflow: hidden; }
+.steps-head i b { display: block; height: 100%; width: 0; background: var(--purple); border-radius: 99px; transition: width var(--m-slow) var(--m-out); }
+.panes { position: relative; overflow: hidden; transition: height var(--m-slow) var(--m-out); }
+.pane { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.pane.on { position: relative; opacity: 1; pointer-events: auto; animation: pane-in var(--m-slow) var(--m-out) both; }
+@keyframes pane-in { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * var(--m-lift-3))); } to { opacity: 1; transform: none; } }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
+.field input, .field select {
+  width: 100%; font: inherit; font-size: 14px; padding: 9px 12px;
+  border: 1.5px solid var(--lavender); border-radius: 10px; background: #fff; color: var(--ink);
+  transition: border-color var(--m-fast) var(--m-out), box-shadow var(--m-fast) var(--m-out);
+}
+.field input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(109,79,209,.16); }
+.field.invalid input { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(224,64,95,.14); }
+.err-msg { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--m-base) var(--m-out); }
+.field.invalid .err-msg { grid-template-rows: 1fr; }
+.err-msg > span { overflow: hidden; font-size: 12.5px; color: var(--danger); }
+.field.invalid .err-msg > span { padding-top: 5px; }
+@keyframes shake { 10%,90% { transform: translateX(-2px); } 30%,70% { transform: translateX(4px); } 50% { transform: translateX(-4px); } }
+.shake { animation: shake var(--m-slow) var(--m-inout); }
+
+/* ===========================================================================
+   9. MICRO
+   ========================================================================= */
+.drop {
+  border: 2px dashed var(--purple-soft); border-radius: 14px; padding: 26px; text-align: center;
+  background: var(--lavender-2); color: var(--ink-soft);
+  transition: border-color var(--m-fast) var(--m-out), background var(--m-fast) var(--m-out), transform var(--m-fast) var(--m-out);
+}
+.drop.over { border-color: var(--purple); background: #efe9ff; transform: scale(1.015); }
+.toasts { position: fixed; right: 20px; bottom: 20px; display: grid; gap: 10px; z-index: 60; }
+.toast {
+  background: #fff; border: 1px solid var(--lavender); border-left: 3px solid var(--purple);
+  border-radius: 12px; padding: 11px 15px; font-size: 13.5px; min-width: 230px;
+  box-shadow: 0 20px 40px -20px rgba(74,47,181,.5);
+  animation: m-fade-up var(--m-base) var(--m-out) both;
+}
+.toast.out { animation: toast-out var(--m-fast) var(--m-in) both; }
+@keyframes toast-out { to { opacity: 0; transform: translateX(var(--m-lift-2)); } }
+.check-draw path { stroke-dasharray: 30; stroke-dashoffset: 30; }
+.check-draw.run path { transition: stroke-dashoffset var(--m-slow) var(--m-out) var(--m-fast); stroke-dashoffset: 0; }
+.check-draw.run circle { animation: m-pop var(--m-base) var(--m-out) both; }
+
+/* ===========================================================================
+   10. SHARED ELEMENT
+   ========================================================================= */
+.vt-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; border-top: 1px solid var(--lavender); cursor: pointer; transition: background var(--m-fast) var(--m-out); }
+.vt-row:first-child { border-top: 0; }
+.vt-row:hover { background: var(--lavender-2); }
+.vt-title { font-weight: 600; }
+.vt-detail h4 { margin: 0 0 2px; font-size: 21px; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Brain&nbsp;Trails · Motion Kit</h1>
+  <span class="mono muted">v0</span>
+  <div class="spacer"></div>
+  <label class="switch"><input type="checkbox" id="tgReduced"> riduci movimento</label>
+  <label class="switch"><input type="checkbox" id="tgPaused"> pausa tutto</label>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h2>Il linguaggio di movimento</h2>
+    <p>Ogni animazione della UI esce da questi token. Non è una galleria di effetti:
+       è il vocabolario condiviso che fa sembrare il sito fatto da una persona sola.
+       I valori vivono in <span class="kbd">assets/motion/motion.css</span>.</p>
+  </div>
+
+  <!-- ================= TOKEN ================= -->
+  <section>
+    <h3>1 · Token</h3>
+    <p class="lede">Quattro easing e cinque durate. Se serve un valore nuovo si aggiunge qui,
+       non nel componente.</p>
+
+    <div class="card pad">
+      <div class="row" style="justify-content: space-between; margin-bottom: 16px;">
+        <b>Easing</b>
+        <button class="btn ghost" id="playEase">Riproduci</button>
+      </div>
+      <div class="grid g2" id="easeList"></div>
+
+      <div class="row" style="justify-content: space-between; margin: 26px 0 10px;">
+        <b>Durate</b>
+        <button class="btn ghost" id="playDur">Riproduci</button>
+      </div>
+      <div id="durList"></div>
+
+      <div style="margin-top: 26px;">
+        <b>Spostamenti</b>
+        <p class="tiny muted" style="margin: 4px 0 12px;">
+          <span class="kbd">lift-1 8px</span> micro-interazioni ·
+          <span class="kbd">lift-2 16px</span> card e dialog ·
+          <span class="kbd">lift-3 24px</span> pagine.
+          Oltre i 24&nbsp;px sembra un carosello, non una UI.
+        </p>
+      </div>
+
+      <div style="margin-top: 22px;">
+        <b>Palette</b>
+        <p class="tiny muted" style="margin: 4px 0 12px;">Derivata dal loader — il piano colori definitivo è un lavoro a parte.</p>
+        <div class="grid g3" id="palette"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MASCOTTE ================= -->
+  <section>
+    <h3>2 · La mascotte come sistema di stati</h3>
+    <p class="lede">Un personaggio, cinque pose. L'utente impara il linguaggio in un minuto:
+       se il cervello cammina sta lavorando, se è seduto non c'è niente, se è a terra è andato storto.</p>
+
+    <div class="grid g3">
+      <div class="pose">
+        <svg viewBox="-58 -100 116 112" data-motion="decor"><use href="#k-walker"/></svg>
+        <b>Cammina</b><span>caricamento lungo</span>
+      </div>
+      <div class="pose">
+        <svg viewBox="-58 -100 116 112" data-motion="decor">
+          <g id="k-idle-pose">
+            <ellipse cx="2" cy="1" rx="24" ry="4" fill="var(--purple-2)" opacity=".16"/>
+            <rect x="-30" y="-14" width="46" height="15" rx="7" fill="var(--purple-soft)"/>
+            <g stroke="var(--limb)" stroke-width="6.5" stroke-linecap="round" fill="none">
+              <path d="M10 -12 L30 -6"/><path d="M4 -12 L22 -3"/>
+            </g>
+            <ellipse cx="32" cy="-5" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+            <ellipse cx="24" cy="-2" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+            <g>
+              <animateTransform attributeName="transform" type="scale" values="1 1; 1.015 .985; 1 1" dur="3.4s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+              <g transform="translate(-4,-46)">
+                <use href="#k-brain"/>
+                <g class="face-calm"></g>
+                <g>
+                  <ellipse cx="-10" cy="4" rx="5.6" ry="6.6" fill="#fff">
+                    <animate attributeName="ry" values="6.6;6.6;.6;6.6;6.6" keyTimes="0;.88;.92;.96;1" dur="4.2s" repeatCount="indefinite"/>
+                  </ellipse>
+                  <ellipse cx="10" cy="4" rx="5.6" ry="6.6" fill="#fff">
+                    <animate attributeName="ry" values="6.6;6.6;.6;6.6;6.6" keyTimes="0;.88;.92;.96;1" dur="4.2s" repeatCount="indefinite"/>
+                  </ellipse>
+                  <circle cx="-9" cy="5" r="2.7" fill="var(--ink)"><animate attributeName="r" values="2.7;2.7;.4;2.7;2.7" keyTimes="0;.88;.92;.96;1" dur="4.2s" repeatCount="indefinite"/></circle>
+                  <circle cx="11" cy="5" r="2.7" fill="var(--ink)"><animate attributeName="r" values="2.7;2.7;.4;2.7;2.7" keyTimes="0;.88;.92;.96;1" dur="4.2s" repeatCount="indefinite"/></circle>
+                </g>
+                <path d="M -4 15 q 5 4 10 0" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <b>Seduto</b><span>stato vuoto</span>
+      </div>
+      <div class="pose">
+        <svg viewBox="-58 -100 116 112" data-motion="decor">
+          <ellipse cx="0" cy="2" rx="22" ry="4.5" fill="var(--purple-2)" opacity=".16">
+            <animate attributeName="rx" values="22;13;22" dur="1.4s" repeatCount="indefinite" calcMode="spline" keySplines=".3 0 .2 1;.6 0 .7 1"/>
+            <animate attributeName="opacity" values=".16;.07;.16" dur="1.4s" repeatCount="indefinite"/>
+          </ellipse>
+          <g>
+            <animateTransform attributeName="transform" type="translate" values="0 0; 0 4; 0 -34; 0 -30; 0 0" keyTimes="0;.18;.5;.62;1" dur="1.4s" repeatCount="indefinite" calcMode="spline" keySplines=".4 0 .6 1;.2 .6 .3 1;.5 0 .5 1;.4 0 .3 1"/>
+            <g stroke="var(--limb)" stroke-width="6.5" stroke-linecap="round" fill="none">
+              <path d="M-8 -34 L-16 -22"><animate attributeName="d" values="M-8 -34 L-16 -22; M-8 -34 L-14 -20; M-8 -34 L-16 -22" dur="1.4s" repeatCount="indefinite"/></path>
+              <path d="M8 -34 L16 -22"><animate attributeName="d" values="M8 -34 L16 -22; M8 -34 L14 -20; M8 -34 L16 -22" dur="1.4s" repeatCount="indefinite"/></path>
+            </g>
+            <ellipse cx="-18" cy="-20" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+            <ellipse cx="18" cy="-20" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+            <g stroke="var(--limb)" stroke-width="6" stroke-linecap="round" fill="none">
+              <path d="M-27 -56 L-38 -70"/><path d="M27 -56 L38 -70"/>
+            </g>
+            <circle cx="-38" cy="-70" r="3.8" fill="var(--limb)"/>
+            <circle cx="38" cy="-70" r="3.8" fill="var(--limb)"/>
+            <g transform="translate(0,-59)">
+              <use href="#k-brain"/>
+              <path d="M-14 4 q4 -6 8 0 M6 4 q4 -6 8 0" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M-6 12 q6 8 12 0 z" fill="var(--ink)" opacity=".85"/>
+            </g>
+            <g fill="var(--purple)">
+              <use href="#k-spark" transform="translate(-40,-84)"><animateTransform attributeName="transform" type="scale" values="0;1.2;0" dur="1.4s" repeatCount="indefinite" additive="sum"/></use>
+              <use href="#k-spark" transform="translate(42,-76)"><animateTransform attributeName="transform" type="scale" values="0;1;0" dur="1.4s" begin="-.35s" repeatCount="indefinite" additive="sum"/></use>
+              <use href="#k-spark" transform="translate(6,-96)"><animateTransform attributeName="transform" type="scale" values="0;1.4;0" dur="1.4s" begin="-.7s" repeatCount="indefinite" additive="sum"/></use>
+            </g>
+          </g>
+        </svg>
+        <b>Salta</b><span>successo</span>
+      </div>
+      <div class="pose">
+        <svg viewBox="-58 -100 116 112" data-motion="decor">
+          <ellipse cx="0" cy="1" rx="30" ry="4.5" fill="var(--purple-2)" opacity=".16"/>
+          <g>
+            <animateTransform attributeName="transform" type="rotate" values="-9 0 0; -5 0 0; -9 0 0" dur="3.6s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>
+            <g stroke="var(--limb)" stroke-width="6.5" stroke-linecap="round" fill="none">
+              <path d="M4 -14 L30 -8"/><path d="M0 -14 L20 -2"/>
+            </g>
+            <ellipse cx="32" cy="-7" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+            <ellipse cx="22" cy="-1" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+            <g stroke="var(--limb)" stroke-width="6" stroke-linecap="round" fill="none">
+              <path d="M-26 -34 L-36 -22"/>
+            </g>
+            <circle cx="-36" cy="-22" r="3.8" fill="var(--limb)"/>
+            <g transform="translate(-2,-40)">
+              <use href="#k-brain"/>
+              <path d="M-14 0 l8 8 M-6 0 l-8 8 M6 0 l8 8 M14 0 l-8 8" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M-6 16 q3 -4 6 0 q3 4 6 0" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+            </g>
+            <g fill="none" stroke="var(--purple-soft)" stroke-width="2">
+              <ellipse cx="-2" cy="-76" rx="17" ry="6">
+                <animateTransform attributeName="transform" type="rotate" values="0 -2 -76; 360 -2 -76" dur="3.2s" repeatCount="indefinite"/>
+              </ellipse>
+            </g>
+            <circle r="2.6" fill="var(--purple)">
+              <animateMotion dur="3.2s" repeatCount="indefinite" path="M15 -76 a17 6 0 1 0 -34 0 a17 6 0 1 0 34 0"/>
+            </circle>
+          </g>
+        </svg>
+        <b>A terra</b><span>errore</span>
+      </div>
+      <div class="pose">
+        <svg viewBox="-58 -100 116 112" data-motion="decor" style="height:132px">
+          <g transform="translate(0,-46) scale(.62) translate(0,46)"><use href="#k-walker"/></g>
+        </svg>
+        <b>Cammina sul posto</b><span>attesa breve, 24&nbsp;px</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CARICAMENTO ================= -->
+  <section>
+    <h3>3 · I tre livelli di attesa</h3>
+    <p class="lede">L'errore più comune è mostrare uno spinner per un'operazione da 200&nbsp;ms:
+       il lampo si legge come un glitch. La soglia è la stessa in tutta l'app.</p>
+
+    <div class="grid g3">
+      <div class="card pad">
+        <div class="mono muted tiny">&lt; 300 ms</div>
+        <b>Niente</b>
+        <p class="tiny muted" style="margin:4px 0 12px">Solo il feedback di pressione. Uno spinner qui peggiora la percezione.</p>
+        <button class="btn ghost" onclick="this.blur()">Salva</button>
+      </div>
+      <div class="card pad">
+        <div class="mono muted tiny">300 ms – 1 s</div>
+        <b>Inline nel bottone</b>
+        <p class="tiny muted" style="margin:4px 0 12px">Il contesto resta: l'utente vede <em>cosa</em> sta caricando.</p>
+        <button class="btn" id="btnInline">
+          <svg viewBox="-46 -96 92 100" style="width:20px;height:22px" data-motion="decor"><use href="#k-walker"/></svg>
+          Caricamento
+        </button>
+      </div>
+      <div class="card pad">
+        <div class="mono muted tiny">&gt; 1 s</div>
+        <b>Scena intera</b>
+        <p class="tiny muted" style="margin:4px 0 12px">Vale la pena intrattenere. <a href="../loader/brain-loader.html" style="color:var(--purple-2)">Loader completo →</a></p>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--lavender)">
+          <svg viewBox="0 0 200 96" style="display:block;width:100%" data-motion="decor">
+            <rect width="200" height="96" fill="#f4f1ff"/>
+            <g class="mini-scroll">
+              <path fill="var(--purple)" d="M-80 -32 L0 8 L80 48 L160 88 L240 128 L240 300 L-80 300 Z" stroke="#fff" stroke-width="3"/>
+            </g>
+            <g transform="translate(100,58) scale(.42)"><use href="#k-walker"/></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SKELETON ================= -->
+  <section>
+    <h3>4 · Skeleton e stagger</h3>
+    <p class="lede">Lo skeleton ha la geometria esatta della riga vera, così il contenuto non fa saltare il layout.
+       L'onda scorre lungo la lista (ritardo di 90&nbsp;ms a riga) invece di far pulsare ogni riga per conto suo:
+       è la differenza fra "sta caricando" e "è rotto".</p>
+
+    <div class="card">
+      <div class="list" id="skList"></div>
+      <div class="pad row" style="border-top:1px solid var(--lavender)">
+        <button class="btn" id="btnLoadRows">Carica i dati</button>
+        <button class="btn ghost" id="btnResetRows">Torna allo skeleton</button>
+        <span class="tiny muted">entrata sfalsata di <span class="kbd">--m-stagger 40ms</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= JOB STEPPER ================= -->
+  <section>
+    <h3>5 · Lo stepper della pipeline</h3>
+    <p class="lede">Il momento chiave del prodotto: l'utente carica un EEG e aspetta minuti, con il backend che
+       risponde solo <span class="kbd">queued / running / done</span>. La barra dentro ogni step decelera e
+       <b>non arriva mai al 100%</b> finché lo stato non cambia davvero — così l'animazione non mente.</p>
+
+    <div class="card pad">
+      <div class="stepper">
+        <div class="walker-track"><div class="walker" id="jobWalker" data-motion="decor">
+          <svg viewBox="-58 -100 116 104"><use href="#k-walker"/></svg>
+        </div></div>
+        <div class="rail">
+          <div class="fill" id="jobFill"></div>
+          <div class="nodes" id="jobNodes"></div>
+        </div>
+      </div>
+      <div class="tiny muted" style="margin-top:22px">avanzamento dentro lo step corrente</div>
+      <div class="job-bar" data-motion="status" style="margin-top:6px"><i id="jobBar"></i></div>
+      <div class="row" style="justify-content:space-between;margin-top:16px">
+        <div class="row">
+          <span class="badge" id="jobBadge"><span class="dot"></span><span>in coda</span></span>
+          <span class="tiny muted" id="jobHint">polling ogni 2 s</span>
+        </div>
+        <div class="row">
+          <button class="btn ghost" id="jobFail">Fai fallire</button>
+          <button class="btn ghost" id="jobReset">Reset</button>
+          <button class="btn" id="jobNext">Avanza step</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TRAIL ================= -->
+  <section>
+    <h3>6 · Il trail che si disegna</h3>
+    <p class="lede">Il colpo d'occhio del prodotto. La traiettoria non appare: si disegna in ordine temporale,
+       colorata segmento per segmento (64 segmenti, colore = tempo, scala viridis). Il gradiente segue il
+       <b>tempo</b>, non l'asse X — sarebbe una bugia visiva.</p>
+
+    <div class="card pad">
+      <div class="trail-wrap" id="trailWrap">
+        <svg viewBox="0 0 420 250" id="trailSvg">
+          <defs>
+            <path id="trailGeom" d="M 60 200 C 80 150, 120 170, 130 130 C 140 95, 100 80, 120 55 C 140 32, 190 45, 200 80 C 210 115, 170 130, 185 160 C 200 190, 250 195, 270 165 C 288 138, 260 110, 285 92 C 310 74, 350 95, 348 130 C 346 165, 320 180, 330 205"/>
+          </defs>
+          <g stroke="var(--lavender)" stroke-width="1">
+            <path d="M40 20 V225 H395" fill="none" stroke="var(--purple-soft)" stroke-width="1.5"/>
+          </g>
+          <text x="40" y="243" font-size="10" fill="var(--ink-soft)">PC1 · 41% varianza</text>
+          <text x="16" y="20" font-size="10" fill="var(--ink-soft)" transform="rotate(-90 16 20)" text-anchor="end">PC2 · 23%</text>
+          <g id="trailSegs" fill="none" stroke-width="3.4" stroke-linecap="round"></g>
+          <g id="trailStart" opacity="0">
+            <circle r="9" fill="none" stroke="#440154" stroke-width="2" data-motion="decor">
+              <animate attributeName="r" values="6;13" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values=".55;0" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle r="5" fill="#440154"/>
+          </g>
+          <g id="trailEnd" opacity="0"><circle r="6" fill="#fde725" stroke="#8a7a1a" stroke-width="1.6"/></g>
+          <g id="trailHead" opacity="0"><circle r="6.5" fill="#fff" stroke="var(--purple-2)" stroke-width="2.5"/></g>
+        </svg>
+        <div class="trail-tip" id="trailTip">t = 0 s</div>
+      </div>
+      <div class="row" style="margin-top:14px;gap:16px">
+        <button class="btn" id="trailPlay">Rigioca</button>
+        <input type="range" id="trailScrub" min="0" max="1000" value="1000" style="flex:1;min-width:180px">
+      </div>
+      <p class="tiny muted" style="margin-top:10px">
+        Trascina lo scrubber: il punto corre sulla traiettoria e il futuro si smorza.
+        È insieme animazione e funzione — l'utente <em>legge</em> il tempo.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= FORM ================= -->
+  <section>
+    <h3>7 · Form multi-step</h3>
+    <p class="lede">La transizione è direzionale: avanti entra da destra, indietro da sinistra. L'utente non si
+       perde perché il movimento gli dice dove si trova. L'altezza della card si anima, così il bottone non salta sotto il dito.</p>
+
+    <div class="card pad" style="max-width:520px">
+      <div class="steps-head" id="stepsHead"><i><b></b></i><i><b></b></i><i><b></b></i></div>
+      <div class="panes" id="panes">
+        <div class="pane on" data-step="0">
+          <div class="field"><label>Email</label><input value="alessio@lumentis.ca"></div>
+          <div class="field" id="fieldPw"><label>Password</label><input type="password" value="123">
+            <div class="err-msg"><span>Almeno 8 caratteri.</span></div>
+          </div>
+        </div>
+        <div class="pane" data-step="1">
+          <div class="field"><label>Anno di nascita</label><input value="1998"></div>
+          <div class="field"><label>Mano dominante</label>
+            <select><option>Destra</option><option>Sinistra</option><option>Ambidestro</option></select>
+          </div>
+          <div class="field"><label>Ore di sonno</label><input value="7"></div>
+        </div>
+        <div class="pane" data-step="2">
+          <div class="field"><label>Consenso al trattamento</label>
+            <p class="tiny muted" style="margin:0">Testo del consenso, obbligatorio prima dell'invio.</p>
+          </div>
+          <div style="text-align:center;padding:8px 0 4px">
+            <svg viewBox="0 0 64 64" width="64" height="64" class="check-draw" id="checkDraw">
+              <circle cx="32" cy="32" r="27" fill="#e3f6ec"/>
+              <path d="M20 33 l9 9 l16 -18" fill="none" stroke="var(--ok)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div style="font-weight:600">Registrazione inviata</div>
+            <div class="tiny muted">In attesa di approvazione</div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin-top:16px">
+        <button class="btn ghost" id="stepPrev">Indietro</button>
+        <div class="row">
+          <button class="btn ghost" id="stepErr">Mostra errore</button>
+          <button class="btn" id="stepNext">Avanti</button>
+        </div>
+      </div>
+    </div>
+    <p class="tiny muted" style="margin-top:12px;max-width:68ch">
+      Nota: l'errore di campo <b>non</b> fa shake — è un cliché e con uno screen reader è solo rumore.
+      Bordo + messaggio che si espande. Lo shake resta solo per il login rifiutato, dove significa "no, riprova".
+      <button class="btn ghost" id="btnShake" style="margin-left:8px">Vedi lo shake del login</button>
+    </p>
+  </section>
+
+  <!-- ================= MICRO ================= -->
+  <section>
+    <h3>8 · Micro-interazioni</h3>
+    <p class="lede">Le cose piccole che si vedono cento volte al giorno: qui conta la sottrazione.</p>
+
+    <div class="grid g2">
+      <div class="card pad">
+        <b>Il badge in polling</b>
+        <p class="tiny muted" style="margin:4px 0 14px">La trappola: la risposta rientra ogni 2&nbsp;s e il badge si rianima
+           ogni volta. La pagina pulsa all'infinito e l'occhio ci va sempre. Si anima il <b>cambio di stato</b>, non la risposta.</p>
+        <div class="row" style="gap:24px">
+          <div><div class="tiny muted" style="margin-bottom:6px">a ogni risposta</div><span class="badge run" id="badgeBad"><span class="dot"></span>running</span></div>
+          <div><div class="tiny muted" style="margin-bottom:6px">solo al cambio</div><span class="badge run" id="badgeGood"><span class="dot"></span>running</span></div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <b>Dropzone</b>
+        <p class="tiny muted" style="margin:4px 0 14px">Il bordo reagisce al dragover, il file entra con una barra reale.</p>
+        <div class="drop" id="drop">Trascina qui un .csv / .edf<div class="tiny" id="dropPct" style="margin-top:6px"></div></div>
+        <button class="btn ghost" id="dropSim" style="margin-top:12px">Simula un drop</button>
+      </div>
+
+      <div class="card pad">
+        <b>Toast</b>
+        <p class="tiny muted" style="margin:4px 0 14px">Entra dal basso con lift-1, esce di lato: l'uscita è più veloce dell'entrata (160&nbsp;ms contro 240) perché l'attenzione è già altrove.</p>
+        <button class="btn" id="toastBtn">Mostra un toast</button>
+      </div>
+
+      <div class="card pad">
+        <b>Checkmark</b>
+        <p class="tiny muted" style="margin:4px 0 14px">Si disegna, non appare: 400&nbsp;ms di <span class="kbd">stroke-dashoffset</span> dopo un pop del cerchio.</p>
+        <div class="row">
+          <svg viewBox="0 0 64 64" width="56" height="56" class="check-draw" id="checkDemo">
+            <circle cx="32" cy="32" r="27" fill="#e3f6ec"/>
+            <path d="M20 33 l9 9 l16 -18" fill="none" stroke="var(--ok)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <button class="btn ghost" id="checkBtn">Rigioca</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SHARED ELEMENT ================= -->
+  <section>
+    <h3>9 · Shared element fra lista e dettaglio</h3>
+    <p class="lede">Con la View Transition API il titolo della riga <b>diventa</b> il titolo della pagina di dettaglio.
+       Costa due <span class="kbd">view-transition-name</span> e collega mentalmente le due schermate.</p>
+
+    <div class="card" id="vtCard">
+      <div id="vtList">
+        <div class="vt-row" data-title="Task Stroop · sessione 3">
+          <div><div class="vt-title">Task Stroop · sessione 3</div><div class="tiny muted">4 min 12 s · 64 canali</div></div>
+          <span class="badge ok"><span class="dot"></span>pronto</span>
+        </div>
+        <div class="vt-row" data-title="Baseline occhi chiusi">
+          <div><div class="vt-title">Baseline occhi chiusi</div><div class="tiny muted">2 min 03 s · 64 canali</div></div>
+          <span class="badge ok"><span class="dot"></span>pronto</span>
+        </div>
+        <div class="vt-row" data-title="N-back · pilota">
+          <div><div class="vt-title">N-back · pilota</div><div class="tiny muted">6 min 48 s · 32 canali</div></div>
+          <span class="badge run"><span class="dot"></span>in elaborazione</span>
+        </div>
+      </div>
+      <div id="vtDetail" hidden class="pad vt-detail">
+        <h4 class="vt-title" id="vtDetailTitle">—</h4>
+        <div class="tiny muted" style="margin-bottom:14px">64 canali · 250 Hz · cleaner <span class="kbd">asr-lite</span></div>
+        <button class="btn ghost" id="vtBack">← Torna alla lista</button>
+      </div>
+    </div>
+    <p class="tiny muted" style="margin-top:10px" id="vtSupport"></p>
+  </section>
+
+  <!-- ================= NON ANIMARE ================= -->
+  <section>
+    <h3>10 · Cosa non animare</h3>
+    <div class="card pad">
+      <div class="note" style="margin-bottom:14px"><b>Il segnale EEG.</b> Sono dati: animarli è fuorviante,
+        l'utente crede di vedere il segnale muoversi. Si anima la finestra dei 30&nbsp;s e il toggle std/clean (crossfade), mai le tracce.</div>
+      <div class="note" style="margin-bottom:14px"><b>Ciò che si ripete in polling.</b> Vedi §8: solo i cambi di stato.</div>
+      <div class="note" style="margin-bottom:14px"><b>Le proprietà che fanno reflow.</b> Solo <span class="kbd">transform</span> e <span class="kbd">opacity</span>.
+        Con un grafico Plotly aperto, animare <span class="kbd">height</span> si vede a occhio nudo.</div>
+      <div class="note"><b>Tutto insieme.</b> Se in una schermata due animazioni competono per l'attenzione, una delle due è di troppo.</div>
+    </div>
+  </section>
+
+  <p class="tiny muted" style="margin-top:56px;text-align:center">
+    Token in <span class="kbd">assets/motion/motion.css</span> e <span class="kbd">assets/motion/motion.ts</span> ·
+    mascotte in <span class="kbd">assets/loader/</span>
+  </p>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<!-- ===========================================================================
+     SPRITE: il personaggio, definito una volta e riusato con <use>
+     ========================================================================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="k-brainFill" cx="35%" cy="28%" r="80%">
+      <stop offset="0%" stop-color="#ffd9e8"/><stop offset="100%" stop-color="var(--brain)"/>
+    </radialGradient>
+
+    <!-- testa: forma + circonvoluzioni + guance (senza faccia) -->
+    <g id="k-brain">
+      <path fill="url(#k-brainFill)" stroke="var(--brain-dark)" stroke-width="2.6" stroke-linejoin="round"
+        d="M -30 2 C -34 -10, -24 -21, -14 -18 C -10 -28, 6 -29, 12 -20 C 24 -23, 33 -11, 28 2
+           C 34 10, 26 21, 14 20 C 6 27, -8 27, -16 19 C -28 20, -35 10, -30 2 Z"/>
+      <g fill="none" stroke="var(--brain-dark)" stroke-width="1.7" stroke-linecap="round" opacity=".55">
+        <path d="M 0 -26 C 4 -20, -3 -15, 1 -9"/>
+        <path d="M -22 -12 c 6 -5, 11 1, 16 -3"/><path d="M -25 -3 c 7 -5, 12 2, 17 -2"/>
+        <path d="M 22 -12 c -6 -5, -11 1, -16 -3"/><path d="M 25 -3 c -7 -5, -12 2, -17 -2"/>
+        <path d="M -14 14 c 4 -4, 8 0, 11 -3"/><path d="M 14 14 c -4 -4, -8 0, -11 -3"/>
+      </g>
+      <ellipse cx="-20" cy="10" rx="5.5" ry="3.4" fill="#ff7fae" opacity=".45"/>
+      <ellipse cx="20" cy="10" rx="5.5" ry="3.4" fill="#ff7fae" opacity=".45"/>
+    </g>
+
+    <path id="k-spark" d="M0 -5.5 L1.4 -1.4 L5.5 0 L1.4 1.4 L0 5.5 L-1.4 1.4 L-5.5 0 L-1.4 -1.4Z"/>
+
+    <!-- personaggio che cammina, ciclo 0.9 s -->
+    <g id="k-walker">
+      <ellipse cx="0" cy="1" rx="26" ry="5" fill="var(--purple-2)" opacity=".2">
+        <animate attributeName="rx" values="26;21;26;21;26" dur="0.9s" repeatCount="indefinite"/>
+      </ellipse>
+      <g>
+        <animateTransform attributeName="transform" type="translate" values="0 0; 0 -4; 0 0" keyTimes="0;0.5;1"
+          calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="0.45s" repeatCount="indefinite"/>
+        <!-- gamba posteriore -->
+        <g stroke-linecap="round" fill="none" opacity=".8">
+          <animateTransform attributeName="transform" type="rotate"
+            values="-28 -7 -34; -6 -7 -34; 24 -7 -34; 6 -7 -34; -28 -7 -34"
+            keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" repeatCount="indefinite"/>
+          <path d="M-7 -34 L-7 -18" stroke="var(--limb)" stroke-width="6.5"/>
+          <g>
+            <animateTransform attributeName="transform" type="rotate"
+              values="0 -7 -18; 8 -7 -18; 32 -7 -18; 48 -7 -18; 14 -7 -18; 0 -7 -18"
+              keyTimes="0;0.2;0.45;0.62;0.85;1" dur="0.9s" repeatCount="indefinite"/>
+            <path d="M-7 -18 L-7 -4" stroke="var(--limb)" stroke-width="6"/>
+            <ellipse cx="-4" cy="-2" rx="7.5" ry="3.8" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+          </g>
+        </g>
+        <!-- gamba anteriore, sfasata di mezzo passo -->
+        <g stroke-linecap="round" fill="none">
+          <animateTransform attributeName="transform" type="rotate"
+            values="-28 7 -34; -6 7 -34; 24 7 -34; 6 7 -34; -28 7 -34"
+            keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+          <path d="M7 -34 L7 -18" stroke="var(--limb)" stroke-width="7.5"/>
+          <g>
+            <animateTransform attributeName="transform" type="rotate"
+              values="0 7 -18; 8 7 -18; 32 7 -18; 48 7 -18; 14 7 -18; 0 7 -18"
+              keyTimes="0;0.2;0.45;0.62;0.85;1" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+            <path d="M7 -18 L7 -4" stroke="var(--limb)" stroke-width="7"/>
+            <ellipse cx="10" cy="-2" rx="8" ry="4" fill="#fff" stroke="var(--brain-dark)" stroke-width="1.6"/>
+          </g>
+        </g>
+        <!-- braccio posteriore -->
+        <g stroke-linecap="round" fill="none" opacity=".75">
+          <animateTransform attributeName="transform" type="rotate"
+            values="30 -29 -55; 0 -29 -55; -30 -29 -55; 0 -29 -55; 30 -29 -55"
+            keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" repeatCount="indefinite"/>
+          <path d="M-29 -55 L-38 -44" stroke="var(--limb)" stroke-width="6"/>
+          <circle cx="-38" cy="-44" r="3.6" fill="var(--limb)" stroke="none"/>
+        </g>
+        <!-- corpo con squash & stretch -->
+        <g transform="translate(0,-34)">
+          <g>
+            <animateTransform attributeName="transform" type="scale"
+              values="1.06 .94; 1 1; .97 1.04; 1 1; 1.06 .94" keyTimes="0;0.2;0.5;0.8;1"
+              dur="0.45s" repeatCount="indefinite"/>
+            <g transform="translate(0,-25)">
+              <use href="#k-brain"/>
+              <ellipse cx="-10" cy="4" rx="5.6" ry="6.6" fill="#fff">
+                <animate attributeName="ry" values="6.6;6.6;.6;6.6;6.6" keyTimes="0;.9;.935;.97;1" dur="3.6s" repeatCount="indefinite"/>
+              </ellipse>
+              <ellipse cx="10" cy="4" rx="5.6" ry="6.6" fill="#fff">
+                <animate attributeName="ry" values="6.6;6.6;.6;6.6;6.6" keyTimes="0;.9;.935;.97;1" dur="3.6s" repeatCount="indefinite"/>
+              </ellipse>
+              <circle cx="-8" cy="5" r="2.7" fill="var(--ink)">
+                <animate attributeName="r" values="2.7;2.7;.4;2.7;2.7" keyTimes="0;.9;.935;.97;1" dur="3.6s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="12" cy="5" r="2.7" fill="var(--ink)">
+                <animate attributeName="r" values="2.7;2.7;.4;2.7;2.7" keyTimes="0;.9;.935;.97;1" dur="3.6s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="-9.2" cy="3.4" r=".9" fill="#fff"/><circle cx="10.8" cy="3.4" r=".9" fill="#fff"/>
+              <path d="M -4 14 q 5 5.5 10 0" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+            </g>
+          </g>
+        </g>
+        <!-- braccio anteriore -->
+        <g stroke-linecap="round" fill="none">
+          <animateTransform attributeName="transform" type="rotate"
+            values="30 27 -55; 0 27 -55; -30 27 -55; 0 27 -55; 30 27 -55"
+            keyTimes="0;0.25;0.5;0.75;1" dur="0.9s" begin="-0.45s" repeatCount="indefinite"/>
+          <path d="M27 -55 L37 -44" stroke="var(--limb)" stroke-width="6.5"/>
+          <circle cx="37" cy="-44" r="3.9" fill="var(--limb)" stroke="none"/>
+        </g>
+      </g>
+    </g>
+  </defs>
+</svg>
+
+<style>
+  @keyframes mini-scroll { to { transform: translate(-80px, -40px); } }
+  .mini-scroll { animation: mini-scroll .9s linear infinite; }
+</style>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/* ---------- toggle globali ---------- */
+$("#tgReduced").addEventListener("change", e => document.body.classList.toggle("sim-reduced", e.target.checked));
+$("#tgPaused").addEventListener("change", e => {
+  document.body.classList.toggle("sim-paused", e.target.checked);
+  $$("svg").forEach(s => e.target.checked ? s.pauseAnimations?.() : s.unpauseAnimations?.());
+});
+
+/* ---------- 1. token ---------- */
+const EASES = [
+  ["--m-out", "out", [.16, 1, .3, 1], "entrate — il 90% dei casi"],
+  ["--m-in", "in", [.7, 0, .84, 0], "uscite — accelera via"],
+  ["--m-inout", "inOut", [.65, 0, .35, 1], "spostamenti A→B"],
+  ["--m-asymptotic", "asymptotic", [0, .7, .15, 1], "progressi senza percentuale"],
+];
+$("#easeList").innerHTML = EASES.map(([v, name, [x1, y1, x2, y2], desc]) => `
+  <div class="ease-card">
+    <svg viewBox="0 0 100 100">
+      <path d="M0 100 L100 100" stroke="#ddd4fb" stroke-width="1.5" fill="none"/>
+      <path d="M0,100 C${x1 * 100},${(1 - y1) * 100} ${x2 * 100},${(1 - y2) * 100} 100,0"
+            fill="none" stroke="var(--purple)" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="name">${name}</div>
+      <div class="tiny muted">${desc}</div>
+      <div class="ease-track" style="--e:var(${v})"><b></b></div>
+    </div>
+  </div>`).join("");
+
+function playEase() {
+  $$("#easeList .ease-card").forEach((c, i) => {
+    const dot = $("b", c), e = EASES[i][0];
+    dot.style.transition = "none"; dot.style.transform = "translateX(0)";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      dot.style.transition = `transform 1s var(${e})`;
+      dot.style.transform = "translateX(calc(100% - 16px))";
+    }));
+  });
+}
+$("#playEase").addEventListener("click", playEase);
+
+const DURS = [["instant", "--m-instant", "hover, pressione"], ["fast", "--m-fast", "tooltip, toggle, badge"],
+              ["base", "--m-base", "card, dialog, toast, riga"], ["slow", "--m-slow", "step, route, collapse"],
+              ["story", "--m-story", "mascotte, trail"]];
+$("#durList").innerHTML = DURS.map(([n, v, d]) => `
+  <div class="dur-row" style="--far:calc(100% - 16px)">
+    <div><b class="tiny">${n}</b></div>
+    <div class="dur-track" style="--v:var(${v})"><b style="transition-duration:var(${v})"></b></div>
+    <div class="tiny muted" style="text-align:right">${d}</div>
+  </div>`).join("");
+function playDur() {
+  $$("#durList .dur-row").forEach(r => {
+    const b = $("b", $(".dur-track", r));
+    b.style.transform = "translateX(0)";
+    requestAnimationFrame(() => requestAnimationFrame(() => { b.style.transform = "translateX(calc(100% - 16px))"; }));
+  });
+}
+$("#playDur").addEventListener("click", playDur);
+setTimeout(() => { playEase(); playDur(); }, 500);
+
+$("#palette").innerHTML = ["--purple", "--purple-2", "--purple-soft", "--lavender", "--ink", "--brain"]
+  .map(v => `<div><div class="swatch" style="background:var(${v})"></div>
+    <div class="mono tiny" style="margin-top:6px">${v.replace("--", "")}</div>
+    <div class="mono tiny muted">${getComputedStyle(document.documentElement).getPropertyValue(v).trim()}</div></div>`).join("");
+
+/* ---------- 4. skeleton + stagger ---------- */
+const ROWS = [
+  ["Task Stroop · sessione 3", "4:12", "pronto"],
+  ["Baseline occhi chiusi", "2:03", "pronto"],
+  ["N-back · pilota", "6:48", "in corso"],
+  ["Rest state · mattina", "5:30", "pronto"],
+  ["Task Stroop · sessione 4", "4:08", "in coda"],
+];
+const skeleton = () => ROWS.map((_, i) => `
+  <div class="item" style="--i:${i}">
+    <div class="sk" style="--i:${i};width:${60 + (i % 3) * 12}%"></div>
+    <div class="sk" style="--i:${i}"></div>
+    <div class="sk" style="--i:${i};height:20px;border-radius:99px"></div>
+  </div>`).join("");
+const real = () => ROWS.map(([t, d, s], i) => `
+  <div class="item real" style="--i:${i}">
+    <div class="title-line">${t}</div>
+    <div class="tiny muted">${d}</div>
+    <span class="badge ${s === "pronto" ? "ok" : ""}"><span class="dot"></span>${s}</span>
+  </div>`).join("");
+$("#skList").innerHTML = skeleton();
+$("#btnLoadRows").addEventListener("click", () => { $("#skList").innerHTML = real(); });
+$("#btnResetRows").addEventListener("click", () => { $("#skList").innerHTML = skeleton(); });
+
+/* ---------- 5. job stepper ---------- */
+const STEPS = ["upload", "pulizia", "embedding REVE", "PCA", "trail"];
+const nodesEl = $("#jobNodes");
+nodesEl.innerHTML = STEPS.map((s, i) => `
+  <div class="node" style="left:${(i / (STEPS.length - 1)) * 100}%">
+    <span class="ping"></span>
+    <span class="disc">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path class="check" d="M6 12.5 l4 4 l8 -9"/></svg>
+      <svg viewBox="0 0 24 24" width="14" height="14" class="bang" style="position:absolute"><path d="M12 6v7M12 17v.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+    </span>
+    <span class="lbl">${s}</span>
+  </div>`).join("");
+
+const job = {
+  i: 0, failed: false,
+  render() {
+    const nodes = $$("#jobNodes .node");
+    nodes.forEach((n, k) => {
+      n.classList.toggle("is-done", k < this.i);
+      n.classList.toggle("is-run", k === this.i && !this.failed && this.i < STEPS.length);
+      n.classList.toggle("is-err", k === this.i && this.failed);
+    });
+    const pct = (Math.min(this.i, STEPS.length - 1) / (STEPS.length - 1)) * 100;
+    $("#jobFill").style.width = pct + "%";
+    $("#jobWalker").style.left = pct + "%";
+
+    const bar = $("#jobBar");
+    bar.className = "";
+    void bar.offsetWidth;                      // forza il restart della transizione
+    if (this.failed) bar.classList.add("err");
+    else if (this.i >= STEPS.length) bar.classList.add("done");
+    else bar.classList.add("creep");           // sale e non arriva mai
+
+    const badge = $("#jobBadge");
+    const done = this.i >= STEPS.length;
+    badge.className = "badge " + (this.failed ? "err" : done ? "ok" : "run");
+    badge.lastElementChild.textContent = this.failed ? "fallito" : done ? "pronto" : STEPS[this.i];
+    $("#jobHint").textContent = this.failed ? "errore dal worker · Riprova" : done ? "trail disponibile" : "polling ogni 2 s";
+    $("#jobWalker").style.opacity = done || this.failed ? ".35" : "1";
+  }
+};
+$("#jobNext").addEventListener("click", () => { if (job.failed) return; job.i = Math.min(job.i + 1, STEPS.length); job.render(); });
+$("#jobFail").addEventListener("click", () => { if (job.i < STEPS.length) { job.failed = true; job.render(); } });
+$("#jobReset").addEventListener("click", () => { job.i = 0; job.failed = false; job.render(); });
+job.render();
+
+/* ---------- 6. trail ---------- */
+const VIRIDIS = ["#440154", "#482878", "#3e4989", "#31688e", "#26828e", "#1f9e89", "#35b779", "#6ece58", "#b5de2b", "#fde725"];
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function viridis(t) {
+  t = Math.max(0, Math.min(1, t));
+  const x = t * (VIRIDIS.length - 1), i = Math.min(Math.floor(x), VIRIDIS.length - 2), f = x - i;
+  const a = hex2rgb(VIRIDIS[i]), b = hex2rgb(VIRIDIS[i + 1]);
+  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",")})`;
+}
+
+const NS = "http://www.w3.org/2000/svg";
+const geom = $("#trailGeom"), segsEl = $("#trailSegs");
+const TOTAL = geom.getTotalLength(), N = 64, DUR_S = 42;
+const segs = [];
+for (let i = 0; i < N; i++) {
+  const p0 = geom.getPointAtLength(TOTAL * i / N), p1 = geom.getPointAtLength(TOTAL * (i + 1) / N);
+  const len = Math.hypot(p1.x - p0.x, p1.y - p0.y) + 0.01;
+  const el = document.createElementNS(NS, "path");
+  el.setAttribute("d", `M${p0.x} ${p0.y} L${p1.x} ${p1.y}`);
+  el.setAttribute("stroke", viridis(i / (N - 1)));
+  el.style.strokeDasharray = len; el.style.strokeDashoffset = len;
+  segsEl.appendChild(el); segs.push({ el, len });
+}
+const startPt = geom.getPointAtLength(0), endPt = geom.getPointAtLength(TOTAL);
+$("#trailStart").setAttribute("transform", `translate(${startPt.x},${startPt.y})`);
+$("#trailEnd").setAttribute("transform", `translate(${endPt.x},${endPt.y})`);
+
+function drawTrail() {
+  $("#trailEnd").style.opacity = 0; $("#trailStart").style.opacity = 0;
+  segs.forEach(s => { s.el.style.transition = "none"; s.el.style.strokeDashoffset = s.len; s.el.style.opacity = 1; });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    $("#trailStart").style.transition = "opacity var(--m-base)";
+    $("#trailStart").style.opacity = 1;
+    segs.forEach((s, i) => {
+      s.el.style.transition = `stroke-dashoffset 90ms linear ${i * 18}ms, opacity var(--m-fast) linear`;
+      s.el.style.strokeDashoffset = 0;
+    });
+    setTimeout(() => {
+      const e = $("#trailEnd");
+      e.style.opacity = 1;
+      e.animate([{ transform: `translate(${endPt.x}px,${endPt.y}px) scale(0)` },
+                 { transform: `translate(${endPt.x}px,${endPt.y}px) scale(1.35)`, offset: .6 },
+                 { transform: `translate(${endPt.x}px,${endPt.y}px) scale(1)` }],
+                { duration: 420, easing: "cubic-bezier(.16,1,.3,1)" });
+    }, N * 18 + 120);
+  }));
+  $("#trailScrub").value = 1000;
+  scrub(1);
+}
+function scrub(t) {
+  const p = geom.getPointAtLength(TOTAL * t);
+  const head = $("#trailHead");
+  head.setAttribute("transform", `translate(${p.x},${p.y})`);
+  head.style.opacity = t > 0.001 && t < 0.999 ? 1 : 0;
+  segs.forEach((s, i) => { s.el.style.opacity = (i / N) > t ? .18 : 1; });
+  const tip = $("#trailTip"), box = $("#trailSvg").getBoundingClientRect();
+  tip.classList.toggle("on", t > 0.001 && t < 0.999);
+  tip.style.left = (p.x / 420) * box.width + "px";
+  tip.style.top = (p.y / 250) * box.height + "px";
+  tip.textContent = `t = ${(t * DUR_S).toFixed(1)} s`;
+}
+$("#trailScrub").addEventListener("input", e => scrub(e.target.value / 1000));
+$("#trailPlay").addEventListener("click", drawTrail);
+new IntersectionObserver((ents, o) => {
+  if (ents[0].isIntersecting) { drawTrail(); o.disconnect(); }
+}, { threshold: .4 }).observe($("#trailWrap"));
+
+/* ---------- 7. form multi-step ---------- */
+const panes = $$("#panes .pane");
+let stepI = 0;
+function goStep(next) {
+  const dir = next > stepI ? 1 : -1;
+  if (next < 0 || next >= panes.length) return;
+  const box = $("#panes");
+  box.style.height = box.offsetHeight + "px";       // blocca l'altezza attuale
+  panes[stepI].classList.remove("on");
+  stepI = next;
+  const cur = panes[stepI];
+  cur.style.setProperty("--dir", dir);
+  cur.classList.add("on");
+  requestAnimationFrame(() => { box.style.height = cur.offsetHeight + "px"; });
+  $$("#stepsHead b").forEach((b, i) => b.style.width = i <= stepI ? "100%" : "0%");
+  $("#stepNext").disabled = stepI === panes.length - 1;
+  $("#stepPrev").disabled = stepI === 0;
+  if (stepI === 2) { const c = $("#checkDraw"); c.classList.remove("run"); void c.offsetWidth; c.classList.add("run"); }
+}
+$("#stepNext").addEventListener("click", () => goStep(stepI + 1));
+$("#stepPrev").addEventListener("click", () => goStep(stepI - 1));
+$("#stepErr").addEventListener("click", () => { goStep(0); $("#fieldPw").classList.toggle("invalid"); });
+$("#btnShake").addEventListener("click", () => {
+  const card = $("#panes").closest(".card");
+  card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+});
+$$("#stepsHead b")[0].style.width = "100%";
+$("#stepPrev").disabled = true;
+requestAnimationFrame(() => { $("#panes").style.height = panes[0].offsetHeight + "px"; });
+// il pannello segue il contenuto: quando il messaggio d'errore si espande, la card
+// cresce con lui invece di tagliarlo (overflow:hidden + altezza bloccata)
+const ro = new ResizeObserver(() => { $("#panes").style.height = panes[stepI].offsetHeight + "px"; });
+panes.forEach(p => ro.observe(p));
+
+/* ---------- 8. micro ---------- */
+// badge in polling: quello a sinistra si rianima a ogni risposta, quello a destra no
+let pollState = "running", tick = 0;
+setInterval(() => {
+  tick++;
+  const bad = $("#badgeBad");
+  bad.style.animation = "none"; void bad.offsetWidth;
+  bad.style.animation = "m-pop var(--m-base) var(--m-out)";
+  if (tick % 6 === 0) {                       // lo stato cambia davvero ogni 12 s
+    pollState = pollState === "running" ? "pronto" : "running";
+    [$("#badgeBad"), $("#badgeGood")].forEach(b => {
+      b.className = "badge " + (pollState === "pronto" ? "ok" : "run");
+      b.lastChild.textContent = pollState;
+    });
+    const good = $("#badgeGood");
+    good.style.animation = "none"; void good.offsetWidth;
+    good.style.animation = "m-pop var(--m-base) var(--m-out)";
+  }
+}, 2000);
+
+const drop = $("#drop");
+drop.addEventListener("mouseenter", () => drop.classList.add("over"));
+drop.addEventListener("mouseleave", () => drop.classList.remove("over"));
+$("#dropSim").addEventListener("click", () => {
+  let p = 0; drop.classList.add("over");
+  const id = setInterval(() => {
+    p += 7 + Math.random() * 10;
+    $("#dropPct").textContent = `sessione-03.csv · ${Math.min(100, Math.round(p))}%`;
+    if (p >= 100) { clearInterval(id); drop.classList.remove("over"); toast("Upload completato · elaborazione avviata"); }
+  }, 140);
+});
+
+function toast(msg) {
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg;
+  $("#toasts").appendChild(el);
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 200); }, 2600);
+}
+$("#toastBtn").addEventListener("click", () => toast("Registrazione salvata"));
+
+$("#checkBtn").addEventListener("click", () => {
+  const c = $("#checkDemo"); c.classList.remove("run"); void c.offsetWidth; c.classList.add("run");
+});
+$("#checkDemo").classList.add("run");
+
+/* ---------- 9. shared element ---------- */
+const swap = fn => document.startViewTransition ? document.startViewTransition(fn) : fn();
+$$(".vt-row").forEach(row => row.addEventListener("click", () => {
+  const title = row.dataset.title;
+  row.querySelector(".vt-title").style.viewTransitionName = "bt-title";
+  swap(() => {
+    row.querySelector(".vt-title").style.viewTransitionName = "";
+    $("#vtDetailTitle").textContent = title;
+    $("#vtDetailTitle").style.viewTransitionName = "bt-title";
+    $("#vtList").hidden = true; $("#vtDetail").hidden = false;
+  });
+}));
+$("#vtBack").addEventListener("click", () => swap(() => {
+  $("#vtDetailTitle").style.viewTransitionName = "";
+  $("#vtList").hidden = false; $("#vtDetail").hidden = true;
+}));
+$("#vtSupport").textContent = document.startViewTransition
+  ? "Questo browser supporta la View Transition API: clicca una riga."
+  : "Questo browser non supporta ancora la View Transition API — il cambio avviene senza transizione (degrada da solo).";
+</script>
+</body>
+</html>
