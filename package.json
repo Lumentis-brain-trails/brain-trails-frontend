@@ -42,5 +42,9 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.0"
+  },
+  "optionalDependencies": {
+    "@emnapi/runtime": "^1",
+    "@emnapi/core": "^1"
   }
 }
