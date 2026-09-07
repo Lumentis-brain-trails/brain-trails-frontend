@@ -2,17 +2,15 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import Home from "./page";
 
-test("home shows the app name, version and entry links", () => {
+test("landing shows the headline and entry links", () => {
   render(<Home />);
   expect(
-    screen.getByRole("heading", { name: "Brain Trails" })
+    screen.getByRole("heading", { name: /watch where your brain travelled/i }),
   ).toBeInTheDocument();
-  expect(screen.getByTestId("version")).toHaveTextContent(/prototype/);
-  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+  expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute(
     "href",
-    "/login"
+    "/register",
   );
-  expect(
-    screen.getByRole("link", { name: "Create an account" })
-  ).toHaveAttribute("href", "/register");
+  expect(screen.getByRole("link", { name: "privacy" })).toHaveAttribute("href", "/privacy");
 });
