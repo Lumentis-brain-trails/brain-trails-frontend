@@ -1,8 +1,8 @@
 # Frontend environments
 
-| Environment         | URL                                                | API                                                                                                  | Deploy                                             |
-| ------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| local               | http://localhost:3000 (`npm run dev`)              | compose API on :8000                                                                                 | -                                                  |
+| Environment         | URL                                                | API                                                         | Deploy                                             |
+| ------------------- | -------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| local               | http://localhost:3000 (`npm run dev`)              | compose API on :8000                                        | -                                                  |
 | production (Vercel) | https://brain-trails-frontend-lumentis1.vercel.app | https://api-dev.63.182.39.169.sslip.io (AWS k3s, ns bt-dev) | manual: `vercel deploy --prod --yes` from the repo |
 
 Vercel account: email `alessio@lumentis.ca` (team `lumentis1`), project

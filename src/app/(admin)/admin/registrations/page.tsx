@@ -68,7 +68,7 @@ export default function AdminRegistrationsPage() {
       action,
     }: {
       userId: string;
-      action: "approve" | "reject";
+      action: "approve" | "reject" | "reissue-verification";
     }) => api.post<ApprovalResponse>(`admin/registrations/${userId}/${action}`),
     onSuccess: (data) => {
       if (data.verification_url) {
@@ -161,6 +161,25 @@ export default function AdminRegistrationsPage() {
                     </Button>
                   </div>
                 )}
+                {user.status === "approved" &&
+                  !user.email_verified_at &&
+                  !links[user.id] && (
+                    <div className="mt-3">
+                      <Button
+                        variant="ghost"
+                        className="px-3 py-1 text-xs"
+                        onClick={() =>
+                          decide.mutate({
+                            userId: user.id,
+                            action: "reissue-verification",
+                          })
+                        }
+                        disabled={decide.isPending}
+                      >
+                        Generate a fresh verification link
+                      </Button>
+                    </div>
+                  )}
                 {links[user.id] && <VerificationLink url={links[user.id]} />}
               </Card>
             ))}

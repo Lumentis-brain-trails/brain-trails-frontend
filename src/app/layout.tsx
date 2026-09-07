@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Brain Trails",
+  title: { default: "Brain Trails", template: "%s | Brain Trails" },
   description: "EEG trails through embedding space - a LuMentis prototype",
 };
 

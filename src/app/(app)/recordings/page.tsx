@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import type { Recording } from "@/lib/types";
@@ -16,7 +15,6 @@ function formatDuration(seconds: number | null): string {
 }
 
 export default function RecordingsPage() {
-  const router = useRouter();
   const [showUpload, setShowUpload] = useState(false);
   const recordings = useQuery({
     queryKey: ["recordings"],
@@ -32,19 +30,8 @@ export default function RecordingsPage() {
   return (
     <main className="mx-auto max-w-4xl p-6">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Brain Trails</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowUpload(true)}>Upload recording</Button>
-          <Button
-            variant="ghost"
-            onClick={async () => {
-              await api.logout();
-              router.push("/login");
-            }}
-          >
-            Sign out
-          </Button>
-        </div>
+        <h1 className="text-2xl font-bold">Your recordings</h1>
+        <Button onClick={() => setShowUpload(true)}>Upload recording</Button>
       </header>
 
       {recordings.isLoading && <Card>Loading...</Card>}

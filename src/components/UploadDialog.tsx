@@ -2,14 +2,48 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+import { api } from "@/lib/api";
 import { TASK_LABELS } from "@/lib/types";
 import { Button, ErrorBanner, Field, Input } from "@/components/ui";
+
+interface Presign {
+  key: string;
+  url: string;
+  fields: Record<string, string>;
+  max_mb: number;
+}
+
+function uploadToStorage(
+  presign: Presign,
+  file: File,
+  onProgress: (pct: number) => void
+) {
+  return new Promise<void>((resolve, reject) => {
+    const form = new FormData();
+    Object.entries(presign.fields).forEach(([k, v]) => form.append(k, v));
+    form.append("file", file);
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable)
+        onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () =>
+      xhr.status < 300
+        ? resolve()
+        : reject(new Error(`storage upload failed (${xhr.status})`));
+    xhr.onerror = () =>
+      reject(new Error("network error while uploading to storage"));
+    xhr.open("POST", presign.url);
+    xhr.send(form);
+  });
+}
 
 export function UploadDialog({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [taskLabel, setTaskLabel] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const upload = useMutation({
@@ -17,26 +51,27 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
       const file = fileRef.current?.files?.[0];
       if (!file) throw new Error("Choose a .csv or .edf file first.");
       if (!title.trim()) throw new Error("Give the recording a title.");
-      if (file.size > 50 * 1024 * 1024) throw new Error("File exceeds 50 MB.");
-      const form = new FormData();
-      form.append("file", file);
-      form.append("title", title.trim());
-      if (taskLabel) form.append("task_label", taskLabel);
-      const response = await fetch("/api/backend/recordings", {
-        method: "POST",
-        body: form,
+      const presign = await api.post<Presign>("recordings/uploads", {
+        filename: file.name,
       });
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.error?.message ?? response.statusText);
-      }
-      return response.json();
+      if (file.size > presign.max_mb * 1024 * 1024)
+        throw new Error(`File exceeds ${presign.max_mb} MB.`);
+      setProgress(0);
+      await uploadToStorage(presign, file, setProgress);
+      return api.post("recordings/complete", {
+        key: presign.key,
+        title: title.trim(),
+        task_label: taskLabel || null,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recordings"] });
       onClose();
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => {
+      setProgress(null);
+      setError(e.message);
+    },
   });
 
   return (
@@ -45,7 +80,10 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
         <h2 className="mb-4 text-lg font-semibold">Upload a recording</h2>
         <div className="space-y-4">
           {error && <ErrorBanner message={error} />}
-          <Field label="EEG file" hint="Mind Monitor .csv or .edf, up to 50 MB">
+          <Field
+            label="EEG file"
+            hint="Mind Monitor .csv or .edf - uploads go straight to storage, up to 50 MB"
+          >
             <Input ref={fileRef} type="file" accept=".csv,.edf,.bdf" />
           </Field>
           <Field label="Title">
@@ -69,12 +107,31 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
               ))}
             </select>
           </Field>
+          {progress !== null && (
+            <div>
+              <div className="h-2 w-full overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700">
+                <div
+                  className="h-full bg-indigo-600 transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-neutral-500">
+                {progress < 100
+                  ? `Uploading... ${progress}%`
+                  : "Registering the recording..."}
+              </p>
+            </div>
+          )}
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={onClose}>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              disabled={upload.isPending}
+            >
               Cancel
             </Button>
             <Button onClick={() => upload.mutate()} disabled={upload.isPending}>
-              {upload.isPending ? "Uploading..." : "Upload"}
+              {upload.isPending ? "Working..." : "Upload"}
             </Button>
           </div>
         </div>
