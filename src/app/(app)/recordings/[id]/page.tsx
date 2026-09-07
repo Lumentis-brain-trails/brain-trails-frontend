@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use } from "react";
 import { api } from "@/lib/api";
 import type { Analysis, Recording } from "@/lib/types";
@@ -9,6 +10,7 @@ import { SignalPreview } from "@/components/SignalPreview";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TrailPlot } from "@/components/TrailPlot";
 import { Button, Card, ErrorBanner } from "@/components/ui";
+import { useToast } from "@/components/Toast";
 
 export default function RecordingDetailPage({
   params,
@@ -17,6 +19,8 @@ export default function RecordingDetailPage({
 }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const toast = useToast();
 
   const recording = useQuery({
     queryKey: ["recording", id],
@@ -102,6 +106,23 @@ export default function RecordingDetailPage({
               <p className="text-sm text-neutral-400">Loading analysis...</p>
             )}
             {analysis.data && <TrailPlot analysis={analysis.data} />}
+            {analysis.data && (
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                {[
+                  `cleaner: ${analysis.data.cleaner_name} v${analysis.data.cleaner_version}`,
+                  `embedder: ${analysis.data.embedder_name}`,
+                  `window ${analysis.data.window_s}s / step ${analysis.data.step_s}s`,
+                  `smoothing ${analysis.data.smooth_s}s`,
+                ].map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full bg-neutral-100 px-2 py-1 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            )}
           </Card>
           <Card className="mb-6">
             <h2 className="mb-2 font-semibold">Signal</h2>

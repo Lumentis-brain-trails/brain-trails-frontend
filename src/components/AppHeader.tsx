@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { UserInfo } from "@/lib/types";
 import { Button, cn } from "@/components/ui";
+import { Logo } from "@/components/Logo";
 
 export function AppHeader() {
   const router = useRouter();
@@ -35,11 +36,16 @@ export function AppHeader() {
     <header className="border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
         <div className="flex items-center gap-4">
-          <Link href="/recordings" className="text-lg font-bold tracking-tight">
+          <Link
+            href="/recordings"
+            className="flex items-center gap-2 text-lg font-bold tracking-tight"
+          >
+            <Logo size={26} />
             Brain Trails
           </Link>
           <nav className="flex gap-1">
             {link("/recordings", "Recordings")}
+            {link("/account", "Account")}
             {me.data?.role === "admin" && link("/admin/registrations", "Admin")}
           </nav>
         </div>

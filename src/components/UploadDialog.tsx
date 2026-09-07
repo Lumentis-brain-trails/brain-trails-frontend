@@ -1,10 +1,12 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { TASK_LABELS } from "@/lib/types";
 import { Button, ErrorBanner, Field, Input } from "@/components/ui";
+import { useToast } from "@/components/Toast";
 
 interface Presign {
   key: string;
@@ -40,9 +42,12 @@ function uploadToStorage(
 
 export function UploadDialog({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [taskLabel, setTaskLabel] = useState("");
+  const [cleaner, setCleaner] = useState("classic");
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,15 +63,18 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
         throw new Error(`File exceeds ${presign.max_mb} MB.`);
       setProgress(0);
       await uploadToStorage(presign, file, setProgress);
-      return api.post("recordings/complete", {
+      return api.post<{ recording_id: string }>("recordings/complete", {
         key: presign.key,
         title: title.trim(),
         task_label: taskLabel || null,
+        cleaner,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["recordings"] });
+      toast("success", "Upload complete - processing started.");
       onClose();
+      router.push(`/recordings/${data.recording_id}`);
     },
     onError: (e: Error) => {
       setProgress(null);
@@ -92,6 +100,18 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Morning meditation"
             />
+          </Field>
+          <Field label="Cleaning">
+            <select
+              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              value={cleaner}
+              onChange={(e) => setCleaner(e.target.value)}
+            >
+              <option value="classic">
+                classic (filters + artifact repair)
+              </option>
+              <option value="identity">none (raw standardized signal)</option>
+            </select>
           </Field>
           <Field label="Task (optional)">
             <select

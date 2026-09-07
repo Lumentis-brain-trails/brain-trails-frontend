@@ -34,7 +34,42 @@ export default function RecordingsPage() {
         <Button onClick={() => setShowUpload(true)}>Upload recording</Button>
       </header>
 
-      {recordings.isLoading && <Card>Loading...</Card>}
+      {recordings.data && recordings.data.length > 0 && (
+        <div className="mb-6 grid grid-cols-3 gap-4">
+          {[
+            ["Recordings", String(recordings.data.length)],
+            [
+              "Total signal",
+              formatDuration(
+                recordings.data.reduce((a, r) => a + (r.duration_s ?? 0), 0)
+              ),
+            ],
+            [
+              "Last upload",
+              new Date(
+                Math.max(...recordings.data.map((r) => +new Date(r.created_at)))
+              ).toLocaleDateString(),
+            ],
+          ].map(([label, value]) => (
+            <Card key={label} className="py-4">
+              <p className="text-xs uppercase tracking-wide text-neutral-400">
+                {label}
+              </p>
+              <p className="mt-1 text-2xl font-semibold">{value}</p>
+            </Card>
+          ))}
+        </div>
+      )}
+      {recordings.isLoading && (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-16 animate-pulse rounded-xl bg-neutral-200 dark:bg-neutral-800"
+            />
+          ))}
+        </div>
+      )}
       {recordings.isError && <Card>Could not load recordings.</Card>}
       {recordings.data?.length === 0 && (
         <Card className="text-center">
