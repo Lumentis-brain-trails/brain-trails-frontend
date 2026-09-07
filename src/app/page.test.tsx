@@ -5,12 +5,17 @@ import Home from "./page";
 test("landing shows the headline and entry links", () => {
   render(<Home />);
   expect(
-    screen.getByRole("heading", { name: /watch where your brain travelled/i }),
+    screen.getByRole("heading", { name: /watch where your brain travelled/i })
   ).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
-  expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute(
+  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
     "href",
-    "/register",
+    "/login"
   );
-  expect(screen.getByRole("link", { name: "privacy" })).toHaveAttribute("href", "/privacy");
+  expect(
+    screen.getByRole("link", { name: "Create an account" })
+  ).toHaveAttribute("href", "/register");
+  expect(screen.getByRole("link", { name: "privacy" })).toHaveAttribute(
+    "href",
+    "/privacy"
+  );
 });

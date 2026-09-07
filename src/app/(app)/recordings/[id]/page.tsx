@@ -31,10 +31,15 @@ export default function RecordingDetailPage({
     },
   });
 
+  const isLive =
+    recording.data?.source === "stream" &&
+    recording.data?.status === "processing";
   const analysis = useQuery({
     queryKey: ["analysis", id, recording.data?.status],
     queryFn: () => api.get<Analysis>(`recordings/${id}/analysis`),
-    enabled: recording.data?.status === "done",
+    enabled: recording.data?.status === "done" || isLive,
+    refetchInterval: isLive ? 1500 : false,
+    retry: isLive,
   });
 
   const reprocess = useMutation({
@@ -61,16 +66,43 @@ export default function RecordingDetailPage({
             {rec ? new Date(rec.created_at).toLocaleString() : ""}
           </p>
         </div>
-        {rec && <StatusBadge status={rec.status} />}
+        <div className="flex items-center gap-2">
+          {isLive && (
+            <span className="flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-950 dark:text-red-300">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+              LIVE
+            </span>
+          )}
+          {rec && <StatusBadge status={rec.status} />}
+        </div>
       </header>
 
-      {rec && (rec.status === "uploaded" || rec.status === "processing") && (
-        <Card className="mb-6 text-sm text-neutral-500">
-          Processing your recording
-          {rec.job ? ` (attempt ${rec.job.attempts || 1})` : ""}... this page
-          updates automatically.
+      {isLive && (
+        <Card className="mb-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-semibold">Trail - growing live</h2>
+            <span className="text-xs text-neutral-500">
+              adaptive PCA: the whole trail re-projects as the session evolves
+            </span>
+          </div>
+          {analysis.data && analysis.data.points.length >= 2 ? (
+            <TrailPlot analysis={analysis.data} />
+          ) : (
+            <p className="text-sm text-neutral-400">
+              Waiting for the first windows (about 4 seconds of signal)...
+            </p>
+          )}
         </Card>
       )}
+      {rec &&
+        !isLive &&
+        (rec.status === "uploaded" || rec.status === "processing") && (
+          <Card className="mb-6 text-sm text-neutral-500">
+            Processing your recording
+            {rec.job ? ` (attempt ${rec.job.attempts || 1})` : ""}... this page
+            updates automatically.
+          </Card>
+        )}
 
       {rec?.status === "failed" && (
         <Card className="mb-6 space-y-3">

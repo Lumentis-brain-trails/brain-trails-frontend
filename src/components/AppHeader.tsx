@@ -46,7 +46,7 @@ export function AppHeader() {
           <nav className="flex gap-1">
             {link("/recordings", "Recordings")}
             {link("/account", "Account")}
-            {me.data?.role === "admin" && link("/admin/registrations", "Admin")}
+            {me.data?.role === "admin" && link("/admin", "Admin")}
           </nav>
         </div>
         <div className="flex items-center gap-3">
