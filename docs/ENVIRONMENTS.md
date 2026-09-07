@@ -6,8 +6,6 @@
 | production (Vercel) | https://brain-trails-frontend-lumentis1.vercel.app | https://api-dev.63.182.39.169.sslip.io (AWS k3s, ns bt-dev) | manual: `vercel deploy --prod --yes` from the repo |
 
 Vercel account: email `alessio@lumentis.ca` (team `lumentis1`), project
-`brain-trails-frontend` (prj_85DjtZDiPlzDqbKbKQACBjtkEvUC). No GitHub integration
-yet (needs the org owner to install the Vercel GitHub app) - deploys are CLI-only
-for now. Deployment Protection (Vercel SSO) was disabled to make the site public.
+`brain-trails-frontend` (prj_85DjtZDiPlzDqbKbKQACBjtkEvUC). GitHub integration active: pushes to `dev`/`beta` create stable branch previews wired to their own API; pushes to `main` deploy production. The repo is public (Vercel Hobby requires it for org repos). Deployment Protection (Vercel SSO) was disabled to make the site public.
 Production env vars: `COOKIE_SECURE=true`, `NEXT_PUBLIC_APP_ENV=prod`; `API_URL`
 intentionally unset until a public API exists.
