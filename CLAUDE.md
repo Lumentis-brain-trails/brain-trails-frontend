@@ -53,7 +53,8 @@ npm test                                # vitest with coverage thresholds (85% o
 
 ## Working method (backend ADR 0013)
 
-Branch from `dev` -> PR to `dev` -> `ci` + `pr-review` green -> squash merge ->
+Branch from `dev` -> PR to `dev` -> `ci` green (+ `pr-review` when Alessio adds the
+`review` label or dispatches it) -> squash merge ->
 `promote` workflow to `beta`, then `main` (with `vX.Y.Z`). Never push to
 `dev`/`beta`/`main` directly; rulesets enforce PRs on this repo.
 
