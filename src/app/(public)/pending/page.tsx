@@ -28,8 +28,8 @@ export default function PendingPage() {
         </span>
         <h1 className="type-title">Registration received.</h1>
         <p className="mt-4 text-pretty text-ink-2">
-          An administrator will review it. Once approved you receive an
-          email-verification link; after verifying, you can sign in.
+          An administrator will review it. Once approved you can sign in with
+          the email and password you chose.
         </p>
         <Link
           href="/login"
