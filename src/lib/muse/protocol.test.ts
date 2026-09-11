@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
+  ACCELEROMETER_SCALE,
+  decodeImuPacket,
+  decodePpgPacket,
   decodeEegPacket,
   decodeResponse,
   decodeTelemetry,
@@ -94,5 +97,32 @@ describe("muse protocol", () => {
       voltageMv: 2200,
       temperatureC: 31,
     });
+  });
+
+  test("decodeImuPacket reads three scaled xyz readings", () => {
+    const buf = new DataView(new ArrayBuffer(20));
+    buf.setUint16(0, 9);
+    buf.setInt16(2, 16384); // x0 = 1 g at the accelerometer scale
+    buf.setInt16(4, -16384);
+    buf.setInt16(6, 0);
+    buf.setInt16(14, 8192); // x2 = 0.5 g
+    const p = decodeImuPacket(buf, ACCELEROMETER_SCALE);
+    expect(p.counter).toBe(9);
+    expect(p.samples).toHaveLength(9);
+    expect(p.samples[0]).toBeCloseTo(1, 2);
+    expect(p.samples[1]).toBeCloseTo(-1, 2);
+    expect(p.samples[6]).toBeCloseTo(0.5, 2);
+  });
+
+  test("decodePpgPacket reads six unsigned 24-bit values", () => {
+    const bytes = new Uint8Array(20);
+    bytes[0] = 0;
+    bytes[1] = 3;
+    bytes.set([0x01, 0x02, 0x03], 2); // 66051
+    bytes.set([0xff, 0xff, 0xff], 17); // 16777215
+    const p = decodePpgPacket(new DataView(bytes.buffer));
+    expect(p.counter).toBe(3);
+    expect(p.samples[0]).toBe(66051);
+    expect(p.samples[5]).toBe(16777215);
   });
 });
