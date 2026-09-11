@@ -6,8 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { UserInfo } from "@/lib/types";
 import { Button, cn } from "@/components/ui";
-import { Logo } from "@/components/Logo";
+import { Wordmark } from "@/components/Logo";
 
+/**
+ * Translucent app chrome. Content scrolls underneath; the active section is a
+ * filled pill so "where am I" is answered without reading.
+ */
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
@@ -18,46 +22,44 @@ export function AppHeader() {
     retry: false,
   });
 
-  const link = (href: string, label: string) => (
-    <Link
-      href={href}
-      className={cn(
-        "rounded-md px-3 py-1.5 text-sm transition-colors",
-        pathname.startsWith(href)
-          ? "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-          : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
-      )}
-    >
-      {label}
-    </Link>
-  );
+  const link = (href: string, label: string) => {
+    const active = pathname.startsWith(href);
+    return (
+      <Link
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "pressable rounded-full px-3.5 py-1.5 text-[14px] font-medium",
+          active
+            ? "bg-ink text-canvas"
+            : "text-ink-2 hover:bg-surface-2 hover:text-ink"
+        )}
+      >
+        {label}
+      </Link>
+    );
+  };
 
   return (
-    <header className="border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/recordings"
-            className="flex items-center gap-2 text-lg font-bold tracking-tight"
-          >
-            <Logo size={26} />
-            Brain Trails
-          </Link>
-          <nav className="flex gap-1">
-            {link("/recordings", "Recordings")}
-            {link("/account", "Account")}
-            {me.data?.role === "admin" && link("/admin", "Admin")}
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
+    <header className="material-glass sticky top-0 z-40 border-b border-hairline">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+        <Link href="/recordings" className="text-ink">
+          <Wordmark size={16} />
+        </Link>
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 gap-1 sm:flex">
+          {link("/recordings", "Recordings")}
+          {link("/account", "Account")}
+          {me.data?.role === "admin" && link("/admin", "Admin")}
+        </nav>
+        <div className="flex items-center gap-2">
           {me.data && (
-            <span className="hidden text-xs text-neutral-400 sm:block">
+            <span className="type-caption hidden text-ink-3 md:block">
               {me.data.email}
             </span>
           )}
           <Button
             variant="ghost"
-            className="px-3 py-1.5 text-sm"
+            size="sm"
             onClick={async () => {
               await api.logout();
               router.push("/login");
@@ -67,6 +69,11 @@ export function AppHeader() {
           </Button>
         </div>
       </div>
+      <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
+        {link("/recordings", "Recordings")}
+        {link("/account", "Account")}
+        {me.data?.role === "admin" && link("/admin", "Admin")}
+      </nav>
     </header>
   );
 }
