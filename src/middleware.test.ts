@@ -20,6 +20,10 @@ describe("middleware", () => {
   });
 
   test("guards only the authenticated areas", () => {
-    expect(config.matcher).toEqual(["/recordings/:path*", "/admin/:path*"]);
+    expect(config.matcher).toEqual([
+      "/recordings/:path*",
+      "/record",
+      "/admin/:path*",
+    ]);
   });
 });
