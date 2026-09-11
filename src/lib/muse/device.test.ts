@@ -5,7 +5,13 @@ import {
   SimulatedMuse,
   type EegEvent,
 } from "./device";
-import { EEG_CHANNELS, EEG_CHARACTERISTICS, MUSE_SERVICE } from "./protocol";
+import {
+  ACCELEROMETER_CHARACTERISTIC,
+  EEG_CHANNELS,
+  EEG_CHARACTERISTICS,
+  MUSE_SERVICE,
+  PPG_CHARACTERISTICS,
+} from "./protocol";
 
 describe("isWebBluetoothSupported", () => {
   test("false without navigator.bluetooth, true with requestDevice", () => {
@@ -42,6 +48,24 @@ describe("SimulatedMuse", () => {
     expect(
       Math.max(...Array.from(events[0].packet.samples).map(Math.abs))
     ).toBeGreaterThan(5);
+  });
+
+  test("emits motion at 52 Hz and PPG at 64 Hz alongside the EEG", async () => {
+    const sim = new SimulatedMuse({ autoplay: false });
+    const motion = vi.fn();
+    const ppg = vi.fn();
+    sim.on("motion", motion);
+    sim.on("ppg", ppg);
+    await sim.connect();
+    for (let i = 0; i < 64; i++) sim.tick(i * 46.875); // 3 s of EEG
+    // 3 s * 52 Hz / 3 samples = 52 packets per kind; 3 s * 64 / 6 = 32 per PPG channel
+    expect(motion.mock.calls.filter((c) => c[0].kind === "acc")).toHaveLength(
+      52
+    );
+    expect(
+      ppg.mock.calls.filter((c) => c[0].channel === "infrared").length
+    ).toBeGreaterThanOrEqual(31);
+    expect(motion.mock.calls[0][0].packet.samples[2]).toBeCloseTo(1, 1); // gravity on z
   });
 
   test("telemetry every 21 packets, disconnect notifies", async () => {
@@ -132,7 +156,13 @@ describe("BluetoothMuse", () => {
         true
       );
     }
-    expect(fake.written).toEqual(["h", "p21", "s", "d"]);
+    expect(fake.written).toEqual(["h", "p50", "s", "d"]);
+    expect(
+      fake.characteristics.get(ACCELEROMETER_CHARACTERISTIC)?.notifying
+    ).toBe(true);
+    expect(
+      fake.characteristics.get(PPG_CHARACTERISTICS.infrared)?.notifying
+    ).toBe(true);
   });
 
   test("decodes notifications into channel events and halts on disconnect", async () => {

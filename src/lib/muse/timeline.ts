@@ -26,6 +26,8 @@ export interface TimelineStats {
   lastSampleIndex: number;
   /** Host milliseconds per sample from the fit, or null before two anchors. */
   msPerSample: number | null;
+  /** Fitted host time (ms) of sample index 0; with msPerSample maps host time to samples. */
+  hostMsAtIndex0: number | null;
   /** Fitted rate in Hz (1000 / msPerSample). */
   effectiveRateHz: number | null;
   /** Deviation of the fitted rate from nominal, in parts per million. */
@@ -78,6 +80,7 @@ export class PacketTimeline {
       lostPackets: this.lostPackets,
       lastSampleIndex: (this.unwrapped ?? 0) * SAMPLES_PER_PACKET,
       msPerSample: null,
+      hostMsAtIndex0: null,
       effectiveRateHz: null,
       driftPpm: null,
       jitterRmsMs: null,
@@ -110,6 +113,7 @@ export class PacketTimeline {
     return {
       ...base,
       msPerSample: slope,
+      hostMsAtIndex0: intercept,
       effectiveRateHz: 1000 / slope,
       driftPpm: ((slope - nominalMs) / nominalMs) * 1e6,
       jitterRmsMs: Math.sqrt(ss / n),

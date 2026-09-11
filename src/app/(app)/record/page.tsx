@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { ContactLights } from "@/components/ContactLights";
+import { HeadbandDiagram } from "@/components/HeadbandDiagram";
 import { LiveSignal } from "@/components/LiveSignal";
 import {
   Button,
@@ -64,6 +65,7 @@ export default function RecordPage() {
     setStopped({
       capture: result.capture,
       timeline: result.timeline,
+      extras: result.extras,
       deviceName: muse.deviceName ?? "Muse",
       title: title.trim() || `Session ${new Date().toLocaleString()}`,
       taskLabel,
@@ -107,7 +109,12 @@ export default function RecordPage() {
             >
               Contact quality
             </SectionTitle>
-            <ContactLights quality={muse.quality} />
+            <div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)] md:items-center">
+              <Card className="flex items-center justify-center p-4">
+                <HeadbandDiagram quality={muse.quality} />
+              </Card>
+              <ContactLights quality={muse.quality} />
+            </div>
           </section>
           <section>
             <SectionTitle>Signal</SectionTitle>
@@ -174,6 +181,24 @@ export default function RecordPage() {
                 value={
                   connected
                     ? `${muse.packetRate.toFixed(0)} / s · ${muse.timeline?.lostPackets ?? 0} lost`
+                    : "—"
+                }
+                mono
+              />
+              <KeyValue
+                label="Motion"
+                value={
+                  muse.sensors.accG !== null
+                    ? `${muse.sensors.accG.toFixed(2)} g · ${muse.sensors.gyroDps?.toFixed(0) ?? "—"} °/s`
+                    : "—"
+                }
+                mono
+              />
+              <KeyValue
+                label="PPG (infrared)"
+                value={
+                  muse.sensors.ppgInfrared !== null
+                    ? muse.sensors.ppgInfrared.toFixed(0)
                     : "—"
                 }
                 mono

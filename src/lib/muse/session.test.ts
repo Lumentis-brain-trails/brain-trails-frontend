@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { EEG_CHANNELS } from "./protocol";
-import { buildSessionCsv, SessionRecorder } from "./session";
+import {
+  buildExtrasCsv,
+  buildSessionCsv,
+  ExtrasRecorder,
+  SessionRecorder,
+} from "./session";
 
 const packet = (v: number) => Float32Array.from({ length: 12 }, () => v);
 
@@ -60,6 +65,7 @@ describe("buildSessionCsv", () => {
         lostPackets: 0,
         lastSampleIndex: 132,
         msPerSample: 3.90625,
+        hostMsAtIndex0: 0,
         effectiveRateHz: 256,
         driftPpm: 0,
         jitterRmsMs: 1.234,
@@ -85,5 +91,47 @@ describe("buildSessionCsv", () => {
       timeline: null,
     });
     expect(csv.split("\n")[0]).toContain("jitter_rms_ms=na");
+  });
+});
+
+describe("ExtrasRecorder + buildExtrasCsv", () => {
+  test("keeps per-stream counters and writes samples on the EEG clock", () => {
+    const eeg = new SessionRecorder();
+    for (const ch of EEG_CHANNELS) eeg.feed(ch, 100, packet(0));
+    const capture = eeg.stop(); // firstSampleIndex = 1200
+    const x = new ExtrasRecorder();
+    x.feed("acc", 65535, Float32Array.from([0, 0, 1, 0, 0, 1, 0, 0, 1]), 1000);
+    x.feed("acc", 0, Float32Array.from([0, 0, 1, 0, 0, 1, 0, 0, 1]), 1057.7);
+    x.feed("ppg_infrared", 7, Float32Array.from([1, 2, 3, 4, 5, 6]), 1000);
+    expect(x.counts()).toEqual({ acc: 2, ppg_infrared: 1 });
+    // EEG fit: host 1000 ms is sample index 1200 exactly, 256 Hz.
+    const csv = buildExtrasCsv(x.stop(), capture, {
+      packets: 1,
+      lostPackets: 0,
+      lastSampleIndex: 1200,
+      msPerSample: 1000 / 256,
+      hostMsAtIndex0: 1000 - 1200 * (1000 / 256),
+      effectiveRateHz: 256,
+      driftPpm: 0,
+      jitterRmsMs: 0,
+    });
+    const lines = csv.trim().split("\n");
+    expect(lines[1]).toBe("stream,sample_index,t_session_s,v0,v1,v2");
+    // acc packet 65535: three samples, the last one at t=0, earlier ones 1/52 s apart
+    expect(lines[2]).toBe(
+      `acc,${65535 * 3},${(-2 / 52).toFixed(6)},0.0000,0.0000,1.0000`
+    );
+    expect(lines[4]).toBe(`acc,${65535 * 3 + 2},0.000000,0.0000,0.0000,1.0000`);
+    // wrapped counter continues at 65536
+    expect(lines[5].startsWith(`acc,${65536 * 3},`)).toBe(true);
+    // ppg: one value per row, last sample at t=0
+    expect(lines[13]).toBe("ppg_infrared,47,0.000000,6,,");
+  });
+
+  test("writes 'na' times when the EEG clock fit is missing", () => {
+    const x = new ExtrasRecorder();
+    x.feed("gyro", 1, new Float32Array(9), 5);
+    const csv = buildExtrasCsv(x.stop(), new SessionRecorder().stop(), null);
+    expect(csv.split("\n")[2]).toMatch(/^gyro,3,na,/);
   });
 });

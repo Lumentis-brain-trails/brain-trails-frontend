@@ -8,9 +8,24 @@
  * headset. The page never depends on which one it got.
  */
 import {
+  ACCELEROMETER_CHARACTERISTIC,
+  ACCELEROMETER_SCALE,
   CONTROL_CHARACTERISTIC,
   decodeEegPacket,
+  decodeImuPacket,
+  decodePpgPacket,
   decodeTelemetry,
+  GYROSCOPE_CHARACTERISTIC,
+  GYROSCOPE_SCALE,
+  IMU_RATE_HZ,
+  IMU_SAMPLES_PER_PACKET,
+  PPG_CHANNELS,
+  PPG_CHARACTERISTICS,
+  PPG_RATE_HZ,
+  PPG_SAMPLES_PER_PACKET,
+  type ImuPacket,
+  type PpgChannel,
+  type PpgPacket,
   EEG_CHANNELS,
   EEG_CHARACTERISTICS,
   encodeCommand,
@@ -33,8 +48,24 @@ export interface EegEvent {
   hostMs: number;
 }
 
+/** Accelerometer or gyroscope notification, stamped on arrival. */
+export interface MotionEvent {
+  kind: "acc" | "gyro";
+  packet: ImuPacket;
+  hostMs: number;
+}
+
+/** PPG notification for one optical channel, stamped on arrival. */
+export interface PpgEvent {
+  channel: PpgChannel;
+  packet: PpgPacket;
+  hostMs: number;
+}
+
 export interface MuseListeners {
   eeg: (event: EegEvent) => void;
+  motion: (event: MotionEvent) => void;
+  ppg: (event: PpgEvent) => void;
   telemetry: (t: Telemetry) => void;
   disconnected: () => void;
 }
@@ -68,6 +99,8 @@ export function isWebBluetoothSupported(
 class Emitter {
   private listeners: { [K in keyof MuseListeners]: Set<MuseListeners[K]> } = {
     eeg: new Set(),
+    motion: new Set(),
+    ppg: new Set(),
     telemetry: new Set(),
     disconnected: new Set(),
   };
@@ -135,6 +168,40 @@ export class BluetoothMuse implements MuseDevice {
       await characteristic.startNotifications();
       this.subscriptions.push(characteristic);
     }
+    // Motion and PPG: kept for later analyses, not used by the pipeline yet.
+    for (const [uuid, kind, scale] of [
+      [ACCELEROMETER_CHARACTERISTIC, "acc", ACCELEROMETER_SCALE],
+      [GYROSCOPE_CHARACTERISTIC, "gyro", GYROSCOPE_SCALE],
+    ] as const) {
+      const characteristic = await service.getCharacteristic(uuid);
+      characteristic.addEventListener("characteristicvaluechanged", (ev) => {
+        const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
+        if (value)
+          this.emitter.emit("motion", {
+            kind,
+            packet: decodeImuPacket(value, scale),
+            hostMs: performance.now(),
+          });
+      });
+      await characteristic.startNotifications();
+      this.subscriptions.push(characteristic);
+    }
+    for (const channel of PPG_CHANNELS) {
+      const characteristic = await service.getCharacteristic(
+        PPG_CHARACTERISTICS[channel]
+      );
+      characteristic.addEventListener("characteristicvaluechanged", (ev) => {
+        const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
+        if (value)
+          this.emitter.emit("ppg", {
+            channel,
+            packet: decodePpgPacket(value),
+            hostMs: performance.now(),
+          });
+      });
+      await characteristic.startNotifications();
+      this.subscriptions.push(characteristic);
+    }
     const telemetry = await service.getCharacteristic(TELEMETRY_CHARACTERISTIC);
     telemetry.addEventListener("characteristicvaluechanged", (ev) => {
       const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
@@ -188,6 +255,10 @@ export class SimulatedMuse implements MuseDevice {
   private counter: number;
   private seed = 12345;
   private packetsSinceTelemetry = 0;
+  private imuCounter = 0;
+  private ppgCounter = 0;
+  private imuDueMs = 0;
+  private ppgDueMs = 0;
   readonly name = "Muse-SIM";
 
   constructor(private readonly options: SimulatedMuseOptions = {}) {
@@ -237,6 +308,7 @@ export class SimulatedMuse implements MuseDevice {
         hostMs,
       });
     }
+    this.emitExtras(counter, hostMs);
     if (++this.packetsSinceTelemetry >= 21) {
       this.packetsSinceTelemetry = 0;
       this.emitter.emit("telemetry", {
@@ -245,6 +317,62 @@ export class SimulatedMuse implements MuseDevice {
         voltageMv: 3900,
         temperatureC: 30,
       });
+    }
+  }
+
+  /** Motion at 52 Hz and PPG at 64 Hz, paced against the 256 Hz EEG ticks. */
+  private emitExtras(eegCounter: number, hostMs: number): void {
+    const tickMs = (SAMPLES_PER_PACKET / SAMPLE_RATE_HZ) * 1000;
+    const tSec = (eegCounter * SAMPLES_PER_PACKET) / SAMPLE_RATE_HZ;
+    this.imuDueMs += tickMs;
+    const imuPeriod = (IMU_SAMPLES_PER_PACKET / IMU_RATE_HZ) * 1000;
+    while (this.imuDueMs >= imuPeriod) {
+      this.imuDueMs -= imuPeriod;
+      const acc = new Float32Array(9);
+      const gyro = new Float32Array(9);
+      for (let i = 0; i < 3; i++) {
+        acc[i * 3] = 0.02 * Math.sin(tSec);
+        acc[i * 3 + 1] = 0.01;
+        acc[i * 3 + 2] = 1 + 0.01 * (this.random() - 0.5); // gravity on z
+        gyro[i * 3] = 2 * Math.sin(0.5 * tSec);
+        gyro[i * 3 + 1] = 0.5 * (this.random() - 0.5);
+        gyro[i * 3 + 2] = 0;
+      }
+      const counter = this.imuCounter;
+      this.imuCounter = (this.imuCounter + 1) & 0xffff;
+      this.emitter.emit("motion", {
+        kind: "acc",
+        packet: { counter, samples: acc },
+        hostMs,
+      });
+      this.emitter.emit("motion", {
+        kind: "gyro",
+        packet: { counter, samples: gyro },
+        hostMs,
+      });
+    }
+    this.ppgDueMs += tickMs;
+    const ppgPeriod = (PPG_SAMPLES_PER_PACKET / PPG_RATE_HZ) * 1000;
+    while (this.ppgDueMs >= ppgPeriod) {
+      this.ppgDueMs -= ppgPeriod;
+      const counter = this.ppgCounter;
+      this.ppgCounter = (this.ppgCounter + 1) & 0xffff;
+      for (const channel of PPG_CHANNELS) {
+        const samples = new Float32Array(PPG_SAMPLES_PER_PACKET);
+        for (let i = 0; i < PPG_SAMPLES_PER_PACKET; i++) {
+          const t = tSec + i / PPG_RATE_HZ;
+          const pulse = Math.max(0, Math.sin(2 * Math.PI * (70 / 60) * t)); // ~70 bpm
+          samples[i] =
+            channel === "ambient"
+              ? 5000
+              : 200000 + 8000 * pulse + 500 * (this.random() - 0.5);
+        }
+        this.emitter.emit("ppg", {
+          channel,
+          packet: { counter, samples },
+          hostMs,
+        });
+      }
     }
   }
 

@@ -13,7 +13,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MuseDevice } from "./device";
 import { EEG_CHANNELS, SAMPLE_RATE_HZ, type EegChannel } from "./protocol";
 import { assessChannel, type ChannelQuality } from "./quality";
-import { SessionRecorder, type SessionCapture } from "./session";
+import {
+  ExtrasRecorder,
+  SessionRecorder,
+  type ExtraStream,
+  type SessionCapture,
+} from "./session";
 import { PacketTimeline, type TimelineStats } from "./timeline";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
@@ -30,7 +35,28 @@ export interface MuseState {
   isRecording: boolean;
   /** Seconds captured so far on the device clock (refreshed once a second). */
   recordingSeconds: number;
+  /** Latest readings of the other sensors, refreshed once a second. */
+  sensors: SensorReadings;
 }
+
+export interface SensorReadings {
+  /** Acceleration magnitude in g (about 1 at rest). */
+  accG: number | null;
+  /** Angular speed magnitude in degrees per second. */
+  gyroDps: number | null;
+  /** Last infrared PPG value (raw ADC units). */
+  ppgInfrared: number | null;
+  motionPackets: number;
+  ppgPackets: number;
+}
+
+const noSensors = (): SensorReadings => ({
+  accG: null,
+  gyroDps: null,
+  ppgInfrared: null,
+  motionPackets: 0,
+  ppgPackets: 0,
+});
 
 const BUFFER_SECONDS = 12;
 const BUFFER_SAMPLES = BUFFER_SECONDS * SAMPLE_RATE_HZ;
@@ -89,8 +115,11 @@ export function useMuse(createDevice: () => MuseDevice) {
     packetRate: 0,
     isRecording: false,
     recordingSeconds: 0,
+    sensors: noSensors(),
   });
   const recorderRef = useRef<SessionRecorder | null>(null);
+  const extrasRef = useRef<ExtrasRecorder | null>(null);
+  const sensorsRef = useRef<SensorReadings>(noSensors());
   const deviceRef = useRef<MuseDevice | null>(null);
   const rings = useMemo(
     () =>
@@ -118,6 +147,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     deviceRef.current = device;
     for (const ring of Object.values(rings)) ring.clear();
     timelineRef.current = new PacketTimeline();
+    sensorsRef.current = noSensors();
     unsubscribe.current.push(
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
@@ -127,6 +157,26 @@ export function useMuse(createDevice: () => MuseDevice) {
           timelineRef.current.push(packet.counter, hostMs);
           packetsSinceRefresh.current += 1;
         }
+      }),
+      device.on("motion", ({ kind, packet, hostMs }) => {
+        const v = packet.samples;
+        const mag = Math.hypot(v[6], v[7], v[8]); // last of the three readings
+        if (kind === "acc") sensorsRef.current.accG = mag;
+        else sensorsRef.current.gyroDps = mag;
+        sensorsRef.current.motionPackets += 1;
+        extrasRef.current?.feed(kind, packet.counter, packet.samples, hostMs);
+      }),
+      device.on("ppg", ({ channel, packet, hostMs }) => {
+        if (channel === "infrared")
+          sensorsRef.current.ppgInfrared =
+            packet.samples[packet.samples.length - 1];
+        sensorsRef.current.ppgPackets += 1;
+        extrasRef.current?.feed(
+          `ppg_${channel}` as ExtraStream,
+          packet.counter,
+          packet.samples,
+          hostMs
+        );
       }),
       device.on("telemetry", (t) => {
         batteryRef.current = Math.round(t.batteryPercent);
@@ -188,6 +238,7 @@ export function useMuse(createDevice: () => MuseDevice) {
         batteryPercent: batteryRef.current,
         timeline: timelineRef.current.stats(),
         recordingSeconds: recorderRef.current?.seconds ?? 0,
+        sensors: { ...sensorsRef.current },
       }));
     }, REFRESH_MS);
     return () => clearInterval(id);
@@ -212,6 +263,7 @@ export function useMuse(createDevice: () => MuseDevice) {
   const startRecording = useCallback(() => {
     if (recorderRef.current) return;
     recorderRef.current = new SessionRecorder();
+    extrasRef.current = new ExtrasRecorder();
     setState((s) => ({ ...s, isRecording: true, recordingSeconds: 0 }));
   }, []);
 
@@ -219,12 +271,19 @@ export function useMuse(createDevice: () => MuseDevice) {
   const stopRecording = useCallback((): {
     capture: SessionCapture;
     timeline: TimelineStats;
+    extras: ExtrasRecorder;
   } | null => {
     const recorder = recorderRef.current;
-    if (!recorder) return null;
+    const extras = extrasRef.current;
+    if (!recorder || !extras) return null;
     recorderRef.current = null;
+    extrasRef.current = null;
     setState((s) => ({ ...s, isRecording: false }));
-    return { capture: recorder.stop(), timeline: timelineRef.current.stats() };
+    return {
+      capture: recorder.stop(),
+      timeline: timelineRef.current.stats(),
+      extras,
+    };
   }, []);
 
   const allGood = EEG_CHANNELS.every((c) => state.quality[c].level === "good");

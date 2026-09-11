@@ -10,6 +10,8 @@
  */
 import {
   EEG_CHANNELS,
+  IMU_RATE_HZ,
+  PPG_RATE_HZ,
   SAMPLE_RATE_HZ,
   SAMPLES_PER_PACKET,
   type EegChannel,
@@ -179,6 +181,111 @@ export function buildSessionCsv(
         return row ? row[i].toFixed(2) : "";
       });
       lines.push(`${index},${tSession},${values.join(",")}`);
+    }
+  }
+  return lines.join("\n") + "\n";
+}
+
+/** Non-EEG streams the headband sends; kept for later analyses. */
+export type ExtraStream =
+  "acc" | "gyro" | "ppg_ambient" | "ppg_infrared" | "ppg_red";
+
+interface ExtraPacket {
+  stream: ExtraStream;
+  /** Unwrapped packet counter of that stream. */
+  counter: number;
+  hostMs: number;
+  /** Flat samples: xyz triplets for motion, single values for PPG. */
+  samples: Float32Array;
+}
+
+const STREAM_RATE: Record<ExtraStream, number> = {
+  acc: IMU_RATE_HZ,
+  gyro: IMU_RATE_HZ,
+  ppg_ambient: PPG_RATE_HZ,
+  ppg_infrared: PPG_RATE_HZ,
+  ppg_red: PPG_RATE_HZ,
+};
+const STREAM_WIDTH: Record<ExtraStream, number> = {
+  acc: 3,
+  gyro: 3,
+  ppg_ambient: 1,
+  ppg_infrared: 1,
+  ppg_red: 1,
+};
+
+/** Collects motion and PPG packets; each stream unwraps its own counter. */
+export class ExtrasRecorder {
+  private packets: ExtraPacket[] = [];
+  private last = new Map<ExtraStream, { raw: number; unwrapped: number }>();
+
+  feed(
+    stream: ExtraStream,
+    rawCounter: number,
+    samples: Float32Array,
+    hostMs: number
+  ): void {
+    const prev = this.last.get(stream);
+    let unwrapped = rawCounter;
+    if (prev) {
+      let delta = rawCounter - prev.raw;
+      if (delta < -COUNTER_MODULO / 2) delta += COUNTER_MODULO;
+      if (delta <= 0) delta = 1;
+      unwrapped = prev.unwrapped + delta;
+    }
+    this.last.set(stream, { raw: rawCounter, unwrapped });
+    this.packets.push({ stream, counter: unwrapped, hostMs, samples });
+  }
+
+  /** Packet counts per stream, for the summary. */
+  counts(): Partial<Record<ExtraStream, number>> {
+    const out: Partial<Record<ExtraStream, number>> = {};
+    for (const p of this.packets) out[p.stream] = (out[p.stream] ?? 0) + 1;
+    return out;
+  }
+
+  stop(): ExtraPacket[] {
+    return this.packets;
+  }
+}
+
+/**
+ * Serialise the extras as CSV on the EEG session clock. Each packet's arrival
+ * time is mapped to an EEG sample index with the timeline fit, then samples in
+ * the packet are spread backwards at the stream's rate; the stream's own
+ * counter is kept in `sample_index` for gap analysis.
+ */
+export function buildExtrasCsv(
+  packets: ExtraPacket[],
+  capture: SessionCapture,
+  timeline: TimelineStats | null
+): string {
+  const lines = [
+    "# brain-trails-extras v1 columns=stream,sample_index,t_session_s,v0,v1,v2",
+    "stream,sample_index,t_session_s,v0,v1,v2",
+  ];
+  const slope = timeline?.msPerSample ?? 1000 / SAMPLE_RATE_HZ;
+  const intercept = timeline?.hostMsAtIndex0 ?? null;
+  for (const p of packets) {
+    const width = STREAM_WIDTH[p.stream];
+    const n = p.samples.length / width;
+    const rate = STREAM_RATE[p.stream];
+    // EEG-clock time of the packet's last sample; "na" when the EEG fit is not available.
+    const eegIndex = intercept === null ? null : (p.hostMs - intercept) / slope;
+    for (let i = 0; i < n; i++) {
+      const tSession =
+        eegIndex === null
+          ? "na"
+          : (
+              (eegIndex - capture.firstSampleIndex) / SAMPLE_RATE_HZ -
+              (n - 1 - i) / rate
+            ).toFixed(6);
+      const values = [0, 1, 2].map((k) =>
+        k < width ? p.samples[i * width + k].toFixed(width === 1 ? 0 : 4) : ""
+      );
+      lines.push(
+        `${p.stream},${(p.counter * n + i).toString()},${tSession},${values.join(",")}`
+      );
     }
   }
   return lines.join("\n") + "\n";

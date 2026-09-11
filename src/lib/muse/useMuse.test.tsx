@@ -52,6 +52,10 @@ describe("useMuse", () => {
     });
     expect(result.current.isRecording).toBe(false);
     expect(stopped!.capture.blocks).toHaveLength(43);
+    expect(stopped!.extras.counts().acc).toBeGreaterThan(30);
+    expect(stopped!.extras.counts().ppg_red).toBeGreaterThan(15);
+    expect(result.current.sensors.accG).toBeCloseTo(1, 1);
+    expect(result.current.sensors.ppgInfrared).toBeGreaterThan(100000);
     expect(stopped!.capture.missingSamples).toBe(0);
     expect(stopped!.timeline.packets).toBe(64 + 43);
 

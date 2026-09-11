@@ -36,12 +36,33 @@ export const SAMPLE_RATE_HZ = 256;
 /** Samples carried by one EEG notification. */
 export const SAMPLES_PER_PACKET = 12;
 
+/** Accelerometer and gyroscope: 52 Hz, three xyz samples per notification. */
+export const ACCELEROMETER_CHARACTERISTIC =
+  "273e000a-4c4d-454d-96be-f03bac821358";
+export const GYROSCOPE_CHARACTERISTIC = "273e0009-4c4d-454d-96be-f03bac821358";
+export const IMU_RATE_HZ = 52;
+export const IMU_SAMPLES_PER_PACKET = 3;
+/** Scale factors from muse-js: accelerometer in g, gyroscope in degrees/s. */
+export const ACCELEROMETER_SCALE = 0.0000610352;
+export const GYROSCOPE_SCALE = 0.0074768;
+
+/** Optical heart-rate sensor (PPG): 64 Hz, six 24-bit samples per notification. */
+export const PPG_CHANNELS = ["ambient", "infrared", "red"] as const;
+export type PpgChannel = (typeof PPG_CHANNELS)[number];
+export const PPG_CHARACTERISTICS: Record<PpgChannel, string> = {
+  ambient: "273e000f-4c4d-454d-96be-f03bac821358",
+  infrared: "273e0010-4c4d-454d-96be-f03bac821358",
+  red: "273e0011-4c4d-454d-96be-f03bac821358",
+};
+export const PPG_RATE_HZ = 64;
+export const PPG_SAMPLES_PER_PACKET = 6;
+
 /**
- * Preset selecting EEG streaming on a Muse 2 (p21 = EEG + AUX enabled; p20 on
- * the 2016 model). The command sequence mirrors muse-js: halt, preset, status
- * request, then resume streaming.
+ * Preset p50 streams EEG, PPG and motion on a Muse 2 (p21 would leave the PPG
+ * off). The command sequence mirrors muse-js: halt, preset, status request,
+ * then resume streaming.
  */
-export const START_SEQUENCE = ["h", "p21", "s", "d"] as const;
+export const START_SEQUENCE = ["h", "p50", "s", "d"] as const;
 export const HALT_COMMAND = "h";
 
 /**
@@ -127,4 +148,47 @@ export function decodeTelemetry(data: DataView): Telemetry {
     voltageMv: data.getUint16(4, false) * 2.2,
     temperatureC: data.getUint16(8, false),
   };
+}
+
+/** One motion notification: three consecutive xyz readings. */
+export interface ImuPacket {
+  counter: number;
+  /** Flat [x0,y0,z0, x1,y1,z1, x2,y2,z2] in g or degrees/s. */
+  samples: Float32Array;
+}
+
+/** Decode an accelerometer/gyroscope notification (int16 big-endian, scaled). */
+export function decodeImuPacket(data: DataView, scale: number): ImuPacket {
+  if (data.byteLength < 20)
+    throw new Error(`IMU packet must be 20 bytes, got ${data.byteLength}`);
+  const samples = new Float32Array(9);
+  for (let i = 0; i < 3; i++) {
+    const base = 2 + i * 6;
+    samples[i * 3] = scale * data.getInt16(base, false);
+    samples[i * 3 + 1] = scale * data.getInt16(base + 2, false);
+    samples[i * 3 + 2] = scale * data.getInt16(base + 4, false);
+  }
+  return { counter: data.getUint16(0, false), samples };
+}
+
+/** One PPG notification for one optical channel. */
+export interface PpgPacket {
+  counter: number;
+  /** Six raw 24-bit ADC values (unitless light intensity). */
+  samples: Float32Array;
+}
+
+/** Decode a PPG notification: counter then six unsigned 24-bit big-endian values. */
+export function decodePpgPacket(data: DataView): PpgPacket {
+  if (data.byteLength < 20)
+    throw new Error(`PPG packet must be 20 bytes, got ${data.byteLength}`);
+  const samples = new Float32Array(PPG_SAMPLES_PER_PACKET);
+  for (let i = 0; i < PPG_SAMPLES_PER_PACKET; i++) {
+    const o = 2 + i * 3;
+    samples[i] =
+      (data.getUint8(o) << 16) |
+      (data.getUint8(o + 1) << 8) |
+      data.getUint8(o + 2);
+  }
+  return { counter: data.getUint16(0, false), samples };
 }
