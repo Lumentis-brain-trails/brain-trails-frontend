@@ -1,0 +1,16 @@
+# Autonomous, separate PR review (Lumentis-brain-trails/brain-trails-reviewer).
+# Fails when the reviewer reports a blocking finding; skips with a notice when no
+# ANTHROPIC_API_KEY / CLAUDE_CODE_OAUTH_TOKEN secret exists.
+name: pr-review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+jobs:
+  review:
+    uses: Lumentis-brain-trails/brain-trails-reviewer/.github/workflows/review.yml@main
+    secrets: inherit

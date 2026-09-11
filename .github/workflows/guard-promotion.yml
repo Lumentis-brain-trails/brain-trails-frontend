@@ -1,18 +1,23 @@
+# Environment branches only move forward along dev -> beta -> main (or a hotfix/*).
 name: guard-promotion
 on:
   pull_request:
-    branches: [main]
+    branches: [beta, main]
     types: [opened, reopened, synchronize, edited]
 jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
-      - name: Only beta or hotfix/* may target main
+      - name: Check the source branch
         run: |
-          HEAD="${{ github.head_ref }}"
-          if [[ "$HEAD" == "beta" || "$HEAD" == hotfix/* ]]; then
-            echo "ok: $HEAD"
+          BASE="${{ github.base_ref }}"; HEAD="${{ github.head_ref }}"
+          case "$BASE" in
+            beta) ALLOWED="dev" ;;
+            main) ALLOWED="beta" ;;
+          esac
+          if [[ "$HEAD" == "$ALLOWED" || "$HEAD" == hotfix/* ]]; then
+            echo "ok: $HEAD -> $BASE"
           else
-            echo "::error::PRs to main must come from 'beta' or 'hotfix/*' (got '$HEAD'). See CONTRIBUTING.md."
+            echo "::error::PRs to $BASE must come from '$ALLOWED' or 'hotfix/*' (got '$HEAD'). Use the promote workflow. See CONTRIBUTING.md."
             exit 1
           fi

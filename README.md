@@ -27,5 +27,7 @@ The full plan (architecture, decisions, sprints) lives in the backend repo under
 
 ## Contributing
 
-Branch from `beta`, open a PR to `beta`; every open green PR is auto-deployed to the dev
-environment; releases go `beta → main` by PR. Details in [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and `CLAUDE.md`. Short version: branch from `dev`, open a PR
+to `dev`; CI and the autonomous reviewer must be green; promotions `dev -> beta -> main` run
+through the `promote` workflow. Knowledge lives in the
+[wiki](https://github.com/Lumentis-brain-trails/brain-trails-wiki).
