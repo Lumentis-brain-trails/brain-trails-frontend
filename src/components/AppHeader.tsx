@@ -48,6 +48,7 @@ export function AppHeader() {
         </Link>
         <nav className="absolute left-1/2 hidden -translate-x-1/2 gap-1 sm:flex">
           {link("/recordings", "Recordings")}
+          {link("/record", "Record")}
           {link("/account", "Account")}
           {me.data?.role === "admin" && link("/admin", "Admin")}
         </nav>
@@ -71,6 +72,7 @@ export function AppHeader() {
       </div>
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
         {link("/recordings", "Recordings")}
+        {link("/record", "Record")}
         {link("/account", "Account")}
         {me.data?.role === "admin" && link("/admin", "Admin")}
       </nav>
