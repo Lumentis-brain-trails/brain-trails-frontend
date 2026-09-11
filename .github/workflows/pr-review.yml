@@ -1,10 +1,16 @@
-# Autonomous, separate PR review (Lumentis-brain-trails/brain-trails-reviewer).
-# Fails when the reviewer reports a blocking finding; skips with a notice when no
+# Manual autonomous review (Lumentis-brain-trails/brain-trails-reviewer).
+# Only the repository owner can dispatch it, and only for the promotion PR that
+# targets `beta` (the reviewer refuses other base branches). Feature PRs to `dev`
+# are not reviewed. Fails on blocking findings; skips with a notice when no
 # ANTHROPIC_API_KEY / CLAUDE_CODE_OAUTH_TOKEN secret exists.
 name: pr-review
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number (must target beta)"
+        required: true
+        type: string
 permissions:
   contents: read
   pull-requests: write
@@ -12,5 +18,8 @@ permissions:
   id-token: write
 jobs:
   review:
+    if: github.actor == 'anonymous2532'
     uses: Lumentis-brain-trails/brain-trails-reviewer/.github/workflows/review.yml@main
+    with:
+      pr_number: ${{ inputs.pr }}
     secrets: inherit
