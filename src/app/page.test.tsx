@@ -7,12 +7,12 @@ test("landing shows the headline and entry links", () => {
   expect(
     screen.getByRole("heading", { name: /watch where your brain travelled/i })
   ).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+  expect(screen.getAllByRole("link", { name: "Sign in" })[0]).toHaveAttribute(
     "href",
     "/login"
   );
   expect(
-    screen.getByRole("link", { name: "Create an account" })
+    screen.getAllByRole("link", { name: "Create an account" })[0]
   ).toHaveAttribute("href", "/register");
   expect(screen.getByRole("link", { name: "privacy" })).toHaveAttribute(
     "href",

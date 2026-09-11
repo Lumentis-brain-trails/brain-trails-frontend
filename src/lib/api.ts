@@ -44,6 +44,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
+  delete: <T>(path: string, body?: unknown) =>
+    request<T>(`/api/backend/${path}`, {
+      method: "DELETE",
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
   logout: () =>
     request<{ status: string }>("/api/auth/logout", { method: "POST" }),
 };

@@ -1,76 +1,140 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { Wordmark } from "@/components/Logo";
+import { TrailIllustration } from "@/components/TrailIllustration";
 
 const version = (process.env.NEXT_PUBLIC_GIT_SHA ?? "dev").slice(0, 7);
 
-const FEATURES = [
+const STEPS = [
   {
-    title: "Upload your session",
-    text: "Mind Monitor CSV or EDF files from your Muse headband, straight to secure storage.",
+    title: "Record.",
+    text: "A Muse 2 headband and a Mind Monitor export. Soon, straight from the browser.",
   },
   {
-    title: "A foundation model reads it",
-    text: "Each 4-second window becomes an embedding through REVE, trained on 60,000 hours of EEG.",
+    title: "Embed.",
+    text: "Every four seconds of signal becomes a point, read by a foundation model trained on sixty thousand hours of EEG.",
   },
   {
-    title: "See the trail",
-    text: "A per-session projection turns your recording into a path through brain-state space.",
+    title: "Follow the trail.",
+    text: "The points form a path. Where it lingers, where it turns and where it settles is the story of the session.",
   },
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-900">
-      <div className="mx-auto flex max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center">
-        <div className="mb-6 flex items-center gap-3">
-          <Logo size={44} />
-          <span className="text-2xl font-bold tracking-tight">
-            Brain Trails
-          </span>
-        </div>
-        <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
-          Watch where your brain travelled.
-        </h1>
-        <p className="mt-4 max-w-xl text-lg text-neutral-500">
-          Turn a raw EEG recording into a readable trail through embedding space
-          - cleaned, embedded and projected automatically.
-        </p>
-        <div className="mt-8 flex gap-3">
+    <main className="min-h-screen">
+      <header className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
+        <Wordmark size={16} />
+        <nav className="flex items-center gap-1">
           <Link
             href="/login"
-            className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            className="pressable rounded-full px-4 py-2 text-[14px] font-medium text-ink-2 hover:bg-surface-2 hover:text-ink"
           >
             Sign in
           </Link>
           <Link
             href="/register"
-            className="rounded-lg border border-neutral-300 bg-white px-6 py-3 text-sm font-semibold transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+            className="pressable rounded-full bg-ink px-4 py-2 text-[14px] font-medium text-canvas hover:opacity-90"
           >
             Create an account
           </Link>
+        </nav>
+      </header>
+
+      <section className="mx-auto flex max-w-3xl flex-col items-center px-6 pt-24 pb-16 text-center sm:pt-32">
+        <p className="type-eyebrow enter-up text-ink-3">EEG, as a path</p>
+        <h1 className="type-display enter-up mt-4 max-w-2xl text-balance [animation-delay:60ms]">
+          Watch where your brain travelled.
+        </h1>
+        <p className="type-body-lg enter-up mt-6 max-w-xl text-pretty text-ink-2 [animation-delay:120ms]">
+          Brain Trails turns a raw EEG recording into a single readable line
+          through brain-state space. Cleaned, embedded and projected. Nothing to
+          configure.
+        </p>
+        <div className="enter-up mt-10 flex flex-wrap items-center justify-center gap-3 [animation-delay:180ms]">
+          <Link
+            href="/register"
+            className="pressable inline-flex h-12 items-center rounded-full bg-accent px-7 text-[17px] font-medium text-on-accent hover:bg-accent-hover"
+          >
+            Create an account
+          </Link>
+          <Link
+            href="/login"
+            className="pressable inline-flex h-12 items-center gap-1 rounded-full px-5 text-[17px] font-medium text-accent hover:bg-accent-soft"
+          >
+            Sign in
+          </Link>
         </div>
-        <p className="mt-3 text-xs text-neutral-400">
+        <p className="type-caption mt-4 text-ink-3">
           Registrations are reviewed by an administrator before activation.
         </p>
+      </section>
 
-        <div className="mt-20 grid w-full gap-6 text-left sm:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-            >
-              <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                {i + 1}
-              </div>
-              <h3 className="mb-1 font-semibold">{f.title}</h3>
-              <p className="text-sm text-neutral-500">{f.text}</p>
+      <section className="mx-auto max-w-5xl px-6">
+        <div className="enter-up rounded-[28px] border border-hairline bg-surface p-4 shadow-(--shadow-card) [animation-delay:240ms] sm:p-8">
+          <TrailIllustration className="h-auto w-full" />
+          <div className="mt-2 flex items-center justify-between px-2">
+            <span className="type-caption text-ink-3">
+              Rest, eyes closed · 3 min
+            </span>
+            <span className="type-caption text-ink-3">
+              PC1 · PC2 of a per-session projection
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
+        <h2 className="type-title max-w-xl text-balance">
+          Three steps. One line.
+        </h2>
+        <div className="stagger mt-12 grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-hairline sm:grid-cols-3">
+          {STEPS.map((s) => (
+            <div key={s.title} className="bg-surface p-8">
+              <h3 className="type-heading">{s.title}</h3>
+              <p className="mt-3 text-pretty text-ink-2">{s.text}</p>
             </div>
           ))}
         </div>
-      </div>
-      <footer className="border-t border-neutral-200 py-6 text-center text-xs text-neutral-400 dark:border-neutral-800">
-        a LuMentis prototype · v{version} ·{" "}
-        <Link href="/privacy" className="hover:underline">
+      </section>
+
+      <section className="border-y border-hairline bg-surface">
+        <div className="mx-auto grid max-w-5xl gap-10 px-6 py-20 sm:grid-cols-2 sm:items-center">
+          <div>
+            <h2 className="type-title text-balance">
+              Built for research. Yours to delete.
+            </h2>
+            <p className="type-body-lg mt-5 text-pretty text-ink-2">
+              A free, non-commercial, non-clinical prototype by LuMentis. Your
+              recordings stay in the EU and are visible only to you. Export
+              everything or erase your account in one step, whenever you like.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-6">
+            {[
+              ["4", "channels, 256 Hz"],
+              ["4 s", "per embedding"],
+              ["512", "dimensions, projected to 2"],
+              ["EU", "storage, Frankfurt"],
+            ].map(([v, l]) => (
+              <div key={l} className="border-t border-hairline pt-4">
+                <dt className="text-[32px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
+                  {v}
+                </dt>
+                <dd className="mt-2 text-ink-2">{l}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-8">
+        <span className="type-caption text-ink-3">
+          A LuMentis prototype · v{version}
+        </span>
+        <Link
+          href="/privacy"
+          className="type-caption text-ink-3 hover:text-ink"
+        >
           privacy
         </Link>
       </footer>

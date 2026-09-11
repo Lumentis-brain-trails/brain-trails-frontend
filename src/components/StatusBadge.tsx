@@ -1,27 +1,54 @@
 import { cn } from "@/components/ui";
 
-const STYLES: Record<string, string> = {
-  done: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  processing: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  running: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  queued: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-  uploaded: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-  failed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-  approved: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+type Tone = "ok" | "busy" | "wait" | "bad" | "muted";
+
+const TONE: Record<string, Tone> = {
+  done: "ok",
+  active: "ok",
+  processing: "busy",
+  running: "busy",
+  approved: "busy",
+  queued: "wait",
+  uploaded: "wait",
+  pending: "wait",
+  failed: "bad",
+  rejected: "bad",
 };
 
+const LABEL: Record<string, string> = {
+  done: "Ready",
+  processing: "Processing",
+  running: "Running",
+  queued: "Queued",
+  uploaded: "Uploaded",
+  failed: "Failed",
+  pending: "Pending",
+  approved: "Approved",
+  active: "Active",
+  rejected: "Rejected",
+};
+
+const DOT: Record<Tone, string> = {
+  ok: "bg-ok",
+  busy: "bg-accent",
+  wait: "bg-warn",
+  bad: "bg-danger",
+  muted: "bg-ink-3",
+};
+
+/** Status as a dot + word. The dot pulses while something is in progress. */
 export function StatusBadge({ status }: { status: string }) {
+  const tone = TONE[status] ?? "muted";
+  const live = tone === "busy";
   return (
-    <span
-      className={cn(
-        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
-        STYLES[status] ?? "bg-neutral-100 text-neutral-700"
-      )}
-    >
-      {status}
+    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-2">
+      <span
+        className={cn("relative h-2 w-2 rounded-full", DOT[tone])}
+        data-motion="status"
+      >
+        {live && <span className="ping absolute inset-0 text-accent" />}
+      </span>
+      {LABEL[status] ?? status}
     </span>
   );
 }

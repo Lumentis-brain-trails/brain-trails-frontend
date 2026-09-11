@@ -1,26 +1,288 @@
+/*
+ * Brain Trails design system.
+ *
+ * Two layers: the motion tokens shared with the design assets (assets/motion) and the
+ * visual tokens below. The palette is deliberately monochrome - off-white/near-black
+ * surfaces, grey text ramps, one accent for interaction - so the trail (the product)
+ * is the only thing that carries colour. Semantic colours exist only for status.
+ */
+@import "../../assets/motion/motion.css";
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: light dark;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --canvas: #fbfbfd;
+  --surface: #ffffff;
+  --surface-2: #f5f5f7;
+  --surface-3: #e8e8ed;
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: #86868b;
+  --hairline: rgba(0, 0, 0, 0.08);
+  --hairline-strong: rgba(0, 0, 0, 0.16);
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --accent-soft: rgba(0, 113, 227, 0.1);
+  --on-accent: #ffffff;
+  --ok: #248a3d;
+  --ok-soft: rgba(52, 199, 89, 0.14);
+  --warn: #b25000;
+  --warn-soft: rgba(255, 159, 10, 0.16);
+  --danger: #d70015;
+  --danger-soft: rgba(255, 59, 48, 0.12);
+  --glass: rgba(251, 251, 253, 0.72);
+  --scrim: rgba(0, 0, 0, 0.32);
+  --shadow-sheet:
+    0 24px 60px -20px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* trail colour ramp (time): grey to accent */
+  --trail-0: #d2d2d7;
+  --trail-1: #0071e3;
+  --trail-start: #248a3d;
+  --trail-end: #d70015;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --canvas: #000000;
+    --surface: #1d1d1f;
+    --surface-2: #2c2c2e;
+    --surface-3: #3a3a3c;
+    --ink: #f5f5f7;
+    --ink-2: #a1a1a6;
+    --ink-3: #86868b;
+    --hairline: rgba(255, 255, 255, 0.1);
+    --hairline-strong: rgba(255, 255, 255, 0.2);
+    --accent: #2997ff;
+    --accent-hover: #3aa0ff;
+    --accent-soft: rgba(41, 151, 255, 0.16);
+    --on-accent: #ffffff;
+    --ok: #30d158;
+    --ok-soft: rgba(48, 209, 88, 0.16);
+    --warn: #ffd60a;
+    --warn-soft: rgba(255, 214, 10, 0.14);
+    --danger: #ff453a;
+    --danger-soft: rgba(255, 69, 58, 0.16);
+    --glass: rgba(0, 0, 0, 0.6);
+    --scrim: rgba(0, 0, 0, 0.6);
+    --shadow-sheet:
+      0 24px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --shadow-card: none;
+    --trail-0: #48484a;
+    --trail-1: #2997ff;
+    --trail-start: #30d158;
+    --trail-end: #ff453a;
   }
 }
 
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --radius-sheet: 22px;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* ---- typography ramp --------------------------------------------------- */
+.type-display {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+.type-title {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  font-weight: 700;
+}
+.type-heading {
+  font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+.type-subhead {
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: -0.008em;
+  font-weight: 600;
+}
+.type-body-lg {
+  font-size: 1.1875rem;
+  line-height: 1.45;
+  letter-spacing: -0.006em;
+}
+.type-caption {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  letter-spacing: 0.002em;
+}
+.type-eyebrow {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ---- materials ---------------------------------------------------------- */
+.material-glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .material-glass {
+    background: var(--canvas);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ---- motion helpers built on the shared tokens -------------------------- */
+.enter-up {
+  animation: m-fade-up var(--m-base) var(--m-out) both;
+}
+.enter-pop {
+  animation: m-pop var(--m-base) var(--m-out) both;
+}
+.enter-fade {
+  animation: m-fade-in var(--m-base) var(--m-out) both;
+}
+.stagger > * {
+  animation: m-fade-up var(--m-base) var(--m-out) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: calc(var(--m-stagger) * 0);
+}
+.stagger > *:nth-child(2) {
+  animation-delay: calc(var(--m-stagger) * 1);
+}
+.stagger > *:nth-child(3) {
+  animation-delay: calc(var(--m-stagger) * 2);
+}
+.stagger > *:nth-child(4) {
+  animation-delay: calc(var(--m-stagger) * 3);
+}
+.stagger > *:nth-child(5) {
+  animation-delay: calc(var(--m-stagger) * 4);
+}
+.stagger > *:nth-child(n + 6) {
+  animation-delay: calc(var(--m-stagger) * 5);
+}
+
+/* press feedback on pointer-down, never on release */
+.pressable {
+  transition:
+    transform var(--m-instant) var(--m-out),
+    background-color var(--m-fast) var(--m-out),
+    color var(--m-fast) var(--m-out),
+    opacity var(--m-fast) var(--m-out),
+    box-shadow var(--m-fast) var(--m-out);
+}
+.pressable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* skeleton: a travelling sheen, not a blink */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  animation: m-shimmer 1.4s var(--m-inout) infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .skeleton::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+  }
+}
+
+/* live indicator ring */
+.ping::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: m-ping 1.6s var(--m-out) infinite;
+}
+
+/* focus rings: visible, on the accent, never on click */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* uPlot: adopt our palette */
+.uplot,
+.u-legend {
+  font-family: var(--font-sans) !important;
+  color: var(--ink-2);
+}
+.u-legend .u-series > * {
+  font-size: 12px;
+}
+.u-axis {
+  color: var(--ink-3);
 }

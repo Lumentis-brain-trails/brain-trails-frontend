@@ -50,7 +50,7 @@ jobs:
           SHA=$(git rev-parse "origin/$SOURCE")
           echo "SHA=$SHA" >> "$GITHUB_ENV"
           C=$(gh run list --workflow ci --branch "$SOURCE" --commit "$SHA" --limit 1 \
-              --json status,conclusion -q '.[0] | "\(.status)/\(.conclusion)"')
+              --json status,conclusion -q '.[0] | select(. != null) | "\(.status)/\(.conclusion)"')
           echo "ci on $SHA: ${C:-no run}"
           [[ "$C" == "completed/success" ]] || { echo "::error::ci is not green for $SHA"; exit 1; }
       - name: Open and merge the promotion PR

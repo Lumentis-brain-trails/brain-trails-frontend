@@ -50,6 +50,15 @@ describe("api client", () => {
     expect((err as ApiRequestError).error.code).toBe("unknown");
   });
 
+  test("delete sends the method and an optional JSON body", async () => {
+    const spy = mockFetch(200, { status: "deleted" });
+    await api.delete("recordings/abc");
+    expect(spy.mock.calls[0][1].method).toBe("DELETE");
+    expect(spy.mock.calls[0][1].body).toBeUndefined();
+    await api.delete("auth/me", { password: "pw" });
+    expect(spy.mock.calls[1][1].body).toBe(JSON.stringify({ password: "pw" }));
+  });
+
   test("login and logout hit the auth routes", async () => {
     const spy = mockFetch(200, { status: "ok" });
     await api.login("a@b.it", "pw-long-enough");
