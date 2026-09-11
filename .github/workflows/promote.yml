@@ -2,8 +2,8 @@
 #   action=open  : verify gates, open (or reuse) the promotion PR. Nothing is merged.
 #                  If the org forbids Actions from creating PRs, open it by hand:
 #                  gh pr create --base beta --head dev
-#   action=merge : verify gates again, require a green pr-review run on the source
-#                  head for beta (the owner's manual review), merge the PR, tag on
+#   action=merge : verify gates again, report whether the owner's optional review
+#                  ran on the source head (beta), merge the PR, tag on
 #                  main when a version is given.
 # Vercel deploys on push through its GitHub App (webhooks fire even for GITHUB_TOKEN merges).
 name: promote
@@ -85,16 +85,16 @@ jobs:
           fi
           echo "promotion PR #$PR"
           echo "PR=$PR" >> "$GITHUB_ENV"
-      - name: Beta requires the owner's review to be green on this head
+      - name: Report whether the owner's review ran on this head (informative, not a gate)
         if: env.NOOP != '1' && inputs.action == 'merge' && inputs.target == 'beta'
         run: |
           RV=$(gh run list --workflow pr-review --branch "$SOURCE" --commit "$SHA" --status success --limit 1 \
                --json databaseId -q '.[0] | select(. != null) | .databaseId')
           if [[ -z "$RV" ]]; then
-            echo "::error::no successful pr-review run for $SHA. Alessio must dispatch pr-review with PR #$PR first."
-            exit 1
+            echo "::notice::no successful pr-review run for $SHA - merging without an autonomous review (optional by decision 0013)"
+          else
+            echo "pr-review run $RV is green for $SHA"
           fi
-          echo "pr-review run $RV is green for $SHA"
       - name: Merge the promotion PR
         if: env.NOOP != '1' && inputs.action == 'merge'
         run: |

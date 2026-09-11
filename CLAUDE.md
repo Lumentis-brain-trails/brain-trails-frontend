@@ -56,7 +56,7 @@ npm test                                # vitest with coverage thresholds (85% o
 Branch from `dev` -> PR to `dev` -> `ci` green -> squash merge (feature PRs are not
 reviewed by the autonomous reviewer) -> `promote` `action=open` to beta -> Alessio
 dispatches `pr-review` on that PR (owner only, base `beta` only) -> `promote`
-`action=merge` (refuses without a green review) ->
+`action=merge` (the review is optional; it never blocks the merge) ->
 `promote` workflow to `beta`, then `main` (with `vX.Y.Z`). Never push to
 `dev`/`beta`/`main` directly; rulesets enforce PRs on this repo.
 
