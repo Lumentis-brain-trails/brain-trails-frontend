@@ -7,14 +7,14 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
 import { type AccountForm, accountSchema } from "@/lib/schemas";
-import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 
 const STATUS_MESSAGES: Record<string, string> = {
   account_pending: "Your registration is still awaiting admin review.",
   account_rejected: "Your registration was not approved.",
   email_not_verified: "Please open the verification link you received first.",
   invalid_credentials: "Wrong email or password.",
-  rate_limited: "Too many attempts - wait a minute and retry.",
+  rate_limited: "Too many attempts. Wait a minute and retry.",
 };
 
 function LoginForm() {
@@ -32,16 +32,19 @@ function LoginForm() {
       if (e instanceof ApiRequestError) {
         if (e.error.code === "account_pending") router.push("/pending");
         else setError(STATUS_MESSAGES[e.error.code] ?? e.error.message);
-      } else setError("Network error - is the API up?");
+      } else setError("Network error. Is the API up?");
     }
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <h1 className="mb-4 text-xl font-semibold">Sign in</h1>
+    <div className="enter-up w-full max-w-sm">
+      <h1 className="type-title text-center">Sign in</h1>
+      <p className="mt-2 text-center text-ink-2">
+        Your recordings are waiting.
+      </p>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
+        className="mt-8 space-y-4"
         noValidate
       >
         {error && <ErrorBanner message={error} />}
@@ -49,6 +52,7 @@ function LoginForm() {
           <Input
             type="email"
             autoComplete="email"
+            autoFocus
             {...form.register("email")}
           />
         </Field>
@@ -61,25 +65,26 @@ function LoginForm() {
         </Field>
         <Button
           type="submit"
-          className="w-full"
+          size="lg"
+          className="mt-2 w-full"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
+          {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <p className="mt-4 text-sm text-neutral-500">
+      <p className="mt-6 text-center text-[14px] text-ink-2">
         No account?{" "}
-        <Link className="text-indigo-600 hover:underline" href="/register">
-          Register
+        <Link className="text-accent hover:underline" href="/register">
+          Create one
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex flex-1 items-center justify-center px-6 py-12">
       <Suspense>
         <LoginForm />
       </Suspense>

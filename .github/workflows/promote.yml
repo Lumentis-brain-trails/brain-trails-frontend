@@ -1,0 +1,108 @@
+# Promotes an environment branch forward (dev -> beta, beta -> main) through a PR.
+#   action=open  : verify gates, open (or reuse) the promotion PR. Nothing is merged.
+#                  If the org forbids Actions from creating PRs, open it by hand:
+#                  gh pr create --base beta --head dev
+#   action=merge : verify gates again, require a green pr-review run on the source
+#                  head for beta (the owner's manual review), merge the PR, tag on
+#                  main when a version is given.
+# Vercel deploys on push through its GitHub App (webhooks fire even for GITHUB_TOKEN merges).
+name: promote
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Branch to promote into"
+        type: choice
+        options: [beta, main]
+        required: true
+      action:
+        description: "open the promotion PR, or merge it"
+        type: choice
+        options: [open, merge]
+        default: open
+      version:
+        description: "vX.Y.Z - tag + GitHub Release (main + merge only, optional)"
+        type: string
+        required: false
+permissions:
+  contents: write
+  pull-requests: write
+concurrency: promote
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET: ${{ inputs.target }}
+      ACTION: ${{ inputs.action }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve source branch
+        run: |
+          case "$TARGET" in
+            beta) echo "SOURCE=dev"  >> "$GITHUB_ENV" ;;
+            main) echo "SOURCE=beta" >> "$GITHUB_ENV" ;;
+          esac
+      - name: Target must be an ancestor of source (no divergent commits)
+        run: |
+          if ! git merge-base --is-ancestor "origin/$TARGET" "origin/$SOURCE"; then
+            echo "::error::$TARGET has commits missing from $SOURCE; merge $TARGET back into $SOURCE first"
+            exit 1
+          fi
+          if [[ "$(git rev-parse origin/$TARGET)" == "$(git rev-parse origin/$SOURCE)" ]]; then
+            echo "::notice::$TARGET already equals $SOURCE - nothing to promote"
+            echo "NOOP=1" >> "$GITHUB_ENV"
+          fi
+      - name: Source head must be green (ci, and build-images when it ran)
+        if: env.NOOP != '1'
+        run: |
+          SHA=$(git rev-parse "origin/$SOURCE")
+          echo "SHA=$SHA" >> "$GITHUB_ENV"
+          check() {  # $1 = workflow name, $2 = required|optional
+            C=$(gh run list --workflow "$1" --branch "$SOURCE" --commit "$SHA" --limit 1 \
+                --json status,conclusion -q '.[0] | select(. != null) | "\(.status)/\(.conclusion)"')
+            echo "$1 on $SHA: ${C:-no run}"
+            if [[ -z "$C" ]]; then
+              [[ "$2" == "required" ]] && { echo "::error::no $1 run for $SHA"; exit 1; } || return 0
+            fi
+            [[ "$C" == "completed/success" ]] || { echo "::error::$1 is not green for $SHA"; exit 1; }
+          }
+          check ci required
+      - name: Find or open the promotion PR
+        if: env.NOOP != '1'
+        run: |
+          PR=$(gh pr list --base "$TARGET" --head "$SOURCE" --state open --json number -q '.[0].number')
+          if [[ -z "$PR" ]]; then
+            BODY=$(printf 'Promotion of `%s` (%s) into `%s`.\n\nCommits:\n%s\n\nCI on the source head is green; the target is an ancestor of the source, so the merged tree equals the tested one.\n' \
+              "$SOURCE" "${SHA:0:7}" "$TARGET" "$(git log --oneline "origin/$TARGET..origin/$SOURCE" | sed 's/^/- /')")
+            if ! PR=$(gh pr create --base "$TARGET" --head "$SOURCE" \
+                 --title "promote: $SOURCE -> $TARGET (${SHA:0:7})" --body "$BODY" | grep -oE '[0-9]+$'); then
+              echo "::error::could not open the PR (org forbids Actions from creating PRs). Open it by hand: gh pr create --base $TARGET --head $SOURCE"
+              exit 1
+            fi
+          fi
+          echo "promotion PR #$PR"
+          echo "PR=$PR" >> "$GITHUB_ENV"
+      - name: Beta requires the owner's review to be green on this head
+        if: env.NOOP != '1' && inputs.action == 'merge' && inputs.target == 'beta'
+        run: |
+          RV=$(gh run list --workflow pr-review --branch "$SOURCE" --commit "$SHA" --status success --limit 1 \
+               --json databaseId -q '.[0] | select(. != null) | .databaseId')
+          if [[ -z "$RV" ]]; then
+            echo "::error::no successful pr-review run for $SHA. Alessio must dispatch pr-review with PR #$PR first."
+            exit 1
+          fi
+          echo "pr-review run $RV is green for $SHA"
+      - name: Merge the promotion PR
+        if: env.NOOP != '1' && inputs.action == 'merge'
+        run: |
+          gh pr merge "$PR" --merge --subject "promote: $SOURCE -> $TARGET (${SHA:0:7})"
+      - name: Tag and release
+        if: env.NOOP != '1' && inputs.action == 'merge' && inputs.target == 'main' && inputs.version != ''
+        run: |
+          git fetch origin main
+          git tag -a "${{ inputs.version }}" origin/main -m "Brain Trails frontend ${{ inputs.version }}"
+          git push origin "${{ inputs.version }}"
+          gh release create "${{ inputs.version }}" --target main --generate-notes --title "${{ inputs.version }}"
