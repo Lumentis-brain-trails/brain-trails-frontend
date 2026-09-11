@@ -1,0 +1,74 @@
+# Promotes an environment branch forward (dev -> beta, beta -> main) by PR.
+# Refuses unless the source head is green in CI and the target is fast-forwardable.
+# Vercel deploys on push through its GitHub App (webhooks fire even for GITHUB_TOKEN merges).
+name: promote
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Branch to promote into"
+        type: choice
+        options: [beta, main]
+        required: true
+      version:
+        description: "vX.Y.Z - tag + GitHub Release (main only, optional)"
+        type: string
+        required: false
+permissions:
+  contents: write
+  pull-requests: write
+concurrency: promote
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve source branch
+        run: |
+          case "$TARGET" in
+            beta) echo "SOURCE=dev"  >> "$GITHUB_ENV" ;;
+            main) echo "SOURCE=beta" >> "$GITHUB_ENV" ;;
+          esac
+      - name: Target must be an ancestor of source (no divergent commits)
+        run: |
+          if ! git merge-base --is-ancestor "origin/$TARGET" "origin/$SOURCE"; then
+            echo "::error::$TARGET has commits missing from $SOURCE; merge $TARGET back into $SOURCE first"
+            exit 1
+          fi
+          if [[ "$(git rev-parse origin/$TARGET)" == "$(git rev-parse origin/$SOURCE)" ]]; then
+            echo "::notice::$TARGET already equals $SOURCE - nothing to promote"
+            echo "NOOP=1" >> "$GITHUB_ENV"
+          fi
+      - name: Source head must be green in ci
+        if: env.NOOP != '1'
+        run: |
+          SHA=$(git rev-parse "origin/$SOURCE")
+          echo "SHA=$SHA" >> "$GITHUB_ENV"
+          C=$(gh run list --workflow ci --branch "$SOURCE" --commit "$SHA" --limit 1 \
+              --json status,conclusion -q '.[0] | "\(.status)/\(.conclusion)"')
+          echo "ci on $SHA: ${C:-no run}"
+          [[ "$C" == "completed/success" ]] || { echo "::error::ci is not green for $SHA"; exit 1; }
+      - name: Open and merge the promotion PR
+        if: env.NOOP != '1'
+        run: |
+          PR=$(gh pr list --base "$TARGET" --head "$SOURCE" --state open --json number -q '.[0].number')
+          if [[ -z "$PR" ]]; then
+            BODY=$(printf 'Promotion of `%s` (%s) into `%s`.\n\nCommits:\n%s\n\nCI on the source head is green; the target was an ancestor of the source, so the merged tree equals the tested one.\n' \
+              "$SOURCE" "${SHA:0:7}" "$TARGET" "$(git log --oneline "origin/$TARGET..origin/$SOURCE" | sed 's/^/- /')")
+            PR=$(gh pr create --base "$TARGET" --head "$SOURCE" \
+              --title "promote: $SOURCE -> $TARGET (${SHA:0:7})" --body "$BODY" | grep -oE '[0-9]+$')
+          fi
+          echo "promotion PR #$PR"
+          gh pr merge "$PR" --merge --subject "promote: $SOURCE -> $TARGET (${SHA:0:7})"
+      - name: Tag and release
+        if: env.NOOP != '1' && inputs.target == 'main' && inputs.version != ''
+        run: |
+          git fetch origin main
+          git tag -a "${{ inputs.version }}" origin/main -m "Brain Trails frontend ${{ inputs.version }}"
+          git push origin "${{ inputs.version }}"
+          gh release create "${{ inputs.version }}" --target main --generate-notes --title "${{ inputs.version }}"

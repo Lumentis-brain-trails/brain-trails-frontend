@@ -229,9 +229,19 @@ README: what slowed us down.
 
 ---
 
-## INTERIM MODE (active since 2026-09-05)
+## CURRENT FLOW (since 2026-09-11, backend decision 0013)
 
-Until org admin rights allow proper repo/workflow management, the flow above is
-suspended in favor of a manual one: feature branches are merged by hand into `dev`;
-`beta` and `main` are promoted manually; CI runs on pushes to dev/beta/main;
-dependabot targets `dev`, monthly. The rebuild-dev workflow was removed for now.
+The machine-built `dev` of section 1 stays suspended. What runs today:
+
+1. Branch from `dev`; open a PR **to `dev`**. Required: `ci` green (eslint, prettier,
+   build, typecheck, vitest with coverage thresholds) and `pr-review` green
+   (autonomous reviewer: promise kept, data safety, security, code+tests quality).
+   Squash merge. Vercel posts a preview URL on every PR.
+2. Every PR states its wiki impact and ships a PR to `brain-trails-wiki`.
+3. Promotion: Actions -> **promote** -> target `beta` (from `dev`) or `main` (from
+   `beta`, optional `vX.Y.Z` for tag + Release). Refuses unless the source head is
+   green and the target is an ancestor; opens and merges the promotion PR; Vercel
+   deploys on push.
+4. `guard-promotion` rejects hand-made PRs to `beta`/`main` from other branches
+   (`hotfix/*` allowed). Rulesets require PRs on `dev`, `beta`, `main`.
+5. dependabot targets `dev`, monthly; its PRs are not sent to the reviewer.
