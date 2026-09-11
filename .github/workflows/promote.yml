@@ -97,7 +97,8 @@ jobs:
           echo "pr-review run $RV is green for $SHA"
       - name: Merge the promotion PR
         if: env.NOOP != '1' && inputs.action == 'merge'
-        run: gh pr merge "$PR" --merge --subject "promote: $SOURCE -> $TARGET (${SHA:0:7})"
+        run: |
+          gh pr merge "$PR" --merge --subject "promote: $SOURCE -> $TARGET (${SHA:0:7})"
       - name: Tag and release
         if: env.NOOP != '1' && inputs.action == 'merge' && inputs.target == 'main' && inputs.version != ''
         run: |
