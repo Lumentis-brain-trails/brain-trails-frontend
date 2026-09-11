@@ -36,6 +36,25 @@ describe("useMuse", () => {
     expect(result.current.batteryPercent).toBe(76);
     expect(result.current.getRecent(1).AF7).toHaveLength(256);
 
+    // Record two seconds, stop, and get a capture with the timing snapshot.
+    act(() => result.current.startRecording());
+    expect(result.current.isRecording).toBe(true);
+    act(() => {
+      for (let i = 64; i < 64 + 43; i++) sim!.tick(i * 46.875);
+    });
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(result.current.recordingSeconds).toBeCloseTo((43 * 12) / 256, 1);
+    let stopped: ReturnType<typeof result.current.stopRecording> = null;
+    act(() => {
+      stopped = result.current.stopRecording();
+    });
+    expect(result.current.isRecording).toBe(false);
+    expect(stopped!.capture.blocks).toHaveLength(43);
+    expect(stopped!.capture.missingSamples).toBe(0);
+    expect(stopped!.timeline.packets).toBe(64 + 43);
+
     await act(async () => {
       await result.current.disconnect();
     });
