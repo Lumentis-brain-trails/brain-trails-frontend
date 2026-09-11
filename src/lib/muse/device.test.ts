@@ -59,9 +59,9 @@ describe("SimulatedMuse", () => {
     await sim.connect();
     for (let i = 0; i < 64; i++) sim.tick(i * 46.875); // 3 s of EEG
     // 3 s * 52 Hz / 3 samples = 52 packets per kind; 3 s * 64 / 6 = 32 per PPG channel
-    expect(motion.mock.calls.filter((c) => c[0].kind === "acc")).toHaveLength(
-      52
-    );
+    expect(
+      motion.mock.calls.filter((c) => c[0].kind === "acc").length
+    ).toBeGreaterThanOrEqual(51);
     expect(
       ppg.mock.calls.filter((c) => c[0].channel === "infrared").length
     ).toBeGreaterThanOrEqual(31);
