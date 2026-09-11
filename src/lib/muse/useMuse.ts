@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MuseDevice } from "./device";
 import { EEG_CHANNELS, SAMPLE_RATE_HZ, type EegChannel } from "./protocol";
 import { assessChannel, type ChannelQuality } from "./quality";
+import { SessionRecorder, type SessionCapture } from "./session";
 import { PacketTimeline, type TimelineStats } from "./timeline";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
@@ -26,6 +27,9 @@ export interface MuseState {
   timeline: TimelineStats | null;
   /** Packets per second over the last refresh interval. */
   packetRate: number;
+  isRecording: boolean;
+  /** Seconds captured so far on the device clock (refreshed once a second). */
+  recordingSeconds: number;
 }
 
 const BUFFER_SECONDS = 12;
@@ -83,7 +87,10 @@ export function useMuse(createDevice: () => MuseDevice) {
     quality: unknownQuality(),
     timeline: null,
     packetRate: 0,
+    isRecording: false,
+    recordingSeconds: 0,
   });
+  const recorderRef = useRef<SessionRecorder | null>(null);
   const deviceRef = useRef<MuseDevice | null>(null);
   const rings = useMemo(
     () =>
@@ -114,6 +121,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     unsubscribe.current.push(
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
+        recorderRef.current?.feed(channel, packet.counter, packet.samples);
         // The four electrodes share one counter; anchor the timeline on the first.
         if (channel === EEG_CHANNELS[0]) {
           timelineRef.current.push(packet.counter, hostMs);
@@ -179,6 +187,7 @@ export function useMuse(createDevice: () => MuseDevice) {
         packetRate,
         batteryPercent: batteryRef.current,
         timeline: timelineRef.current.stats(),
+        recordingSeconds: recorderRef.current?.seconds ?? 0,
       }));
     }, REFRESH_MS);
     return () => clearInterval(id);
@@ -199,6 +208,33 @@ export function useMuse(createDevice: () => MuseDevice) {
     [rings]
   );
 
+  /** Begin capturing packets into a session (no-op while already recording). */
+  const startRecording = useCallback(() => {
+    if (recorderRef.current) return;
+    recorderRef.current = new SessionRecorder();
+    setState((s) => ({ ...s, isRecording: true, recordingSeconds: 0 }));
+  }, []);
+
+  /** Close the capture and return it with the timing snapshot for the file header. */
+  const stopRecording = useCallback((): {
+    capture: SessionCapture;
+    timeline: TimelineStats;
+  } | null => {
+    const recorder = recorderRef.current;
+    if (!recorder) return null;
+    recorderRef.current = null;
+    setState((s) => ({ ...s, isRecording: false }));
+    return { capture: recorder.stop(), timeline: timelineRef.current.stats() };
+  }, []);
+
   const allGood = EEG_CHANNELS.every((c) => state.quality[c].level === "good");
-  return { ...state, allGood, connect, disconnect, getRecent };
+  return {
+    ...state,
+    allGood,
+    connect,
+    disconnect,
+    getRecent,
+    startRecording,
+    stopRecording,
+  };
 }

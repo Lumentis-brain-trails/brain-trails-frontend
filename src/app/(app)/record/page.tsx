@@ -9,10 +9,15 @@ import {
   Card,
   EmptyState,
   ErrorBanner,
+  Field,
+  Input,
   KeyValue,
   ListRow,
+  Select,
   SectionTitle,
 } from "@/components/ui";
+import { SessionSheet, type StoppedSession } from "@/components/SessionSheet";
+import { TASK_LABELS } from "@/lib/types";
 import {
   BluetoothMuse,
   isWebBluetoothSupported,
@@ -25,10 +30,10 @@ import { useMuse } from "@/lib/muse/useMuse";
 const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
 
 /**
- * Record, step one of sprint 11: pair the Muse over Web Bluetooth, watch the
- * four contact lights and the live signal, see the device state. Recording
- * itself (protocol, markers, upload) lands in the next steps; the Start
- * button is shown disabled so the layout is final.
+ * Record (sprint 11): pair the Muse over Web Bluetooth, watch the four contact
+ * lights and the live signal, then record a free session and upload it as a
+ * canonical Brain Trails session file. Stimulus protocols and markers are a
+ * later step.
  */
 export default function RecordPage() {
   // Web Bluetooth support is a client-only fact: the server snapshot is null so
@@ -47,6 +52,23 @@ export default function RecordPage() {
   );
   const muse = useMuse(createDevice);
   const connected = muse.status === "connected";
+  const [title, setTitle] = useState("");
+  const [taskLabel, setTaskLabel] = useState("");
+  const [override, setOverride] = useState(false);
+  const [stopped, setStopped] = useState<StoppedSession | null>(null);
+  const canStart = connected && !muse.isRecording && (muse.allGood || override);
+
+  const stop = () => {
+    const result = muse.stopRecording();
+    if (!result) return;
+    setStopped({
+      capture: result.capture,
+      timeline: result.timeline,
+      deviceName: muse.deviceName ?? "Muse",
+      title: title.trim() || `Session ${new Date().toLocaleString()}`,
+      taskLabel,
+    });
+  };
 
   if (supported === false && !SIMULATOR_ALLOWED) return <Unsupported />;
 
@@ -207,24 +229,83 @@ export default function RecordPage() {
           <section>
             <SectionTitle>Session</SectionTitle>
             <Card className="flex flex-col gap-4">
-              <p className="text-ink-2">
-                Recording, markers and upload arrive in the next step. For now
-                this page is about wearing the band well.
-              </p>
-              <Button size="lg" disabled title="Not available yet">
-                Start recording
-              </Button>
+              <Field label="Title">
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Morning rest"
+                  disabled={muse.isRecording}
+                />
+              </Field>
+              <Field
+                label="Task"
+                hint="Optional; protocols with stimuli come later."
+              >
+                <Select
+                  value={taskLabel}
+                  onChange={(e) => setTaskLabel(e.target.value)}
+                  disabled={muse.isRecording}
+                >
+                  <option value="">Free recording</option>
+                  {TASK_LABELS.map((t) => (
+                    <option key={t} value={t}>
+                      {t.replaceAll("_", " ")}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              {muse.isRecording ? (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="inline-flex items-center gap-2 text-[15px] font-medium">
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-danger" />
+                    REC · {Math.floor(muse.recordingSeconds / 60)}:
+                    {String(Math.floor(muse.recordingSeconds % 60)).padStart(
+                      2,
+                      "0"
+                    )}
+                  </span>
+                  <Button variant="danger" onClick={stop}>
+                    Stop
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="lg"
+                  disabled={!canStart}
+                  onClick={() => muse.startRecording()}
+                >
+                  Start recording
+                </Button>
+              )}
               <p className="type-caption text-ink-3">
-                {connected
-                  ? muse.allGood
-                    ? "All four electrodes read good."
-                    : "Waiting for four green lights."
-                  : "Connect a headband first."}
+                {!connected ? (
+                  "Connect a headband first."
+                ) : muse.isRecording ? (
+                  "Stopping shows a summary before anything is uploaded."
+                ) : muse.allGood ? (
+                  "All four electrodes read good."
+                ) : override ? (
+                  "Recording without four green lights."
+                ) : (
+                  <>
+                    Waiting for four green lights ·{" "}
+                    <button
+                      type="button"
+                      className="text-accent underline-offset-2 hover:underline"
+                      onClick={() => setOverride(true)}
+                    >
+                      record anyway
+                    </button>
+                  </>
+                )}
               </p>
             </Card>
           </section>
         </div>
       </div>
+      {stopped && (
+        <SessionSheet session={stopped} onClose={() => setStopped(null)} />
+      )}
     </main>
   );
 }
