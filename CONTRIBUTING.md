@@ -234,9 +234,9 @@ README: what slowed us down.
 The machine-built `dev` of section 1 stays suspended. What runs today:
 
 1. Branch from `dev`; open a PR **to `dev`**. Required: `ci` green (eslint, prettier,
-   build, typecheck, vitest with coverage thresholds) and `pr-review` green
-   (autonomous reviewer: promise kept, data safety, security, code+tests quality).
-   Squash merge. Vercel posts a preview URL on every PR.
+   build, typecheck, vitest with coverage thresholds). The autonomous reviewer
+   (`pr-review`) runs **on demand**: add the `review` label or dispatch the workflow
+   with the PR number; blocking findings fail the check. Squash merge. Vercel posts a preview URL on every PR.
 2. Every PR states its wiki impact and ships a PR to `brain-trails-wiki`.
 3. Promotion: Actions -> **promote** -> target `beta` (from `dev`) or `main` (from
    `beta`, optional `vX.Y.Z` for tag + Release). Refuses unless the source head is
