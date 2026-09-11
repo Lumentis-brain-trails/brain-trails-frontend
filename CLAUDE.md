@@ -53,8 +53,10 @@ npm test                                # vitest with coverage thresholds (85% o
 
 ## Working method (backend ADR 0013)
 
-Branch from `dev` -> PR to `dev` -> `ci` green (+ `pr-review` when Alessio adds the
-`review` label or dispatches it) -> squash merge ->
+Branch from `dev` -> PR to `dev` -> `ci` green -> squash merge (feature PRs are not
+reviewed by the autonomous reviewer) -> `promote` `action=open` to beta -> Alessio
+dispatches `pr-review` on that PR (owner only, base `beta` only) -> `promote`
+`action=merge` (refuses without a green review) ->
 `promote` workflow to `beta`, then `main` (with `vX.Y.Z`). Never push to
 `dev`/`beta`/`main` directly; rulesets enforce PRs on this repo.
 
