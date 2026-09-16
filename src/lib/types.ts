@@ -84,3 +84,23 @@ export const TASK_LABELS = [
   "motor_imagery",
   "video_watching",
 ] as const;
+
+/** A catalog item: something a session can be recorded against (backend V2-0002). */
+export interface Media {
+  id: string;
+  kind: "video" | "game" | "scenario";
+  visibility: "private" | "official";
+  status: "draft" | "ready";
+  slug: string;
+  title: string;
+  description: string | null;
+  module: string | null;
+  manifest: { content_warning?: string | null; expected_duration_s?: number };
+  definition: Record<string, unknown>;
+  duration_s: number | null;
+  created_at: string;
+  mine: boolean;
+  /** Short-lived links, only on the detail response. */
+  url?: string | null;
+  cover_url?: string | null;
+}
