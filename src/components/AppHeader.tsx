@@ -43,10 +43,11 @@ export function AppHeader() {
   return (
     <header className="material-glass sticky top-0 z-40 border-b border-hairline">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-        <Link href="/recordings" className="text-ink">
+        <Link href="/library" className="text-ink">
           <Wordmark size={16} />
         </Link>
         <nav className="absolute left-1/2 hidden -translate-x-1/2 gap-1 sm:flex">
+          {link("/library", "Library")}
           {link("/recordings", "Recordings")}
           {link("/record", "Record")}
           {link("/account", "Account")}
@@ -71,6 +72,7 @@ export function AppHeader() {
         </div>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
+        {link("/library", "Library")}
         {link("/recordings", "Recordings")}
         {link("/record", "Record")}
         {link("/account", "Account")}
