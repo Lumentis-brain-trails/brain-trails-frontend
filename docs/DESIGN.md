@@ -4,6 +4,15 @@ Brain Trails follows Apple's interface principles translated to the web: the
 interface disappears, the trail is the only thing that carries colour, and every
 motion starts from the current on-screen value and respects reduced motion.
 
+## The brand surface (entry screen)
+
+`/` is the one page that leaves the system: a dark ground in both colour schemes,
+two ribbons of light in opposite corners (`CornerRibbons`, canvas), the name in
+**Manrope** (`font-display`, self-hosted by next/font), one viewport with nothing to
+scroll. Everything behind the login keeps the rules below - system font, monochrome
+chrome, colour only in the trail. Keep the exception where it is: the ribbons and
+the webfont must not leak into the app.
+
 ## Tokens (`src/app/globals.css`)
 
 | Group    | Tokens                                                         | Rule                                                                                   |
@@ -22,6 +31,8 @@ Charts (Plotly, uPlot) cannot read CSS variables, so `useChartTheme()` mirrors t
 palette for them.
 
 ## Type ramp
+
+The entry screen is the exception: `font-display` (Manrope) with weights 300/600/700.
 
 Classes `type-display`, `type-title`, `type-heading`, `type-subhead`,
 `type-body-lg`, `type-caption`, `type-eyebrow`. Tracking is size-specific
@@ -46,4 +57,5 @@ panel, Escape/scrim to dismiss, non-dismissible while a mutation runs).
 - Confirmation dialogs only for destructive, irreversible actions (delete
   recording, delete account).
 - Copy is short and specific: "Recordings", "New recording", "Delete everything".
-- No mascots, no decorative illustration beyond the trail itself.
+- No mascots, no decorative illustration beyond the trail itself - and the entry
+  screen's ribbons, which are the brand mark and stay on that page.

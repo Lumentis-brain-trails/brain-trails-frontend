@@ -102,6 +102,10 @@
     system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-mono:
     ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  /* brand face, entry screen only (see docs/DESIGN.md); the app keeps --font-sans */
+  --font-display:
+    var(--font-manrope), -apple-system, BlinkMacSystemFont, system-ui,
+    "Helvetica Neue", sans-serif;
   --radius-control: 12px;
   --radius-card: 18px;
   --radius-sheet: 22px;
