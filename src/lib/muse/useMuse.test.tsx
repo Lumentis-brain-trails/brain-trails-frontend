@@ -19,6 +19,7 @@ describe("useMuse", () => {
     });
     expect(result.current.status).toBe("connected");
     expect(result.current.deviceName).toBe("Muse-SIM");
+    expect(result.current.model).toBe("simulated");
 
     // Three seconds of packets (64 packets = 768 samples per channel).
     act(() => {
@@ -68,6 +69,7 @@ describe("useMuse", () => {
   test("surfaces a connection failure as an error state", async () => {
     const failing = {
       name: "x",
+      model: "muse-2" as const,
       connect: async () => {
         throw new Error("GATT operation failed");
       },

@@ -1,16 +1,15 @@
 /**
  * Device-clock timeline for a Muse stream (decision V1-0001).
  *
- * The headset's packet counter is the clock: every packet carries twelve
- * samples at a nominal 256 Hz, so a sample's position on the device timeline is
- * `counter * 12 + i`, independent of Bluetooth arrival jitter. This module
- * unwraps the 16-bit counter, counts lost packets, and fits a line from sample
- * index to host time (`performance.now()`), LSL-style, so later work can put
- * page-generated stimuli on the same axis and report jitter and drift.
+ * The headset's own clock is the clock: the driver stamps every packet with
+ * the index of its first sample at a nominal 256 Hz, independent of Bluetooth
+ * arrival jitter and of how the band happens to number its packets. This
+ * module counts lost packets from the holes in those indices and fits a line
+ * from sample index to host time (`performance.now()`), LSL-style, so later
+ * work can put page-generated stimuli on the same axis and report jitter and
+ * drift.
  */
-import { SAMPLES_PER_PACKET, SAMPLE_RATE_HZ } from "./protocol";
-
-const COUNTER_MODULO = 0x10000;
+import { SAMPLE_RATE_HZ } from "./protocol";
 
 /** Arrival observation kept for the clock fit. */
 interface Anchor {
@@ -37,12 +36,11 @@ export interface TimelineStats {
 }
 
 /**
- * Tracks one electrode's packet stream; the four channels share counters in
+ * Tracks one electrode's packet stream; the four channels are stamped in
  * lockstep, so the caller feeds only the first channel's packets here.
  */
 export class PacketTimeline {
-  private unwrapped: number | null = null;
-  private lastRaw: number | null = null;
+  private lastSampleIndex: number | null = null;
   private packets = 0;
   private lostPackets = 0;
   private anchors: Anchor[] = [];
@@ -51,25 +49,22 @@ export class PacketTimeline {
   constructor(private readonly windowSize = 640) {}
 
   /**
-   * Register a packet. Returns the unwrapped index of its first sample so the
-   * caller can place the samples on the device timeline.
+   * Register a packet of `sampleCount` samples starting at `sampleIndex`.
+   *
+   * A gap wider than one packet means notifications went missing; how many is
+   * read off the gap in packet-sized steps, which works for any band's packet
+   * size and tolerates the rounding of a clock-derived index.
    */
-  push(rawCounter: number, hostMs: number): number {
-    if (this.unwrapped === null || this.lastRaw === null) {
-      this.unwrapped = rawCounter;
-    } else {
-      let delta = rawCounter - this.lastRaw;
-      if (delta < -COUNTER_MODULO / 2) delta += COUNTER_MODULO; // wrapped
-      if (delta <= 0) delta = 1; // duplicate or out-of-order: never go backwards
-      this.lostPackets += delta - 1;
-      this.unwrapped += delta;
+  push(sampleIndex: number, hostMs: number, sampleCount: number): void {
+    if (this.lastSampleIndex !== null) {
+      const gap = sampleIndex - this.lastSampleIndex;
+      if (gap > sampleCount)
+        this.lostPackets += Math.max(Math.round(gap / sampleCount) - 1, 0);
     }
-    this.lastRaw = rawCounter;
+    this.lastSampleIndex = sampleIndex;
     this.packets += 1;
-    const sampleIndex = this.unwrapped * SAMPLES_PER_PACKET;
     this.anchors.push({ sampleIndex, hostMs });
     if (this.anchors.length > this.windowSize) this.anchors.shift();
-    return sampleIndex;
   }
 
   /** Least-squares fit of host time against sample index over the window. */
@@ -78,7 +73,7 @@ export class PacketTimeline {
     const base: TimelineStats = {
       packets: this.packets,
       lostPackets: this.lostPackets,
-      lastSampleIndex: (this.unwrapped ?? 0) * SAMPLES_PER_PACKET,
+      lastSampleIndex: this.lastSampleIndex ?? 0,
       msPerSample: null,
       hostMsAtIndex0: null,
       effectiveRateHz: null,

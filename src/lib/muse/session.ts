@@ -4,10 +4,16 @@
  *
  * The file is CSV with a metadata comment line, then
  * `sample_index,t_session_s,TP9,AF7,AF8,TP10`. `sample_index` is the device
- * clock (unwrapped counter * 12 + i); the backend parser
+ * clock, placed there by the driver; the backend parser
  * (`pipeline/sources/braintrails.py`) relies on it alone. A lost packet is an
  * index jump; a packet lost on one electrode only is an empty cell.
+ *
+ * The file says nothing about which headband produced it beyond the `device`
+ * and `device_model` header fields (the latter is what the backend parser
+ * reads as the source's device): a packet's sample count differs between Muse
+ * generations, a row does not.
  */
+import type { MuseModel } from "./models";
 import {
   EEG_CHANNELS,
   IMU_RATE_HZ,
@@ -18,12 +24,13 @@ import {
 } from "./protocol";
 import type { TimelineStats } from "./timeline";
 
-const COUNTER_MODULO = 0x10000;
-/** Entries older than this many packets are flushed even if a channel is missing. */
-const STALE_PACKETS = 64;
+/** Entries this far behind the newest sample are flushed even if a channel is missing. */
+const STALE_SAMPLES = 64 * SAMPLES_PER_PACKET;
 
 interface Block {
   sampleIndex: number;
+  /** Samples per channel in this block, whatever the band sends per packet. */
+  length: number;
   channels: Partial<Record<EegChannel, Float32Array>>;
 }
 
@@ -31,34 +38,34 @@ interface Block {
 export interface SessionCapture {
   startedAt: Date;
   endedAt: Date;
-  /** Complete or partial 12-sample blocks, sorted by device clock. */
+  /** Complete or partial packets, sorted by device clock. */
   blocks: Block[];
   firstSampleIndex: number;
   lastSampleIndex: number;
+  /** Samples actually received, per electrode. */
+  sampleCount: number;
   /** Samples the device produced but the browser never received. */
   missingSamples: number;
   durationS: number;
 }
 
 /**
- * Accumulates packets from all four electrodes, matching them by counter.
- * Owns its own counter unwrapping so a channel arriving before or after the
- * others still lands on the same sample index.
+ * Accumulates packets from all four electrodes, matching them by the sample
+ * index the driver put on them, so a channel arriving before or after the
+ * others still lands on the same block whichever band is streaming.
  */
 export class SessionRecorder {
   private startedAt = new Date();
   private pending = new Map<number, Block>();
   private done: Block[] = [];
-  private lastRaw: number | null = null;
-  private unwrapped = 0;
 
-  feed(channel: EegChannel, rawCounter: number, samples: Float32Array): void {
-    const index = this.unwrap(rawCounter) * SAMPLES_PER_PACKET;
+  feed(channel: EegChannel, index: number, samples: Float32Array): void {
     let block = this.pending.get(index);
     if (!block) {
-      block = { sampleIndex: index, channels: {} };
+      block = { sampleIndex: index, length: samples.length, channels: {} };
       this.pending.set(index, block);
     }
+    block.length = Math.max(block.length, samples.length);
     block.channels[channel] = samples;
     if (EEG_CHANNELS.every((c) => block!.channels[c])) {
       this.pending.delete(index);
@@ -80,23 +87,39 @@ export class SessionRecorder {
         blocks: [],
         firstSampleIndex: 0,
         lastSampleIndex: 0,
+        sampleCount: 0,
         missingSamples: 0,
         durationS: 0,
       };
     }
+    const tail = this.done[this.done.length - 1];
     const first = this.done[0].sampleIndex;
-    const last =
-      this.done[this.done.length - 1].sampleIndex + SAMPLES_PER_PACKET - 1;
+    const last = tail.sampleIndex + tail.length - 1;
     const expected = last - first + 1;
+    const received = this.done.reduce((n, b) => n + b.length, 0);
     return {
       startedAt: this.startedAt,
       endedAt,
       blocks: this.done,
       firstSampleIndex: first,
       lastSampleIndex: last,
-      missingSamples: expected - this.done.length * SAMPLES_PER_PACKET,
+      sampleCount: received,
+      missingSamples: expected - received,
       durationS: expected / SAMPLE_RATE_HZ,
     };
+  }
+
+  /**
+   * The first sample index this capture kept, or null before the first packet.
+   *
+   * Available while recording, not only at `stop()`, so page events can be placed on the
+   * session clock as they happen rather than re-dated afterwards.
+   */
+  get firstIndex(): number | null {
+    let min = Infinity;
+    for (const b of [...this.done, ...this.pending.values()])
+      if (b.sampleIndex < min) min = b.sampleIndex;
+    return min === Infinity ? null : min;
   }
 
   /** Seconds captured so far, on the device clock. */
@@ -106,32 +129,14 @@ export class SessionRecorder {
     let max = -Infinity;
     for (const b of [...this.done, ...this.pending.values()]) {
       if (b.sampleIndex < min) min = b.sampleIndex;
-      if (b.sampleIndex > max) max = b.sampleIndex;
+      if (b.sampleIndex + b.length > max) max = b.sampleIndex + b.length;
     }
-    return (max - min + SAMPLES_PER_PACKET) / SAMPLE_RATE_HZ;
-  }
-
-  /** Signed wrap-aware unwrap; small negative deltas mean a late channel packet. */
-  private unwrap(raw: number): number {
-    if (this.lastRaw === null) {
-      this.lastRaw = raw;
-      this.unwrapped = raw;
-      return raw;
-    }
-    let delta = raw - this.lastRaw;
-    if (delta > COUNTER_MODULO / 2) delta -= COUNTER_MODULO;
-    if (delta < -COUNTER_MODULO / 2) delta += COUNTER_MODULO;
-    const value = this.unwrapped + delta;
-    if (delta > 0) {
-      this.lastRaw = raw;
-      this.unwrapped = value;
-    }
-    return value;
+    return (max - min) / SAMPLE_RATE_HZ;
   }
 
   private flushStale(latestIndex: number): void {
     for (const [index, block] of this.pending) {
-      if (latestIndex - index > STALE_PACKETS * SAMPLES_PER_PACKET) {
+      if (latestIndex - index > STALE_SAMPLES) {
         this.pending.delete(index);
         this.done.push(block);
       }
@@ -142,6 +147,8 @@ export class SessionRecorder {
 /** Header fields written on the first line of the file. */
 export interface SessionMeta {
   deviceName: string;
+  /** Which generation recorded it; the rows themselves do not differ. */
+  model: MuseModel;
   timeline: TimelineStats | null;
 }
 
@@ -157,6 +164,7 @@ export function buildSessionCsv(
     "# brain-trails-session v1",
     `sfreq=${SAMPLE_RATE_HZ}`,
     `device=${meta.deviceName.replace(/\s+/g, "_")}`,
+    `device_model=${meta.model}`,
     `started_at=${capture.startedAt.toISOString()}`,
     `ended_at=${capture.endedAt.toISOString()}`,
     `missing_samples=${capture.missingSamples}`,
@@ -170,7 +178,7 @@ export function buildSessionCsv(
     `sample_index,t_session_s,${EEG_CHANNELS.join(",")}`,
   ];
   for (const block of capture.blocks) {
-    for (let i = 0; i < SAMPLES_PER_PACKET; i++) {
+    for (let i = 0; i < block.length; i++) {
       const index = block.sampleIndex + i;
       const tSession = (
         (index - capture.firstSampleIndex) /
@@ -178,7 +186,7 @@ export function buildSessionCsv(
       ).toFixed(6);
       const values = EEG_CHANNELS.map((c) => {
         const row = block.channels[c];
-        return row ? row[i].toFixed(2) : "";
+        return row && i < row.length ? row[i].toFixed(2) : "";
       });
       lines.push(`${index},${tSession},${values.join(",")}`);
     }
@@ -186,14 +194,20 @@ export function buildSessionCsv(
   return lines.join("\n") + "\n";
 }
 
-/** Non-EEG streams the headband sends; kept for later analyses. */
+/**
+ * Non-EEG streams the headband sends; kept for later analyses.
+ *
+ * The `ppg_*` streams exist on the Muse 2 and the Muse S only. The Athena
+ * replaces that sensor with the fNIRS optode array, which this version does
+ * not record, so an Athena session has motion rows and no optical ones.
+ */
 export type ExtraStream =
   "acc" | "gyro" | "ppg_ambient" | "ppg_infrared" | "ppg_red";
 
 interface ExtraPacket {
   stream: ExtraStream;
-  /** Unwrapped packet counter of that stream. */
-  counter: number;
+  /** Index of the first reading on that stream's own device clock. */
+  sampleIndex: number;
   hostMs: number;
   /** Flat samples: xyz triplets for motion, single values for PPG. */
   samples: Float32Array;
@@ -214,27 +228,17 @@ const STREAM_WIDTH: Record<ExtraStream, number> = {
   ppg_red: 1,
 };
 
-/** Collects motion and PPG packets; each stream unwraps its own counter. */
+/** Collects motion and PPG packets on the indices the driver placed them at. */
 export class ExtrasRecorder {
   private packets: ExtraPacket[] = [];
-  private last = new Map<ExtraStream, { raw: number; unwrapped: number }>();
 
   feed(
     stream: ExtraStream,
-    rawCounter: number,
+    sampleIndex: number,
     samples: Float32Array,
     hostMs: number
   ): void {
-    const prev = this.last.get(stream);
-    let unwrapped = rawCounter;
-    if (prev) {
-      let delta = rawCounter - prev.raw;
-      if (delta < -COUNTER_MODULO / 2) delta += COUNTER_MODULO;
-      if (delta <= 0) delta = 1;
-      unwrapped = prev.unwrapped + delta;
-    }
-    this.last.set(stream, { raw: rawCounter, unwrapped });
-    this.packets.push({ stream, counter: unwrapped, hostMs, samples });
+    this.packets.push({ stream, sampleIndex, hostMs, samples });
   }
 
   /** Packet counts per stream, for the summary. */
@@ -253,7 +257,7 @@ export class ExtrasRecorder {
  * Serialise the extras as CSV on the EEG session clock. Each packet's arrival
  * time is mapped to an EEG sample index with the timeline fit, then samples in
  * the packet are spread backwards at the stream's rate; the stream's own
- * counter is kept in `sample_index` for gap analysis.
+ * device clock is kept in `sample_index` for gap analysis.
  */
 export function buildExtrasCsv(
   packets: ExtraPacket[],
@@ -284,7 +288,7 @@ export function buildExtrasCsv(
         k < width ? p.samples[i * width + k].toFixed(width === 1 ? 0 : 4) : ""
       );
       lines.push(
-        `${p.stream},${(p.counter * n + i).toString()},${tSession},${values.join(",")}`
+        `${p.stream},${p.sampleIndex + i},${tSession},${values.join(",")}`
       );
     }
   }

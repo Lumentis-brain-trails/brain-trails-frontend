@@ -35,6 +35,10 @@ const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
  * lights and the live signal, then record a free session and upload it as a
  * canonical Brain Trails session file. Stimulus protocols and markers are a
  * later step.
+ *
+ * Either headband generation can be worn: which protocol the band speaks is
+ * settled by the driver after pairing, and the session file is the same four
+ * electrodes either way.
  */
 export default function RecordPage() {
   // Web Bluetooth support is a client-only fact: the server snapshot is null so
@@ -44,13 +48,16 @@ export default function RecordPage() {
     () => isWebBluetoothSupported(),
     () => null
   );
-  const [source, setSource] = useState<"bluetooth" | "simulated">("bluetooth");
+  const [source, setSource] = useState<
+    "bluetooth" | "simulated" | "simulated-athena"
+  >("bluetooth");
 
-  const createDevice = useCallback(
-    (): MuseDevice =>
-      source === "simulated" ? new SimulatedMuse() : new BluetoothMuse(),
-    [source]
-  );
+  const createDevice = useCallback((): MuseDevice => {
+    if (source === "bluetooth") return new BluetoothMuse();
+    return new SimulatedMuse({
+      model: source === "simulated-athena" ? "athena" : "muse-2",
+    });
+  }, [source]);
   const muse = useMuse(createDevice);
   const connected = muse.status === "connected";
   const [title, setTitle] = useState("");
@@ -67,6 +74,7 @@ export default function RecordPage() {
       timeline: result.timeline,
       extras: result.extras,
       deviceName: muse.deviceName ?? "Muse",
+      model: muse.model,
       title: title.trim() || `Session ${new Date().toLocaleString()}`,
       taskLabel,
     });
@@ -80,7 +88,8 @@ export default function RecordPage() {
         <div>
           <h1 className="type-title">Record</h1>
           <p className="mt-1 text-ink-2">
-            Wear the band, wait for four green lights, then start.
+            Wear the band — Muse 2, Muse S or Muse S Athena — wait for four
+            green lights, then start.
           </p>
         </div>
         <BrowserStatus supported={supported} />
@@ -138,12 +147,14 @@ export default function RecordPage() {
               <ListRow className="justify-between">
                 <div>
                   <div className="type-subhead">
-                    {muse.deviceName ?? "Muse 2"}
+                    {muse.deviceName ?? "Muse 2 or Muse S"}
                   </div>
                   <div className="type-caption text-ink-3">
-                    {source === "simulated"
-                      ? "Simulated headband"
-                      : "Bluetooth Low Energy"}
+                    {connected
+                      ? muse.profile.label
+                      : source === "bluetooth"
+                        ? "Bluetooth Low Energy"
+                        : "Simulated headband"}
                   </div>
                 </div>
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-2">
@@ -197,9 +208,11 @@ export default function RecordPage() {
               <KeyValue
                 label="PPG (infrared)"
                 value={
-                  muse.sensors.ppgInfrared !== null
-                    ? muse.sensors.ppgInfrared.toFixed(0)
-                    : "—"
+                  connected && !muse.profile.hasPpg
+                    ? "not on this band"
+                    : muse.sensors.ppgInfrared !== null
+                      ? muse.sensors.ppgInfrared.toFixed(0)
+                      : "—"
                 }
                 mono
               />
@@ -224,17 +237,26 @@ export default function RecordPage() {
                 ) : (
                   <>
                     {SIMULATOR_ALLOWED && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={muse.status === "connecting"}
-                        onClick={() => {
-                          setSource("simulated");
-                        }}
-                        aria-pressed={source === "simulated"}
-                      >
-                        Simulated
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={muse.status === "connecting"}
+                          onClick={() => setSource("simulated")}
+                          aria-pressed={source === "simulated"}
+                        >
+                          Simulated
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={muse.status === "connecting"}
+                          onClick={() => setSource("simulated-athena")}
+                          aria-pressed={source === "simulated-athena"}
+                        >
+                          Simulated Athena
+                        </Button>
+                      </>
                     )}
                     <Button
                       size="sm"

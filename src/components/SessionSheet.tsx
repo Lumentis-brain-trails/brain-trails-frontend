@@ -10,6 +10,7 @@ import {
   type ExtrasRecorder,
   type SessionCapture,
 } from "@/lib/muse/session";
+import { MODEL_PROFILES, type MuseModel } from "@/lib/muse/models";
 import type { TimelineStats } from "@/lib/muse/timeline";
 import { uploadToStorage, type Presign } from "@/lib/upload";
 import { Button, ErrorBanner, KeyValue } from "@/components/ui";
@@ -22,6 +23,7 @@ export interface StoppedSession {
   timeline: TimelineStats;
   extras: ExtrasRecorder;
   deviceName: string;
+  model: MuseModel;
   title: string;
   taskLabel: string;
 }
@@ -57,6 +59,7 @@ export function SessionSheet({
     mutationFn: async () => {
       const csv = buildSessionCsv(capture, {
         deviceName: session.deviceName,
+        model: session.model,
         timeline,
       });
       const blob = new Blob([csv], { type: "text/csv" });
@@ -123,7 +126,7 @@ export function SessionSheet({
           />
           <KeyValue
             label="Samples"
-            value={`${capture.blocks.length * 12} · ${lost} missing`}
+            value={`${capture.sampleCount} · ${lost} missing`}
             mono
           />
           <KeyValue
@@ -141,14 +144,22 @@ export function SessionSheet({
             mono
           />
           <KeyValue
+            label="Headband"
+            value={MODEL_PROFILES[session.model].label}
+          />
+          <KeyValue
             label="Other sensors"
             value={(() => {
               const c = session.extras.counts();
               const motion = (c.acc ?? 0) * 3;
               const ppg = (c.ppg_infrared ?? 0) * 6;
-              return motion + ppg > 0
-                ? `${motion} motion · ${ppg} PPG samples`
-                : "none";
+              if (motion + ppg === 0) return "none";
+              const parts = [`${motion} motion`];
+              // The Athena streams no PPG: its optical sensor is the fNIRS
+              // array, which this version does not record.
+              if (MODEL_PROFILES[session.model].hasPpg)
+                parts.push(`${ppg} PPG samples`);
+              return parts.join(" · ");
             })()}
             mono
           />

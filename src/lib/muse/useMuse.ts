@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MuseDevice } from "./device";
+import { MODEL_PROFILES, type MuseModel } from "./models";
 import { EEG_CHANNELS, SAMPLE_RATE_HZ, type EegChannel } from "./protocol";
 import { assessChannel, type ChannelQuality } from "./quality";
 import {
@@ -27,6 +28,8 @@ export interface MuseState {
   status: MuseStatus;
   error: string | null;
   deviceName: string | null;
+  /** Which generation is connected; drives the rail threshold and the labels. */
+  model: MuseModel;
   batteryPercent: number | null;
   quality: Record<EegChannel, ChannelQuality>;
   timeline: TimelineStats | null;
@@ -109,6 +112,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     status: "idle",
     error: null,
     deviceName: null,
+    model: "muse-2",
     batteryPercent: null,
     quality: unknownQuality(),
     timeline: null,
@@ -151,10 +155,14 @@ export function useMuse(createDevice: () => MuseDevice) {
     unsubscribe.current.push(
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
-        recorderRef.current?.feed(channel, packet.counter, packet.samples);
-        // The four electrodes share one counter; anchor the timeline on the first.
+        recorderRef.current?.feed(channel, packet.sampleIndex, packet.samples);
+        // The four electrodes are stamped alike; anchor the timeline on the first.
         if (channel === EEG_CHANNELS[0]) {
-          timelineRef.current.push(packet.counter, hostMs);
+          timelineRef.current.push(
+            packet.sampleIndex,
+            hostMs,
+            packet.samples.length
+          );
           packetsSinceRefresh.current += 1;
         }
       }),
@@ -164,7 +172,12 @@ export function useMuse(createDevice: () => MuseDevice) {
         if (kind === "acc") sensorsRef.current.accG = mag;
         else sensorsRef.current.gyroDps = mag;
         sensorsRef.current.motionPackets += 1;
-        extrasRef.current?.feed(kind, packet.counter, packet.samples, hostMs);
+        extrasRef.current?.feed(
+          kind,
+          packet.sampleIndex,
+          packet.samples,
+          hostMs
+        );
       }),
       device.on("ppg", ({ channel, packet, hostMs }) => {
         if (channel === "infrared")
@@ -173,7 +186,7 @@ export function useMuse(createDevice: () => MuseDevice) {
         sensorsRef.current.ppgPackets += 1;
         extrasRef.current?.feed(
           `ppg_${channel}` as ExtraStream,
-          packet.counter,
+          packet.sampleIndex,
           packet.samples,
           hostMs
         );
@@ -193,7 +206,13 @@ export function useMuse(createDevice: () => MuseDevice) {
     );
     try {
       await device.connect();
-      setState((s) => ({ ...s, status: "connected", deviceName: device.name }));
+      // The generation is only known once the GATT service has been inspected.
+      setState((s) => ({
+        ...s,
+        status: "connected",
+        deviceName: device.name,
+        model: device.model,
+      }));
     } catch (err) {
       teardown();
       const message =
@@ -220,13 +239,14 @@ export function useMuse(createDevice: () => MuseDevice) {
   }, [teardown]);
 
   // One refresh per second: quality, packet statistics, battery.
+  const railUv = MODEL_PROFILES[state.model].eegRailUv;
   useEffect(() => {
     if (state.status !== "connected") return;
     const id = setInterval(() => {
       const quality = Object.fromEntries(
         EEG_CHANNELS.map((c) => [
           c,
-          assessChannel(rings[c].recent(QUALITY_WINDOW_SAMPLES)),
+          assessChannel(rings[c].recent(QUALITY_WINDOW_SAMPLES), railUv),
         ])
       ) as Record<EegChannel, ChannelQuality>;
       const packetRate = packetsSinceRefresh.current / (REFRESH_MS / 1000);
@@ -242,7 +262,7 @@ export function useMuse(createDevice: () => MuseDevice) {
       }));
     }, REFRESH_MS);
     return () => clearInterval(id);
-  }, [state.status, rings]);
+  }, [state.status, rings, railUv]);
 
   // Release the headband if the page unmounts mid-session.
   useEffect(() => () => void deviceRef.current?.disconnect(), []);
@@ -286,14 +306,40 @@ export function useMuse(createDevice: () => MuseDevice) {
     };
   }, []);
 
+  /**
+   * Live inputs for placing page events on the EEG clock (decision V1-0001).
+   *
+   * Read from the refs rather than from React state, which only refreshes once a second:
+   * a stimulus onset must be stamped against the fit as it stands now, not as it stood up
+   * to a second ago. Both return null until they exist, so a caller cannot accidentally
+   * date an event from an origin the recording does not have yet.
+   */
+  const readTimelineFit = useCallback(() => {
+    const stats = timelineRef.current.stats();
+    return stats.hostMsAtIndex0 !== null && stats.msPerSample !== null
+      ? {
+          hostMsAtIndex0: stats.hostMsAtIndex0,
+          msPerSample: stats.msPerSample,
+        }
+      : null;
+  }, []);
+
+  const readFirstSampleIndex = useCallback(
+    () => recorderRef.current?.firstIndex ?? null,
+    []
+  );
+
   const allGood = EEG_CHANNELS.every((c) => state.quality[c].level === "good");
   return {
     ...state,
+    profile: MODEL_PROFILES[state.model],
     allGood,
     connect,
     disconnect,
     getRecent,
     startRecording,
     stopRecording,
+    readTimelineFit,
+    readFirstSampleIndex,
   };
 }
