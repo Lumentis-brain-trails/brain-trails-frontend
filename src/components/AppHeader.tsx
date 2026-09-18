@@ -23,7 +23,9 @@ export function AppHeader() {
   });
 
   const link = (href: string, label: string) => {
-    const active = pathname.startsWith(href);
+    // A prefix match alone would light Record up on /recordings as well: the
+    // next character has to be a segment boundary for the section to be ours.
+    const active = pathname === href || pathname.startsWith(`${href}/`);
     return (
       <Link
         href={href}
