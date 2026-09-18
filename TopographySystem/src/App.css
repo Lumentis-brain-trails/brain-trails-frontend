@@ -1,0 +1,171 @@
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: #e6edf3;
+}
+
+.hud-panel {
+  pointer-events: auto;
+  background: rgba(13, 17, 23, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: flex-start;
+  width: auto;
+}
+
+.brand {
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7cc26b;
+  box-shadow: 0 0 8px #7cc26b;
+}
+
+.brand-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: #8b949e;
+  margin-left: 2px;
+}
+
+.phase {
+  margin-left: 24px;
+  font-size: 13px;
+  color: #c9d1d9;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.hud-bands {
+  position: absolute;
+  top: 70px;
+  right: 18px;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.band-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.band-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.band-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.band-name {
+  font-weight: 500;
+  color: #c9d1d9;
+}
+
+.band-name.dominant {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.band-hz {
+  margin-left: auto;
+  color: #6e7681;
+  font-size: 10px;
+}
+
+.band-track {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.band-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.12s linear;
+}
+
+.hud-transport {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, 92vw);
+}
+
+.play-btn {
+  background: #238636;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.play-btn:hover {
+  background: #2ea043;
+}
+
+.scrub {
+  flex: 1;
+  accent-color: #7cc26b;
+}
+
+.time {
+  font-size: 12px;
+  color: #8b949e;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.speed {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e6edf3;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 12px;
+}
