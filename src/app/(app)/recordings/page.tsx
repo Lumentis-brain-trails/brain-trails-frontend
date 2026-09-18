@@ -7,11 +7,28 @@ import { api } from "@/lib/api";
 import type { Recording } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UploadDialog } from "@/components/UploadDialog";
-import { Button, Card } from "@/components/ui";
+import {
+  Button,
+  Card,
+  EmptyState,
+  Icon,
+  Skeleton,
+  Stat,
+} from "@/components/ui";
 
 function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "-";
-  return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+  if (seconds == null) return "–";
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return m ? `${m} min ${s} s` : `${s} s`;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function RecordingsPage() {
@@ -26,101 +43,88 @@ export default function RecordingsPage() {
         ? 2000
         : false,
   });
+  const list = recordings.data;
 
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Your recordings</h1>
-        <Button onClick={() => setShowUpload(true)}>Upload recording</Button>
+    <main className="mx-auto max-w-5xl px-6 py-10">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="type-title">Recordings</h1>
+          <p className="mt-1 text-ink-2">Every session, one trail.</p>
+        </div>
+        <Button onClick={() => setShowUpload(true)}>
+          <Icon name="plus" /> New recording
+        </Button>
       </header>
 
-      {recordings.data && recordings.data.length > 0 && (
-        <div className="mb-6 grid grid-cols-3 gap-4">
-          {[
-            ["Recordings", String(recordings.data.length)],
-            [
-              "Total signal",
-              formatDuration(
-                recordings.data.reduce((a, r) => a + (r.duration_s ?? 0), 0)
-              ),
-            ],
-            [
-              "Last upload",
+      {list && list.length > 0 && (
+        <div className="stagger mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <Stat label="Sessions" value={list.length} />
+          <Stat
+            label="Signal collected"
+            value={formatDuration(
+              list.reduce((a, r) => a + (r.duration_s ?? 0), 0)
+            )}
+          />
+          <Stat
+            label="Last upload"
+            value={formatDate(
               new Date(
-                Math.max(...recordings.data.map((r) => +new Date(r.created_at)))
-              ).toLocaleDateString(),
-            ],
-          ].map(([label, value]) => (
-            <Card key={label} className="py-4">
-              <p className="text-xs uppercase tracking-wide text-neutral-400">
-                {label}
-              </p>
-              <p className="mt-1 text-2xl font-semibold">{value}</p>
-            </Card>
-          ))}
+                Math.max(...list.map((r) => +new Date(r.created_at)))
+              ).toISOString()
+            )}
+          />
         </div>
       )}
+
       {recordings.isLoading && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-16 animate-pulse rounded-xl bg-neutral-200 dark:bg-neutral-800"
-            />
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       )}
-      {recordings.isError && <Card>Could not load recordings.</Card>}
-      {recordings.data?.length === 0 && (
-        <Card className="text-center">
-          <p className="mb-3 text-sm text-neutral-500">
-            No recordings yet. Upload a Muse EEG file to see your first trail.
-          </p>
-          <Button onClick={() => setShowUpload(true)}>
-            Upload your first recording
-          </Button>
+      {recordings.isError && (
+        <Card>
+          <p className="text-ink-2">Could not load recordings.</p>
         </Card>
       )}
-      {recordings.data && recordings.data.length > 0 && (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b border-neutral-200 text-left dark:border-neutral-800">
-              <tr>
-                <th className="p-3">Title</th>
-                <th className="p-3">Task</th>
-                <th className="p-3">Duration</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recordings.data.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
+      {list?.length === 0 && (
+        <Card inset>
+          <EmptyState
+            title="No recordings yet."
+            text="Upload a Muse EEG file to see your first trail."
+            action={
+              <Button onClick={() => setShowUpload(true)}>
+                Upload your first recording
+              </Button>
+            }
+          />
+        </Card>
+      )}
+      {list && list.length > 0 && (
+        <Card inset>
+          <ul className="stagger divide-y divide-hairline">
+            {list.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={`/recordings/${r.id}`}
+                  className="pressable flex items-center gap-4 px-5 py-4 hover:bg-surface-2"
                 >
-                  <td className="p-3">
-                    <Link
-                      href={`/recordings/${r.id}`}
-                      className="font-medium text-indigo-600 hover:underline"
-                    >
-                      {r.title}
-                    </Link>
-                  </td>
-                  <td className="p-3 text-neutral-500">
-                    {r.task_label?.replaceAll("_", " ") ?? "-"}
-                  </td>
-                  <td className="p-3">{formatDuration(r.duration_s)}</td>
-                  <td className="p-3">
-                    <StatusBadge status={r.status} />
-                  </td>
-                  <td className="p-3 text-neutral-500">
-                    {new Date(r.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{r.title}</p>
+                    <p className="type-caption mt-0.5 text-ink-3">
+                      {r.task_label?.replaceAll("_", " ") ?? "No task"} ·{" "}
+                      {formatDuration(r.duration_s)} ·{" "}
+                      {formatDate(r.created_at)}
+                    </p>
+                  </div>
+                  <StatusBadge status={r.status} />
+                  <Icon name="chevron" className="text-ink-3" />
+                </Link>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
       {showUpload && <UploadDialog onClose={() => setShowUpload(false)} />}

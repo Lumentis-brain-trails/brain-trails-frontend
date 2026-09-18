@@ -2,10 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import Home from "./page";
 
-test("landing shows the headline and entry links", () => {
+test("entry screen shows the name and both ways in", () => {
   render(<Home />);
   expect(
-    screen.getByRole("heading", { name: /watch where your brain travelled/i })
+    screen.getByRole("heading", { name: "Braintrails" })
   ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
     "href",

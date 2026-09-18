@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Card } from "@/components/ui";
+import Link from "next/link";
+import { Button } from "@/components/ui";
 
 export default function GlobalError({
   reset,
@@ -9,14 +10,20 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="max-w-md text-center">
-        <h1 className="mb-2 text-xl font-semibold">Something went wrong</h1>
-        <p className="mb-4 text-sm text-neutral-500">
-          The error was logged. You can retry, or go back to your recordings.
-        </p>
+    <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      <h1 className="type-title">Something went wrong.</h1>
+      <p className="mt-3 max-w-sm text-ink-2">
+        The error was logged. You can try again or go back to your recordings.
+      </p>
+      <div className="mt-8 flex gap-2">
         <Button onClick={reset}>Try again</Button>
-      </Card>
+        <Link
+          href="/recordings"
+          className="pressable inline-flex h-10 items-center rounded-full px-5 font-medium text-accent hover:bg-accent-soft"
+        >
+          Recordings
+        </Link>
+      </div>
     </main>
   );
 }

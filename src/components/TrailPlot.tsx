@@ -2,16 +2,35 @@
 
 import dynamic from "next/dynamic";
 import type { Analysis } from "@/lib/types";
+import { useChartTheme } from "@/lib/theme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
-export function TrailPlot({ analysis }: { analysis: Analysis }) {
+/**
+ * The trail: one path through the per-session PCA plane, coloured by time from
+ * grey (start) to the accent (now). Axes carry the explained variance so the
+ * reader knows how much of the session the plane actually holds.
+ */
+export function TrailPlot({
+  analysis,
+  height = 460,
+}: {
+  analysis: Analysis;
+  height?: number;
+}) {
+  const theme = useChartTheme();
   const xs = analysis.points.map((p) => p.pc1);
   const ys = analysis.points.map((p) => p.pc2);
   const ts = analysis.points.map((p) => p.t_start);
-  const ratio = analysis.explained_variance.ratio;
-  const [ev1, ev2] = ratio ?? [null, null];
+  const [ev1, ev2] = analysis.explained_variance.ratio ?? [null, null];
   const last = analysis.points.length - 1;
+  const axis = {
+    gridcolor: theme.hairline,
+    zerolinecolor: theme.hairline,
+    linecolor: "rgba(0,0,0,0)",
+    tickfont: { color: theme.ink3, size: 11 },
+    title: { font: { color: theme.ink3, size: 12 } },
+  };
 
   return (
     <Plot
@@ -21,7 +40,7 @@ export function TrailPlot({ analysis }: { analysis: Analysis }) {
           y: ys,
           mode: "lines",
           type: "scatter",
-          line: { color: "rgba(160,160,160,0.4)", width: 1 },
+          line: { color: theme.trail0, width: 1.5, shape: "spline" },
           hoverinfo: "skip",
           showlegend: false,
         },
@@ -32,12 +51,27 @@ export function TrailPlot({ analysis }: { analysis: Analysis }) {
           type: "scatter",
           marker: {
             color: ts,
-            colorscale: "Viridis",
-            size: 8,
-            colorbar: { title: { text: "time (s)" }, thickness: 12 },
+            colorscale: [
+              [0, theme.trail0],
+              [1, theme.trail1],
+            ],
+            size: 7,
+            line: { width: 0 },
+            colorbar: {
+              title: { text: "seconds", font: { color: theme.ink3, size: 11 } },
+              thickness: 6,
+              len: 0.6,
+              outlinewidth: 0,
+              tickfont: { color: theme.ink3, size: 10 },
+            },
           },
-          text: ts.map((t) => `t = ${t.toFixed(0)} s`),
+          text: ts.map((t) => `${t.toFixed(0)} s`),
           hoverinfo: "text",
+          hoverlabel: {
+            bgcolor: theme.ink,
+            bordercolor: theme.ink,
+            font: { color: theme.trail0 === "#d2d2d7" ? "#fff" : "#000" },
+          },
           showlegend: false,
         },
         {
@@ -45,39 +79,53 @@ export function TrailPlot({ analysis }: { analysis: Analysis }) {
           y: [ys[0]],
           mode: "markers",
           type: "scatter",
-          name: "start",
-          marker: { symbol: "triangle-up", size: 16, color: "#16a34a" },
+          name: "Start",
+          marker: { symbol: "circle", size: 12, color: theme.trailStart },
+          hoverinfo: "name",
         },
         {
           x: [xs[last]],
           y: [ys[last]],
           mode: "markers",
           type: "scatter",
-          name: "end",
-          marker: { symbol: "square", size: 13, color: "#dc2626" },
+          name: "End",
+          marker: { symbol: "circle", size: 12, color: theme.trailEnd },
+          hoverinfo: "name",
         },
       ]}
       layout={{
         autosize: true,
-        height: 480,
-        margin: { l: 60, r: 20, t: 20, b: 50 },
+        height,
+        margin: { l: 48, r: 16, t: 8, b: 44 },
         xaxis: {
+          ...axis,
           title: {
-            text: ev1 != null ? `PC1 (${(ev1 * 100).toFixed(0)}% var)` : "PC1",
+            ...axis.title,
+            text: ev1 != null ? `PC1 · ${(ev1 * 100).toFixed(0)}%` : "PC1",
           },
         },
         yaxis: {
+          ...axis,
           title: {
-            text: ev2 != null ? `PC2 (${(ev2 * 100).toFixed(0)}% var)` : "PC2",
+            ...axis.title,
+            text: ev2 != null ? `PC2 · ${(ev2 * 100).toFixed(0)}%` : "PC2",
           },
         },
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
-        legend: { orientation: "h" },
+        font: { family: "-apple-system, BlinkMacSystemFont, system-ui" },
+        legend: {
+          orientation: "h",
+          x: 0,
+          y: 1.08,
+          font: { color: theme.ink3, size: 11 },
+        },
+        transition: { duration: 240, easing: "cubic-in-out" },
       }}
       config={{
         displaylogo: false,
         responsive: true,
+        modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d"],
         toImageButtonOptions: { filename: "brain-trail" },
       }}
       style={{ width: "100%" }}

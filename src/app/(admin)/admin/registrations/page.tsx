@@ -5,22 +5,33 @@ import { useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
 import type { ApprovalResponse, Registration } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button, Card, ErrorBanner } from "@/components/ui";
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorBanner,
+  Icon,
+  Segmented,
+  Skeleton,
+} from "@/components/ui";
 
 const TABS = ["pending", "approved", "active", "rejected"] as const;
+type Tab = (typeof TABS)[number];
 
-function ProfileTable({ profile }: { profile: Registration["profile"] }) {
+function ProfileGrid({ profile }: { profile: Registration["profile"] }) {
   const entries = Object.entries(profile).filter(
     ([, v]) => v !== null && v !== ""
   );
   return (
-    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
       {entries.map(([key, value]) => (
-        <div key={key}>
-          <dt className="font-medium text-neutral-500">
+        <div key={key} className="min-w-0">
+          <dt className="type-caption text-ink-3">
             {key.replaceAll("_", " ")}
           </dt>
-          <dd>{Array.isArray(value) ? value.join(", ") : String(value)}</dd>
+          <dd className="truncate text-[14px]">
+            {Array.isArray(value) ? value.join(", ") : String(value)}
+          </dd>
         </div>
       ))}
     </dl>
@@ -30,19 +41,23 @@ function ProfileTable({ profile }: { profile: Registration["profile"] }) {
 function VerificationLink({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="mt-2 rounded-md bg-amber-50 p-3 text-xs dark:bg-amber-950">
-      <p className="mb-1 font-medium text-amber-800 dark:text-amber-200">
-        Send this verification link to the user (manual mail mode):
+    <div className="enter-up mt-4 rounded-[var(--radius-control)] bg-warn-soft p-4">
+      <p className="type-caption mb-2 font-medium text-warn">
+        Manual mail mode: send this verification link to the participant.
       </p>
       <div className="flex items-center gap-2">
-        <code className="flex-1 overflow-x-auto whitespace-nowrap">{url}</code>
+        <code className="flex-1 overflow-x-auto font-mono text-[12px] whitespace-nowrap text-ink">
+          {url}
+        </code>
         <Button
-          className="px-2 py-1 text-xs"
+          size="sm"
+          variant="secondary"
           onClick={async () => {
             await navigator.clipboard.writeText(url);
             setCopied(true);
           }}
         >
+          <Icon name={copied ? "check" : "copy"} className="h-3.5 w-3.5" />
           {copied ? "Copied" : "Copy"}
         </Button>
       </div>
@@ -51,7 +66,7 @@ function VerificationLink({ url }: { url: string }) {
 }
 
 export default function AdminRegistrationsPage() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>("pending");
+  const [tab, setTab] = useState<Tab>("pending");
   const [links, setLinks] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -78,6 +93,7 @@ export default function AdminRegistrationsPage() {
         }));
       }
       queryClient.invalidateQueries({ queryKey: ["registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
     },
     onError: (e) =>
       setError(
@@ -90,58 +106,67 @@ export default function AdminRegistrationsPage() {
     registrations.error.status === 403;
 
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <h1 className="mb-1 text-2xl font-bold">Registrations</h1>
-      <p className="mb-6 text-sm text-neutral-500">
-        Review who can join Brain Trails. Approving generates the
-        email-verification link.
-      </p>
+    <main className="mx-auto max-w-4xl px-6 py-10">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="type-title">Registrations</h1>
+          <p className="mt-1 text-ink-2">
+            Who can join. Approving generates the email-verification link.
+          </p>
+        </div>
+        <Segmented
+          label="Registration status"
+          size="md"
+          value={tab}
+          onChange={setTab}
+          options={TABS.map((t) => ({
+            value: t,
+            label: t.charAt(0).toUpperCase() + t.slice(1),
+          }))}
+        />
+      </header>
 
       {forbidden ? (
-        <Card>
-          <ErrorBanner message="Admin role required." />
-        </Card>
+        <ErrorBanner message="Admin role required." />
       ) : (
         <>
-          <div className="mb-4 flex gap-1">
-            {TABS.map((t) => (
-              <Button
-                key={t}
-                variant={tab === t ? "primary" : "ghost"}
-                className="px-3 py-1 text-xs"
-                onClick={() => setTab(t)}
-              >
-                {t}
-              </Button>
-            ))}
-          </div>
           {error && (
             <div className="mb-4">
               <ErrorBanner message={error} />
             </div>
           )}
-          {registrations.isLoading && <Card>Loading...</Card>}
-          {registrations.data?.length === 0 && (
-            <Card className="text-sm text-neutral-500">Nothing here.</Card>
+          {registrations.isLoading && (
+            <div className="space-y-3">
+              <Skeleton className="h-40" />
+              <Skeleton className="h-40" />
+            </div>
           )}
-          <div className="space-y-4">
+          {registrations.data?.length === 0 && (
+            <Card inset>
+              <EmptyState title={`Nothing ${tab}.`} />
+            </Card>
+          )}
+          <div className="stagger space-y-4">
             {registrations.data?.map(({ user, profile }) => (
               <Card key={user.id}>
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="type-subhead truncate">
                       {String(profile.full_name ?? user.email)}
                     </p>
-                    <p className="text-xs text-neutral-500">
+                    <p className="type-caption mt-0.5 text-ink-3">
                       {user.email} · registered{" "}
-                      {new Date(user.created_at).toLocaleString()}
+                      {new Date(user.created_at).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
                     </p>
                   </div>
                   <StatusBadge status={user.status} />
                 </div>
-                <ProfileTable profile={profile} />
+                <ProfileGrid profile={profile} />
                 {user.status === "pending" && (
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-6 flex gap-2">
                     <Button
                       onClick={() =>
                         decide.mutate({ userId: user.id, action: "approve" })
@@ -164,10 +189,10 @@ export default function AdminRegistrationsPage() {
                 {user.status === "approved" &&
                   !user.email_verified_at &&
                   !links[user.id] && (
-                    <div className="mt-3">
+                    <div className="mt-5">
                       <Button
-                        variant="ghost"
-                        className="px-3 py-1 text-xs"
+                        variant="secondary"
+                        size="sm"
                         onClick={() =>
                           decide.mutate({
                             userId: user.id,

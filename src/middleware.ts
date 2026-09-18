@@ -16,6 +16,10 @@ export const config = {
     "/protocols",
     "/protocols/:path*",
     "/recordings/:path*",
+    "/library",
+    "/library/:path*",
+    "/recordings/:path*",
+    "/record",
     "/admin/:path*",
   ],
 };

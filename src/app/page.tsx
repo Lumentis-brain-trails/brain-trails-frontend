@@ -1,79 +1,49 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { CornerRibbons } from "@/components/CornerRibbons";
 
-const version = (process.env.NEXT_PUBLIC_GIT_SHA ?? "dev").slice(0, 7);
-
-const FEATURES = [
-  {
-    title: "Upload your session",
-    text: "Mind Monitor CSV or EDF files from your Muse headband, straight to secure storage.",
-  },
-  {
-    title: "A foundation model reads it",
-    text: "Each 4-second window becomes an embedding through REVE, trained on 60,000 hours of EEG.",
-  },
-  {
-    title: "See the trail",
-    text: "A per-session projection turns your recording into a path through brain-state space.",
-  },
-];
-
+/**
+ * Entry screen: one viewport, no scroll. The name, one line about the product,
+ * and the two ways in.
+ *
+ * This is the brand surface and the only page that departs from the monochrome
+ * system (docs/DESIGN.md): it commits to a dark ground in both colour schemes so
+ * the ribbons read as light, which is what they are.
+ */
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-900">
-      <div className="mx-auto flex max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center">
-        <div className="mb-6 flex items-center gap-3">
-          <Logo size={44} />
-          <span className="text-2xl font-bold tracking-tight">
-            Brain Trails
-          </span>
-        </div>
-        <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
-          Watch where your brain travelled.
+    <main className="relative isolate grid h-[100svh] min-h-[480px] grid-rows-[1fr_auto] overflow-hidden bg-[#04060b] px-4 pt-6 pb-5 text-[#f1f4fa]">
+      <CornerRibbons className="absolute inset-0 -z-10 h-full w-full" />
+
+      <div className="grid content-center justify-items-center gap-8 text-center">
+        <h1 className="font-display text-[clamp(2.8rem,10vw,5rem)] leading-none font-bold tracking-[-0.035em] text-balance">
+          Braintrails
         </h1>
-        <p className="mt-4 max-w-xl text-lg text-neutral-500">
-          Turn a raw EEG recording into a readable trail through embedding space
-          - cleaned, embedded and projected automatically.
+        <p className="font-display max-w-[34ch] text-[clamp(0.98rem,2.4vw,1.15rem)] leading-relaxed font-light text-[#9ea8bd]">
+          Wear the band, pick a stimulus, watch your trail take shape.
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/login"
-            className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            className="pressable font-display inline-flex h-12 items-center rounded-full bg-[#f1f4fa] px-7 text-[15px] font-semibold text-[#05080e] hover:bg-white"
           >
             Sign in
           </Link>
           <Link
             href="/register"
-            className="rounded-lg border border-neutral-300 bg-white px-6 py-3 text-sm font-semibold transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+            className="pressable font-display inline-flex h-12 items-center rounded-full border border-[#2a3346] bg-[rgba(6,9,15,0.5)] px-7 text-[15px] font-semibold text-[#f1f4fa] hover:border-[#8fe6ec]"
           >
             Create an account
           </Link>
         </div>
-        <p className="mt-3 text-xs text-neutral-400">
-          Registrations are reviewed by an administrator before activation.
-        </p>
-
-        <div className="mt-20 grid w-full gap-6 text-left sm:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-            >
-              <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                {i + 1}
-              </div>
-              <h3 className="mb-1 font-semibold">{f.title}</h3>
-              <p className="text-sm text-neutral-500">{f.text}</p>
-            </div>
-          ))}
-        </div>
       </div>
-      <footer className="border-t border-neutral-200 py-6 text-center text-xs text-neutral-400 dark:border-neutral-800">
-        a LuMentis prototype · v{version} ·{" "}
-        <Link href="/privacy" className="hover:underline">
+
+      <div className="font-display flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] tracking-[0.15em] text-[#56607a] uppercase">
+        <span>Non-clinical prototype</span>
+        <span aria-hidden>·</span>
+        <Link href="/privacy" className="hover:text-[#9ea8bd]">
           privacy
         </Link>
-      </footer>
+      </div>
     </main>
   );
 }
