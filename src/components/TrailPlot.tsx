@@ -1,15 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useMemo } from "react";
 import type { Analysis } from "@/lib/types";
+import { densityField, energyField } from "@/lib/landscape";
 import { useChartTheme } from "@/lib/theme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 /**
- * The trail: one path through the per-session PCA plane, coloured by time from
- * grey (start) to the accent (now). Axes carry the explained variance so the
- * reader knows how much of the session the plane actually holds.
+ * The trail, drawn on the terrain it moved over.
+ *
+ * With a landscape projection the background is the session's own energy surface -
+ * the negative log of where it spent its time - so a basin is a state it settled
+ * into and a ridge is a crossing between two. The axes of an MDS layout carry no
+ * meaning of their own, so they are unlabelled; with the older PCA projection they
+ * are the components and carry the explained variance instead.
+ *
+ * Exploratory, not diagnostic: energy is in arbitrary units.
  */
 export function TrailPlot({
   analysis,
@@ -19,10 +27,21 @@ export function TrailPlot({
   height?: number;
 }) {
   const theme = useChartTheme();
+  const terrain = analysis.landscape;
+  const field = useMemo(() => {
+    if (!terrain || terrain.positions.length === 0) return null;
+    const nodes = terrain.positions.map(([x, y], i) => ({
+      x,
+      y,
+      mass: terrain.masses[i] ?? 0,
+    }));
+    return energyField(densityField(nodes, terrain.sigma));
+  }, [terrain]);
+
   const xs = analysis.points.map((p) => p.pc1);
   const ys = analysis.points.map((p) => p.pc2);
   const ts = analysis.points.map((p) => p.t_start);
-  const [ev1, ev2] = analysis.explained_variance.ratio ?? [null, null];
+  const [ev1, ev2] = analysis.projector_meta.ratio ?? [null, null];
   const last = analysis.points.length - 1;
   const axis = {
     gridcolor: theme.hairline,
@@ -35,6 +54,28 @@ export function TrailPlot({
   return (
     <Plot
       data={[
+        ...(field
+          ? [
+              {
+                x: field.xs,
+                y: field.ys,
+                z: field.z,
+                type: "contour" as const,
+                colorscale: [
+                  [0, theme.trail1],
+                  [0.5, theme.hairline],
+                  [1, "rgba(0,0,0,0)"],
+                ] as [number, string][],
+                opacity: 0.35,
+                contours: { coloring: "fill" as const },
+                line: { width: 0 },
+                showscale: false,
+                hoverinfo: "skip" as const,
+                showlegend: false,
+                name: "Energy",
+              },
+            ]
+          : []),
         {
           x: xs,
           y: ys,
@@ -97,20 +138,32 @@ export function TrailPlot({
         autosize: true,
         height,
         margin: { l: 48, r: 16, t: 8, b: 44 },
-        xaxis: {
-          ...axis,
-          title: {
-            ...axis.title,
-            text: ev1 != null ? `PC1 · ${(ev1 * 100).toFixed(0)}%` : "PC1",
-          },
-        },
-        yaxis: {
-          ...axis,
-          title: {
-            ...axis.title,
-            text: ev2 != null ? `PC2 · ${(ev2 * 100).toFixed(0)}%` : "PC2",
-          },
-        },
+        xaxis: terrain
+          ? {
+              ...axis,
+              showticklabels: false,
+              title: { ...axis.title, text: "" },
+            }
+          : {
+              ...axis,
+              title: {
+                ...axis.title,
+                text: ev1 != null ? `PC1 · ${(ev1 * 100).toFixed(0)}%` : "PC1",
+              },
+            },
+        yaxis: terrain
+          ? {
+              ...axis,
+              showticklabels: false,
+              title: { ...axis.title, text: "" },
+            }
+          : {
+              ...axis,
+              title: {
+                ...axis.title,
+                text: ev2 != null ? `PC2 · ${(ev2 * 100).toFixed(0)}%` : "PC2",
+              },
+            },
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
         font: { family: "-apple-system, BlinkMacSystemFont, system-ui" },

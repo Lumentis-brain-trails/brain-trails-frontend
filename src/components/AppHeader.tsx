@@ -49,6 +49,7 @@ export function AppHeader() {
         <nav className="absolute left-1/2 hidden -translate-x-1/2 gap-1 sm:flex">
           {link("/library", "Library")}
           {link("/recordings", "Recordings")}
+          {link("/neurometrics", "NeuroMetrics")}
           {link("/record", "Record")}
           {link("/account", "Account")}
           {me.data?.role === "admin" && link("/admin", "Admin")}
@@ -74,6 +75,7 @@ export function AppHeader() {
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
         {link("/library", "Library")}
         {link("/recordings", "Recordings")}
+        {link("/neurometrics", "NeuroMetrics")}
         {link("/record", "Record")}
         {link("/account", "Account")}
         {me.data?.role === "admin" && link("/admin", "Admin")}

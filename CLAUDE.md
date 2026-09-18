@@ -16,19 +16,20 @@ nothing secret may ever be committed.
 
 ## Code map
 
-| Path                                     | What                                                                                                              |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `src/app/(public)/`                      | landing, login, register, verify, pending, privacy                                                                |
-| `src/app/(app)/`                         | recordings list, recording detail (trail + signal + live polling), account                                        |
-| `src/app/(admin)/admin/`                 | dashboard, registrations approval                                                                                 |
-| `src/app/api/backend/[...path]/route.ts` | BFF proxy: allow-list `auth/`, `recordings`, `admin/`; attaches the cookie JWT                                    |
-| `src/app/api/auth/{login,logout}/`       | cookie set/clear                                                                                                  |
-| `src/middleware.ts`                      | redirects anonymous visitors of `/recordings`, `/admin` to `/login`                                               |
-| `src/lib/api.ts`                         | browser client (`api.get/post/login/logout`)                                                                      |
-| `src/lib/schemas.ts`                     | zod forms (account, profile, upload)                                                                              |
-| `src/lib/types.ts`                       | API response types (mirror the backend `schemas.py`)                                                              |
-| `src/components/`                        | `ui.tsx` primitives, `TrailPlot` (Plotly), `SignalPreview` (uPlot), `UploadDialog` (presigned S3), header, toasts |
-| `docs/`                                  | ENVIRONMENTS, decisions                                                                                           |
+| Path                                     | What                                                                                                                               |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/(public)/`                      | landing, login, register, verify, pending, privacy                                                                                 |
+| `src/app/(app)/`                         | recordings list/detail (trail on its landscape), neurometrics section, library, record, account                                    |
+| `src/app/(admin)/admin/`                 | dashboard, registrations approval                                                                                                  |
+| `src/app/api/backend/[...path]/route.ts` | BFF proxy: allow-list `auth/`, `recordings`, `admin/`; attaches the cookie JWT                                                     |
+| `src/app/api/auth/{login,logout}/`       | cookie set/clear                                                                                                                   |
+| `src/middleware.ts`                      | redirects anonymous visitors of the authenticated areas to `/login`                                                                |
+| `src/lib/api.ts`                         | browser client (`api.get/post/login/logout`)                                                                                       |
+| `src/lib/schemas.ts`                     | zod forms (account, profile, upload)                                                                                               |
+| `src/lib/landscape.ts`                   | energy field from node positions + masses; mirrors `pipeline/neurometrics/landscape.py`                                            |
+| `src/lib/types.ts`                       | API response types (mirror the backend `schemas.py`)                                                                               |
+| `src/components/`                        | `ui.tsx` primitives, `TrailPlot`/`BallMapperGraph`/`MetricCurve` (Plotly), `SignalPreview` (uPlot), `UploadDialog`, header, toasts |
+| `docs/`                                  | ENVIRONMENTS, decisions                                                                                                            |
 
 ## Commands
 
