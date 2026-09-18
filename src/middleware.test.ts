@@ -25,6 +25,8 @@ describe("middleware", () => {
       "/library/:path*",
       "/recordings/:path*",
       "/record",
+      "/protocols",
+      "/protocols/:path*",
       "/admin/:path*",
     ]);
   });

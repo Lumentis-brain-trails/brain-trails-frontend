@@ -13,13 +13,12 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/protocols",
-    "/protocols/:path*",
-    "/recordings/:path*",
     "/library",
     "/library/:path*",
     "/recordings/:path*",
     "/record",
+    "/protocols",
+    "/protocols/:path*",
     "/admin/:path*",
   ],
 };
