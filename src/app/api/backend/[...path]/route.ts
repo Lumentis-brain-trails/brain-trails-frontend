@@ -9,7 +9,7 @@ const API_URL = process.env.API_URL ?? "http://localhost:8000";
 const API_DEPLOYED =
   (process.env.API_URL ?? "").length > 0 ||
   process.env.NODE_ENV !== "production";
-const ALLOWED_PREFIXES = ["auth/", "recordings", "admin/"];
+const ALLOWED_PREFIXES = ["auth/", "recordings", "admin/", "sessions"];
 
 async function forward(
   request: NextRequest,
