@@ -16,6 +16,8 @@ export const config = {
     "/library",
     "/library/:path*",
     "/recordings/:path*",
+    "/neurometrics",
+    "/neurometrics/:path*",
     "/record",
     "/admin/:path*",
   ],

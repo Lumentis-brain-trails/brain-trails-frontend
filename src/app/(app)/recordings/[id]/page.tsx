@@ -224,15 +224,27 @@ export default function RecordingDetailPage({
                     <KeyValue label="Step" value={`${a.step_s} s`} />
                     <KeyValue label="Smoothing" value={`${a.smooth_s} s`} />
                     <KeyValue label="Points" value={a.points.length} />
-                    {a.explained_variance.ratio && (
-                      <KeyValue
-                        label="Variance held"
-                        value={`${Math.round(
-                          (a.explained_variance.ratio[0] +
-                            a.explained_variance.ratio[1]) *
-                            100
-                        )}%`}
-                      />
+                    {a.landscape ? (
+                      <>
+                        <KeyValue label="Regions" value={a.landscape.n_nodes} />
+                        {a.landscape.stress != null && (
+                          <KeyValue
+                            label="Layout strain"
+                            value={a.landscape.stress.toFixed(2)}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      a.projector_meta.ratio && (
+                        <KeyValue
+                          label="Variance held"
+                          value={`${Math.round(
+                            (a.projector_meta.ratio[0] +
+                              a.projector_meta.ratio[1]) *
+                              100
+                          )}%`}
+                        />
+                      )
                     )}
                   </>
                 ) : (
@@ -242,9 +254,9 @@ export default function RecordingDetailPage({
                   </div>
                 )}
               </Card>
-              {a?.explained_variance.cleaner_notes?.length ? (
+              {a?.projector_meta.cleaner_notes?.length ? (
                 <p className="type-caption mt-2 px-1 text-ink-3">
-                  {a.explained_variance.cleaner_notes.join(" · ")}
+                  {a.projector_meta.cleaner_notes.join(" · ")}
                 </p>
               ) : null}
             </section>
@@ -262,6 +274,10 @@ export default function RecordingDetailPage({
                     label="Reprocess without cleaning"
                     onClick={() => reprocess.mutate("identity")}
                     disabled={reprocess.isPending}
+                  />
+                  <ActionRow
+                    label="Open NeuroMetrics"
+                    onClick={() => router.push(`/neurometrics/${id}`)}
                   />
                   <ActionRow
                     label="Download raw file"
