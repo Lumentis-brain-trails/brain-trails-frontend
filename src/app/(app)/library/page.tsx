@@ -7,6 +7,8 @@ import {
   MEDIA_TAGS,
   MEDIA_TAG_HINTS,
   MEDIA_TAG_LABELS,
+  mediaAccess,
+  mediaTags,
   type Media,
   type MediaTag,
 } from "@/lib/types";
@@ -52,22 +54,41 @@ export default function LibraryPage() {
 
   /** Runnable first inside a row, so the one thing a reader can actually start leads. */
   const byAccessThenTitle = (a: Media, b: Media) =>
-    a.access === b.access
+    mediaAccess(a) === mediaAccess(b)
       ? a.title.localeCompare(b.title)
-      : a.access === "open"
+      : mediaAccess(a) === "open"
         ? -1
         : 1;
 
+  /**
+   * True when the catalog came back with no tags anywhere, which means the API predates
+   * them rather than that the catalog is empty. Tag rows would all be empty and the page
+   * would claim there is nothing in the library, so everything goes in one row instead.
+   */
+  const untagged =
+    !!items &&
+    items.length > 0 &&
+    items.every((i) => mediaTags(i).length === 0);
+
   const rows: Row[] = items
     ? [
-        ...MEDIA_TAGS.map((tag: MediaTag) => ({
-          key: tag,
-          title: MEDIA_TAG_LABELS[tag],
-          hint: MEDIA_TAG_HINTS[tag],
-          items: items
-            .filter((i) => i.tags.includes(tag))
-            .sort(byAccessThenTitle),
-        })),
+        ...(untagged
+          ? [
+              {
+                key: "all",
+                title: "Everything",
+                hint: "Browsing by tag arrives with the next API release.",
+                items: [...items].sort(byAccessThenTitle),
+              },
+            ]
+          : MEDIA_TAGS.map((tag: MediaTag) => ({
+              key: tag,
+              title: MEDIA_TAG_LABELS[tag],
+              hint: MEDIA_TAG_HINTS[tag],
+              items: items
+                .filter((i) => mediaTags(i).includes(tag))
+                .sort(byAccessThenTitle),
+            }))),
         {
           key: "mine",
           title: "Your uploads",
@@ -126,7 +147,7 @@ export default function LibraryPage() {
                 <MediaCard
                   key={item.id}
                   item={item}
-                  locked={item.access === "locked"}
+                  locked={mediaAccess(item) === "locked"}
                 />
               ))}
             </div>
@@ -134,7 +155,9 @@ export default function LibraryPage() {
         ))}
       </div>
 
-      {rows.some((row) => row.items.some((i) => i.access === "locked")) && (
+      {rows.some((row) =>
+        row.items.some((i) => mediaAccess(i) === "locked")
+      ) && (
         <p className="type-caption mt-10 text-ink-3">
           Locked protocols are part of the programme but not open yet. Beta
           testers get them first.

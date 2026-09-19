@@ -155,3 +155,40 @@ test("an empty catalog invites the first upload", async () => {
     expect(screen.getByText("Nothing in the library yet")).toBeInTheDocument()
   );
 });
+
+test("survives an API that predates tags and access, and still shows the catalog", async () => {
+  // Exactly what the deployed API returned while the frontend was ahead of it: no `tags`
+  // and no `access` keys at all. This threw `TypeError: i.tags is undefined` during render
+  // and took the whole page to the error boundary, so the fields are optional now.
+  const legacy = item({ kind: "game", title: "Signal Navigator", mine: false });
+  delete (legacy as Partial<Media>).tags;
+  delete (legacy as Partial<Media>).access;
+  get.mockResolvedValue([legacy]);
+
+  renderPage();
+
+  // One fallback row rather than three empty ones plus "nothing in the library yet".
+  expect(await screen.findByText("Everything")).toBeTruthy();
+  expect(screen.getByText("Signal Navigator")).toBeTruthy();
+  expect(screen.queryByText("Nothing in the library yet")).toBeNull();
+  // Nothing is locked, so the beta-tester footnote stays away.
+  expect(screen.queryByText(/Beta\s+testers get them first/)).toBeNull();
+});
+
+test("an item missing only access is treated as open, not locked", async () => {
+  // Not `mine`, so it lands in the Attention row only and not also in "Your uploads".
+  const partial = item({
+    kind: "game",
+    title: "Half Migrated",
+    mine: false,
+    visibility: "official",
+    tags: ["attention"],
+  });
+  delete (partial as Partial<Media>).access;
+  get.mockResolvedValue([partial]);
+
+  renderPage();
+
+  const card = await screen.findByText("Half Migrated");
+  await waitFor(() => expect(card.closest("a")).not.toBeNull());
+});

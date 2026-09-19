@@ -206,9 +206,17 @@ export interface Media {
   kind: "video" | "game" | "scenario";
   visibility: "private" | "official";
   status: "draft" | "ready";
-  /** `locked` items are advertised but cannot be started; the backend refuses a session. */
-  access: "open" | "locked";
-  tags: string[];
+  /**
+   * `locked` items are advertised but cannot be started; the backend refuses a session.
+   *
+   * Optional because the two repos deploy separately: a frontend carrying this field can
+   * be live against an API that predates the column, and did once, which took the library
+   * page down with a `TypeError` rather than degrading. Absent means "this API has no
+   * opinion" - treat it as open and untagged. Use `mediaAccess`/`mediaTags` rather than
+   * reading these directly, so the fallback lives in one place.
+   */
+  access?: "open" | "locked";
+  tags?: string[];
   slug: string;
   title: string;
   description: string | null;
@@ -221,4 +229,21 @@ export interface Media {
   /** Short-lived links, only on the detail response. */
   url?: string | null;
   cover_url?: string | null;
+}
+
+/**
+ * An item's access level, defaulting to `open` when the API does not report one.
+ *
+ * Failing open is the right default here even though it sounds like the unsafe one: the
+ * field only decides what the library *draws*, and the backend independently refuses to
+ * start a session against a locked item. An API too old to send `access` is also too old
+ * to hold a locked row, so there is nothing to hide.
+ */
+export function mediaAccess(item: Media): "open" | "locked" {
+  return item.access ?? "open";
+}
+
+/** An item's browsing tags, empty when the API does not report them. */
+export function mediaTags(item: Media): string[] {
+  return item.tags ?? [];
 }
