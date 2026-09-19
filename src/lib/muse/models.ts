@@ -24,11 +24,13 @@ export interface ModelProfile {
    */
   eegRailUv: number;
   /**
-   * True when the band streams the three-wavelength PPG of the Muse 2. The
-   * Athena replaces it with the fNIRS optode array, which we do not record
-   * (see `athena.ts`), so the PPG rows stay empty there.
+   * True when the PPG arrives decoded, as the Muse 2's three channels do. The
+   * Athena's PPG shares one optics stream with the fNIRS optodes and is not
+   * decoded yet: it is kept in the raw capture (V2-0006), not in the extras.
    */
   hasPpg: boolean;
+  /** The API's device name, so a recording says which band produced it. */
+  apiDevice: "muse-2" | "muse-s-athena";
 }
 
 export const MODEL_PROFILES: Record<MuseModel, ModelProfile> = {
@@ -37,17 +39,20 @@ export const MODEL_PROFILES: Record<MuseModel, ModelProfile> = {
     label: "Muse 2 / Muse S",
     eegRailUv: 990,
     hasPpg: true,
+    apiDevice: "muse-2",
   },
   athena: {
     id: "athena",
     label: "Muse S Athena",
     eegRailUv: 715,
     hasPpg: false,
+    apiDevice: "muse-s-athena",
   },
   simulated: {
     id: "simulated",
     label: "Simulated headband",
     eegRailUv: 990,
     hasPpg: true,
+    apiDevice: "muse-2",
   },
 };

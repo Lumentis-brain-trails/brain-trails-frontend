@@ -16,6 +16,11 @@
  * device's own clock: a packet carries the index of its first sample and as
  * many samples as that band sends. Nothing above this file knows how a
  * generation numbers its packets or how many samples it puts in one.
+ *
+ * Alongside the decoded events, a real headband emits every notification and
+ * every command as a `raw` event, byte for byte, before any decoder sees it
+ * (decision V2-0006): what the decoders drop -- the Athena's optics, the aux
+ * inputs, a tag nobody has identified yet -- still reaches the capture file.
  */
 import {
   ATHENA_AUX_CHARACTERISTIC,
@@ -29,6 +34,7 @@ import {
 import { MODEL_PROFILES, type ModelProfile, type MuseModel } from "./models";
 import {
   ACCELEROMETER_CHARACTERISTIC,
+  AUX_CHARACTERISTIC,
   ACCELEROMETER_SCALE,
   CONTROL_CHARACTERISTIC,
   CounterClock,
@@ -92,11 +98,25 @@ export interface PpgEvent {
   hostMs: number;
 }
 
+/**
+ * One GATT exchange exactly as it crossed the link: a notification from the
+ * band (`in`) or a command written to it (`out`). `bytes` is a copy the
+ * listener may keep.
+ */
+export interface RawEvent {
+  characteristic: string;
+  direction: "in" | "out";
+  bytes: Uint8Array;
+  hostMs: number;
+}
+
 export interface MuseListeners {
   eeg: (event: EegEvent) => void;
   motion: (event: MotionEvent) => void;
   ppg: (event: PpgEvent) => void;
   telemetry: (t: Telemetry) => void;
+  /** Every notification and command of a real headband; never from the simulator. */
+  raw: (event: RawEvent) => void;
   disconnected: () => void;
 }
 
@@ -139,6 +159,7 @@ class Emitter {
     motion: new Set(),
     ppg: new Set(),
     telemetry: new Set(),
+    raw: new Set(),
     disconnected: new Set(),
   };
   on<K extends keyof MuseListeners>(
@@ -210,21 +231,57 @@ export class BluetoothMuse implements MuseDevice {
     }
   }
 
+  /**
+   * Route a characteristic's notifications: each one goes out raw first, then
+   * to `decode` when there is one. A decoder that throws on a malformed packet
+   * therefore cannot keep that packet out of the capture.
+   */
+  private listen(
+    characteristic: BluetoothRemoteGATTCharacteristic,
+    decode?: (value: DataView, hostMs: number) => void
+  ): void {
+    characteristic.addEventListener("characteristicvaluechanged", (ev) => {
+      const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
+      if (!value) return;
+      const hostMs = performance.now();
+      this.emitter.emit("raw", {
+        characteristic: characteristic.uuid,
+        direction: "in",
+        bytes: new Uint8Array(
+          value.buffer.slice(
+            value.byteOffset,
+            value.byteOffset + value.byteLength
+          )
+        ),
+        hostMs,
+      });
+      decode?.(value, hostMs);
+    });
+  }
+
   /** Muse 2 / Muse S: one notify characteristic per electrode and per sensor. */
   private async subscribeLegacy(service: BluetoothRemoteGATTService) {
+    // Control replies (firmware version, serial, preset) and the AUX input
+    // are not decoded; they are listened to so the capture keeps them.
+    this.listen(this.control!);
+    await notifyQuietly(this.control);
+    const aux = await optionalCharacteristic(service, AUX_CHARACTERISTIC);
+    if (aux) {
+      this.listen(aux);
+      if (await notifyQuietly(aux)) this.subscriptions.push(aux);
+    }
+
     const eegClock = new CounterClock();
     for (const channel of EEG_CHANNELS) {
       const characteristic = await service.getCharacteristic(
         EEG_CHARACTERISTICS[channel]
       );
-      characteristic.addEventListener("characteristicvaluechanged", (ev) => {
-        const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-        if (!value) return;
+      this.listen(characteristic, (value, hostMs) => {
         const { counter, samples } = decodeEegPacket(value);
         this.emitter.emit("eeg", {
           channel,
           packet: { sampleIndex: eegClock.next(counter), samples },
-          hostMs: performance.now(),
+          hostMs,
         });
       });
       await characteristic.startNotifications();
@@ -237,14 +294,12 @@ export class BluetoothMuse implements MuseDevice {
     ] as const) {
       const clock = new CounterClock(IMU_SAMPLES_PER_PACKET, true);
       const characteristic = await service.getCharacteristic(uuid);
-      characteristic.addEventListener("characteristicvaluechanged", (ev) => {
-        const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-        if (!value) return;
+      this.listen(characteristic, (value, hostMs) => {
         const { counter, samples } = decodeImuPacket(value, scale);
         this.emitter.emit("motion", {
           kind,
           packet: { sampleIndex: clock.next(counter), samples },
-          hostMs: performance.now(),
+          hostMs,
         });
       });
       await characteristic.startNotifications();
@@ -255,24 +310,21 @@ export class BluetoothMuse implements MuseDevice {
       const characteristic = await service.getCharacteristic(
         PPG_CHARACTERISTICS[channel]
       );
-      characteristic.addEventListener("characteristicvaluechanged", (ev) => {
-        const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-        if (!value) return;
+      this.listen(characteristic, (value, hostMs) => {
         const { counter, samples } = decodePpgPacket(value);
         this.emitter.emit("ppg", {
           channel,
           packet: { sampleIndex: clock.next(counter), samples },
-          hostMs: performance.now(),
+          hostMs,
         });
       });
       await characteristic.startNotifications();
       this.subscriptions.push(characteristic);
     }
     const telemetry = await service.getCharacteristic(TELEMETRY_CHARACTERISTIC);
-    telemetry.addEventListener("characteristicvaluechanged", (ev) => {
-      const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-      if (value) this.emitter.emit("telemetry", decodeTelemetry(value));
-    });
+    this.listen(telemetry, (value) =>
+      this.emitter.emit("telemetry", decodeTelemetry(value))
+    );
     await telemetry.startNotifications();
     this.subscriptions.push(telemetry);
 
@@ -282,8 +334,9 @@ export class BluetoothMuse implements MuseDevice {
   /**
    * Athena: every stream arrives on one or two characteristics as tagged
    * subpackets. The optics stream (fNIRS and PPG) arrives -- no preset gives
-   * motion without it -- and is dropped by the decoder, so what reaches the
-   * listeners is the four electrodes and motion, as from an older band.
+   * motion without it -- and is not decoded yet, so what reaches the decoded
+   * listeners is the four electrodes and motion, as from an older band; the
+   * optics reach the capture through the `raw` events.
    */
   private async subscribeAthena(
     service: BluetoothRemoteGATTService,
@@ -291,10 +344,7 @@ export class BluetoothMuse implements MuseDevice {
   ) {
     const eegClock = new AthenaClock(SAMPLE_RATE_HZ);
     const motionClock = new AthenaClock(ATHENA_MOTION_RATE_HZ);
-    const handle = (ev: Event) => {
-      const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-      if (!value) return;
-      const hostMs = performance.now();
+    const handle = (value: DataView, hostMs: number) => {
       for (const part of decodeAthenaMessage(value)) {
         if (part.sensor === "eeg") {
           const sampleIndex = eegClock.next(part.tick, part.sampleCount);
@@ -331,7 +381,8 @@ export class BluetoothMuse implements MuseDevice {
     };
     // The control characteristic answers the handshake; the official app
     // listens to it before sending anything, and some firmware will not start
-    // until something is subscribed. We do not read the replies.
+    // until something is subscribed. The replies are captured, not decoded.
+    this.listen(this.control!);
     await notifyQuietly(this.control);
 
     // Firmware revisions disagree about which streams leave by which
@@ -343,7 +394,7 @@ export class BluetoothMuse implements MuseDevice {
       await optionalCharacteristic(service, ATHENA_AUX_CHARACTERISTIC),
     ]) {
       if (!characteristic) continue;
-      characteristic.addEventListener("characteristicvaluechanged", handle);
+      this.listen(characteristic, handle);
       if (await notifyQuietly(characteristic)) {
         this.subscriptions.push(characteristic);
         subscribed++;
@@ -379,6 +430,12 @@ export class BluetoothMuse implements MuseDevice {
   private async send(command: string): Promise<void> {
     if (!this.control) throw new Error("Not connected");
     const bytes = encodeCommand(command);
+    this.emitter.emit("raw", {
+      characteristic: this.control.uuid,
+      direction: "out",
+      bytes: bytes.slice(),
+      hostMs: performance.now(),
+    });
     if (this.control.writeValueWithoutResponse) {
       await this.control.writeValueWithoutResponse(bytes);
       return;

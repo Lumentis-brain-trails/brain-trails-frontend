@@ -12,9 +12,11 @@ import {
   type EegEvent,
   type MotionEvent,
   type PpgEvent,
+  type RawEvent,
 } from "./device";
 import {
   ACCELEROMETER_CHARACTERISTIC,
+  AUX_CHARACTERISTIC,
   CONTROL_CHARACTERISTIC,
   EEG_CHANNELS,
   EEG_CHARACTERISTICS,
@@ -252,6 +254,84 @@ describe("BluetoothMuse", () => {
   });
 });
 
+describe("BluetoothMuse raw capture", () => {
+  test("every notification goes out raw before decoding, commands too", async () => {
+    const fake = fakeBluetooth([...LEGACY_UUIDS, AUX_CHARACTERISTIC]);
+    const muse = new BluetoothMuse(fake.bluetooth);
+    const raw: RawEvent[] = [];
+    const eeg = vi.fn();
+    muse.on("raw", (e) => raw.push(e));
+    muse.on("eeg", eeg);
+    await muse.connect();
+
+    // The start sequence is captured as written, framing included.
+    const out = raw.filter((e) => e.direction === "out");
+    expect(out.map((e) => e.characteristic)).toEqual(
+      Array(4).fill(CONTROL_CHARACTERISTIC)
+    );
+    expect(new TextDecoder().decode(out[1].bytes)).toBe("\x04p50\n");
+
+    // Control replies and the AUX input are listened to, though nobody decodes them.
+    expect(fake.characteristics.get(CONTROL_CHARACTERISTIC)?.notifying).toBe(
+      true
+    );
+    expect(fake.characteristics.get(AUX_CHARACTERISTIC)?.notifying).toBe(true);
+    const reply = new Uint8Array([3, 0x7b, 0x7d, 0x0a, 0xff]);
+    fake.characteristics
+      .get(CONTROL_CHARACTERISTIC)!
+      .notify(new DataView(reply.buffer));
+    const auxPacket = new Uint8Array(20).fill(7);
+    fake.characteristics
+      .get(AUX_CHARACTERISTIC)!
+      .notify(new DataView(auxPacket.buffer));
+
+    // A packet that the decoder rejects still reaches the capture.
+    const short = new Uint8Array([1, 2, 3]);
+    expect(() =>
+      fake.characteristics
+        .get(ACCELEROMETER_CHARACTERISTIC)!
+        .notify(new DataView(short.buffer))
+    ).not.toThrow();
+
+    const incoming = raw.filter((e) => e.direction === "in");
+    expect(incoming.map((e) => e.characteristic)).toEqual([
+      CONTROL_CHARACTERISTIC,
+      AUX_CHARACTERISTIC,
+      ACCELEROMETER_CHARACTERISTIC,
+    ]);
+    expect(Array.from(incoming[0].bytes)).toEqual(Array.from(reply));
+    expect(Array.from(incoming[2].bytes)).toEqual([1, 2, 3]);
+    expect(eeg).not.toHaveBeenCalled();
+  });
+
+  test("a raw event owns its bytes: a reused buffer cannot rewrite it", async () => {
+    const fake = fakeBluetooth();
+    const muse = new BluetoothMuse(fake.bluetooth);
+    const raw: RawEvent[] = [];
+    muse.on("raw", (e) => raw.push(e));
+    await muse.connect();
+    const buf = new Uint8Array(20);
+    buf[1] = 1;
+    const tp9 = fake.characteristics.get(EEG_CHARACTERISTICS.TP9)!;
+    tp9.notify(new DataView(buf.buffer));
+    buf[1] = 2;
+    tp9.notify(new DataView(buf.buffer));
+    const eegRaw = raw.filter(
+      (e) => e.characteristic === EEG_CHARACTERISTICS.TP9
+    );
+    expect(eegRaw.map((e) => e.bytes[1])).toEqual([1, 2]);
+  });
+
+  test("the simulator has no link to capture", async () => {
+    const sim = new SimulatedMuse({ autoplay: false });
+    const raw = vi.fn();
+    sim.on("raw", raw);
+    await sim.connect();
+    sim.tick(0);
+    expect(raw).not.toHaveBeenCalled();
+  });
+});
+
 /** Connect with the command waits collapsed, so the test does not sleep. */
 async function connectFast(muse: BluetoothMuse) {
   vi.useFakeTimers();
@@ -410,6 +490,7 @@ describe("BluetoothMuse on a Muse S Athena", () => {
       );
 
     expect(motion.map((m) => m.kind)).toEqual(["acc", "gyro"]);
+    expect(motion[0].hostMs).toBe(motion[1].hostMs);
     expect(motion[0].packet.samples[2]).toBeCloseTo(1, 2);
     expect(motion[0].packet.sampleIndex).toBe(0);
     expect(telemetry).toHaveBeenCalledWith({
@@ -418,6 +499,38 @@ describe("BluetoothMuse on a Muse S Athena", () => {
       voltageMv: null,
       temperatureC: null,
     });
+  });
+});
+
+describe("BluetoothMuse on a Muse S Athena, raw", () => {
+  test("optics are skipped by the decoder but kept byte for byte", async () => {
+    const fake = fakeBluetooth(ATHENA_UUIDS, "MuseS-4B1C");
+    const muse = new BluetoothMuse(fake.bluetooth);
+    const raw: RawEvent[] = [];
+    const eeg = vi.fn();
+    muse.on("raw", (e) => raw.push(e));
+    muse.on("eeg", eeg);
+    await connectFast(muse);
+
+    const optics = new Uint8Array(40).map((_, i) => i + 1);
+    const message = athenaMessage(
+      athenaPacket({ tick: 0, primaryTag: 0x36, primaryData: optics })
+    );
+    fake.characteristics.get(ATHENA_DATA_CHARACTERISTIC)!.notify(message);
+
+    expect(eeg).not.toHaveBeenCalled();
+    const data = raw.filter(
+      (e) =>
+        e.direction === "in" && e.characteristic === ATHENA_DATA_CHARACTERISTIC
+    );
+    expect(data).toHaveLength(1);
+    expect(Array.from(data[0].bytes)).toEqual(
+      Array.from(
+        new Uint8Array(message.buffer, message.byteOffset, message.byteLength)
+      )
+    );
+    // The whole handshake went out on the control characteristic.
+    expect(raw.filter((e) => e.direction === "out")).toHaveLength(12);
   });
 });
 

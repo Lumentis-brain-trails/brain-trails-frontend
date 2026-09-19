@@ -8,11 +8,21 @@
  * React state is refreshed once a second with what the UI actually displays:
  * quality lights, packet statistics, battery. Charts read the buffers
  * directly through `getRecent`.
+ *
+ * A recording captures three things: the EEG session, the decoded extras
+ * (motion, PPG) and the raw Bluetooth traffic (decision V2-0006), the last
+ * seeded with the handshake replies seen since connection.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CapturePreamble, RawCapture } from "./capture";
 import type { MuseDevice } from "./device";
 import { MODEL_PROFILES, type MuseModel } from "./models";
-import { EEG_CHANNELS, SAMPLE_RATE_HZ, type EegChannel } from "./protocol";
+import {
+  CONTROL_CHARACTERISTIC,
+  EEG_CHANNELS,
+  SAMPLE_RATE_HZ,
+  type EegChannel,
+} from "./protocol";
 import { assessChannel, type ChannelQuality } from "./quality";
 import {
   ExtrasRecorder,
@@ -51,6 +61,8 @@ export interface SensorReadings {
   ppgInfrared: number | null;
   motionPackets: number;
   ppgPackets: number;
+  /** Raw notifications from the band since connection (0 on the simulator). */
+  rawPackets: number;
 }
 
 const noSensors = (): SensorReadings => ({
@@ -59,6 +71,7 @@ const noSensors = (): SensorReadings => ({
   ppgInfrared: null,
   motionPackets: 0,
   ppgPackets: 0,
+  rawPackets: 0,
 });
 
 const BUFFER_SECONDS = 12;
@@ -123,6 +136,8 @@ export function useMuse(createDevice: () => MuseDevice) {
   });
   const recorderRef = useRef<SessionRecorder | null>(null);
   const extrasRef = useRef<ExtrasRecorder | null>(null);
+  const rawRef = useRef<RawCapture | null>(null);
+  const preambleRef = useRef(new CapturePreamble(CONTROL_CHARACTERISTIC));
   const sensorsRef = useRef<SensorReadings>(noSensors());
   const deviceRef = useRef<MuseDevice | null>(null);
   const rings = useMemo(
@@ -152,7 +167,13 @@ export function useMuse(createDevice: () => MuseDevice) {
     for (const ring of Object.values(rings)) ring.clear();
     timelineRef.current = new PacketTimeline();
     sensorsRef.current = noSensors();
+    preambleRef.current = new CapturePreamble(CONTROL_CHARACTERISTIC);
     unsubscribe.current.push(
+      device.on("raw", (event) => {
+        if (event.direction === "in") sensorsRef.current.rawPackets += 1;
+        preambleRef.current.offer(event);
+        rawRef.current?.feed(event);
+      }),
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
         recorderRef.current?.feed(channel, packet.sampleIndex, packet.samples);
@@ -284,6 +305,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     if (recorderRef.current) return;
     recorderRef.current = new SessionRecorder();
     extrasRef.current = new ExtrasRecorder();
+    rawRef.current = new RawCapture(preambleRef.current.snapshot());
     setState((s) => ({ ...s, isRecording: true, recordingSeconds: 0 }));
   }, []);
 
@@ -292,17 +314,21 @@ export function useMuse(createDevice: () => MuseDevice) {
     capture: SessionCapture;
     timeline: TimelineStats;
     extras: ExtrasRecorder;
+    raw: RawCapture;
   } | null => {
     const recorder = recorderRef.current;
     const extras = extrasRef.current;
-    if (!recorder || !extras) return null;
+    const raw = rawRef.current;
+    if (!recorder || !extras || !raw) return null;
     recorderRef.current = null;
     extrasRef.current = null;
+    rawRef.current = null;
     setState((s) => ({ ...s, isRecording: false }));
     return {
       capture: recorder.stop(),
       timeline: timelineRef.current.stats(),
       extras,
+      raw,
     };
   }, []);
 
