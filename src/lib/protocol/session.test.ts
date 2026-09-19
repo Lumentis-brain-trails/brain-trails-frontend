@@ -15,11 +15,12 @@ beforeEach(() => post.mockReset().mockResolvedValue({}));
 afterEach(() => vi.clearAllMocks());
 
 describe("startSession", () => {
-  test("posts the media id and defaults the device", async () => {
+  test("posts the media id, asks for upload capture, defaults the device", async () => {
     await startSession("media-1");
 
     expect(post).toHaveBeenCalledWith("sessions", {
       media_id: "media-1",
+      capture: "upload",
       device: "muse-2",
       params: {},
     });
@@ -33,6 +34,7 @@ describe("startSession", () => {
 
     expect(post.mock.calls[0][1]).toEqual({
       media_id: "media-1",
+      capture: "upload",
       title: "Signal Navigator",
       device: "muse-2",
       params: { protocol_id: "signal-navigator", protocol_version: 1 },
@@ -50,17 +52,25 @@ describe("startSession", () => {
 });
 
 describe("finishSession", () => {
-  test("closes a completed run with its summary", async () => {
-    await finishSession("sess-1", { challenge_a: { hitRate: 0.9 } }, false);
+  test("closes a completed run with its summary and its capture", async () => {
+    const capture = { original: "k/original.csv", extras: null, ble: null };
+    await finishSession("sess-1", {
+      summary: { challenge_a: { hitRate: 0.9 } },
+      aborted: false,
+      capture,
+      events: [{ t: 1, type: "session_start", payload: {}, seq: 0 }],
+    });
 
     expect(post).toHaveBeenCalledWith("sessions/sess-1/finish", {
       summary: { challenge_a: { hitRate: 0.9 } },
       aborted: false,
+      capture,
+      events: [{ t: 1, type: "session_start", payload: {}, seq: 0 }],
     });
   });
 
-  test("marks an abandoned run aborted", async () => {
-    await finishSession("sess-1", {}, true);
+  test("an aborted run with nothing captured sends no capture", async () => {
+    await finishSession("sess-1", { summary: {}, aborted: true });
     expect(post.mock.calls[0][1]).toEqual({ summary: {}, aborted: true });
   });
 });

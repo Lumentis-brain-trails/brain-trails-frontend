@@ -12,6 +12,9 @@
  */
 
 import { api } from "@/lib/api";
+import type { CaptureFiles } from "@/lib/muse/captureFiles";
+import { uploadToStorage } from "@/lib/upload";
+import type { WireEvent } from "./marker";
 import { getProtocolModule } from "./definitions/signalNavigator";
 import { safeParseProtocol } from "./schema";
 import type { components } from "@/lib/api-types";
@@ -33,33 +36,83 @@ export interface StartSessionOptions {
   params?: Record<string, unknown>;
 }
 
-/** Open a session against a catalog item. The backend creates the live recording. */
+/**
+ * Open a session against a catalog item (backend V3-0005).
+ *
+ * The EEG is captured in the browser and uploaded at finish: the response carries the
+ * presigned forms for the session CSV, the extras sidecar and the raw capture.
+ */
 export function startSession(
   mediaId: string,
   options: StartSessionOptions = {}
 ): Promise<StimulusSessionStart> {
   return api.post<StimulusSessionStart>("sessions", {
     media_id: mediaId,
+    capture: "upload",
     ...(options.title ? { title: options.title } : {}),
     device: options.device ?? "muse-2",
     params: options.params ?? {},
   });
 }
 
+export type CaptureForms = components["schemas"]["CaptureForms"];
+export type CaptureKeys = components["schemas"]["CaptureKeys"];
+
 /**
- * Close a session.
+ * Upload a run's capture files through the session's forms; returns the keys `finish`
+ * expects. The raw capture is left out when it exceeds its cap - the EEG still goes up.
+ */
+export async function uploadCapture(
+  forms: CaptureForms,
+  files: CaptureFiles,
+  onProgress: (pct: number) => void
+): Promise<CaptureKeys> {
+  const plan: [CaptureForms["original"], Blob][] = [
+    [forms.original, files.csv],
+  ];
+  if (files.extras) plan.push([forms.extras, files.extras]);
+  if (files.ble && files.ble.size <= forms.max_ble_mb * 1024 * 1024)
+    plan.push([forms.ble, files.ble]);
+  const total = plan.reduce((n, [, blob]) => n + blob.size, 0);
+  let done = 0;
+  for (const [form, blob] of plan) {
+    await uploadToStorage({ ...form, max_mb: forms.max_mb }, blob, (pct) =>
+      onProgress(((done + (blob.size * pct) / 100) / total) * 100)
+    );
+    done += blob.size;
+  }
+  const sent = (form: CaptureForms["original"]) =>
+    plan.some(([f]) => f === form) ? form.key : null;
+  return {
+    original: forms.original.key,
+    extras: sent(forms.extras),
+    ble: sent(forms.ble),
+  };
+}
+
+export interface FinishOptions {
+  summary: Record<string, unknown>;
+  aborted: boolean;
+  /** The uploaded capture; omitted only for an aborted run that captured nothing. */
+  capture?: CaptureKeys;
+  /** The whole timeline, re-sent; the backend drops what it already has. */
+  events?: WireEvent[];
+}
+
+/**
+ * Close a session: store its capture, merge its timeline, start the analysis.
  *
- * Called on both a completed and an abandoned run: an unfinished session never merges its
- * event parts, so the timeline would stay unreadable.
+ * Idempotent on the backend, so a failed call can simply be retried.
  */
 export function finishSession(
   sessionId: string,
-  summary: Record<string, unknown>,
-  aborted: boolean
+  options: FinishOptions
 ): Promise<StimulusSession> {
   return api.post<StimulusSession>(`sessions/${sessionId}/finish`, {
-    summary,
-    aborted,
+    summary: options.summary,
+    aborted: options.aborted,
+    ...(options.capture ? { capture: options.capture } : {}),
+    ...(options.events ? { events: options.events } : {}),
   });
 }
 

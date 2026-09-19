@@ -113,7 +113,7 @@ export function MediaCard({
 
   return (
     <Link
-      href={`/library/${item.id}`}
+      href={`/protocols/${item.id}`}
       className="pressable group block w-[228px] shrink-0 focus-visible:outline-none"
     >
       {cover}

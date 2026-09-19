@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { use } from "react";
 import { api } from "@/lib/api";
+import { protocolFor } from "@/lib/protocol/catalog";
 import { mediaAccess, type Media } from "@/lib/types";
 import {
   Button,
@@ -21,11 +22,9 @@ const KIND_LABEL: Record<Media["kind"], string> = {
 };
 
 /**
- * One catalog item: what it is, and the way into a session with it.
- *
- * Recording against a stimulus arrives with the session model (V2 phase 2), so the
- * start button says so instead of pretending: a dead control that looks live is
- * worse than an honest one.
+ * A protocol's page (plan V3, S16): what it does, how long it takes, the blocks in
+ * plain words, the content warning - then Play, which goes through the headband
+ * pre-flight to the run. A locked item is shown but cannot be played.
  */
 export default function MediaDetailPage({
   params,
@@ -49,10 +48,10 @@ export default function MediaDetailPage({
   if (item.isError || !item.data)
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <ErrorBanner message="This item is not in your library." />
+        <ErrorBanner message="This protocol is not in your catalog." />
         <div className="mt-6">
-          <Link href="/library" className={buttonClass("secondary")}>
-            Back to the library
+          <Link href="/protocols" className={buttonClass("secondary")}>
+            Back to protocols
           </Link>
         </div>
       </main>
@@ -60,6 +59,8 @@ export default function MediaDetailPage({
 
   const media = item.data;
   const warning = media.manifest.content_warning;
+  const protocol = protocolFor(media);
+  const locked = mediaAccess(media) === "locked";
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -86,23 +87,41 @@ export default function MediaDetailPage({
             {media.visibility === "official" ? " · Official" : " · Private"}
           </p>
         </div>
-        {/* Reachable by URL even though the library does not link locked cards, so it
-            says why rather than looking merely broken. */}
-        <Button
-          disabled
-          title={
-            mediaAccess(media) === "locked"
-              ? "Not open yet: beta testers get this first"
-              : "Recording with a stimulus arrives in the next step"
-          }
-        >
-          {mediaAccess(media) === "locked" ? "Locked" : "Record with this"}
-        </Button>
+        {locked || !protocol.ok ? (
+          <Button
+            disabled
+            title={
+              locked ? "Not open yet: beta testers get this first" : undefined
+            }
+          >
+            {locked ? "Locked" : "Cannot play"}
+          </Button>
+        ) : (
+          <Link href={`/protocols/${media.id}/run`} className={buttonClass()}>
+            Play
+          </Link>
+        )}
       </header>
 
       {media.description && (
         <p className="mt-4 text-pretty text-ink-2">{media.description}</p>
       )}
+
+      {protocol.ok && (
+        <Card className="mt-6">
+          <h2 className="text-[15px] font-semibold">What happens</h2>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-ink-2">
+            {protocol.protocol.steps.map((step) => (
+              <li key={step.id}>{step.label}</li>
+            ))}
+          </ol>
+          <p className="type-caption mt-3 text-ink-3">
+            You wear the headband throughout; the recording starts and stops
+            with the session.
+          </p>
+        </Card>
+      )}
+      {!protocol.ok && !locked && <ErrorBanner message={protocol.error} />}
 
       {warning && (
         <Card className="mt-6 border-warn/40 bg-warn-soft">

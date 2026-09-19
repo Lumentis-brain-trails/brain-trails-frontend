@@ -4,15 +4,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { buildCaptureBlob, type RawCapture } from "@/lib/muse/capture";
 import {
-  buildExtrasCsv,
-  buildSessionCsv,
-  type ExtrasRecorder,
-  type SessionCapture,
-} from "@/lib/muse/session";
-import { MODEL_PROFILES, type MuseModel } from "@/lib/muse/models";
-import type { TimelineStats } from "@/lib/muse/timeline";
+  buildCaptureFiles,
+  type StoppedCapture,
+} from "@/lib/muse/captureFiles";
+import { MODEL_PROFILES } from "@/lib/muse/models";
 import {
   uploadToStorage,
   type Presign,
@@ -23,13 +19,7 @@ import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
 
 /** A stopped capture waiting for the user's decision. */
-export interface StoppedSession {
-  capture: SessionCapture;
-  timeline: TimelineStats;
-  extras: ExtrasRecorder;
-  raw: RawCapture;
-  deviceName: string;
-  model: MuseModel;
+export interface StoppedSession extends StoppedCapture {
   title: string;
   taskLabel: string;
 }
@@ -70,36 +60,16 @@ export function SessionSheet({
       recording_id: string;
       captureSkipped: boolean;
     }> => {
-      const csv = buildSessionCsv(capture, {
-        deviceName: session.deviceName,
-        model: session.model,
-        timeline,
-      });
-      const blob = new Blob([csv], { type: "text/csv" });
+      const built = await buildCaptureFiles(session);
+      const blob = built.csv;
       const slug =
         session.title
           .trim()
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, "") || "session";
-      const extrasPackets = session.extras.stop();
-      const extrasBlob =
-        extrasPackets.length > 0
-          ? new Blob([buildExtrasCsv(extrasPackets, capture, timeline)], {
-              type: "text/csv",
-            })
-          : null;
-      const captureBlob = await buildCaptureBlob(session.raw.stop(), {
-        model: session.model,
-        deviceName: session.deviceName,
-        startedAt: capture.startedAt.toISOString(),
-        timeline: {
-          hostMsAtIndex0: timeline.hostMsAtIndex0,
-          msPerSample: timeline.msPerSample,
-          firstSampleIndex: capture.firstSampleIndex,
-        },
-        userAgent: navigator.userAgent,
-      });
+      const extrasBlob = built.extras;
+      const captureBlob = built.ble;
       const presign = await api.post<SessionPresign>("recordings/uploads", {
         filename: `${slug}.csv`,
         with_extras: extrasBlob !== null,
