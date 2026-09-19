@@ -1,5 +1,4 @@
 import { expect, test } from "vitest";
-import "@/components/protocol/kinds";
 import type { Media } from "@/lib/types";
 import { protocolFor } from "./catalog";
 

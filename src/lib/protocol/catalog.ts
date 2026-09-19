@@ -6,6 +6,9 @@
  * implicit one-block protocol. This module turns an item into something the runner can
  * run.
  */
+// Registers the task kinds: validating a protocol needs them, and a page that only
+// shows a protocol (its detail page) would otherwise validate against none.
+import "@/components/protocol/kinds";
 import type { Media } from "@/lib/types";
 import { type ResolvedProtocol, resolveProtocol } from "./session";
 import { safeParseProtocol } from "./schema";
