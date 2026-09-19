@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import "@/components/protocol/kinds"; // registers the built-in kinds
 import { planBreathing } from "./breathing";
-import { SIGNAL_NAVIGATOR } from "./definitions/signalNavigator";
+import { SIGNAL_NAVIGATOR } from "./__fixtures__/signalNavigator";
 import { eegAnchor, runAnchor } from "./clock";
 import {
   MAX_PAYLOAD_BYTES,
@@ -15,10 +15,19 @@ import { parseProtocol, safeParseProtocol } from "./schema";
 describe("registry", () => {
   test("registers the built-in kinds", () => {
     expect(knownKinds()).toEqual([
+      "audio",
+      "baseline",
       "breathing",
+      "countdown",
+      "fixation",
       "go-no-go",
       "image-sequence",
+      "instructions",
       "prompt",
+      "questionnaire",
+      "quiz",
+      "rest",
+      "text",
       "video",
     ]);
   });
@@ -115,7 +124,7 @@ describe("parseProtocol", () => {
     if (!result.ok) {
       expect(result.error).toMatch(/unknown kind "teleport"/);
       expect(result.error).toMatch(
-        /breathing, go-no-go, image-sequence, prompt, video/
+        /breathing, countdown, fixation, go-no-go, image-sequence, instructions/
       );
     }
   });

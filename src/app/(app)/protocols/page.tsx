@@ -1,19 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { ApiRequestError, api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
+import { type ProtocolCard as Card } from "@/lib/protocol/catalog";
 import {
   MEDIA_TAGS,
   MEDIA_TAG_HINTS,
   MEDIA_TAG_LABELS,
-  mediaAccess,
-  mediaTags,
-  type Media,
   type MediaTag,
 } from "@/lib/types";
-import Link from "next/link";
-import { MediaCard } from "@/components/MediaCard";
+import { ProtocolCard } from "@/components/ProtocolCard";
 import {
   EmptyState,
   ErrorBanner,
@@ -21,84 +19,77 @@ import {
   buttonClass,
 } from "@/components/ui";
 
-type Row = { key: string; title: string; hint: string; items: Media[] };
+type Row = { key: string; title: string; hint: string; items: Card[] };
 
 /**
- * The protocol catalog (plan V3, S16): what you can play while you record. One row per
- * browsing tag, plus a row of your own, each scrolling sideways like a streaming
- * service; a card opens the protocol's page, where Play starts it. Until protocols are
- * rows of their own (S18) an item here is a module-backed protocol or a video, which
- * plays as a one-block protocol. Uploading lives in `/media`.
+ * The protocol catalog (V3-0004, S16-S18): rows of cards scrolling sideways like a
+ * streaming service - Official, Community, yours, then one row per browsing tag. A card
+ * opens the protocol's page, where Play starts it. Protocols are rows of their own:
+ * a video becomes one through "Create a protocol from this" in My media.
  *
- * Rows are built from a single catalog request rather than one request per row: the
- * whole visible catalog is tens of items, and one round trip keeps the first paint
- * honest about what exists.
- *
- * `include_locked` is asked for on purpose. Most of the programme is not built yet, and
- * a row of one card reads as a bug rather than a beginning; showing the locked items
- * says what is coming without pretending it is ready. Locked cards cannot be opened, and
- * the backend refuses to start a session against one, so the row is an advertisement and
- * nothing more.
+ * Two requests: the published catalog (locked cards included on purpose - a row of one
+ * card reads as a bug, and a locked card says what is coming without pretending it is
+ * ready) and the caller's own protocols, drafts included.
  */
-export default function LibraryPage() {
+export default function ProtocolsPage() {
   const workspace = useCurrentWorkspace();
+  // a bad request or an expired session will not become valid on retry: fail fast
+  const retry = (count: number, error: Error) =>
+    error instanceof ApiRequestError && error.status < 500 ? false : count < 2;
   const catalog = useQuery({
-    queryKey: ["media", "with-locked", workspace?.id],
+    queryKey: ["protocols", "catalog"],
+    queryFn: () => api.get<Card[]>("protocols?include_locked=true&limit=100"),
+    retry,
+  });
+  const mine = useQuery({
+    queryKey: ["protocols", "mine", workspace?.id],
     queryFn: () =>
-      api.get<Media[]>(inWorkspace("media?include_locked=true", workspace)),
+      api.get<Card[]>(inWorkspace("protocols?mine=true&limit=100", workspace)),
     enabled: workspace !== undefined,
-    // a rejected session or a bad request will not become valid on retry: fail fast
-    // and show the error instead of spinning through three backoffs
-    retry: (count, error) =>
-      error instanceof ApiRequestError && error.status < 500
-        ? false
-        : count < 2,
+    retry,
   });
   const items = catalog.data;
 
-  /** Runnable first inside a row, so the one thing a reader can actually start leads. */
-  const byAccessThenTitle = (a: Media, b: Media) =>
-    mediaAccess(a) === mediaAccess(b)
-      ? a.title.localeCompare(b.title)
-      : mediaAccess(a) === "open"
-        ? -1
-        : 1;
+  // An older API may not send `tags` or `access` at all; a missing one is not locked.
+  const tagsOf = (p: Card) => p.tags ?? [];
+  const locked = (p: Card) => p.access === "locked";
 
-  /**
-   * True when the catalog came back with no tags anywhere, which means the API predates
-   * them rather than that the catalog is empty. Tag rows would all be empty and the page
-   * would claim there is nothing in the library, so everything goes in one row instead.
-   */
-  const untagged =
-    !!items &&
-    items.length > 0 &&
-    items.every((i) => mediaTags(i).length === 0);
+  /** Runnable first inside a row, so the one thing a reader can actually start leads. */
+  const openFirst = (a: Card, b: Card) =>
+    locked(a) === locked(b)
+      ? a.title.localeCompare(b.title)
+      : locked(a)
+        ? 1
+        : -1;
 
   const rows: Row[] = items
     ? [
-        ...(untagged
-          ? [
-              {
-                key: "all",
-                title: "Everything",
-                hint: "Browsing by tag arrives with the next API release.",
-                items: [...items].sort(byAccessThenTitle),
-              },
-            ]
-          : MEDIA_TAGS.map((tag: MediaTag) => ({
-              key: tag,
-              title: MEDIA_TAG_LABELS[tag],
-              hint: MEDIA_TAG_HINTS[tag],
-              items: items
-                .filter((i) => mediaTags(i).includes(tag))
-                .sort(byAccessThenTitle),
-            }))),
+        {
+          key: "official",
+          title: "Official",
+          hint: "Built and checked by the Brain Trails team.",
+          items: items
+            .filter((i) => i.visibility === "official" && !locked(i))
+            .sort(openFirst),
+        },
         {
           key: "mine",
-          title: "Your uploads",
-          hint: "Private to you.",
-          items: items.filter((i) => i.kind === "video" && i.mine),
+          title: "Yours",
+          hint: "Private to your workspace, drafts included.",
+          items: (mine.data ?? []).filter((i) => i.visibility === "workspace"),
         },
+        {
+          key: "community",
+          title: "Community",
+          hint: "Shared by other people, reviewed before they appear.",
+          items: items.filter((i) => i.visibility === "public"),
+        },
+        ...MEDIA_TAGS.map((tag: MediaTag) => ({
+          key: tag,
+          title: MEDIA_TAG_LABELS[tag],
+          hint: MEDIA_TAG_HINTS[tag],
+          items: items.filter((i) => tagsOf(i).includes(tag)).sort(openFirst),
+        })),
       ].filter((row) => row.items.length > 0)
     : [];
 
@@ -131,10 +122,10 @@ export default function LibraryPage() {
       {items && rows.length === 0 && (
         <EmptyState
           title="No protocols yet"
-          text="Upload a video to record against, or ask an admin to publish the first protocol."
+          text="Upload a video in My media and turn it into a protocol, or ask an admin to publish the official ones."
           action={
             <Link href="/media" className={buttonClass()}>
-              Upload a video
+              Go to My media
             </Link>
           }
         />
@@ -142,25 +133,19 @@ export default function LibraryPage() {
 
       <div className="flex flex-col gap-10">
         {rows.map((row) => (
-          <section key={row.key}>
+          <section key={row.key} aria-label={row.title}>
             <h2 className="type-heading">{row.title}</h2>
             <p className="type-caption mt-0.5 text-ink-3">{row.hint}</p>
             <div className="-mx-6 mt-4 flex gap-4 overflow-x-auto px-6 pb-2">
               {row.items.map((item) => (
-                <MediaCard
-                  key={item.id}
-                  item={item}
-                  locked={mediaAccess(item) === "locked"}
-                />
+                <ProtocolCard key={item.id} item={item} />
               ))}
             </div>
           </section>
         ))}
       </div>
 
-      {rows.some((row) =>
-        row.items.some((i) => mediaAccess(i) === "locked")
-      ) && (
+      {rows.some((row) => row.items.some(locked)) && (
         <p className="type-caption mt-10 text-ink-3">
           Locked protocols are part of the programme but not open yet. Beta
           testers get them first.

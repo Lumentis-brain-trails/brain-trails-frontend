@@ -15,6 +15,7 @@ const ALLOWED_PREFIXES = [
   "admin/",
   "sessions",
   "media",
+  "protocols",
   "config",
   "workspaces",
 ];
@@ -72,7 +73,9 @@ async function forward(
     const value = upstream.headers.get(name);
     if (value) responseHeaders[name] = value;
   }
-  return new NextResponse(responseBody, {
+  // A null-body status must not carry one, not even an empty buffer: Response throws.
+  const nullBody = upstream.status === 204 || upstream.status === 304;
+  return new NextResponse(nullBody ? null : responseBody, {
     status: upstream.status,
     headers: responseHeaders,
   });

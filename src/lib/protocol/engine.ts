@@ -15,7 +15,7 @@
  * than assumed away.
  */
 
-import type { MarkerDraft, Outcome } from "./marker";
+import { FRAME_MS, type MarkerDraft, type Outcome, timingMeta } from "./marker";
 import type { CuedTrial, Trial } from "./trials";
 
 export type EnginePhase =
@@ -162,6 +162,8 @@ export function scheduledDurationMs(state: EngineState): number {
 function onsetMeta(plannedMs: number, actualMs: number, lateFrameMs: number) {
   const error = actualMs - plannedMs;
   return {
+    // Onsets land on rAF ticks: the frame is observed, to within one frame.
+    ...timingMeta("raf", FRAME_MS),
     planned_onset_ms: plannedMs,
     actual_onset_ms: actualMs,
     onset_error_ms: error,

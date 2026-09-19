@@ -92,6 +92,105 @@
       "nothing": "The session stopped before anything was recorded.",
       "sync_failed": "No signal arrived from the headband. Check that it is on and paired, then try again.",
       "dropped": "The headband disconnected, so the session stopped. What was recorded until then has been kept."
+    },
+    "consent": {
+      "title": "Before you begin",
+      "warning": "Content notice",
+      "consent": "Consent",
+      "agree": "I have read this and I agree to take part.",
+      "accept": "Continue",
+      "decline": "Back",
+      "required": "Tick the box to continue."
+    }
+  },
+  "kinds": {
+    "common": {
+      "continue": "Continue",
+      "loading": "Loading…",
+      "media_error": "This could not be played. You can continue with the session."
+    },
+    "fixation": {
+      "label": "Fixation cross"
+    },
+    "baseline": {
+      "open": "Keep your eyes open and rest your gaze on the cross.",
+      "closed": "Close your eyes and relax. A tone will tell you when to open them.",
+      "closed_silent": "Close your eyes and relax until the screen changes."
+    },
+    "rest": {
+      "timed": "Take a short break.",
+      "self_paced": "Take your time. Press Finish when you are done.",
+      "elapsed": "Elapsed {time}",
+      "finish": "Finish"
+    },
+    "countdown": {
+      "label": "Starting in"
+    },
+    "audio": {
+      "listen": "Listen"
+    },
+    "text": {
+      "error": "This text could not be loaded. You can continue with the session."
+    },
+    "questionnaire": {
+      "submit": "Submit",
+      "unanswered": "Answer every question to continue.",
+      "point": "{value} of {max}",
+      "sam": {
+        "valence": {
+          "question": "How pleasant did you feel?",
+          "low": "Unhappy",
+          "high": "Happy"
+        },
+        "arousal": {
+          "question": "How calm or excited did you feel?",
+          "low": "Calm",
+          "high": "Excited"
+        },
+        "dominance": {
+          "question": "How much in control did you feel?",
+          "low": "Controlled",
+          "high": "In control"
+        }
+      },
+      "nasa_tlx": {
+        "mental": {
+          "question": "How mentally demanding was the task?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "physical": {
+          "question": "How physically demanding was the task?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "temporal": {
+          "question": "How hurried or rushed was the pace of the task?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "performance": {
+          "question": "How successful were you in doing what you were asked to do?",
+          "low": "Perfect",
+          "high": "Failure"
+        },
+        "effort": {
+          "question": "How hard did you have to work to reach your level of performance?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "frustration": {
+          "question": "How insecure, discouraged, irritated, stressed or annoyed were you?",
+          "low": "Very low",
+          "high": "Very high"
+        }
+      }
+    },
+    "quiz": {
+      "progress": "Question {n} of {total}",
+      "correct": "Correct",
+      "incorrect": "Not quite",
+      "next": "Next"
     }
   }
 }

@@ -46,7 +46,41 @@ export interface MarkerMeta {
   /** Set when the trial straddled a hidden tab and must be excluded from rates. */
   invalid?: boolean;
   motion_profile?: "full" | "reduced";
+  /** What observed a stimulus onset (backend decision V3-0004, "Events"). */
+  timing_source?: TimingSource;
+  /** How far the true onset may be from the stamped one, in milliseconds. */
+  timing_uncertainty_ms?: number;
   [key: string]: unknown;
+}
+
+/**
+ * The clock that observed a stimulus onset, best first:
+ * - `rvfc`: `requestVideoFrameCallback`'s presentation time of the frame itself;
+ * - `webaudio`: the audio clock's scheduled start mapped through `getOutputTimestamp`;
+ * - `raf`: the first animation frame after the change, so within about one frame;
+ * - `ui`: a timer or event handler changed the screen; the paint time is not observed.
+ */
+export type TimingSource = "rvfc" | "raf" | "webaudio" | "ui";
+
+/** One frame at 60 Hz: the uncertainty of an onset seen on a rAF tick. */
+export const FRAME_MS = 1000 / 60;
+
+/**
+ * A timer-driven change reaches the screen within a frame or two plus timer slack; the
+ * runner stamps this on stimulus markers that did not say how they were observed, so no
+ * onset in the stream claims more precision than it has.
+ */
+export const UI_UNCERTAINTY_MS = 50;
+
+/** The meta pair every stimulus onset carries. */
+export function timingMeta(
+  source: TimingSource,
+  uncertaintyMs: number
+): Pick<MarkerMeta, "timing_source" | "timing_uncertainty_ms"> {
+  return {
+    timing_source: source,
+    timing_uncertainty_ms: Math.round(uncertaintyMs * 10) / 10,
+  };
 }
 
 /** One marker, host-stamped. */

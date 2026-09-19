@@ -164,6 +164,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/review/protocols": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Protocol Review Queue
+         * @description Protocols waiting for a community decision, oldest first (admin only).
+         */
+        get: operations["protocol_review_queue_admin_review_protocols_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/review/protocols/{protocol_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Protocol
+         * @description Approve or refuse a protocol's community request, or hide a shared one (admin only).
+         *
+         *     Same rules as for media: approving grants everyone, hiding withdraws that grant and
+         *     archives the protocol, 409 without a pending request. Audited.
+         */
+        post: operations["review_protocol_admin_review_protocols__protocol_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/stats": {
         parameters: {
             query?: never;
@@ -472,10 +515,12 @@ export interface paths {
         post?: never;
         /**
          * Delete Media
-         * @description Delete an item, its files and its grants.
+         * @description Delete an item, its files and its grants - or archive it when a protocol plays it.
          *
          *     Whoever builds in its workspace may delete it; an admin may also take down an item
-         *     everyone can see (the official catalog), which is audited.
+         *     everyone can see (the official catalog), which is audited. An item a published
+         *     protocol version plays cannot go (sessions must replay what they showed): it is
+         *     `archived`, leaves the library and keeps playing inside those protocols.
          */
         delete: operations["delete_media_media__media_id__delete"];
         options?: never;
@@ -537,7 +582,7 @@ export interface paths {
         };
         /**
          * Media Usage
-         * @description The protocol versions that use this item (none until protocols exist, S18).
+         * @description The protocols that play this item: deleting it would archive it instead.
          */
         get: operations["media_usage_media__media_id__usage_get"];
         put?: never;
@@ -568,6 +613,224 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/protocols": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Protocols
+         * @description Protocols the caller may see, newest first, as catalog cards.
+         *
+         *     Published protocols only, except with `mine=true`, which keeps the protocols of the
+         *     workspaces the caller builds in, drafts included. `circle`, `tag` and `q` (title or
+         *     summary) narrow the list; archived protocols never show; locked ones only with
+         *     `include_locked`. The next page's cursor comes back in `X-Next-Cursor`.
+         */
+        get: operations["list_protocols_protocols_get"];
+        put?: never;
+        /**
+         * Create Protocol
+         * @description Start a protocol in `?workspace=` (the personal one by default).
+         */
+        post: operations["create_protocol_protocols_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/from-media/{media_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Protocol From Media
+         * @description Create a protocol from this: a draft around one video, sound or text (201).
+         *
+         *     Titled and covered after the media; the author publishes it as it is or edits it.
+         *     422 for a kind that cannot be wrapped (a game), 409 while the media is not ready.
+         */
+        post: operations["protocol_from_media_protocols_from_media__media_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/{protocol_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Protocol
+         * @description One protocol with its outline; editors also get the draft and its revision.
+         */
+        get: operations["get_protocol_protocols__protocol_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Protocol
+         * @description Delete a protocol, or archive it when sessions ran it.
+         *
+         *     An archived protocol leaves the catalog and can no longer be started, but every
+         *     session keeps the version it ran. An admin removing someone else's protocol is
+         *     audited.
+         */
+        delete: operations["delete_protocol_protocols__protocol_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Protocol
+         * @description Change catalog fields; they are not part of a version, so nothing is republished.
+         */
+        patch: operations["update_protocol_protocols__protocol_id__patch"];
+        trace?: never;
+    };
+    "/protocols/{protocol_id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Draft
+         * @description Replace the draft; `If-Match` must carry the revision it was edited from.
+         *
+         *     428 without `If-Match`, 409 `stale_draft` when someone saved in between - two tabs
+         *     cannot silently overwrite each other. The draft is not validated here: a draft is
+         *     allowed to be unfinished.
+         */
+        put: operations["save_draft_protocols__protocol_id__draft_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/{protocol_id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Duplicate Protocol
+         * @description Copy a protocol one may see into one's own workspace, as a new draft.
+         *
+         *     The copy starts from the published version when there is one (what the caller saw),
+         *     else from the draft. It is a new protocol: no link back, nothing published.
+         */
+        post: operations["duplicate_protocol_protocols__protocol_id__duplicate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/{protocol_id}/official": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Official
+         * @description Promote a protocol into the official catalog (admin only; audited).
+         */
+        post: operations["set_official_protocols__protocol_id__official_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/{protocol_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Protocol
+         * @description Validate the draft and freeze it as the next version (422 with the errors).
+         *
+         *     Sessions, and later assignments and studies, point at a version, so publishing never
+         *     changes what an earlier session ran.
+         */
+        post: operations["publish_protocol_protocols__protocol_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/{protocol_id}/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Share Protocol
+         * @description Ask for a published protocol to go on the community shelf.
+         *
+         *     Reviewed by an admin while `beta_gate_publication` is on (V3-0008), immediate
+         *     otherwise. 409 for a protocol never published or already shared. Its media are lent
+         *     through the version grant, private ones included (V3-0003).
+         */
+        post: operations["share_protocol_protocols__protocol_id__share_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/protocols/{protocol_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate Protocol
+         * @description Validate the current draft: errors (block publication) and warnings (advice).
+         */
+        post: operations["validate_protocol_protocols__protocol_id__validate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/recordings": {
         parameters: {
             query?: never;
@@ -581,6 +844,7 @@ export interface paths {
          *
          *     `?workspace=` narrows to one workspace. Keyset pagination on `(created_at, id)`: the
          *     next page's cursor comes back in the `X-Next-Cursor` header, absent on the last page.
+         *     Abandoned browser sessions are closed first, so none is listed as still capturing.
          */
         get: operations["list_recordings_recordings_get"];
         put?: never;
@@ -836,16 +1100,18 @@ export interface paths {
         put?: never;
         /**
          * Start Session
-         * @description Start a session against a runnable catalog item, recorded in `?workspace=` (201).
+         * @description Start a session running a protocol, recorded in `?workspace=` (201).
          *
-         *     With `capture: upload` (the default, V3-0005) the recording waits for its files and
-         *     the response carries presigned forms for the session CSV, the extras sidecar and the
-         *     raw capture; the browser records locally and uploads at finish. With
-         *     `capture: stream` the recording and its analysis are created for the websocket, as
-         *     before. Either way the response carries what the stimulus needs to run: its
-         *     manifest, its module or definition, and the `seed` a replay must reuse.
-         *     404 when the item is not visible to the caller, 403 when it is locked or when the
-         *     caller may not record in the workspace.
+         *     The protocol's current version runs unless `version` names an earlier one. With
+         *     `capture: upload` (the default, V3-0005) the recording waits for its files and the
+         *     response carries presigned forms for the session CSV, the extras sidecar and the raw
+         *     capture; the browser records locally and uploads at finish. With `capture: stream`
+         *     the recording and its analysis are created for the websocket, as before. Either way
+         *     the response carries what the run needs: the version's tree and manifest, the `seed`
+         *     a replay must reuse, and links to its media that last the whole run
+         *     (`est_duration_s` + 30 min; `/media-urls` renews them).
+         *     404 when the protocol is not visible (or archived), 403 when it is locked or the
+         *     caller may not record in the workspace, 409 when it was never published.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -924,12 +1190,56 @@ export interface paths {
          *     capture files are checked and moved under the recording and `full_pipeline` is
          *     queued (the worker is woken, 0014); a missing file answers 422 and leaves the session
          *     running, so the upload can be retried. An aborted run keeps whatever it uploaded; an
-         *     aborted run with no capture closes with its recording marked `failed`.
+         *     aborted run with no capture closes with its recording marked `empty`.
          *
          *     The timeline is the stored parts plus any events re-sent here, de-duplicated on
          *     `(t, type, seq)` and sorted by `t`; the parts are then removed.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/{session_id}/media-urls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Renew Media Links
+         * @description Fresh links to the session's media, for a run that outlived the first ones.
+         */
+        get: operations["renew_media_links_sessions__session_id__media_urls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/{session_id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Store Plan
+         * @description Store the resolved plan, before the first block (V3-0004).
+         *
+         *     Review and analysis read what was shown, not what could have been. Posting the same
+         *     plan again is harmless (a retry); a different one answers 409 `plan_fixed`, and a
+         *     closed session 409 `session_closed`.
+         */
+        post: operations["store_plan_sessions__session_id__plan_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1321,6 +1631,17 @@ export interface components {
             password: string;
         };
         /**
+         * DeletedOut
+         * @description `deleted`, or `archived` when sessions ran it and it must stay readable.
+         */
+        DeletedOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "deleted" | "archived";
+        };
+        /**
          * DownloadOut
          * @description Short-lived presigned link to the raw file.
          */
@@ -1329,6 +1650,24 @@ export interface components {
             expires_s: number;
             /** Url */
             url: string;
+        };
+        /**
+         * DraftIn
+         * @description A whole draft; the revision it started from travels in `If-Match`.
+         */
+        DraftIn: {
+            /** Draft */
+            draft: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * DraftOut
+         * @description The new revision, for the next `If-Match`.
+         */
+        DraftOut: {
+            /** Draft Rev */
+            draft_rev: number;
         };
         /**
          * EventIn
@@ -1391,6 +1730,18 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * IssueOut
+         * @description One validation finding; `rule` is stable, `path` points into the tree.
+         */
+        IssueOut: {
+            /** Message */
+            message: string;
+            /** Path */
+            path: string;
+            /** Rule */
+            rule: string;
         };
         /**
          * JobOut
@@ -1522,6 +1873,37 @@ export interface components {
          */
         MediaKind: "video" | "audio" | "text" | "quiz" | "game";
         /**
+         * MediaLink
+         * @description A media item a session plays: a link that outlives the run, or a text's passage.
+         */
+        MediaLink: {
+            /** Body */
+            body?: string | null;
+            /** Duration S */
+            duration_s: number | null;
+            /** Kind */
+            kind: string;
+            /** Poster Url */
+            poster_url: string | null;
+            /** Url */
+            url: string | null;
+        };
+        /**
+         * MediaLinks
+         * @description Every media item of the session's version, and when the links stop working.
+         */
+        MediaLinks: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Media */
+            media: {
+                [key: string]: components["schemas"]["MediaLink"];
+            };
+        };
+        /**
          * MediaOut
          * @description A catalog item as the app sees it; `url` is a short-lived link for videos.
          */
@@ -1558,6 +1940,8 @@ export interface components {
             mine: boolean;
             /** Module */
             module: string | null;
+            /** Preview Url */
+            preview_url?: string | null;
             /** Probe */
             probe: {
                 [key: string]: unknown;
@@ -1659,6 +2043,30 @@ export interface components {
             step_s: number;
             /** Summary */
             summary: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * OutlineItem
+         * @description One top-level step of a protocol in plain words, for the detail page.
+         */
+        OutlineItem: {
+            /** Count */
+            count: number;
+            /** Duration S */
+            duration_s: number | null;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * PlanIn
+         * @description The flat plan the browser resolved from the version's tree and the seed.
+         */
+        PlanIn: {
+            /** Plan */
+            plan: {
                 [key: string]: unknown;
             };
         };
@@ -1766,6 +2174,152 @@ export interface components {
             vision_correction?: string | null;
         };
         /**
+         * ProtocolCard
+         * @description What a catalog card needs; `mine` when the caller may edit the protocol.
+         */
+        ProtocolCard: {
+            access: components["schemas"]["MediaAccess"];
+            /** Archived */
+            archived: boolean;
+            /** Content Warning */
+            content_warning: string | null;
+            /** Cover Url */
+            cover_url: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current Version */
+            current_version: number | null;
+            /** Est Duration S */
+            est_duration_s: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Language */
+            language: string | null;
+            /** Mine */
+            mine: boolean;
+            /** Preview Url */
+            preview_url: string | null;
+            review_state: components["schemas"]["ReviewState"];
+            /** Slug */
+            slug: string;
+            /** Summary */
+            summary: string | null;
+            /** Tags */
+            tags: string[];
+            /** Title */
+            title: string;
+            visibility: components["schemas"]["MediaVisibility"];
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /**
+         * ProtocolDetail
+         * @description The detail page: description, outline, the published tree and, for editors, the draft.
+         */
+        ProtocolDetail: {
+            access: components["schemas"]["MediaAccess"];
+            /** Archived */
+            archived: boolean;
+            /** Content Warning */
+            content_warning: string | null;
+            /** Cover Url */
+            cover_url: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current Version */
+            current_version: number | null;
+            /** Definition */
+            definition: {
+                [key: string]: unknown;
+            } | null;
+            /** Description */
+            description: string | null;
+            /** Draft */
+            draft?: {
+                [key: string]: unknown;
+            } | null;
+            /** Draft Rev */
+            draft_rev?: number | null;
+            /** Est Duration S */
+            est_duration_s: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Language */
+            language: string | null;
+            /** Mine */
+            mine: boolean;
+            /** Outline */
+            outline: components["schemas"]["OutlineItem"][];
+            /** Preview Url */
+            preview_url: string | null;
+            review_state: components["schemas"]["ReviewState"];
+            /** Slug */
+            slug: string;
+            /** Summary */
+            summary: string | null;
+            /** Tags */
+            tags: string[];
+            /** Title */
+            title: string;
+            visibility: components["schemas"]["MediaVisibility"];
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /**
+         * ProtocolIn
+         * @description A new protocol: its catalog fields and, optionally, a starting draft.
+         */
+        ProtocolIn: {
+            /** Description */
+            description?: string | null;
+            /** Draft */
+            draft?: {
+                [key: string]: unknown;
+            } | null;
+            /** Language */
+            language?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** Tags */
+            tags?: ("attention" | "anxiety" | "cognitive_decline")[];
+            /** Title */
+            title: string;
+        };
+        /**
+         * ProtocolPatch
+         * @description Catalog fields; none of them makes a new version.
+         */
+        ProtocolPatch: {
+            /** Description */
+            description?: string | null;
+            /** Language */
+            language?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** Tags */
+            tags?: ("attention" | "anxiety" | "cognitive_decline")[] | null;
+            /** Title */
+            title?: string | null;
+        };
+        /**
          * PublishIn
          * @description A request to show an item to the community (V3-0003).
          *
@@ -1851,6 +2405,12 @@ export interface components {
             note?: string | null;
         };
         /**
+         * ReviewState
+         * @description Where a publication request stands; during the beta every one is reviewed (V3-0008).
+         * @enum {string}
+         */
+        ReviewState: "none" | "pending" | "approved" | "refused";
+        /**
          * SessionOut
          * @description A session as the app sees it; `events_url` is a short-lived link when finished.
          */
@@ -1864,16 +2424,16 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Media Id */
-            media_id: string | null;
-            /** Media Title */
-            media_title: string;
             /** N Events */
             n_events: number;
             /** Params */
             params: {
                 [key: string]: unknown;
             };
+            /** Protocol Id */
+            protocol_id: string | null;
+            /** Protocol Version */
+            protocol_version: number | null;
             /**
              * Recording Id
              * Format: uuid
@@ -1891,10 +2451,12 @@ export interface components {
             summary: {
                 [key: string]: unknown;
             };
+            /** Title */
+            title: string;
         };
         /**
          * SessionStartIn
-         * @description Start a session against a catalog item.
+         * @description Start a session: a protocol, at its current version unless `version` names one.
          */
         SessionStartIn: {
             /**
@@ -1908,26 +2470,30 @@ export interface components {
              * @default muse-2
              */
             device: string;
-            /**
-             * Media Id
-             * Format: uuid
-             */
-            media_id: string;
             /** Params */
             params?: {
                 [key: string]: unknown;
             };
+            /**
+             * Protocol Id
+             * Format: uuid
+             */
+            protocol_id: string;
             /** Task Label */
             task_label?: string | null;
             /** Title */
             title?: string | null;
+            /** Version */
+            version?: number | null;
         };
         /**
          * SessionStartOut
-         * @description The session plus how its EEG gets to the server and what the stimulus needs.
+         * @description The session plus how its EEG gets to the server and what the run needs.
          *
          *     `upload` capture returns the presigned forms; `stream` capture the analysis and the
-         *     websocket path instead.
+         *     websocket path instead. `definition` is the version's tree: the browser resolves it
+         *     with `seed` (`resolvePlan`), posts the plan back to `/plan`, and binds `media` links
+         *     to the blocks that reference them.
          */
         SessionStartOut: {
             /** Analysis Id */
@@ -1951,18 +2517,30 @@ export interface components {
             manifest: {
                 [key: string]: unknown;
             };
-            /** Media Id */
-            media_id: string | null;
-            /** Media Title */
-            media_title: string;
-            /** Module */
-            module: string | null;
+            /** Media */
+            media: {
+                [key: string]: components["schemas"]["MediaLink"];
+            };
+            /**
+             * Media Expires At
+             * Format: date-time
+             */
+            media_expires_at: string;
             /** N Events */
             n_events: number;
             /** Params */
             params: {
                 [key: string]: unknown;
             };
+            /** Protocol Id */
+            protocol_id: string | null;
+            /** Protocol Version */
+            protocol_version: number | null;
+            /**
+             * Protocol Version Id
+             * Format: uuid
+             */
+            protocol_version_id: string;
             /**
              * Recording Id
              * Format: uuid
@@ -1980,6 +2558,8 @@ export interface components {
             summary: {
                 [key: string]: unknown;
             };
+            /** Title */
+            title: string;
             upload?: components["schemas"]["CaptureForms"] | null;
             /** Ws Path */
             ws_path?: string | null;
@@ -1990,6 +2570,14 @@ export interface components {
          * @enum {string}
          */
         SessionStatus: "running" | "done" | "aborted";
+        /**
+         * ShareIn
+         * @description A request to show a protocol to the community.
+         */
+        ShareIn: {
+            /** Note */
+            note?: string | null;
+        };
         /**
          * SignalOut
          * @description Decimated signal slice; `samples` is (n_channels, n_samples) in microvolts.
@@ -2070,7 +2658,7 @@ export interface components {
         };
         /**
          * UsageOut
-         * @description Where an item is used; protocols reference media from S18 on.
+         * @description The protocols whose published versions play an item.
          */
         UsageOut: {
             /** Protocols */
@@ -2112,6 +2700,20 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * ValidationOut
+         * @description The validator's answer: errors block publication, warnings only advise.
+         */
+        ValidationOut: {
+            /** Errors */
+            errors: components["schemas"]["IssueOut"][];
+            /** Est Duration S */
+            est_duration_s: number;
+            /** Ok */
+            ok: boolean;
+            /** Warnings */
+            warnings: components["schemas"]["IssueOut"][];
         };
         /**
          * WorkspaceOut
@@ -2440,6 +3042,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MediaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    protocol_review_queue_admin_review_protocols_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolCard"][];
+                };
+            };
+        };
+    };
+    review_protocol_admin_review_protocols__protocol_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolCard"];
                 };
             };
             /** @description Validation Error */
@@ -3017,6 +3674,407 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_protocols_protocols_get: {
+        parameters: {
+            query?: {
+                circle?: components["schemas"]["MediaVisibility"] | null;
+                mine?: boolean | null;
+                tag?: ("attention" | "anxiety" | "cognitive_decline") | null;
+                q?: string | null;
+                include_locked?: boolean;
+                limit?: number;
+                cursor?: string | null;
+                workspace?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolCard"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_protocol_protocols_post: {
+        parameters: {
+            query?: {
+                workspace?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProtocolIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    protocol_from_media_protocols_from_media__media_id__post: {
+        parameters: {
+            query?: {
+                workspace?: string | null;
+            };
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_protocol_protocols__protocol_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_protocol_protocols__protocol_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_protocol_protocols__protocol_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProtocolPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_draft_protocols__protocol_id__draft_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    duplicate_protocol_protocols__protocol_id__duplicate_post: {
+        parameters: {
+            query?: {
+                workspace?: string | null;
+            };
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_official_protocols__protocol_id__official_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_protocol_protocols__protocol_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    share_protocol_protocols__protocol_id__share_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_protocol_protocols__protocol_id__validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3642,6 +4700,70 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SessionOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    renew_media_links_sessions__session_id__media_urls_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaLinks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    store_plan_sessions__session_id__plan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

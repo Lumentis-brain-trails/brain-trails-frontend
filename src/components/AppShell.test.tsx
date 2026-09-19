@@ -48,8 +48,8 @@ const current = () =>
     .map((a) => a.textContent);
 
 test("a section owns its subpaths, not every href it starts with", () => {
-  expect(isCurrentSection("/recordings", "/record")).toBe(false);
-  expect(isCurrentSection("/record", "/record")).toBe(true);
+  expect(isCurrentSection("/recordings", "/media")).toBe(false);
+  expect(isCurrentSection("/media", "/media")).toBe(true);
   expect(isCurrentSection("/recordings/abc", "/recordings")).toBe(true);
 });
 

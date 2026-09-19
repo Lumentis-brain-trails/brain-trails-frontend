@@ -1,46 +1,65 @@
 /**
- * The catalog's view of the media table (plan V3, sprint S16).
+ * The catalog's protocols (backend V3-0004, S18) and how a started session becomes a
+ * plan the runner can execute.
  *
- * Until protocols are rows of their own (S18), what the catalog shows as a protocol is
- * either a module-backed item (Signal Navigator) or an open video, which plays as an
- * implicit one-block protocol. This module turns an item into something the runner can
- * run.
+ * A protocol is a row of its own now: the catalog and the detail page read
+ * `/protocols`, and Play starts a session that returns the version's tree, the seed and
+ * links to the media it plays. `planFor` spends all the structure before the first block
+ * - loops, shuffles, fixations - binds the media links and validates every block against
+ * its kind, so nothing malformed reaches a renderer mid-run.
  */
-// Registers the task kinds: validating a protocol needs them, and a page that only
-// shows a protocol (its detail page) would otherwise validate against none.
+// Registers the task kinds: validating a plan needs them, and a page that only shows a
+// protocol would otherwise validate against none.
 import "@/components/protocol/kinds";
-import type { Media } from "@/lib/types";
-import { type ResolvedProtocol, resolveProtocol } from "./session";
+import type { components } from "@/lib/api-types";
+import { bindMedia } from "./media";
+import { resolvePlan } from "./resolve";
 import { safeParseProtocol } from "./schema";
+import type { ResolvedProtocol, StimulusSessionStart } from "./session";
 
-/** A video as a one-block protocol: the video, from its short-lived link. */
-export function videoProtocol(item: Media): ResolvedProtocol {
-  if (!item.url)
-    return { ok: false, error: "This video has no playable file." };
-  return safeParseProtocol({
-    id: `video-${item.slug}`,
-    version: 1,
-    title: item.title,
-    ...(item.manifest.content_warning
-      ? { contentWarning: item.manifest.content_warning }
-      : {}),
-    startMarker: "session_start",
-    endMarker: "session_end",
-    steps: [
-      {
-        id: "video",
-        kind: "video",
-        label: item.title,
-        startMarker: "stimulus_onset",
-        endMarker: "stimulus_offset",
-        config: { src: item.url },
-      },
-    ],
-  });
+export type ProtocolCard = components["schemas"]["ProtocolCard"];
+export type ProtocolDetail = components["schemas"]["ProtocolDetail"];
+export type OutlineItem = components["schemas"]["OutlineItem"];
+export type ValidationResult = components["schemas"]["ValidationOut"];
+
+/** Whether a card can be played (locked cards are advertised, not runnable). */
+export function isPlayable(card: ProtocolCard): boolean {
+  return (
+    card.access === "open" && card.current_version !== null && !card.archived
+  );
 }
 
-/** What the runner plays for a catalog item. */
-export function protocolFor(item: Media): ResolvedProtocol {
-  if (item.kind === "video") return videoProtocol(item);
-  return resolveProtocol(item.module, item.definition);
+/** The plan a started session runs: resolved by its seed, media bound, validated. */
+export function planFor(session: StimulusSessionStart): ResolvedProtocol {
+  try {
+    const plan = resolvePlan(session.definition, session.seed, {
+      id: session.protocol_id ?? session.id,
+      version: session.protocol_version ?? 0,
+      title: session.title,
+    });
+    const media = Object.fromEntries(
+      Object.entries(session.media).map(([id, link]) => [
+        id,
+        {
+          url: link.url ?? "",
+          kind: link.kind,
+          poster_url: link.poster_url,
+          duration_s: link.duration_s,
+          body: link.body,
+        },
+      ])
+    );
+    return safeParseProtocol(bindMedia(plan, media));
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Minutes, rounded, for a card or a detail page; null when unknown. */
+export function formatMinutes(
+  seconds: number | null | undefined
+): string | null {
+  if (seconds == null) return null;
+  const minutes = Math.round(seconds / 60);
+  return minutes >= 1 ? `${minutes} min` : `${Math.round(seconds)} s`;
 }

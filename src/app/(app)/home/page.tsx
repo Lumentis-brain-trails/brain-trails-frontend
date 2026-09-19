@@ -75,11 +75,12 @@ export default function HomePage() {
               Start a new trail
             </h2>
             <p className="mt-2 text-ink-2">
-              Wear the band, pick a stimulus, press record.
+              Wear the band, pick a protocol, press play. Free recording is one
+              too.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/record" className={buttonClass("primary", "lg")}>
+            <Link href="/protocols" className={buttonClass("primary", "lg")}>
               <span className="h-2 w-2 rounded-full bg-danger" aria-hidden />
               Record
             </Link>
@@ -136,9 +137,9 @@ export default function HomePage() {
           <Card inset>
             <EmptyState
               title="No trails yet."
-              text="Record a session or upload a Muse file: its trail appears here."
+              text="Play a protocol or upload a Muse file: its trail appears here."
               action={
-                <Link href="/record" className={buttonClass()}>
+                <Link href="/protocols" className={buttonClass()}>
                   Record your first session
                 </Link>
               }

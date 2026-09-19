@@ -8,8 +8,13 @@
  * "Checking" until then and refreshes by itself, and a refused file says why. A ready
  * item can be offered to the community; during the beta an admin reviews every request,
  * and a video or audio file needs the author to confirm they may share it.
+ *
+ * "Create a protocol" wraps one item in a protocol of baseline - the item - baseline
+ * (V3-0004): everything is played through a protocol, so every session has a version, a
+ * stored plan and block events. It opens the new draft, which its author publishes.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MediaCard } from "@/components/MediaCard";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
@@ -22,6 +27,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
+import type { ProtocolDetail } from "@/lib/protocol/catalog";
 import type { Media } from "@/lib/types";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 
@@ -116,6 +122,34 @@ function Publish({ item }: { item: Media }) {
   );
 }
 
+const WRAPPABLE = new Set(["video", "audio", "text"]);
+
+/** Turn one item into a protocol draft and open it (V3-0004 amendment). */
+function MakeProtocol({ item }: { item: Media }) {
+  const router = useRouter();
+  const create = useMutation({
+    mutationFn: () =>
+      api.post<ProtocolDetail>(`protocols/from-media/${item.id}`, {}),
+    onSuccess: (protocol) => router.push(`/protocols/${protocol.id}`),
+  });
+  if (!WRAPPABLE.has(item.kind) || item.status !== "ready") return null;
+  return (
+    <div className="space-y-2">
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => create.mutate()}
+        disabled={create.isPending}
+      >
+        Create a protocol
+      </Button>
+      {create.error instanceof ApiRequestError && (
+        <ErrorBanner message={create.error.error.message} />
+      )}
+    </div>
+  );
+}
+
 export default function MediaPage() {
   const [uploading, setUploading] = useState(false);
   const workspace = useCurrentWorkspace();
@@ -157,6 +191,7 @@ export default function MediaPage() {
           <Card key={item.id} inset className="space-y-3 p-3">
             <MediaCard item={item} locked={item.status !== "ready"} />
             <Standing item={item} />
+            <MakeProtocol item={item} />
             <Publish item={item} />
           </Card>
         ))}

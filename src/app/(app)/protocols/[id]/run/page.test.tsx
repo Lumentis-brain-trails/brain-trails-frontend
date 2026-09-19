@@ -25,53 +25,97 @@ vi.mock("@/lib/api", async (orig) => ({
 
 afterEach(() => cleanup());
 
-const video = {
-  id: "m1",
-  kind: "video",
-  visibility: "workspace",
-  status: "ready",
-  access: "open",
-  tags: [],
+const MEDIA_ID = "11111111-1111-4111-8111-111111111111";
+
+const tree = {
+  schema: 1,
+  manifest: {},
+  root: {
+    type: "sequence",
+    children: [
+      {
+        type: "block",
+        id: "clip",
+        kind: "video",
+        label: "Clip",
+        config: { media_id: MEDIA_ID },
+      },
+    ],
+  },
+};
+
+const protocol = {
+  id: "p1",
+  workspace_id: "w1",
   slug: "clip",
   title: "Clip",
-  description: null,
-  module: null,
-  manifest: {},
-  definition: {},
-  duration_s: 1,
-  language: null,
-  review_state: "none",
-  probe: {},
-  created_at: "2026-09-19T00:00:00Z",
-  mine: true,
-  url: "https://example.com/v.mp4",
+  summary: null,
   cover_url: null,
+  preview_url: null,
+  visibility: "workspace",
+  access: "open",
+  review_state: "none",
+  tags: [],
+  language: null,
+  current_version: 1,
+  est_duration_s: 60,
+  content_warning: null,
+  mine: true,
+  archived: false,
+  created_at: "2026-09-19T00:00:00Z",
+  description: null,
+  outline: [{ kind: "video", label: "Clip", count: 1, duration_s: 60 }],
+  definition: tree,
+  draft: tree,
+  draft_rev: 1,
 };
 
 const form = { key: "k", url: "https://s3", fields: {} };
 
 test("a video protocol goes from pre-flight to the runner with the simulated headband", async () => {
-  get.mockResolvedValue(video);
-  post.mockResolvedValue({
-    id: "s1",
-    recording_id: "r1",
-    seed: 7,
-    capture: "upload",
-    upload: {
-      original: form,
-      extras: form,
-      ble: form,
-      max_mb: 50,
-      max_ble_mb: 200,
-    },
-    manifest: {},
-    module: null,
-    definition: {},
-  });
+  get.mockResolvedValue(protocol);
+  post.mockImplementation((path: string) =>
+    path.endsWith("/plan")
+      ? Promise.resolve(undefined)
+      : Promise.resolve({
+          id: "s1",
+          status: "running",
+          protocol_id: "p1",
+          protocol_version: 1,
+          title: "Clip",
+          recording_id: "r1",
+          seed: 7,
+          params: {},
+          summary: {},
+          n_events: 0,
+          started_at: "2026-09-19T00:00:00Z",
+          ended_at: null,
+          capture: "upload",
+          protocol_version_id: "v1",
+          upload: {
+            original: form,
+            extras: form,
+            ble: form,
+            max_mb: 50,
+            max_ble_mb: 200,
+          },
+          manifest: {},
+          definition: tree,
+          media: {
+            [MEDIA_ID]: {
+              url: "https://example.com/v.mp4",
+              kind: "video",
+              poster_url: null,
+              duration_s: 1,
+            },
+          },
+          media_expires_at: "2026-09-19T01:00:00Z",
+        })
+  );
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  const params = Promise.resolve({ id: "m1" });
+  const params = Promise.resolve({ id: "p1" });
   await act(async () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -100,9 +144,114 @@ test("a video protocol goes from pre-flight to the runner with the simulated hea
   });
   expect(post).toHaveBeenCalledWith(
     "sessions",
-    expect.objectContaining({ media_id: "m1" })
+    expect.objectContaining({ protocol_id: "p1" })
+  );
+  // the plan this run resolved is posted back before the first block (V3-0004)
+  expect(post).toHaveBeenCalledWith(
+    "sessions/s1/plan",
+    expect.objectContaining({ plan: expect.anything() })
   );
   // the recording light shows once the run surface is up
   expect(await screen.findByRole("status", {}, { timeout: 5000 })).toBeTruthy();
+  await act(() => new Promise((r) => setTimeout(r, 1500)));
+}, 20_000);
+
+/**
+ * Free recording is a protocol like any other (V3-0004 amendment): one self-paced rest
+ * block. This is the path the E2E takes, so it is worth a jsdom check of its own.
+ */
+test("free recording runs its self-paced block and finishes on demand", async () => {
+  const freeTree = {
+    schema: 1,
+    manifest: {},
+    root: {
+      type: "sequence",
+      children: [
+        {
+          type: "block",
+          id: "free_recording",
+          kind: "rest",
+          label: "Free recording",
+          config: { mode: "self_paced" },
+        },
+      ],
+    },
+  };
+  get.mockResolvedValue({
+    ...protocol,
+    title: "Free recording",
+    definition: freeTree,
+    draft: freeTree,
+    outline: [
+      { kind: "rest", label: "Free recording", count: 1, duration_s: 60 },
+    ],
+  });
+  post.mockImplementation((path: string) =>
+    path.endsWith("/plan")
+      ? Promise.resolve(undefined)
+      : Promise.resolve({
+          id: "s2",
+          status: "running",
+          protocol_id: "p1",
+          protocol_version: 1,
+          title: "Free recording",
+          recording_id: "r2",
+          seed: 3,
+          params: {},
+          summary: {},
+          n_events: 0,
+          started_at: "2026-09-19T00:00:00Z",
+          ended_at: null,
+          capture: "upload",
+          protocol_version_id: "v1",
+          upload: {
+            original: form,
+            extras: form,
+            ble: form,
+            max_mb: 50,
+            max_ble_mb: 200,
+          },
+          manifest: {},
+          definition: freeTree,
+          media: {},
+          media_expires_at: "2026-09-19T01:00:00Z",
+        })
+  );
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  await act(async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={client}>
+          <Suspense fallback="loading">
+            <RunProtocolPage params={Promise.resolve({ id: "p1" })} />
+          </Suspense>
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    );
+  });
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: messages.run.preflight.connect },
+      { timeout: 5000 }
+    )
+  );
+  await screen.findByText(/Connected to/, {}, { timeout: 5000 });
+  const override = screen.queryByLabelText(messages.run.preflight.override);
+  if (override) fireEvent.click(override);
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.run.preflight.start })
+    );
+  });
+  // the block's own Finish button ends an open-ended session
+  const finish = await screen.findByRole(
+    "button",
+    { name: messages.kinds.rest.finish },
+    { timeout: 5000 }
+  );
+  expect(finish).toBeTruthy();
   await act(() => new Promise((r) => setTimeout(r, 1500)));
 }, 20_000);

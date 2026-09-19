@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": null,
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "intro",
+        "kind": "instructions",
+        "label": "Get ready",
+        "config": {
+          "lines": [
+            {
+              "text": "Sit comfortably and let your shoulders drop.",
+              "holdMs": 3000
+            },
+            {
+              "text": "First, one minute with your eyes open on a cross.\nThen one minute with your eyes closed.",
+              "holdMs": 3000
+            },
+            {
+              "text": "Keep still and relax your face and jaw.",
+              "holdMs": 2000
+            }
+          ],
+          "advance": { "mode": "key", "label": "Start" }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_open",
+        "kind": "baseline",
+        "label": "Eyes open",
+        "condition": "eyes_open",
+        "config": { "eyes": "open", "duration_s": 60 }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "eyes_closed",
+        "config": { "eyes": "closed", "duration_s": 60, "end_tone": true }
+      }
+    ]
+  }
+}
