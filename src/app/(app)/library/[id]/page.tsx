@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { use } from "react";
 import { api } from "@/lib/api";
-import type { Media } from "@/lib/types";
+import { mediaAccess, type Media } from "@/lib/types";
 import { Button, Card, ErrorBanner, KeyValue, Skeleton } from "@/components/ui";
 
 const KIND_LABEL: Record<Media["kind"], string> = {
@@ -84,12 +84,12 @@ export default function MediaDetailPage({
         <Button
           disabled
           title={
-            media.access === "locked"
+            mediaAccess(media) === "locked"
               ? "Not open yet: beta testers get this first"
               : "Recording with a stimulus arrives in the next step"
           }
         >
-          {media.access === "locked" ? "Locked" : "Record with this"}
+          {mediaAccess(media) === "locked" ? "Locked" : "Record with this"}
         </Button>
       </header>
 
