@@ -159,3 +159,19 @@ export const SIGNAL_NAVIGATOR: ProtocolDefinition = {
 export const PROTOCOL_MODULES: Record<string, ProtocolDefinition> = {
   "signal-navigator-v1": SIGNAL_NAVIGATOR,
 };
+
+/**
+ * Look a protocol up by the `module` string a catalog item carries.
+ *
+ * The module name is typed by whoever created the catalog row, so the protocol's own id
+ * is accepted too: a row saying `signal-navigator` rather than `signal-navigator-v1`
+ * should run the task, not fail with "this build has no such module".
+ */
+export function getProtocolModule(
+  module: string
+): ProtocolDefinition | undefined {
+  return (
+    PROTOCOL_MODULES[module] ??
+    Object.values(PROTOCOL_MODULES).find((p) => p.id === module)
+  );
+}
