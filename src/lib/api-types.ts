@@ -38,7 +38,8 @@ export interface paths {
          * @description Approve a pending registration (admin only).
          *
          *     With `email_verification_required` off (the default until a sending domain
-         *     exists) the account becomes active at once and can log in. When on, a 24 h
+         *     exists) the account becomes active at once - with its personal workspace - and can
+         *     log in. When on, a 24 h
          *     verification link is issued and, in manual-mailer mode, returned so the admin
          *     can deliver it by hand. 404 when unknown, 409 when not pending.
          */
@@ -118,7 +119,7 @@ export interface paths {
         };
         /**
          * Users Overview
-         * @description Per-user input statistics.
+         * @description Per-user input statistics: recordings each account started as operator.
          */
         get: operations["users_overview_admin_users_get"];
         put?: never;
@@ -168,7 +169,10 @@ export interface paths {
         post?: never;
         /**
          * Delete Me
-         * @description GDPR erasure: removes the account, every row and every stored object.
+         * @description GDPR erasure by rows: the workspaces the caller owns alone, every object, the account.
+         *
+         *     401 on a wrong password; 403 for an admin, who must drop the role first (the
+         *     official catalog lives in an admin's workspace). See `app.workspaces.erase_account`.
          */
         delete: operations["delete_me_auth_me_delete"];
         options?: never;
@@ -185,7 +189,10 @@ export interface paths {
         };
         /**
          * Export Me
-         * @description GDPR portability: profile + recordings metadata + short-lived file links.
+         * @description GDPR portability: profile, and everything in the workspaces the caller owns.
+         *
+         *     Metadata of every recording, media item and session, with short-lived links to the
+         *     stored files (raw and standardized signal, media sources, event timelines).
          */
         get: operations["export_me_auth_me_export_get"];
         put?: never;
@@ -249,6 +256,8 @@ export interface paths {
         /**
          * Verify Email
          * @description Consume a single-use verification link and move the account approved -> active.
+         *
+         *     Activation creates the personal workspace (`app.workspaces.activate`).
          *
          *     The token is looked up by hash: 400 `invalid_token` when unknown, already used or
          *     expired, 400 `invalid_state` when the user is not awaiting verification.
@@ -315,11 +324,11 @@ export interface paths {
         };
         /**
          * List Media
-         * @description The catalog for this user: their items plus the official ones, newest first.
+         * @description The catalog for this user, newest first: their workspaces' items and official ones.
          *
-         *     `kind` filters to one row of the home page; `mine=true` narrows to the user's own
-         *     uploads; `tag` narrows to one library row. Ready items only - a draft has no
-         *     confirmed file yet.
+         *     `kind` filters to one row of the home page; `mine=true` narrows to items of the
+         *     workspaces the caller builds in; `tag` narrows to one library row; `?workspace=`
+         *     narrows to one workspace. Ready items only - a draft has no confirmed file yet.
          *
          *     Locked items are left out unless `include_locked` asks for them, so a caller that
          *     wants something runnable gets only runnable things. The library asks for them,
@@ -329,14 +338,15 @@ export interface paths {
         put?: never;
         /**
          * Create Media
-         * @description Create a catalog item (201).
+         * @description Create a catalog item in `?workspace=` (default: the caller's personal one) (201).
          *
-         *     A video must name a `source_key` from `/media/uploads` that belongs to the caller
-         *     and actually exists in storage (422 otherwise), and its size counts against the
-         *     quota. A game needs a `module`, a scenario a non-empty `definition`. Marking an
-         *     item `official` is admin-only (403), as is creating a game or a scenario, tagging an
-         *     item, or locking one: the curated catalog is editorial, not user-generated, until
-         *     the sandbox exists (decision V2-0002).
+         *     A video must name a `source_key` from `/media/uploads` of the same workspace that
+         *     actually exists in storage (403/422 otherwise); its size counts against the
+         *     workspace's quota and the files move to the item's own prefix. A game needs a
+         *     `module`, a scenario a non-empty `definition`. Marking an item `official` is
+         *     admin-only (403), as is creating a game or a scenario, tagging an item, or locking
+         *     one: the curated catalog is editorial, not user-generated, until the sandbox exists
+         *     (decision V2-0002). An official item is granted to everyone (`viewer@user:*`).
          */
         post: operations["create_media_media_post"];
         delete?: never;
@@ -358,8 +368,9 @@ export interface paths {
          * Presign Media Upload
          * @description Step 1 of a video upload: presigned forms for the file and its optional cover.
          *
-         *     413 when the user is already at their quota; the per-file cap travels inside the
-         *     form, so S3 itself rejects an oversized upload.
+         *     The forms point under the workspace's pending prefix (V3-0009). 403 without
+         *     `can_build` on the workspace; 413 when it is already at its quota. The per-file cap
+         *     travels inside the form, so S3 itself rejects an oversized upload.
          */
         post: operations["presign_media_upload_media_uploads_post"];
         delete?: never;
@@ -384,7 +395,10 @@ export interface paths {
         post?: never;
         /**
          * Delete Media
-         * @description Delete an item and its files: the owner, or an admin for the official catalog.
+         * @description Delete an item, its files and its grants.
+         *
+         *     Whoever builds in its workspace may delete it; an admin may also take down an item
+         *     everyone can see (the official catalog), which is audited.
          */
         delete: operations["delete_media_media__media_id__delete"];
         options?: never;
@@ -403,7 +417,7 @@ export interface paths {
         put?: never;
         /**
          * Set Official
-         * @description Promote an item into the official catalog (admin only).
+         * @description Promote an item into the official catalog (admin only): everyone may now view it.
          */
         post: operations["set_official_media__media_id__official_post"];
         delete?: never;
@@ -441,7 +455,10 @@ export interface paths {
         };
         /**
          * List Recordings
-         * @description List the caller's recordings newest first; `before` paginates by `created_at`.
+         * @description Recordings the caller may see, newest first, one page at a time.
+         *
+         *     `?workspace=` narrows to one workspace. Keyset pagination on `(created_at, id)`: the
+         *     next page's cursor comes back in the `X-Next-Cursor` header, absent on the last page.
          */
         get: operations["list_recordings_recordings_get"];
         put?: never;
@@ -449,8 +466,10 @@ export interface paths {
          * Upload
          * @description Proxied upload: store the file, create the recording and queue a job (202).
          *
-         *     Validates cleaner, task label, extension and device (422) and streams the body
-         *     through a temp file to enforce `max_upload_mb` (413) before touching S3.
+         *     The recording is created in `?workspace=` (default: the caller's personal one; 403
+         *     without `can_record`). Validates cleaner, task label, extension and device (422) and
+         *     streams the body through a temp file to enforce `max_upload_mb` (413) before
+         *     touching S3.
          */
         post: operations["upload_recordings_post"];
         delete?: never;
@@ -470,7 +489,12 @@ export interface paths {
         put?: never;
         /**
          * Complete Upload
-         * @description Step 2: the file is in S3; verify it and create recording + job.
+         * @description Step 2: the files are in the pending area; verify them, create recording + job.
+         *
+         *     The original and its sidecars must sit in one pending folder of the target workspace
+         *     (403 otherwise); each is checked for presence (404) and size (413), then moved under
+         *     the recording's prefix. Completing the same upload twice finds nothing left to
+         *     move (404 `upload_missing`).
          */
         post: operations["complete_upload_recordings_complete_post"];
         delete?: never;
@@ -492,7 +516,8 @@ export interface paths {
          * Start Stream
          * @description Create a `stream` recording (status processing) and its empty analysis (201).
          *
-         *     422 for an unknown task label or device. `ws_path` is where samples go next.
+         *     In `?workspace=` (default personal; 403 without `can_record`). 422 for an unknown
+         *     task label or device. `ws_path` is where samples go next.
          */
         post: operations["start_stream_recordings_stream_post"];
         delete?: never;
@@ -512,7 +537,11 @@ export interface paths {
         put?: never;
         /**
          * Presign Upload
-         * @description Step 1 of the browser upload: a direct-to-S3 form, no size-limited proxies.
+         * @description Step 1 of the browser upload: direct-to-S3 forms, no size-limited proxies.
+         *
+         *     The forms point under `uploads-pending/{workspace}/{upload}/` (V3-0009): nothing is a
+         *     recording until `complete` accepts it, and an abandoned upload expires by a bucket
+         *     lifecycle rule. 403 without `can_record` on the workspace.
          */
         post: operations["presign_upload_recordings_uploads_post"];
         delete?: never;
@@ -530,14 +559,17 @@ export interface paths {
         };
         /**
          * Get Recording
-         * @description Return one recording with its latest job; 404 unless owned by the caller.
+         * @description Return one recording with its latest job; 404 unless the caller may see it.
          */
         get: operations["get_recording_recordings__recording_id__get"];
         put?: never;
         post?: never;
         /**
          * Delete Recording
-         * @description Remove the recording, its analyses and every stored artifact.
+         * @description Remove the recording, its analyses, its session and every stored artifact.
+         *
+         *     Everything the recording owns sits under one prefix (V3-0009), timeline included.
+         *     404 unless visible, 403 without `can_delete`, 409 while a job is active.
          */
         delete: operations["delete_recording_recordings__recording_id__delete"];
         options?: never;
@@ -554,7 +586,7 @@ export interface paths {
         };
         /**
          * Get Analysis
-         * @description Return the latest (or the requested) analysis with its points; 404 unless owned.
+         * @description Return the latest (or the requested) analysis with its points; 404 unless visible.
          *
          *     409 `not_ready` while no analysis exists yet.
          */
@@ -576,7 +608,7 @@ export interface paths {
         };
         /**
          * Download
-         * @description Return a presigned GET link for the raw file; 404 unless owned and present.
+         * @description Return a presigned GET link for the raw file; 404 unless visible and present.
          */
         get: operations["download_recordings__recording_id__download_get"];
         put?: never;
@@ -596,7 +628,7 @@ export interface paths {
         };
         /**
          * Get Neurometrics
-         * @description Return the radius sweep of the latest (or requested) analysis; 404 unless owned.
+         * @description Return the radius sweep of the latest (or requested) analysis; 404 unless visible.
          *
          *     409 `not_ready` when the analysis has no sweep yet - because it predates NeuroMetrics,
          *     because the recording is too short, or because the job has not run. The levels come
@@ -609,8 +641,9 @@ export interface paths {
          * @description Queue a sweep over an analysis that already has its embeddings (202).
          *
          *     This is the backfill for recordings analysed before NeuroMetrics existed; it reuses the
-         *     stored vectors, so it never pays for the embedder again. 404 unless owned, 409 while a
-         *     job is already active or when there is nothing to sweep.
+         *     stored vectors, so it never pays for the embedder again. 404 unless visible, 403
+         *     without `can_edit`, 409 while a job is already active or when there is nothing to
+         *     sweep.
          */
         post: operations["rebuild_neurometrics_recordings__recording_id__neurometrics_post"];
         delete?: never;
@@ -632,8 +665,9 @@ export interface paths {
          * Reprocess
          * @description Queue a new full_pipeline job over the raw file with the given cleaner (202).
          *
-         *     404 unless owned (or the raw file is missing), 422 for an unknown cleaner, 409 while
-         *     a job is already queued or running. The recording drops back to `uploaded`.
+         *     404 unless visible (or the raw file is missing), 403 without `can_edit`, 422 for an
+         *     unknown cleaner, 409 while a job is already queued or running. The recording drops
+         *     back to `uploaded`.
          */
         post: operations["reprocess_recordings__recording_id__reprocess_post"];
         delete?: never;
@@ -653,7 +687,7 @@ export interface paths {
          * Get Signal
          * @description Return up to 30 s of the standardized or cleaned signal, decimated to `target_hz`.
          *
-         *     Reads the parquet from storage; 404 unless owned, 409 before processing, 422 when
+         *     Reads the parquet from storage; 404 unless visible, 409 before processing, 422 when
          *     `start` is past the end of the recording.
          */
         get: operations["get_signal_recordings__recording_id__signal_get"];
@@ -674,18 +708,19 @@ export interface paths {
         };
         /**
          * List Sessions
-         * @description The caller's sessions, newest first.
+         * @description Sessions the caller may see, newest first; `?workspace=` narrows to one.
          */
         get: operations["list_sessions_sessions_get"];
         put?: never;
         /**
          * Start Session
-         * @description Start a session against a visible catalog item (201).
+         * @description Start a session against a runnable catalog item, recorded in `?workspace=` (201).
          *
          *     Creates the live recording and its analysis, so the EEG goes to the existing
          *     websocket unchanged, and returns everything the stimulus needs to run: its
          *     manifest, its module or definition, and the `seed` a replay must reuse.
-         *     404 when the item is not visible to the caller, 403 when it is locked.
+         *     404 when the item is not visible to the caller, 403 when it is locked or when the
+         *     caller may not record in the workspace.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -714,7 +749,8 @@ export interface paths {
          *
          *     The recording goes too: a session's EEG has no meaning without what was on screen.
          *     Deleting the recording is enough - the session row cascades with it - so the row is
-         *     never deleted twice.
+         *     never deleted twice. The timeline lives under the recording's prefix (V3-0009), so
+         *     one prefix deletion takes everything.
          */
         delete: operations["delete_session_sessions__session_id__delete"];
         options?: never;
@@ -764,6 +800,26 @@ export interface paths {
          *     keeping, and its EEG recording exists either way.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Workspaces
+         * @description Every workspace the caller holds a relation in, personal first, then by creation.
+         */
+        get: operations["list_workspaces_workspaces_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -877,26 +933,26 @@ export interface components {
                 beta_applications: boolean;
                 /** @description Band power, per-block metrics, usability verdict (S20). */
                 block_metrics: boolean;
-                /** @description The experiment builder (S19). */
+                /** @description The protocol builder: timeline, media bin, groups (S19). */
                 builder: boolean;
+                /** @description Protocol catalog with detail page and Play; /library is gone (S16). */
+                catalog: boolean;
                 /** @description Operator console on the same machine (S21). */
                 console: boolean;
                 /** @description Remote operator console over the live relay (S23). */
                 console_remote: boolean;
-                /** @description Experiment model, runtime and official templates (S18). */
-                experiments: boolean;
                 /** @description BIDS exports (S25). */
                 exports: boolean;
-                /** @description The library starts every runnable item; /protocols is gone (S16). */
-                library_door: boolean;
                 /** @description Workspace, public and official circles; review queue (S17). */
                 library_publish: boolean;
-                /** @description Audio, image sets, text, questionnaires; media probe; quotas (S17). */
+                /** @description Media bin: audio, image sets, text, questionnaires; probe; quotas (S17). */
                 library_v2: boolean;
                 /** @description Locales other than English on client-facing surfaces (S26). */
                 locales: boolean;
                 /** @description TOTP enforced for anyone who can see another person's data (S26). */
                 mfa_required: boolean;
+                /** @description Protocol model, runtime, official templates, protocol from media (S18). */
+                protocols: boolean;
                 /** @description Recording review with annotations (S20). */
                 review: boolean;
                 /** @description Sessions capture EEG in the browser and upload it at finish (S16). */
@@ -1645,6 +1701,32 @@ export interface components {
             type: string;
         };
         /**
+         * WorkspaceOut
+         * @description A workspace the caller belongs to, with the relations they hold in it.
+         */
+        WorkspaceOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Relations */
+            relations: string[];
+            /** Slug */
+            slug: string;
+            /** Status */
+            status: string;
+        };
+        /**
          * PresignForm
          * @description A presigned POST: where to send the file and the fields that must ride along.
          */
@@ -2093,6 +2175,7 @@ export interface operations {
                 tag?: ("attention" | "anxiety" | "cognitive_decline") | null;
                 include_locked?: boolean;
                 limit?: number;
+                workspace?: string | null;
             };
             header?: never;
             path?: never;
@@ -2122,7 +2205,9 @@ export interface operations {
     };
     create_media_media_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2155,7 +2240,9 @@ export interface operations {
     };
     presign_media_upload_media_uploads_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2303,7 +2390,8 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
-                before?: string | null;
+                cursor?: string | null;
+                workspace?: string | null;
             };
             header?: never;
             path?: never;
@@ -2333,7 +2421,9 @@ export interface operations {
     };
     upload_recordings_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2366,7 +2456,9 @@ export interface operations {
     };
     complete_upload_recordings_complete_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2399,7 +2491,9 @@ export interface operations {
     };
     start_stream_recordings_stream_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2432,7 +2526,9 @@ export interface operations {
     };
     presign_upload_recordings_uploads_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2728,6 +2824,7 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                workspace?: string | null;
             };
             header?: never;
             path?: never;
@@ -2757,7 +2854,9 @@ export interface operations {
     };
     start_session_sessions_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2916,6 +3015,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workspaces_workspaces_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"][];
                 };
             };
         };

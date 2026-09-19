@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import {
   MEDIA_TAGS,
   MEDIA_TAG_HINTS,
@@ -40,9 +41,12 @@ type Row = { key: string; title: string; hint: string; items: Media[] };
  */
 export default function LibraryPage() {
   const [uploading, setUploading] = useState(false);
+  const workspace = useCurrentWorkspace();
   const catalog = useQuery({
-    queryKey: ["media", "with-locked"],
-    queryFn: () => api.get<Media[]>("media?include_locked=true"),
+    queryKey: ["media", "with-locked", workspace?.id],
+    queryFn: () =>
+      api.get<Media[]>(inWorkspace("media?include_locked=true", workspace)),
+    enabled: workspace !== undefined,
     // a rejected session or a bad request will not become valid on retry: fail fast
     // and show the error instead of spinning through three backoffs
     retry: (count, error) =>
