@@ -17,6 +17,7 @@ const TRANSLATED_SURFACES = [
   "src/components/console/**",
   "src/components/experiments/**",
   "src/components/application/**",
+  "src/components/builder/**",
 ];
 
 const eslintConfig = defineConfig([
