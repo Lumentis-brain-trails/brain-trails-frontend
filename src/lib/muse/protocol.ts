@@ -9,8 +9,12 @@
  * order and the 256 Hz sampling rate -- is defined here and imported there.
  */
 
-/** GATT primary service advertised by every Muse headband. */
-export const MUSE_SERVICE = 0xfe8d;
+/**
+ * GATT primary service advertised by every Muse headband (16-bit `0xfe8d`).
+ * Written as the full 128-bit UUID: Chrome takes the short numeric alias, but
+ * the Web Bluetooth browsers on iOS (Bluefy) reject it.
+ */
+export const MUSE_SERVICE = "0000fe8d-0000-1000-8000-00805f9b34fb";
 
 /** Control characteristic: commands go in, status/JSON replies come out. */
 export const CONTROL_CHARACTERISTIC = "273e0001-4c4d-454d-96be-f03bac821358";

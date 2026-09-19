@@ -175,7 +175,7 @@ function fakeBluetooth(
     async connect() {
       gatt.connected = true;
       return {
-        getPrimaryService: async (s: number) =>
+        getPrimaryService: async (s: string) =>
           s === MUSE_SERVICE ? service : Promise.reject(),
       };
     },
@@ -251,6 +251,39 @@ describe("BluetoothMuse", () => {
     await muse.disconnect();
     expect(fake.written.at(-1)).toBe("h");
     expect(disconnected).toHaveBeenCalled();
+  });
+});
+
+describe("BluetoothMuse chooser", () => {
+  test("a browser that refuses the filter list is asked by name alone", async () => {
+    const fake = fakeBluetooth();
+    const requestDevice = vi.mocked(fake.bluetooth.requestDevice);
+    const impl = requestDevice.getMockImplementation()!;
+    requestDevice.mockImplementationOnce(async () => {
+      throw new TypeError("Invalid filters");
+    });
+    requestDevice.mockImplementation(impl);
+    const muse = new BluetoothMuse(fake.bluetooth);
+    await muse.connect();
+    expect(requestDevice).toHaveBeenCalledTimes(2);
+    expect(requestDevice.mock.calls[1][0]).toEqual({
+      filters: [{ namePrefix: "Muse" }],
+      optionalServices: [MUSE_SERVICE],
+    });
+    expect(muse.model).toBe("muse-2");
+  });
+
+  test("closing the chooser is not retried", async () => {
+    const fake = fakeBluetooth();
+    const requestDevice = vi.mocked(fake.bluetooth.requestDevice);
+    requestDevice.mockImplementationOnce(async () => {
+      throw new DOMException("cancelled", "NotFoundError");
+    });
+    const muse = new BluetoothMuse(fake.bluetooth);
+    await expect(muse.connect()).rejects.toMatchObject({
+      name: "NotFoundError",
+    });
+    expect(requestDevice).toHaveBeenCalledTimes(1);
   });
 });
 

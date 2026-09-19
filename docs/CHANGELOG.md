@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Record page on Bluefy (iPhone/iPad): pairing stopped at "choose a headband".
+  The Muse service is now given as its full 128-bit UUID instead of the 16-bit
+  number Chrome accepts, and a browser that refuses the list of chooser filters
+  is asked again with the name filter alone.
 - Bluetooth on iPhone and iPad. No browser there can use Bluetooth (WebKit has no
   Web Bluetooth), so the site now also runs inside a native shell
   (`capacitor.config.ts`, `ios/`): a web view on the same deployment with a
