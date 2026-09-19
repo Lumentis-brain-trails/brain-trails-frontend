@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import "@/components/protocol/kinds"; // registers the built-in kinds
 import { planBreathing } from "./breathing";
-import { SIGNAL_NAVIGATOR } from "./definitions/signalNavigator";
+import { SIGNAL_NAVIGATOR } from "./__fixtures__/signalNavigator";
 import { eegAnchor, runAnchor } from "./clock";
 import {
   MAX_PAYLOAD_BYTES,

@@ -88,9 +88,6 @@ export default function AdminDashboardPage() {
           <Link href="/admin/review" className={buttonClass("secondary")}>
             Publication review
           </Link>
-          <Link href="/admin/catalog" className={buttonClass("secondary")}>
-            Catalog
-          </Link>
           <Link
             href="/admin/applications"
             className="pressable inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover"

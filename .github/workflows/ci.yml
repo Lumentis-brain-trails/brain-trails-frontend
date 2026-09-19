@@ -94,6 +94,7 @@ jobs:
           uv run alembic upgrade head
           uv run python -c "from app.storage.s3 import get_storage; s = get_storage(); s._client.create_bucket(Bucket=s.bucket)"
           uv run scripts/seed_admin.py "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD"
+          uv run scripts/seed_protocols.py "$E2E_ADMIN_EMAIL"   # the official catalog (S18)
           nohup uv run uvicorn app.main:app --port 8000 > ../api.log 2>&1 &
           nohup uv run python -m worker.main > ../worker.log 2>&1 &
           for i in $(seq 1 60); do

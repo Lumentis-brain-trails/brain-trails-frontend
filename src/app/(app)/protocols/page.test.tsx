@@ -1,12 +1,12 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { cleanup } from "@testing-library/react";
-import type { Media } from "@/lib/types";
-import LibraryPage from "./page";
+import type { ProtocolCard } from "@/lib/protocol/catalog";
+import ProtocolsPage from "./page";
 
 const get = vi.fn();
 vi.mock("@/lib/api", () => ({
+  ApiRequestError: class extends Error {},
   api: {
     get: (p: string) =>
       p === "workspaces"
@@ -15,26 +15,26 @@ vi.mock("@/lib/api", () => ({
   },
 }));
 
-function item(over: Partial<Media>): Media {
+function card(over: Partial<ProtocolCard>): ProtocolCard {
   return {
     id: crypto.randomUUID(),
-    kind: "video",
-    visibility: "workspace",
-    status: "ready",
-    access: "open",
-    tags: [],
+    workspace_id: "w1",
     slug: "slug",
     title: "Title",
-    description: null,
-    module: null,
-    manifest: {},
-    definition: {},
-    duration_s: 120,
-    language: null,
+    summary: null,
+    cover_url: null,
+    preview_url: null,
+    visibility: "official",
+    access: "open",
     review_state: "none",
-    probe: {},
+    tags: [],
+    language: null,
+    current_version: 1,
+    est_duration_s: 120,
+    content_warning: null,
+    mine: false,
+    archived: false,
     created_at: new Date().toISOString(),
-    mine: true,
     ...over,
   };
 }
@@ -45,7 +45,7 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={client}>
-      <LibraryPage />
+      <ProtocolsPage />
     </QueryClientProvider>
   );
 }
@@ -54,60 +54,73 @@ beforeEach(() => get.mockReset());
 // vitest runs without globals, so testing-library never registers its own auto-cleanup.
 afterEach(() => cleanup());
 
-test("builds one row per tag and keeps other people's videos out of yours", async () => {
-  get.mockResolvedValue([
-    item({
-      kind: "game",
-      title: "Signal Navigator",
-      mine: false,
-      visibility: "official",
-      tags: ["attention"],
-    }),
-    item({
-      kind: "quiz",
-      title: "Breath Pacing",
-      mine: false,
-      visibility: "official",
-      tags: ["anxiety"],
-      access: "locked",
-    }),
-    item({ kind: "video", title: "My clip", mine: true }),
-  ]);
+test("one row per shelf and per tag, and drafts only in yours", async () => {
+  get.mockImplementation((path?: string) =>
+    Promise.resolve(
+      (path ?? "").includes("mine=true")
+        ? [
+            card({
+              title: "My draft",
+              visibility: "workspace",
+              mine: true,
+              current_version: null,
+            }),
+          ]
+        : [
+            card({ title: "Signal Navigator", tags: ["attention"] }),
+            card({
+              title: "Breath Pacing",
+              tags: ["anxiety"],
+              access: "locked",
+            }),
+            card({ title: "Shared one", visibility: "public" }),
+          ]
+    )
+  );
   renderPage();
 
   await waitFor(() =>
     expect(screen.getByText("Attention")).toBeInTheDocument()
   );
-  expect(screen.getByText("Anxiety")).toBeInTheDocument();
-  expect(screen.getByText("Your uploads")).toBeInTheDocument();
   expect(
-    screen.getByRole("link", { name: /Signal Navigator/ })
+    screen.getByRole("heading", { name: "Official", level: 2 })
   ).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "My clip" })).toBeInTheDocument();
-
+  expect(
+    screen.getByRole("heading", { name: "Community", level: 2 })
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByRole("heading", { name: "Yours", level: 2 })
+  ).toBeInTheDocument();
+  expect(
+    screen.getAllByRole("link", { name: /Signal Navigator/ })[0]
+  ).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "My draft" })).toBeInTheDocument();
   // Cognitive Decline has nothing tagged to it, so the row is not drawn empty.
   expect(screen.queryByText("Cognitive Decline")).not.toBeInTheDocument();
 });
 
-test("asks for locked items, since showing what is coming is the point", async () => {
+test("asks for locked protocols, since showing what is coming is the point", async () => {
   get.mockResolvedValue([]);
   renderPage();
   await waitFor(() => expect(get).toHaveBeenCalled());
-  expect(get).toHaveBeenCalledWith("media?include_locked=true&workspace=w1");
+  expect(get).toHaveBeenCalledWith("protocols?include_locked=true&limit=100");
 });
 
 /** A locked card must not be a link: there is nothing behind it to open. */
-test("a locked item is shown but cannot be opened", async () => {
-  get.mockResolvedValue([
-    item({
-      kind: "quiz",
-      title: "Visual Oddballs",
-      mine: false,
-      visibility: "official",
-      tags: ["cognitive_decline"],
-      access: "locked",
-    }),
-  ]);
+test("a locked protocol is shown but cannot be opened", async () => {
+  get.mockImplementation((path?: string) =>
+    Promise.resolve(
+      (path ?? "").includes("mine=true")
+        ? []
+        : [
+            card({
+              title: "Visual Oddballs",
+              tags: ["cognitive_decline"],
+              access: "locked",
+            }),
+          ]
+    )
+  );
   renderPage();
 
   await waitFor(() =>
@@ -122,43 +135,39 @@ test("a locked item is shown but cannot be opened", async () => {
   expect(screen.getByText(/Beta testers get them first/)).toBeInTheDocument();
 });
 
-test("runnable items lead their row, ahead of locked ones", async () => {
-  get.mockResolvedValue([
-    item({
-      title: "Zebra Locked",
-      kind: "quiz",
-      mine: false,
-      tags: ["attention"],
-      access: "locked",
-    }),
-    item({
-      title: "Apple Locked",
-      kind: "quiz",
-      mine: false,
-      tags: ["attention"],
-      access: "locked",
-    }),
-    item({
-      title: "Runnable",
-      kind: "game",
-      mine: false,
-      tags: ["attention"],
-      access: "open",
-    }),
-  ]);
+test("runnable protocols lead their row, ahead of locked ones", async () => {
+  get.mockImplementation((path?: string) =>
+    Promise.resolve(
+      (path ?? "").includes("mine=true")
+        ? []
+        : [
+            card({
+              title: "Zebra Locked",
+              tags: ["attention"],
+              access: "locked",
+            }),
+            card({
+              title: "Apple Locked",
+              tags: ["attention"],
+              access: "locked",
+            }),
+            card({ title: "Runnable", tags: ["attention"] }),
+          ]
+    )
+  );
   renderPage();
 
   await waitFor(() =>
     expect(screen.getByText("Attention")).toBeInTheDocument()
   );
-  const titles = screen
-    .getAllByRole("heading", { level: 3 })
-    .map((h) => h.textContent);
-  // open first, then locked alphabetically
+  const attention = screen.getByRole("region", { name: "Attention" });
+  const titles = Array.from(attention.querySelectorAll("h3")).map(
+    (h) => h.textContent
+  );
   expect(titles).toEqual(["Runnable", "Apple Locked", "Zebra Locked"]);
 });
 
-test("an empty catalog invites the first upload", async () => {
+test("an empty catalog points at My media", async () => {
   get.mockResolvedValue([]);
   renderPage();
   await waitFor(() =>
@@ -166,39 +175,19 @@ test("an empty catalog invites the first upload", async () => {
   );
 });
 
-test("survives an API that predates tags and access, and still shows the catalog", async () => {
-  // Exactly what the deployed API returned while the frontend was ahead of it: no `tags`
-  // and no `access` keys at all. This threw `TypeError: i.tags is undefined` during render
-  // and took the whole page to the error boundary, so the fields are optional now.
-  const legacy = item({ kind: "game", title: "Signal Navigator", mine: false });
-  delete (legacy as Partial<Media>).tags;
-  delete (legacy as Partial<Media>).access;
-  get.mockResolvedValue([legacy]);
+test("survives an API that predates tags and access", async () => {
+  // The deployed API has been ahead of and behind the frontend before; a missing
+  // `tags` threw during render and took the page to the error boundary.
+  const legacy = card({ title: "Signal Navigator" });
+  delete (legacy as Partial<ProtocolCard>).tags;
+  delete (legacy as Partial<ProtocolCard>).access;
+  get.mockImplementation((path?: string) =>
+    Promise.resolve((path ?? "").includes("mine=true") ? [] : [legacy])
+  );
 
   renderPage();
 
-  // One fallback row rather than three empty ones plus "nothing in the library yet".
-  expect(await screen.findByText("Everything")).toBeTruthy();
-  expect(screen.getByText("Signal Navigator")).toBeTruthy();
+  expect(await screen.findByText("Signal Navigator")).toBeTruthy();
   expect(screen.queryByText("No protocols yet")).toBeNull();
-  // Nothing is locked, so the beta-tester footnote stays away.
-  expect(screen.queryByText(/Beta\s+testers get them first/)).toBeNull();
-});
-
-test("an item missing only access is treated as open, not locked", async () => {
-  // Not `mine`, so it lands in the Attention row only and not also in "Your uploads".
-  const partial = item({
-    kind: "game",
-    title: "Half Migrated",
-    mine: false,
-    visibility: "official",
-    tags: ["attention"],
-  });
-  delete (partial as Partial<Media>).access;
-  get.mockResolvedValue([partial]);
-
-  renderPage();
-
-  const card = await screen.findByText("Half Migrated");
-  await waitFor(() => expect(card.closest("a")).not.toBeNull());
+  expect(screen.queryByText(/Beta testers get them first/)).toBeNull();
 });

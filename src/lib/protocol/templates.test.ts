@@ -6,7 +6,7 @@ import { bindMedia, mediaIds } from "./media";
 import { resolvePlan } from "./resolve";
 import { parseProtocol } from "./schema";
 import { parseTree } from "./tree";
-import { SIGNAL_NAVIGATOR } from "./definitions/signalNavigator";
+import { SIGNAL_NAVIGATOR } from "./__fixtures__/signalNavigator";
 
 /**
  * The official templates the backend seeds (`schemas/templates/*.json`). Each must

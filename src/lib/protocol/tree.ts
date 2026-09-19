@@ -87,7 +87,8 @@ export const sequenceNodeSchema = z.strictObject({
   type: z.literal("sequence"),
   id: nodeIdSchema.optional(),
   label: z.string().optional(),
-  order: z.enum(["fixed", "shuffle"]),
+  // Optional, like the backend's: a sequence with no order stated runs in order.
+  order: z.enum(["fixed", "shuffle"]).default("fixed"),
   max_run_same: z.number().int().min(1).optional(),
   get children() {
     return z.array(treeNodeSchema).min(1);
@@ -105,7 +106,7 @@ export const loopNodeSchema = z.strictObject({
     columns: z.array(z.string().min(1)).min(1),
     rows: z.array(z.array(cellSchema)).min(1),
   }),
-  order: z.enum(["sequential", "random"]),
+  order: z.enum(["sequential", "random"]).default("sequential"),
   repetitions: z.number().int().min(1).default(1),
   max_run_same: z.number().int().min(1).optional(),
 });

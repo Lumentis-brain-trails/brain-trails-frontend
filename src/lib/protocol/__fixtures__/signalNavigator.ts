@@ -1,5 +1,10 @@
 /**
- * Signal Navigator, as data.
+ * Signal Navigator as the code shipped it, kept as a test fixture only (S18).
+ *
+ * The protocol itself is a seeded official row now (`schemas/templates/signal-navigator.json`,
+ * V3-0004); this copy is what the template is checked against, so the move from code to
+ * data cannot change a single number without a test saying so. Nothing in the app
+ * imports it.
  *
  * Every number here comes from `attention-task-spec.md`. The protocol is five generic
  * steps - prompt, go/no-go, breathing, cued go/no-go, prompt - so the whole task is a
@@ -154,24 +159,3 @@ export const SIGNAL_NAVIGATOR: ProtocolDefinition = {
     },
   ],
 };
-
-/** Protocols shipped as code, resolved by the `module` name on a catalog item. */
-export const PROTOCOL_MODULES: Record<string, ProtocolDefinition> = {
-  "signal-navigator-v1": SIGNAL_NAVIGATOR,
-};
-
-/**
- * Look a protocol up by the `module` string a catalog item carries.
- *
- * The module name is typed by whoever created the catalog row, so the protocol's own id
- * is accepted too: a row saying `signal-navigator` rather than `signal-navigator-v1`
- * should run the task, not fail with "this build has no such module".
- */
-export function getProtocolModule(
-  module: string
-): ProtocolDefinition | undefined {
-  return (
-    PROTOCOL_MODULES[module] ??
-    Object.values(PROTOCOL_MODULES).find((p) => p.id === module)
-  );
-}

@@ -72,6 +72,7 @@
           "type": "string"
         },
         "order": {
+          "default": "fixed",
           "type": "string",
           "enum": [
             "fixed",
@@ -142,6 +143,7 @@
                     "additionalProperties": false
                   },
                   "order": {
+                    "default": "sequential",
                     "type": "string",
                     "enum": [
                       "sequential",
@@ -164,8 +166,7 @@
                   "type",
                   "id",
                   "template",
-                  "conditions",
-                  "order"
+                  "conditions"
                 ],
                 "additionalProperties": false
               },
@@ -263,7 +264,6 @@
       },
       "required": [
         "type",
-        "order",
         "children"
       ],
       "additionalProperties": false

@@ -1,14 +1,18 @@
 "use client";
 
 /**
- * Plays one protocol with EEG (backend V3-0005, sprint S16).
+ * Plays one protocol with EEG (backend V3-0004, V3-0005; sprints S16, S18).
  *
- * The route's id is the catalog item. Pre-flight pairs the headband and checks contact;
- * Start opens a session, starts recording and waits for the device clock to be fitted,
- * so every marker the protocol emits lands on the EEG clock (`eegAnchor`, V1-0001) and
- * inside the signal. When the protocol ends - or is stopped - the capture is uploaded
- * through the session's own forms and the session is closed; the backend then queues the
- * analysis. An upload that fails keeps the files in memory and offers a retry.
+ * The route's id is the protocol. Consent and the content warning come first, then the
+ * headband pre-flight; Start opens a session, which returns the published version's
+ * tree, the run's seed and links to its media. The tree is resolved here
+ * (`resolvePlan`: loops, shuffles, jitter), the media are bound to it and the flat plan
+ * is posted back before the first block, so review reads what was shown rather than what
+ * could have been. Recording then waits for the device clock to be fitted, so every
+ * marker lands on the EEG clock (`eegAnchor`, V1-0001) and inside the signal. When the
+ * protocol ends - or is stopped - the capture is uploaded through the session's own
+ * forms and the session is closed; the backend queues the analysis. An upload that fails
+ * keeps the files in memory and offers a retry.
  *
  * Deferred (Alessio, 2026-09-19): writing the capture to disk as it arrives, automatic
  * Bluetooth reconnection and media preload - see the S16 sprint notes.
@@ -29,6 +33,11 @@ import {
 import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
 import "@/components/protocol/kinds";
 import {
+  ConsentGate,
+  needsConsentGate,
+  type ConsentManifest,
+} from "@/components/run/ConsentGate";
+import {
   HeadbandPreflight,
   type HeadbandSource,
 } from "@/components/run/HeadbandPreflight";
@@ -48,16 +57,16 @@ import { useMuse } from "@/lib/muse/useMuse";
 import { type ClockAnchor, eegAnchor } from "@/lib/protocol/clock";
 import { type Marker, toWireEvent } from "@/lib/protocol/marker";
 import type { PhaseSummary } from "@/lib/protocol/metrics";
-import { protocolFor } from "@/lib/protocol/catalog";
+import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
 import {
   type StimulusSessionStart,
   finishSession,
+  postPlan,
   startSession,
   uploadCapture,
 } from "@/lib/protocol/session";
 import { type MarkerSink, createSessionSink } from "@/lib/protocol/sink";
-import type { TaskResult } from "@/lib/protocol/types";
-import type { Media } from "@/lib/types";
+import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
 
 const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
 
@@ -65,7 +74,13 @@ const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
 const SYNC_TIMEOUT_MS = 15_000;
 
 type Phase =
-  "preflight" | "syncing" | "running" | "saving" | "saved" | "failed";
+  | "consent"
+  | "preflight"
+  | "syncing"
+  | "running"
+  | "saving"
+  | "saved"
+  | "failed";
 
 /** What a finished or stopped run hands to the upload, kept for a retry. */
 interface Ending {
@@ -86,19 +101,25 @@ export default function RunProtocolPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id: mediaId } = use(params);
+  const { id: protocolId } = use(params);
   const router = useRouter();
   const t = useTranslations("run.upload");
 
-  const media = useQuery({
-    queryKey: ["media", mediaId, "run"],
-    queryFn: () => api.get<Media>(`media/${mediaId}`),
+  const protocol = useQuery({
+    queryKey: ["protocol", protocolId, "run"],
+    queryFn: () => api.get<ProtocolDetail>(`protocols/${protocolId}`),
     staleTime: Infinity,
   });
-  const parsed = useMemo(
-    () => (media.data ? protocolFor(media.data) : null),
-    [media.data]
-  );
+  const manifest = useMemo<ConsentManifest>(() => {
+    const raw = (protocol.data?.definition ?? {}) as {
+      manifest?: Partial<ConsentManifest>;
+    };
+    return {
+      content_warning: raw.manifest?.content_warning ?? null,
+      requires_consent: raw.manifest?.requires_consent ?? false,
+      consent_text: raw.manifest?.consent_text ?? null,
+    };
+  }, [protocol.data]);
 
   const transport = useSyncExternalStore(
     () => () => {},
@@ -116,7 +137,8 @@ export default function RunProtocolPage({
   }, [source]);
   const muse = useMuse(createDevice);
 
-  const [phase, setPhase] = useState<Phase>("preflight");
+  const [phase, setPhase] = useState<Phase>("consent");
+  const [plan, setPlan] = useState<ProtocolDefinition | null>(null);
   const [override, setOverride] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,18 +163,22 @@ export default function RunProtocolPage({
   );
 
   const begin = useCallback(async () => {
-    if (!media.data || !parsed?.ok) return;
+    if (!protocol.data) return;
     setStarting(true);
     setError(null);
     try {
-      const started = await startSession(mediaId, {
-        title: media.data.title,
+      const started = await startSession(protocolId, {
         device: MODEL_PROFILES[muse.model].apiDevice,
-        params: {
-          protocol_id: parsed.protocol.id,
-          protocol_version: parsed.protocol.version,
-        },
       });
+      // The tree becomes this run's flat plan here, and the backend stores it: from now
+      // on, what was shown is a record, not something to re-derive.
+      const resolved = planFor(started);
+      if (!resolved.ok) {
+        setError(resolved.error);
+        return;
+      }
+      await postPlan(started.id, resolved.protocol);
+      setPlan(resolved.protocol);
       muse.startRecording();
       syncStarted.current = performance.now();
       setSession(started);
@@ -162,7 +188,7 @@ export default function RunProtocolPage({
     } finally {
       setStarting(false);
     }
-  }, [media.data, mediaId, muse, parsed]);
+  }, [muse, protocol.data, protocolId]);
 
   const save = useCallback(async () => {
     const end = ending.current;
@@ -265,26 +291,36 @@ export default function RunProtocolPage({
     void close({}, true);
   }, [close, sink]);
 
-  if (media.isPending) return <Spinner />;
-  if (media.isError || !parsed)
+  if (protocol.isPending) return <Spinner />;
+  if (protocol.isError || !protocol.data)
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <ErrorBanner message={errorText(media.error)} />
+        <ErrorBanner message={errorText(protocol.error)} />
       </main>
     );
-  if (!parsed.ok)
+
+  if (phase === "consent")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <ErrorBanner message={parsed.error} />
+        {needsConsentGate(manifest) ? (
+          <ConsentGate
+            manifest={manifest}
+            title={protocol.data.title}
+            onAccept={() => setPhase("preflight")}
+            onDecline={() => router.push(`/protocols/${protocolId}`)}
+          />
+        ) : (
+          <Skip onDone={() => setPhase("preflight")} />
+        )}
       </main>
     );
 
   if (phase === "preflight")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="type-title mb-1">{media.data.title}</h1>
+        <h1 className="type-title mb-1">{protocol.data.title}</h1>
         <p className="mb-6 text-ink-2">
-          {parsed.protocol.steps.map((s) => s.label).join(" → ")}
+          {protocol.data.outline.map((s) => s.label).join(" → ")}
         </p>
         {error && (
           <div className="mb-6">
@@ -301,7 +337,7 @@ export default function RunProtocolPage({
           onOverride={setOverride}
           starting={starting}
           onStart={() => void begin()}
-          onBack={() => router.push(`/protocols/${mediaId}`)}
+          onBack={() => router.push(`/protocols/${protocolId}`)}
         />
       </main>
     );
@@ -309,13 +345,13 @@ export default function RunProtocolPage({
   if (phase === "syncing" || phase === "running")
     return (
       <RunSurface>
-        {phase === "syncing" || !anchor || !sink ? (
+        {phase === "syncing" || !anchor || !sink || !plan ? (
           <div className="flex min-h-dvh items-center justify-center">
             <Spinner />
           </div>
         ) : (
           <ProtocolRunner
-            protocol={parsed.protocol}
+            protocol={plan}
             seed={session?.seed ?? 1}
             sink={sink}
             anchor={anchor}
@@ -388,6 +424,16 @@ export default function RunProtocolPage({
       </div>
     </main>
   );
+}
+
+/**
+ * Nothing to consent to: move on without a screen the participant must click through.
+ * An effect, not a render-time transition, because setting state during render of the
+ * same component is what React forbids.
+ */
+function Skip({ onDone }: { onDone: () => void }) {
+  useEffect(onDone, [onDone]);
+  return <Spinner />;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

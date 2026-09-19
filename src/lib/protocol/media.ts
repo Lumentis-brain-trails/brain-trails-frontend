@@ -17,6 +17,8 @@ export interface BoundMedia {
   kind: string;
   poster_url?: string | null;
   duration_s?: number | null;
+  /** A text item's passage, which has no file to link to. */
+  body?: string | null;
 }
 
 function bindStep(
@@ -40,7 +42,7 @@ function bindStep(
     ...step,
     config: {
       ...config,
-      src: entry.url,
+      ...(entry.body ? { body: entry.body } : { src: entry.url }),
       ...(step.kind === "video" && entry.poster_url
         ? { poster: entry.poster_url }
         : {}),
