@@ -9,7 +9,18 @@ const API_URL = process.env.API_URL ?? "http://localhost:8000";
 const API_DEPLOYED =
   (process.env.API_URL ?? "").length > 0 ||
   process.env.NODE_ENV !== "production";
-const ALLOWED_PREFIXES = ["auth/", "recordings", "admin/", "sessions", "media"];
+const ALLOWED_PREFIXES = [
+  "auth/",
+  "recordings",
+  "admin/",
+  "sessions",
+  "media",
+  "config",
+];
+/** Request headers the backend reads besides auth and content type. */
+const FORWARDED_REQUEST_HEADERS = ["if-match"];
+/** Response headers the browser needs besides content type. */
+const FORWARDED_RESPONSE_HEADERS = ["etag"];
 
 async function forward(
   request: NextRequest,
@@ -36,6 +47,10 @@ async function forward(
   if (token) headers.Authorization = `Bearer ${token}`;
   const contentType = request.headers.get("content-type");
   if (contentType) headers["Content-Type"] = contentType;
+  for (const name of FORWARDED_REQUEST_HEADERS) {
+    const value = request.headers.get(name);
+    if (value) headers[name] = value;
+  }
 
   const body =
     request.method === "GET" || request.method === "HEAD"
@@ -49,12 +64,16 @@ async function forward(
     signal: AbortSignal.timeout(60_000),
   });
   const responseBody = await upstream.arrayBuffer();
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": upstream.headers.get("content-type") ?? "application/json",
+  };
+  for (const name of FORWARDED_RESPONSE_HEADERS) {
+    const value = upstream.headers.get(name);
+    if (value) responseHeaders[name] = value;
+  }
   return new NextResponse(responseBody, {
     status: upstream.status,
-    headers: {
-      "Content-Type":
-        upstream.headers.get("content-type") ?? "application/json",
-    },
+    headers: responseHeaders,
   });
 }
 
@@ -71,6 +90,18 @@ export async function POST(
   return forward(req, (await ctx.params).path);
 }
 export async function DELETE(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
+  return forward(req, (await ctx.params).path);
+}
+export async function PUT(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
+  return forward(req, (await ctx.params).path);
+}
+export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> }
 ) {

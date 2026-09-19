@@ -20,12 +20,14 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { TimingProbeOverlay } from "@/components/TimingProbeOverlay";
 import { Button } from "@/components/ui";
 import { type ClockAnchor, runAnchor } from "@/lib/protocol/clock";
 import type { Marker, MarkerDraft } from "@/lib/protocol/marker";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { hash32 } from "@/lib/protocol/rng";
 import type { MarkerSink } from "@/lib/protocol/sink";
+import { pageProbe } from "@/lib/timing/probe";
 import {
   type ProtocolDefinition,
   type TaskResult,
@@ -141,6 +143,8 @@ export function ProtocolRunner({
   const emitForStep = useCallback(
     (draft: MarkerDraft, atHostMs?: number) => {
       if (!step) return;
+      const onsetError = draft.meta?.onset_error_ms;
+      if (typeof onsetError === "number") pageProbe.onset(onsetError);
       sink.push(stamp(draft, atHostMs, protocolMeta(protocol, step)));
     },
     [protocol, sink, stamp, step]
@@ -343,6 +347,7 @@ function Shell({
         </Button>
       </div>
       <div className="min-h-0 flex-1">{children}</div>
+      <TimingProbeOverlay />
     </div>
   );
 }

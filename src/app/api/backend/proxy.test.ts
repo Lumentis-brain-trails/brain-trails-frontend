@@ -11,7 +11,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { DELETE, GET, POST } from "./[...path]/route";
+import { DELETE, GET, PATCH, POST, PUT } from "./[...path]/route";
 
 const ctx = (path: string[]) => ({ params: Promise.resolve({ path }) });
 
@@ -90,5 +90,41 @@ describe("BFF proxy", () => {
     const res = await GET(req, ctx(["recordings", "zzz"]));
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: { code: "not_found" } });
+  });
+
+  test("forwards PUT and PATCH, the If-Match header, and relays ETag", async () => {
+    fetchSpy.mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ETag: '"8"' },
+        })
+    );
+    const put = new NextRequest("http://localhost/api/backend/media/m1", {
+      method: "PUT",
+      body: "{}",
+      headers: { "Content-Type": "application/json", "If-Match": "7" },
+    });
+    const res = await PUT(put, ctx(["media", "m1"]));
+    expect(fetchSpy.mock.calls[0][1].method).toBe("PUT");
+    expect(fetchSpy.mock.calls[0][1].headers["if-match"]).toBe("7");
+    expect(res.headers.get("etag")).toBe('"8"');
+
+    const patch = new NextRequest("http://localhost/api/backend/media/m1", {
+      method: "PATCH",
+      body: "{}",
+    });
+    await PATCH(patch, ctx(["media", "m1"]));
+    expect(fetchSpy.mock.calls[1][1].method).toBe("PATCH");
+    expect(fetchSpy.mock.calls[1][1].headers["if-match"]).toBeUndefined();
+  });
+
+  test("allows the public configuration endpoint", async () => {
+    const req = new NextRequest("http://localhost/api/backend/config");
+    const res = await GET(req, ctx(["config"]));
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(
+      "http://localhost:8000/config"
+    );
   });
 });

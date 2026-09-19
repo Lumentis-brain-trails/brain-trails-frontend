@@ -28,7 +28,12 @@ nothing secret may ever be committed.
 | `src/lib/schemas.ts`                     | zod forms (account, profile, upload)                                                                                                                                                                                               |
 | `src/lib/landscape.ts`                   | energy field from node positions + masses; mirrors `pipeline/neurometrics/landscape.py`                                                                                                                                            |
 | `src/lib/terrainMesh.ts`                 | energy field -> 3D vertex grid + trail path, framework-free (Three.js lives in `TerrainScene`)                                                                                                                                     |
-| `src/lib/types.ts`                       | API response types (mirror the backend `schemas.py`)                                                                                                                                                                               |
+| `src/lib/types.ts`                       | API response types (mirror the backend `schemas.py`) - being replaced by `api-types.ts` as areas are touched                                                                                                                       |
+| `src/lib/api-types.ts`                   | generated from the backend's `docs/api/openapi.json` (`npm run api:types`); never edited by hand                                                                                                                                   |
+| `src/lib/features.ts`                    | `useFeature(name)`: flags from `GET /config` (plan V3 deploy table); unknown state = off                                                                                                                                           |
+| `messages/`, `src/i18n/`                 | next-intl: English only until S26; every new UI string is a key; `no-literal-string` lint on the V3 surfaces                                                                                                                       |
+| `src/lib/timing/`                        | run-timing probe (dropped frames, onset error); overlay with `?probe=1` outside prod                                                                                                                                               |
+| `e2e/`, `playwright.config.ts`           | Playwright against a real API + worker with the simulated headband (`docs/E2E.md`)                                                                                                                                                 |
 | `src/components/`                        | `ui.tsx` primitives, `TrailPlot` (flat/terrain toggle) with `TerrainScene` (react-three-fiber), `BallMapperGraph`/`MetricCurve` (Plotly), `SignalPreview` (uPlot), `UploadDialog`, `AppShell` (sidebar, appearance switch), toasts |
 | `src/lib/muse/`                          | Muse driver: `device.ts` (one driver over Web Bluetooth or the native bridge), `nativeBluetooth.ts` (Capacitor BLE dressed as `Bluetooth`), decoders, capture                                                                      |
 | `capacitor.config.ts`, `ios/`, `shell/`  | the iOS shell: web view on the deployment + CoreBluetooth, because iOS browsers have no Bluetooth (`docs/IOS_SHELL.md`)                                                                                                            |
@@ -42,14 +47,17 @@ API_URL=http://localhost:8000 COOKIE_SECURE=false npm run dev
 npm run lint && npm run format          # eslint, prettier --check
 npm run build && npm run typecheck      # build first: typecheck needs generated route types
 npm test                                # vitest with coverage thresholds (85% on lib/api/middleware)
+npm run api:types                       # regenerate src/lib/api-types.ts from the backend's OpenAPI
+npm run e2e                              # Playwright; needs the local backend (docs/E2E.md)
 ```
 
 ## Conventions
 
-- English everywhere: code, comments, JSDoc, commits, UI copy.
+- English everywhere: code, comments, JSDoc, commits, UI copy. New UI copy lives in
+  `messages/en.json` and is read through next-intl, never written inline.
 - JSDoc on exported functions/components explaining the why and the contract.
 - Unit tests for `src/lib`, the BFF routes and middleware (security boundary);
-  pages/components get e2e tests (Playwright, planned).
+  pages/components get e2e tests (Playwright, `e2e/`).
 - New backend paths must be added to the BFF allow-list deliberately.
 - Files never pass through the BFF (Vercel 4.5 MB cap): presigned direct-to-S3.
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).

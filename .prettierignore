@@ -5,3 +5,4 @@ assets
 
 # native iOS shell: Xcode and Capacitor own these files
 /ios
+src/lib/api-types.ts

@@ -59,6 +59,26 @@ describe("api client", () => {
     expect(spy.mock.calls[1][1].body).toBe(JSON.stringify({ password: "pw" }));
   });
 
+  test("put and patch send their method and JSON body", async () => {
+    const spy = mockFetch(200, { ok: true });
+    await api.put("experiments/e1/draft", { root: {} });
+    await api.patch("media/m1", { title: "t" });
+    expect(spy.mock.calls[0][1].method).toBe("PUT");
+    expect(spy.mock.calls[0][1].body).toBe(JSON.stringify({ root: {} }));
+    expect(spy.mock.calls[1][1].method).toBe("PATCH");
+  });
+
+  test("ifMatch becomes an If-Match header, and is absent otherwise", async () => {
+    const spy = mockFetch(200, { ok: true });
+    await api.put("experiments/e1/draft", {}, { ifMatch: 7 });
+    expect(spy.mock.calls[0][1].headers["If-Match"]).toBe("7");
+    expect(spy.mock.calls[0][1].headers["Content-Type"]).toBe(
+      "application/json"
+    );
+    await api.put("experiments/e1/draft", {});
+    expect(spy.mock.calls[1][1].headers["If-Match"]).toBeUndefined();
+  });
+
   test("login and logout hit the auth routes", async () => {
     const spy = mockFetch(200, { status: "ok" });
     await api.login("a@b.it", "pw-long-enough");
