@@ -22,6 +22,7 @@ import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
 import "@/components/protocol/kinds";
 import { Button, Card, ErrorBanner } from "@/components/ui";
 import { ApiRequestError } from "@/lib/api";
+import { useFocusMode } from "@/lib/focus";
 import {
   SIGNAL_NAVIGATOR,
   getProtocolModule,
@@ -69,6 +70,8 @@ export default function RunProtocolPage({
   const [error, setError] = useState<string | null>(null);
   // Held in state, not a ref: the results screen renders from it.
   const [markers, setMarkers] = useState<readonly Marker[]>([]);
+  // The run owns the screen: the app chrome steps aside until it ends.
+  useFocusMode(phase === "running");
 
   const sessionId = session?.id ?? sessionParam ?? null;
 
@@ -170,7 +173,7 @@ export default function RunProtocolPage({
 
   if (!parsed.ok) {
     return (
-      <main className="mx-auto max-w-2xl p-6">
+      <main className="mx-auto max-w-2xl px-6 py-10">
         <ErrorBanner message={parsed.error} />
       </main>
     );
@@ -178,9 +181,9 @@ export default function RunProtocolPage({
 
   if (phase === "preflight") {
     return (
-      <main className="mx-auto max-w-2xl p-6">
-        <h1 className="mb-1 text-2xl font-bold">{parsed.protocol.title}</h1>
-        <p className="mb-6 text-sm text-neutral-500">
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <h1 className="type-title mb-1">{parsed.protocol.title}</h1>
+        <p className="mb-6 text-ink-2">
           {parsed.protocol.steps.length} stages ·{" "}
           {parsed.protocol.steps.map((s) => s.label).join(" → ")}
         </p>
@@ -192,7 +195,7 @@ export default function RunProtocolPage({
         )}
 
         <Card className="mb-6">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-ink-2">
             Starting creates a recording and begins the session. Everything the
             task does is timestamped into it. You can stop at any point, and
             what you have already done is kept.
@@ -224,11 +227,11 @@ export default function RunProtocolPage({
   }
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-1 text-2xl font-bold">
+    <main className="mx-auto max-w-3xl px-6 py-10">
+      <h1 className="type-title mb-1">
         {phase === "done" ? "Route complete" : "Session stopped"}
       </h1>
-      <p className="mb-6 text-sm text-neutral-500">
+      <p className="mb-6 text-ink-2">
         {markers.length} markers recorded
         {sessionId
           ? " and sent."
@@ -246,10 +249,10 @@ export default function RunProtocolPage({
         if (summary.hitRate === undefined) return null;
         return (
           <Card key={result.stepId} className="mb-4">
-            <h2 className="mb-3 font-semibold capitalize">
+            <h2 className="type-subhead mb-3 capitalize">
               {result.stepId.replace(/_/g, " ")}
             </h2>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-3">
               <Stat label="Hits" value={pct(summary.hitRate)} />
               <Stat label="Misses" value={pct(summary.omissionRate)} />
               <Stat label="False docks" value={pct(summary.commissionRate)} />
@@ -261,8 +264,8 @@ export default function RunProtocolPage({
         );
       })}
 
-      <Card className="mb-6 border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
-        <p className="text-sm text-amber-900 dark:text-amber-200">
+      <Card className="mb-6 border-transparent bg-warn-soft">
+        <p className="text-[14px] text-ink">
           Fewer false docks alone does not mean better control &mdash; it can
           reflect responding less often overall. Read hits, misses, false docks,
           reaction time and criterion together, never one in isolation. This is
@@ -291,7 +294,7 @@ export default function RunProtocolPage({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-neutral-500">{label}</dt>
+      <dt className="text-ink-3">{label}</dt>
       <dd className="font-medium tabular-nums">{value}</dd>
     </div>
   );

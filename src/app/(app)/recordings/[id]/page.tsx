@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
+import { formatDuration } from "@/lib/format";
 import type { Analysis, Recording } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
 import { SignalPreview } from "@/components/SignalPreview";
@@ -21,13 +22,6 @@ import {
   Spinner,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "–";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m ? `${m} min ${s} s` : `${s} s`;
-}
 
 export default function RecordingDetailPage({
   params,
