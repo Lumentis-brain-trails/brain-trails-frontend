@@ -17,6 +17,7 @@ import Link from "next/link";
 import { buttonClass, Card, ErrorBanner, Spinner } from "@/components/ui";
 import "@/components/protocol/kinds";
 import { api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import {
   PROTOCOL_MODULES,
   getProtocolModule,
@@ -25,9 +26,11 @@ import { safeParseProtocol } from "@/lib/protocol/schema";
 import type { Media } from "@/lib/types";
 
 export default function ProtocolsPage() {
+  const workspace = useCurrentWorkspace();
   const games = useQuery({
-    queryKey: ["media", "game"],
-    queryFn: () => api.get<Media[]>("media?kind=game"),
+    queryKey: ["media", "game", workspace?.id],
+    queryFn: () => api.get<Media[]>(inWorkspace("media?kind=game", workspace)),
+    enabled: workspace !== undefined,
   });
 
   const published = new Set(

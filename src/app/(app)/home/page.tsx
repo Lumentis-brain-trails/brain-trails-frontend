@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
 import type { Recording } from "@/lib/types";
 import { TrailThumb } from "@/components/TrailThumb";
@@ -27,9 +28,11 @@ const RECENT = 4;
  */
 export default function HomePage() {
   const [showUpload, setShowUpload] = useState(false);
+  const workspace = useCurrentWorkspace();
   const recordings = useQuery({
-    queryKey: ["recordings"],
-    queryFn: () => api.get<Recording[]>("recordings"),
+    queryKey: ["recordings", workspace?.id],
+    queryFn: () => api.get<Recording[]>(inWorkspace("recordings", workspace)),
+    enabled: workspace !== undefined,
     refetchInterval: (query) =>
       query.state.data?.some(
         (r) => r.status === "uploaded" || r.status === "processing"
@@ -117,7 +120,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {recordings.isLoading && (
+        {recordings.isPending && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-[200px]" />

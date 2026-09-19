@@ -14,32 +14,18 @@
 import { api } from "@/lib/api";
 import { getProtocolModule } from "./definitions/signalNavigator";
 import { safeParseProtocol } from "./schema";
+import type { components } from "@/lib/api-types";
+import type { MediaManifest } from "@/lib/types";
 import type { ProtocolDefinition } from "./types";
 
-/** A session as the app sees it, mirroring the backend's `SessionOut`. */
-export interface StimulusSession {
-  id: string;
-  status: "running" | "finished" | "aborted";
-  media_id: string | null;
-  media_title: string;
-  recording_id: string;
-  seed: number;
-  params: Record<string, unknown>;
-  summary: Record<string, unknown>;
-  n_events: number;
-  started_at: string;
-  ended_at: string | null;
-  events_url?: string | null;
-}
+/** A session as the app sees it (the backend's `SessionOut`, generated). */
+export type StimulusSession = components["schemas"]["SessionOut"];
 
 /** What `POST /sessions` adds: where the EEG goes and what the stimulus needs to run. */
-export interface StimulusSessionStart extends StimulusSession {
-  analysis_id: string;
-  ws_path: string;
-  manifest: { content_warning?: string | null; expected_duration_s?: number };
-  module: string | null;
-  definition: Record<string, unknown>;
-}
+export type StimulusSessionStart = Omit<
+  components["schemas"]["SessionStartOut"],
+  "manifest"
+> & { manifest: MediaManifest };
 
 export interface StartSessionOptions {
   title?: string;

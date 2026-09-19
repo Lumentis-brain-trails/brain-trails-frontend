@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDuration } from "@/lib/format";
 import type { Recording } from "@/lib/types";
 import { Card, EmptyState, Icon, Skeleton } from "@/components/ui";
@@ -18,9 +19,11 @@ const MIN_DURATION_S = 180;
  * disabled row with no explanation reads as a bug.
  */
 export default function NeuroMetricsIndexPage() {
+  const workspace = useCurrentWorkspace();
   const recordings = useQuery({
-    queryKey: ["recordings"],
-    queryFn: () => api.get<Recording[]>("recordings"),
+    queryKey: ["recordings", workspace?.id],
+    queryFn: () => api.get<Recording[]>(inWorkspace("recordings", workspace)),
+    enabled: workspace !== undefined,
   });
   const done = recordings.data?.filter((r) => r.status === "done");
 
@@ -35,7 +38,7 @@ export default function NeuroMetricsIndexPage() {
         </p>
       </header>
 
-      {recordings.isLoading && (
+      {recordings.isPending && (
         <div className="space-y-2">
           <Skeleton className="h-16" />
           <Skeleton className="h-16" />

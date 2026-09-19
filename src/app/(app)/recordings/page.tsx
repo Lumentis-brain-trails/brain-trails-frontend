@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
 import type { Recording } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -19,9 +20,11 @@ import {
 
 export default function RecordingsPage() {
   const [showUpload, setShowUpload] = useState(false);
+  const workspace = useCurrentWorkspace();
   const recordings = useQuery({
-    queryKey: ["recordings"],
-    queryFn: () => api.get<Recording[]>("recordings"),
+    queryKey: ["recordings", workspace?.id],
+    queryFn: () => api.get<Recording[]>(inWorkspace("recordings", workspace)),
+    enabled: workspace !== undefined,
     refetchInterval: (query) =>
       query.state.data?.some(
         (r) => r.status === "uploaded" || r.status === "processing"
@@ -63,7 +66,7 @@ export default function RecordingsPage() {
         </div>
       )}
 
-      {recordings.isLoading && (
+      {recordings.isPending && (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-16" />

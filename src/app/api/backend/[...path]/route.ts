@@ -16,11 +16,12 @@ const ALLOWED_PREFIXES = [
   "sessions",
   "media",
   "config",
+  "workspaces",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];
-/** Response headers the browser needs besides content type. */
-const FORWARDED_RESPONSE_HEADERS = ["etag"];
+/** Response headers the browser needs besides content type (`x-next-cursor`: list paging). */
+const FORWARDED_RESPONSE_HEADERS = ["etag", "x-next-cursor"];
 
 async function forward(
   request: NextRequest,
