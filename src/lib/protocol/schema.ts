@@ -43,13 +43,17 @@ const baseSchema = z.object({
  * Parse a protocol definition, validating every step's config against its kind.
  *
  * Throws on the first structural problem and reports every per-step config problem at
- * once, so fixing a definition is one pass rather than one round trip per step.
+ * once, so fixing a definition is one pass rather than one round trip per step. The
+ * returned steps carry their *parsed* configs, with each kind's defaults filled in:
+ * a renderer may rely on every field its schema declares, even one the definition left
+ * out (a one-block video protocol gives only `src`).
  */
 export function parseProtocol(input: unknown): ProtocolDefinition {
   const base = baseSchema.parse(input);
 
   const issues: string[] = [];
   const ids = new Set<string>();
+  const configs: unknown[] = [];
 
   base.steps.forEach((step, index) => {
     const where = `steps[${index}] ("${step.id}")`;
@@ -63,6 +67,7 @@ export function parseProtocol(input: unknown): ProtocolDefinition {
       return;
     }
     const result = getTaskKind(step.kind).configSchema.safeParse(step.config);
+    configs[index] = result.success ? result.data : step.config;
     if (!result.success) {
       for (const issue of result.error.issues) {
         const path =
@@ -75,7 +80,13 @@ export function parseProtocol(input: unknown): ProtocolDefinition {
   if (issues.length > 0) {
     throw new Error(`invalid protocol "${base.id}":\n  ${issues.join("\n  ")}`);
   }
-  return base as ProtocolDefinition;
+  return {
+    ...base,
+    steps: base.steps.map((step, index) => ({
+      ...step,
+      config: configs[index],
+    })),
+  } as ProtocolDefinition;
 }
 
 /** Non-throwing variant, for callers rendering an error state instead of crashing. */

@@ -47,3 +47,14 @@ test("a module-backed item plays its module", () => {
   });
   expect(resolved.ok && resolved.protocol.id).toBe("signal-navigator");
 });
+
+test("a one-block video carries its kind's defaults (it crashed the runner without)", () => {
+  const resolved = protocolFor(base);
+  expect(resolved.ok).toBe(true);
+  if (!resolved.ok) return;
+  expect(resolved.protocol.steps[0].config).toMatchObject({
+    src: base.url,
+    cues: [],
+    allowPause: true,
+  });
+});
