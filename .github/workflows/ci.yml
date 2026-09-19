@@ -19,3 +19,104 @@ jobs:
       - run: npm run build # generates .next/types needed by typecheck
       - run: npm run typecheck
       - run: npm test
+
+  # End-to-end tests (plan V3, sprint S13): this frontend against the backend's `dev`
+  # branch, with the simulated headband. The backend repo is private, so the job needs a
+  # read-only token in the `E2E_BACKEND_TOKEN` secret; without it (forks, dependabot,
+  # before the secret exists) the job reports that it skipped instead of failing.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: braintrails
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d braintrails"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      APP_ENV: e2e
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/braintrails
+      DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5433/braintrails
+      S3_ENDPOINT_URL: http://localhost:9000
+      S3_BUCKET: brain-trails-e2e
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      EMBEDDER: fake
+      MAILER: manual
+      JWT_SECRET: e2e-ci-secret
+      CORS_ORIGINS: http://localhost:3000
+      WORKER_WAKE_URL: http://localhost:9100/wake
+      E2E_ADMIN_EMAIL: admin@example.com
+      E2E_ADMIN_PASSWORD: admin-pass-123
+    steps:
+      - name: Gate on the backend token
+        id: gate
+        env:
+          TOKEN: ${{ secrets.E2E_BACKEND_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then echo "run=true" >> "$GITHUB_OUTPUT";
+          else echo "::notice::E2E skipped: secret E2E_BACKEND_TOKEN is not set"; fi
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v4
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: Lumentis-brain-trails/brain-trails-backend
+          ref: dev
+          token: ${{ secrets.E2E_BACKEND_TOKEN }}
+          path: backend
+      - if: steps.gate.outputs.run == 'true'
+        name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio server /data
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break; sleep 2;
+          done
+      - if: steps.gate.outputs.run == 'true'
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - if: steps.gate.outputs.run == 'true'
+        name: Start the backend (API + worker, fake embedder)
+        working-directory: backend
+        run: |
+          uv python install 3.12
+          uv sync --frozen --all-extras
+          uv run alembic upgrade head
+          uv run python -c "from app.storage.s3 import get_storage; s = get_storage(); s._client.create_bucket(Bucket=s.bucket)"
+          uv run scripts/seed_admin.py "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD"
+          nohup uv run uvicorn app.main:app --port 8000 > ../api.log 2>&1 &
+          nohup uv run python -m worker.main > ../worker.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8000/health && curl -sf http://localhost:9100/healthz && break; sleep 2;
+          done
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.gate.outputs.run == 'true'
+        run: npm ci
+      - if: steps.gate.outputs.run == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.gate.outputs.run == 'true'
+        run: npx playwright test
+      - if: failure() && steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+            api.log
+            worker.log
+          retention-days: 7

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Foundations for plan V3 (sprint S13), nothing visible changes: API types generated
+  from the backend's OpenAPI (`npm run api:types`, `src/lib/api-types.ts`); the API
+  client and the BFF gain `PUT`, `PATCH` and `If-Match`/`ETag`, and the BFF allows
+  `config`; `useFeature()` reads the backend's feature flags; next-intl with English
+  as the only locale, API errors rendered from their code through `errors.*` keys, and
+  a lint rule against inline strings on the V3 surfaces; a run-timing probe
+  (`?probe=1`, never in prod); Playwright end-to-end tests with the simulated headband,
+  locally and in CI once the `E2E_BACKEND_TOKEN` secret exists (`docs/E2E.md`).
+
 - Record page on Bluefy (iPhone/iPad): pairing stopped at "choose a headband".
   The Muse service is now given as its full 128-bit UUID instead of the 16-bit
   number Chrome accepts, and a browser that refuses the list of chooser filters

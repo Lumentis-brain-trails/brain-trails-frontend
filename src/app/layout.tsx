@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 import { Providers } from "./providers";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
@@ -36,6 +37,9 @@ export const viewport: Viewport = {
  * The inline script sets `data-theme` before the body paints, so the stored
  * appearance never flashes the other one; `suppressHydrationWarning` covers exactly
  * that attribute, which the server cannot know.
+ *
+ * `NextIntlClientProvider` hands client components the locale and messages that
+ * `src/i18n/request.ts` resolved for this request (English only until sprint S26).
  */
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -48,7 +52,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

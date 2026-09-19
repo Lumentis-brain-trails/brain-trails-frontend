@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "unknown": "Something went wrong. Try again in a moment.",
+    "network": "The server could not be reached. Check your connection and try again.",
+    "unauthorized": "Your session has ended. Sign in again.",
+    "forbidden": "You do not have access to this.",
+    "forbidden_path": "This part of the service is not available from the app.",
+    "not_found": "This could not be found. It may have been deleted.",
+    "rate_limited": "Too many attempts. Wait a minute and try again.",
+    "conflict": "This changed somewhere else. Reload to see the latest version."
+  }
+}
