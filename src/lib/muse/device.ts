@@ -265,10 +265,7 @@ export class BluetoothMuse implements MuseDevice {
         ? await this.bluetooth()
         : this.bluetooth;
     this.stage = "choose a headband";
-    this.device = await bluetooth.requestDevice({
-      filters: [{ services: [MUSE_SERVICE] }, { namePrefix: "Muse" }],
-      optionalServices: [MUSE_SERVICE],
-    });
+    this.device = await chooseHeadband(bluetooth);
     this.name = this.device.name ?? "Muse";
     const gatt = this.device.gatt;
     if (!gatt) throw new Error("This device does not expose GATT");
@@ -514,6 +511,30 @@ export class BluetoothMuse implements MuseDevice {
       return;
     }
     await this.control.writeValue(bytes);
+  }
+}
+
+/**
+ * Open the browser's chooser on headbands only.
+ *
+ * The preferred request ORs the service with the name, for the Athena
+ * firmware that leaves the service out of its advertisement. Some Web
+ * Bluetooth browsers refuse a list of filters outright; they get the name
+ * filter alone, which every Muse matches. Closing the chooser
+ * (`NotFoundError`) is the user's answer and is never retried.
+ */
+async function chooseHeadband(bluetooth: Bluetooth): Promise<BluetoothDevice> {
+  try {
+    return await bluetooth.requestDevice({
+      filters: [{ services: [MUSE_SERVICE] }, { namePrefix: "Muse" }],
+      optionalServices: [MUSE_SERVICE],
+    });
+  } catch (err) {
+    if ((err as { name?: unknown } | null)?.name === "NotFoundError") throw err;
+    return await bluetooth.requestDevice({
+      filters: [{ namePrefix: "Muse" }],
+      optionalServices: [MUSE_SERVICE],
+    });
   }
 }
 
