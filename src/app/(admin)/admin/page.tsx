@@ -10,6 +10,7 @@ import {
   SectionTitle,
   Skeleton,
   Stat,
+  buttonClass,
 } from "@/components/ui";
 
 interface Stats {
@@ -83,17 +84,25 @@ export default function AdminDashboardPage() {
             Participants and input statistics across the prototype.
           </p>
         </div>
-        <Link
-          href="/admin/applications"
-          className="pressable inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover"
-        >
-          Review applications
-          {pending > 0 && (
-            <span className="rounded-full bg-white/25 px-2 text-[12px] tabular-nums">
-              {pending}
-            </span>
-          )}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/review" className={buttonClass("secondary")}>
+            Publication review
+          </Link>
+          <Link href="/admin/catalog" className={buttonClass("secondary")}>
+            Catalog
+          </Link>
+          <Link
+            href="/admin/applications"
+            className="pressable inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover"
+          >
+            Review applications
+            {pending > 0 && (
+              <span className="rounded-full bg-white/25 px-2 text-[12px] tabular-nums">
+                {pending}
+              </span>
+            )}
+          </Link>
+        </div>
       </header>
 
       {stats.isLoading && (

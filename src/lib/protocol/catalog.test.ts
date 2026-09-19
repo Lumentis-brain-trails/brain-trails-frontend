@@ -6,7 +6,7 @@ import { protocolFor } from "./catalog";
 const base: Media = {
   id: "m1",
   kind: "video",
-  visibility: "private",
+  visibility: "workspace",
   status: "ready",
   access: "open",
   tags: [],
@@ -17,6 +17,9 @@ const base: Media = {
   manifest: {},
   definition: {},
   duration_s: 60,
+  language: null,
+  review_state: "none",
+  probe: {},
   created_at: "2026-09-19T00:00:00Z",
   mine: true,
   url: "https://example.com/v.mp4",

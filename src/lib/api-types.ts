@@ -120,6 +120,50 @@ export interface paths {
         patch: operations["update_cohort_admin_cohorts__cohort_id__patch"];
         trace?: never;
     };
+    "/admin/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Review Queue
+         * @description Publication requests waiting for a decision, oldest first (admin only).
+         */
+        get: operations["review_queue_admin_review_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/review/media/{media_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Media
+         * @description Approve or refuse a publication request, or hide any published item (admin only).
+         *
+         *     Approving makes the item public (a grant to everyone); refusing keeps it in its
+         *     workspace; hiding takes a public or official item down and withdraws the grant. 409
+         *     when there is no pending request to approve or refuse. Audited.
+         */
+        post: operations["review_media_admin_review_media__media_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/stats": {
         parameters: {
             query?: never;
@@ -357,15 +401,14 @@ export interface paths {
         };
         /**
          * List Media
-         * @description The catalog for this user, newest first: their workspaces' items and official ones.
+         * @description The items the caller may see, newest first, one page at a time.
          *
-         *     `kind` filters to one row of the home page; `mine=true` narrows to items of the
-         *     workspaces the caller builds in; `tag` narrows to one library row; `?workspace=`
-         *     narrows to one workspace. Ready items only - a draft has no confirmed file yet.
-         *
-         *     Locked items are left out unless `include_locked` asks for them, so a caller that
-         *     wants something runnable gets only runnable things. The library asks for them,
-         *     because showing what is coming is the point of a locked row.
+         *     `kind`, `circle` (workspace / public / official), `tag` and `q` (title or
+         *     description, case-insensitive) narrow the list; `mine=true` keeps the items of the
+         *     workspaces the caller builds in and also shows them while `processing` or `failed`,
+         *     so an upload is visible before its probe ends. Everything else lists `ready` items
+         *     only; hidden and archived ones never. Locked items are left out unless
+         *     `include_locked` asks for them. The next page's cursor comes back in `X-Next-Cursor`.
          */
         get: operations["list_media_media_get"];
         put?: never;
@@ -373,13 +416,14 @@ export interface paths {
          * Create Media
          * @description Create a catalog item in `?workspace=` (default: the caller's personal one) (201).
          *
-         *     A video must name a `source_key` from `/media/uploads` of the same workspace that
-         *     actually exists in storage (403/422 otherwise); its size counts against the
-         *     workspace's quota and the files move to the item's own prefix. A game needs a
-         *     `module`, a scenario a non-empty `definition`. Marking an item `official` is
-         *     admin-only (403), as is creating a game or a scenario, tagging an item, or locking
-         *     one: the curated catalog is editorial, not user-generated, until the sandbox exists
-         *     (decision V2-0002). An official item is granted to everyone (`viewer@user:*`).
+         *     A video or audio item must name a `source_key` from `/media/uploads` of the same
+         *     workspace, with a matching extension, that actually exists in storage (403/422
+         *     otherwise); its size counts against the workspace's quota, the files move to the
+         *     item's own prefix, and the item stays `processing` until the `media_probe` job
+         *     accepts it. Text needs `definition.body`, a quiz a non-empty `definition`, a game a
+         *     `module`. Games, official items, tags and locked items are admin-only (403): the
+         *     curated catalog is editorial. An official item is granted to everyone
+         *     (`viewer@user:*`).
          */
         post: operations["create_media_media_post"];
         delete?: never;
@@ -399,7 +443,7 @@ export interface paths {
         put?: never;
         /**
          * Presign Media Upload
-         * @description Step 1 of a video upload: presigned forms for the file and its optional cover.
+         * @description Step 1 of a video or audio upload: presigned forms for the file and its cover.
          *
          *     The forms point under the workspace's pending prefix (V3-0009). 403 without
          *     `can_build` on the workspace; 413 when it is already at its quota. The per-file cap
@@ -453,6 +497,51 @@ export interface paths {
          * @description Promote an item into the official catalog (admin only): everyone may now view it.
          */
         post: operations["set_official_media__media_id__official_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{media_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Media
+         * @description Ask for an item to be published to the community.
+         *
+         *     During the beta every request waits for an admin (`beta_gate_publication`,
+         *     V3-0008); with the gate off it is published at once. File kinds need
+         *     `rights_attested` (422); only a `ready` item can be published (409); an item already
+         *     public or official answers 409.
+         */
+        post: operations["publish_media_media__media_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{media_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Media Usage
+         * @description The protocol versions that use this item (none until protocols exist, S18).
+         */
+        get: operations["media_usage_media__media_id__usage_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1378,11 +1467,12 @@ export interface components {
         MediaAccess: "open" | "locked";
         /**
          * MediaIn
-         * @description Create a catalog item.
+         * @description Create a media item.
          *
-         *     Videos pass the keys returned by `/media/uploads`; games name a `module`;
-         *     scenarios carry their `definition`. `manifest` is free-form but the host reads
-         *     `content_warning` and `expected_duration_s` from it (decision V2-0002).
+         *     Videos and audio pass the keys returned by `/media/uploads`; text carries its
+         *     passage in `definition.body`; a quiz carries its scenes in `definition`; games name a
+         *     `module`. `manifest` is free-form but the host reads `content_warning`,
+         *     `expected_duration_s` and `family` from it (decisions V2-0002, V3-0003).
          */
         MediaIn: {
             /** @default open */
@@ -1398,6 +1488,8 @@ export interface components {
             /** Duration S */
             duration_s?: number | null;
             kind: components["schemas"]["MediaKind"];
+            /** Language */
+            language?: string | null;
             /** Manifest */
             manifest?: {
                 [key: string]: unknown;
@@ -1420,13 +1512,15 @@ export interface components {
         };
         /**
          * MediaKind
-         * @description What a catalog item is: an uploaded video, a mini-game, or a scripted scenario.
+         * @description What a media item is (decisions V2-0002, V3-0003).
          *
-         *     One abstraction on purpose (decision V2-0002): all three run for a while and emit
-         *     timed events, so sessions, storage and replay treat them the same.
+         *     File kinds (`video`, `audio`) own a file in storage and are probed before use; data
+         *     kinds (`text`, `quiz`) carry their content in `definition`; `game` names frontend
+         *     code and stays admin-only until the sandbox exists. `quiz` was `scenario` until S17.
+         *     `image_set`, `questionnaire` and `task` arrive with the blocks that use them (S18).
          * @enum {string}
          */
-        MediaKind: "video" | "game" | "scenario";
+        MediaKind: "video" | "audio" | "text" | "quiz" | "game";
         /**
          * MediaOut
          * @description A catalog item as the app sees it; `url` is a short-lived link for videos.
@@ -1454,6 +1548,8 @@ export interface components {
              */
             id: string;
             kind: components["schemas"]["MediaKind"];
+            /** Language */
+            language: string | null;
             /** Manifest */
             manifest: {
                 [key: string]: unknown;
@@ -1462,6 +1558,12 @@ export interface components {
             mine: boolean;
             /** Module */
             module: string | null;
+            /** Probe */
+            probe: {
+                [key: string]: unknown;
+            };
+            /** Review State */
+            review_state: string;
             /** Slug */
             slug: string;
             status: components["schemas"]["MediaStatus"];
@@ -1475,7 +1577,7 @@ export interface components {
         };
         /**
          * MediaPresignIn
-         * @description Step 1 of a video upload: the filename decides the extension.
+         * @description Step 1 of a video or audio upload: the filename decides the extension.
          */
         MediaPresignIn: {
             /** Cover Filename */
@@ -1495,20 +1597,23 @@ export interface components {
         };
         /**
          * MediaStatus
-         * @description Lifecycle of a catalog item: `draft` until its file is confirmed, then `ready`.
+         * @description Lifecycle of an item.
+         *
+         *     A file kind is `processing` until the probe accepts it (`ready`) or refuses it
+         *     (`failed`, the reason in `probe`). `hidden` is a moderation take-down, reversible;
+         *     `archived` removes an item from the library while keeping it runnable.
          * @enum {string}
          */
-        MediaStatus: "draft" | "ready";
+        MediaStatus: "draft" | "processing" | "ready" | "failed" | "hidden" | "archived";
         /**
          * MediaVisibility
-         * @description Who may open a catalog item.
+         * @description Which shelf an item sits on (V3-0003): its workspace, the community, the official one.
          *
-         *     `private` is the owner only - today every user upload. `official` is the curated
-         *     catalog, which only an admin may create. Sharing between users comes later; the
-         *     value space is here so the check never has to be rewritten.
+         *     The shelf is a label; who may open the item is the authz model's answer - a public or
+         *     official item carries the tuple `media:M#viewer@user:*`. `workspace` was `private`.
          * @enum {string}
          */
-        MediaVisibility: "private" | "official";
+        MediaVisibility: "workspace" | "public" | "official";
         /**
          * MessageOut
          * @description Minimal status acknowledgement.
@@ -1661,6 +1766,20 @@ export interface components {
             vision_correction?: string | null;
         };
         /**
+         * PublishIn
+         * @description A request to show an item to the community (V3-0003).
+         *
+         *     For a file kind the author states they may redistribute it: a public video is a
+         *     redistribution, and the liability is ours.
+         */
+        PublishIn: {
+            /**
+             * Rights Attested
+             * @default false
+             */
+            rights_attested: boolean;
+        };
+        /**
          * RecordingOut
          * @description Recording summary for list and detail views, with its most recent job.
          */
@@ -1717,6 +1836,19 @@ export interface components {
              * @default classic
              */
             cleaner: string;
+        };
+        /**
+         * ReviewDecisionIn
+         * @description An admin's answer to a publication request, or a moderation take-down.
+         */
+        ReviewDecisionIn: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "refuse" | "hide";
+            /** Note */
+            note?: string | null;
         };
         /**
          * SessionOut
@@ -1935,6 +2067,14 @@ export interface components {
              * Format: uuid
              */
             recording_id: string;
+        };
+        /**
+         * UsageOut
+         * @description Where an item is used; protocols reference media from S18 on.
+         */
+        UsageOut: {
+            /** Protocols */
+            protocols: string[];
         };
         /**
          * UserOut
@@ -2258,6 +2398,61 @@ export interface operations {
             };
         };
     };
+    review_queue_admin_review_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaOut"][];
+                };
+            };
+        };
+    };
+    review_media_admin_review_media__media_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stats_admin_stats_get: {
         parameters: {
             query?: never;
@@ -2542,10 +2737,13 @@ export interface operations {
         parameters: {
             query?: {
                 kind?: components["schemas"]["MediaKind"] | null;
+                circle?: components["schemas"]["MediaVisibility"] | null;
                 mine?: boolean | null;
                 tag?: ("attention" | "anxiety" | "cognitive_decline") | null;
+                q?: string | null;
                 include_locked?: boolean;
                 limit?: number;
+                cursor?: string | null;
                 workspace?: string | null;
             };
             header?: never;
@@ -2724,6 +2922,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MediaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_media_media__media_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    media_usage_media__media_id__usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageOut"];
                 };
             };
             /** @description Validation Error */
