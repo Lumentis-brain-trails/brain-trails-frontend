@@ -353,7 +353,15 @@ export function Icon({
   name,
   className,
 }: {
-  name: "chevron" | "back" | "plus" | "download" | "trash" | "check" | "copy";
+  name:
+    | "chevron"
+    | "back"
+    | "plus"
+    | "download"
+    | "trash"
+    | "check"
+    | "copy"
+    | "lock";
   className?: string;
 }) {
   const paths: Record<typeof name, string> = {
@@ -364,6 +372,7 @@ export function Icon({
     trash: "M3 4h10M6 4V2.5h4V4M5 4l.6 9h4.8L11 4",
     check: "M3 8.5l3 3 7-7",
     copy: "M6 6h7v7H6zM3 10V3h7",
+    lock: "M5 7V5a3 3 0 016 0v2M3.5 7h9v6.5h-9z",
   };
   return (
     <svg

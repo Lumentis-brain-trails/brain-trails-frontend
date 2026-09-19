@@ -170,12 +170,45 @@ export const TASK_LABELS = [
   "video_watching",
 ] as const;
 
+/**
+ * The library's browsing rows, in the order they are shown.
+ *
+ * Closed list, mirrored from the backend's `MEDIA_TAGS` (which enforces it with a CHECK
+ * constraint): tags are the top-level navigation, so a typo would silently produce an
+ * empty row rather than an error.
+ */
+export const MEDIA_TAGS = [
+  "attention",
+  "anxiety",
+  "cognitive_decline",
+] as const;
+
+export type MediaTag = (typeof MEDIA_TAGS)[number];
+
+export const MEDIA_TAG_LABELS: Record<MediaTag, string> = {
+  attention: "Attention",
+  anxiety: "Anxiety",
+  cognitive_decline: "Cognitive Decline",
+};
+
+/** One line under each row title, saying what the tag is for. */
+export const MEDIA_TAG_HINTS: Record<MediaTag, string> = {
+  attention:
+    "Hold a target, ignore the rest, and stop a response you already started.",
+  anxiety: "Settle the body, then watch what the signal does with it.",
+  cognitive_decline:
+    "Memory, speed and flexibility, measured the same way each time.",
+};
+
 /** A catalog item: something a session can be recorded against (backend V2-0002). */
 export interface Media {
   id: string;
   kind: "video" | "game" | "scenario";
   visibility: "private" | "official";
   status: "draft" | "ready";
+  /** `locked` items are advertised but cannot be started; the backend refuses a session. */
+  access: "open" | "locked";
+  tags: string[];
   slug: string;
   title: string;
   description: string | null;
