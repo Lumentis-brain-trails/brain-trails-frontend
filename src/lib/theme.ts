@@ -95,6 +95,13 @@ export interface ChartTheme {
   trailEnd: string;
   /** One colour per EEG channel (TP9, AF7, AF8, TP10). */
   channels: string[];
+  /**
+   * Contact-ribbon ramp, clean contact to unusable: the four stops the blended
+   * disturbance field is read through. Light stacks the strands with `multiply`
+   * so crowding darkens, dark stacks them with `lighter` so crowding glows,
+   * which is why the two sets are not lightness variants of each other.
+   */
+  ribbon: readonly [string, string, string, string];
 }
 
 const LIGHT_TRAIL = ["#e8a02a", "#1bafc4", "#7c5ce6", "#e2569c"] as const;
@@ -116,6 +123,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     trailStart: LIGHT_TRAIL[0],
     trailEnd: LIGHT_TRAIL[3],
     channels: [...LIGHT_TRAIL],
+    ribbon: ["#1f9d6b", "#c98a12", "#dd6a2a", "#c8203a"],
   },
   dark: {
     canvas: "#07090e",
@@ -132,6 +140,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     trailStart: DARK_TRAIL[0],
     trailEnd: DARK_TRAIL[3],
     channels: [...DARK_TRAIL],
+    ribbon: ["#84f6cd", "#fbe59c", "#ffa06a", "#ff4f66"],
   },
 };
 

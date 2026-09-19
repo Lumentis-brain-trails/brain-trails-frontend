@@ -103,6 +103,36 @@
       "required": "Tick the box to continue."
     }
   },
+  "signals": {
+    "title": "Sensor contact",
+    "levels": {
+      "unknown": "Waiting",
+      "good": "Good",
+      "noisy": "Noisy",
+      "saturated": "Saturated",
+      "flat": "No contact"
+    },
+    "hints": {
+      "unknown": "Waiting for signal",
+      "good": "Good contact",
+      "noisy": "Relax and hold still",
+      "saturated": "Lift and reseat",
+      "flat": "Press it gently down"
+    },
+    "help": {
+      "open": "Where the sensors sit",
+      "title": "Where the sensors sit",
+      "intro": "The band holds four dry electrodes against the skin: two on the forehead just above the eyebrows, two behind the ears. The lights follow the band from left to right as you wear it, so the leftmost light is the sensor behind your left ear.",
+      "where": {
+        "TP9": "Behind the left ear",
+        "AF7": "Left forehead, above the eyebrow",
+        "AF8": "Right forehead, above the eyebrow",
+        "TP10": "Behind the right ear"
+      },
+      "reference_label": "Fpz",
+      "reference": "Reference, centre of the forehead"
+    }
+  },
   "kinds": {
     "common": {
       "continue": "Continue",

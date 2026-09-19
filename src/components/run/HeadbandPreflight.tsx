@@ -85,7 +85,7 @@ export function HeadbandPreflight({
           <p className="text-ink-2">
             {t("connected", { name: muse.deviceName ?? "Muse" })}
           </p>
-          <ContactLights quality={muse.quality} />
+          <ContactLights quality={muse.quality} active={connected} />
           <p className="type-caption text-ink-3">
             {muse.allGood ? t("contact_ok") : t("contact_wait")}
           </p>
