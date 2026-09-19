@@ -281,9 +281,9 @@ export class BluetoothMuse implements MuseDevice {
 
   /**
    * Athena: every stream arrives on one or two characteristics as tagged
-   * subpackets. The optics stream (fNIRS and PPG) is left switched off by the
-   * preset and skipped by the decoder, so what reaches the listeners is the
-   * four electrodes and motion, exactly as from an older band.
+   * subpackets. The optics stream (fNIRS and PPG) arrives -- no preset gives
+   * motion without it -- and is dropped by the decoder, so what reaches the
+   * listeners is the four electrodes and motion, as from an older band.
    */
   private async subscribeAthena(
     service: BluetoothRemoteGATTService,
@@ -329,15 +329,29 @@ export class BluetoothMuse implements MuseDevice {
         }
       }
     };
+    // The control characteristic answers the handshake; the official app
+    // listens to it before sending anything, and some firmware will not start
+    // until something is subscribed. We do not read the replies.
+    await notifyQuietly(this.control);
+
+    // Firmware revisions disagree about which streams leave by which
+    // characteristic, and some expose an aux that cannot notify at all --
+    // which must not cost us the main one. One working subscription is enough.
+    let subscribed = 0;
     for (const characteristic of [
       data,
       await optionalCharacteristic(service, ATHENA_AUX_CHARACTERISTIC),
     ]) {
       if (!characteristic) continue;
       characteristic.addEventListener("characteristicvaluechanged", handle);
-      await characteristic.startNotifications();
-      this.subscriptions.push(characteristic);
+      if (await notifyQuietly(characteristic)) {
+        this.subscriptions.push(characteristic);
+        subscribed++;
+      }
     }
+    if (subscribed === 0)
+      throw new Error("This Muse would not start its data stream");
+
     for (const step of ATHENA_START_SEQUENCE) {
       await this.send(step.command);
       await wait(step.waitMs);
@@ -357,9 +371,35 @@ export class BluetoothMuse implements MuseDevice {
     this.device = null;
   }
 
+  /**
+   * The headband expects its commands without a response; asking for one is
+   * what makes a write time out on some adapters. `writeValue` is kept as the
+   * fallback for browsers that never grew the explicit method.
+   */
   private async send(command: string): Promise<void> {
     if (!this.control) throw new Error("Not connected");
-    await this.control.writeValue(encodeCommand(command));
+    const bytes = encodeCommand(command);
+    if (this.control.writeValueWithoutResponse) {
+      await this.control.writeValueWithoutResponse(bytes);
+      return;
+    }
+    await this.control.writeValue(bytes);
+  }
+}
+
+/**
+ * `startNotifications`, but a characteristic that refuses is not fatal: it
+ * reports whether the subscription took.
+ */
+async function notifyQuietly(
+  characteristic: BluetoothRemoteGATTCharacteristic | null
+): Promise<boolean> {
+  if (!characteristic) return false;
+  try {
+    await characteristic.startNotifications();
+    return true;
+  } catch {
+    return false;
   }
 }
 

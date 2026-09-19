@@ -14,11 +14,11 @@
  * https://github.com/Amused-EEG/amused-py -- https://github.com/DominiqueMakowski/OpenMuse
  *
  * **fNIRS is deliberately not recorded.** The Athena's optode array and its
- * PPG share the one "optics" stream, and the preset we ask for (see
- * {@link ATHENA_PRESET}) leaves that stream switched off, so a session file is
- * the same four electrodes plus motion whichever headband produced it. Optics
- * tags are still recognised here, because a packet that contains one has to be
- * walked over to reach the subpackets behind it.
+ * PPG share one "optics" stream, and no preset gives us the motion we need
+ * without also switching that stream on, so it arrives and is discarded here:
+ * optics tags are framed -- a packet containing one has to be walked over to
+ * reach the subpackets behind it -- and then dropped. A session file is the
+ * same four electrodes plus motion whichever headband produced it.
  */
 import { EEG_CHANNELS, SAMPLE_RATE_HZ, type EegChannel } from "./protocol";
 
@@ -40,29 +40,48 @@ export const ATHENA_DATA_CHARACTERISTIC =
 export const ATHENA_AUX_CHARACTERISTIC = "273e0014-4c4d-454d-96be-f03bac821358";
 
 /**
- * EEG at 256 Hz plus accelerometer, gyroscope and battery, with the optics
- * array (fNIRS and PPG) off and the red LED dark: the closest match to what a
- * Muse 2 sends. The 1000-series presets all switch some optode configuration
- * on and would put a stream in the file that the other headband cannot
- * produce.
+ * The preset the band is primed with before it is moved to the streaming one.
+ * On its own it does not stream: it is the first half of the two-step start
+ * below.
  */
-export const ATHENA_PRESET = "p21";
+export const ATHENA_PRIMING_PRESET = "p21";
 
 /**
- * Start-up handshake. `dc001` starts the stream and has to be sent twice --
- * the single most important undocumented detail of this protocol, found by
- * amused-py: one `dc001` alone leaves the band silent. `L1` asks for the
- * low-latency connection interval, `v6`/`s` are the version and status
- * queries the official app sends first. The firmware drops commands that
- * arrive too close together, hence the wait after each one.
+ * The streaming preset: EEG at 256 Hz, accelerometer and gyroscope at 52 Hz,
+ * battery -- and the optode array, which we cannot switch off without also
+ * losing the motion we need. So the optics arrive on the wire and are thrown
+ * away in {@link decodeSubpacket}: **no fNIRS and no PPG ever reaches a file**,
+ * which is what a uniform input across headbands asks for. Telling the two
+ * apart inside that one optics stream is the fNIRS work that was deferred.
+ */
+export const ATHENA_PRESET = "p1034";
+
+/**
+ * Start-up handshake, and the reason an Athena stays silent if you get it
+ * wrong. The band will not start on a single preset: it has to be primed on
+ * `p21`, started once with `dc001` + `L1`, **halted**, moved to the streaming
+ * preset, and started again. That is why `dc001` is sent twice -- once per
+ * preset, each time followed by its own `L1` -- and not twice in a row.
+ *
+ * `v6` and `s` are the version and status queries the official app opens with,
+ * `h` halts whatever the band was doing, and `L1` asks for the low-latency
+ * connection interval. The firmware drops commands that arrive too close
+ * together, hence the wait after each one.
+ *
+ * Sequence from amused-py's `get_init_sequence`:
+ * https://github.com/Amused-EEG/amused-py/blob/main/muse_athena_protocol.py
  */
 export const ATHENA_START_SEQUENCE = [
   { command: "v6", waitMs: 200 },
   { command: "s", waitMs: 200 },
   { command: "h", waitMs: 200 },
+  { command: ATHENA_PRIMING_PRESET, waitMs: 200 },
+  { command: "s", waitMs: 200 },
+  { command: "dc001", waitMs: 100 },
+  { command: "L1", waitMs: 200 },
+  { command: "h", waitMs: 200 },
   { command: ATHENA_PRESET, waitMs: 200 },
   { command: "s", waitMs: 200 },
-  { command: "dc001", waitMs: 50 },
   { command: "dc001", waitMs: 100 },
   { command: "L1", waitMs: 300 },
 ] as const;
@@ -307,6 +326,15 @@ export function decodeAthenaMotion(
 const CLOCK_MODULO = 2 ** 32;
 
 /**
+ * A hole this long is not a hole. Above it the tick has to be assumed bad --
+ * a firmware that moved the field, a reset mid-session -- and the clock is
+ * rebased instead of minting a gap of millions of samples that would make an
+ * otherwise sound recording read as almost entirely lost. Five seconds is far
+ * past any real dropout that still leaves a link standing.
+ */
+const MAX_CREDIBLE_GAP_SECONDS = 5;
+
+/**
  * Turns the header's 256 kHz tick into a sample index on one stream's own
  * clock, which is what the rest of the app records against.
  *
@@ -342,10 +370,16 @@ export class AthenaClock {
       absolute = Math.max(rawTick + this.wrapOffset, this.lastAbsoluteTick);
     }
     this.lastAbsoluteTick = absolute;
-    const index = Math.max(
+    let index = Math.max(
       Math.round(((absolute - this.baseTick) / DEVICE_CLOCK_HZ) * this.rateHz),
       this.nextIndex
     );
+    if (index - this.nextIndex > this.rateHz * MAX_CREDIBLE_GAP_SECONDS) {
+      // Rebase onto this tick and carry on where the samples left off.
+      this.baseTick =
+        absolute - (this.nextIndex / this.rateHz) * DEVICE_CLOCK_HZ;
+      index = this.nextIndex;
+    }
     this.nextIndex = index + count;
     return index;
   }
