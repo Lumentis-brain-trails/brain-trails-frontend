@@ -19,6 +19,8 @@ export const config = {
     "/neurometrics",
     "/neurometrics/:path*",
     "/record",
+    "/protocols",
+    "/protocols/:path*",
     "/admin/:path*",
   ],
 };

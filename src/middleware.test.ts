@@ -27,6 +27,8 @@ describe("middleware", () => {
       "/neurometrics",
       "/neurometrics/:path*",
       "/record",
+      "/protocols",
+      "/protocols/:path*",
       "/admin/:path*",
     ]);
   });
