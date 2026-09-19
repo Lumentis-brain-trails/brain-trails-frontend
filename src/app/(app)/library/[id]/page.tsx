@@ -79,11 +79,17 @@ export default function MediaDetailPage({
             {media.visibility === "official" ? " · Official" : " · Private"}
           </p>
         </div>
+        {/* Reachable by URL even though the library does not link locked cards, so it
+            says why rather than looking merely broken. */}
         <Button
           disabled
-          title="Recording with a stimulus arrives in the next step"
+          title={
+            media.access === "locked"
+              ? "Not open yet: beta testers get this first"
+              : "Recording with a stimulus arrives in the next step"
+          }
         >
-          Record with this
+          {media.access === "locked" ? "Locked" : "Record with this"}
         </Button>
       </header>
 
