@@ -52,7 +52,9 @@ export function Scrubber({
   const ref = useRef<HTMLDivElement>(null);
   const [brushFrom, setBrushFrom] = useState<number | null>(null);
   const pct = (seconds: number) =>
-    duration > 0 ? (Math.max(0, Math.min(seconds, duration)) / duration) * 100 : 0;
+    duration > 0
+      ? (Math.max(0, Math.min(seconds, duration)) / duration) * 100
+      : 0;
 
   const timeAt = useCallback(
     (clientX: number) => {

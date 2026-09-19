@@ -190,7 +190,9 @@ export function Notes({
                 </div>
               </div>
             ) : (
-              <p className="mt-1 whitespace-pre-line text-[14px]">{note.body}</p>
+              <p className="mt-1 whitespace-pre-line text-[14px]">
+                {note.body}
+              </p>
             )}
             {note.mine && editing !== note.id && (
               <div className="mt-1 flex gap-2">

@@ -165,7 +165,9 @@ function ClipCard({
           );
           event.dataTransfer.effectAllowed = "move";
         }}
-        onClick={(event) => onSelect(clip.index, event.shiftKey || event.metaKey)}
+        onClick={(event) =>
+          onSelect(clip.index, event.shiftKey || event.metaKey)
+        }
         onDoubleClick={() => isGroup && onOpenGroup(clip.index)}
         className="min-w-0 flex-1 cursor-grab text-left"
         aria-pressed={selected}

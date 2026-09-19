@@ -84,8 +84,7 @@ export function ReviewTrail({
       {mapped.slice(1).map((p, i) => {
         const previous = mapped[i];
         const inRange =
-          !range ||
-          (p.point.t_start >= range[0] && p.point.t_end <= range[1]);
+          !range || (p.point.t_start >= range[0] && p.point.t_end <= range[1]);
         return (
           <line
             key={i}
@@ -93,7 +92,10 @@ export function ReviewTrail({
             y1={previous.y}
             x2={p.x}
             y2={p.y}
-            stroke={trailHexAt(theme.trail, (i + 1) / Math.max(1, mapped.length - 1))}
+            stroke={trailHexAt(
+              theme.trail,
+              (i + 1) / Math.max(1, mapped.length - 1)
+            )}
             strokeWidth={inRange ? 2.4 : 1.2}
             strokeOpacity={inRange ? 1 : 0.35}
             strokeLinecap="round"

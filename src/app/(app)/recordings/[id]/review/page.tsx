@@ -49,7 +49,9 @@ interface SessionDetail {
   title: string;
   protocol_id: string | null;
   protocol_version: number | null;
-  resolved_plan: { steps?: { id: string; label?: string; kind?: string }[] } | null;
+  resolved_plan: {
+    steps?: { id: string; label?: string; kind?: string }[];
+  } | null;
   events_url: string | null;
 }
 
@@ -122,7 +124,8 @@ export default function ReviewPage({
   });
   const features = useQuery({
     queryKey: ["features", id],
-    queryFn: () => api.get<Features>(`recordings/${id}/features?downsample=600`),
+    queryFn: () =>
+      api.get<Features>(`recordings/${id}/features?downsample=600`),
     enabled: recording.data?.status === "done",
     retry: false,
   });
@@ -160,18 +163,13 @@ export default function ReviewPage({
     0;
   const currentBlock = blockAt(blocks, t);
   const at = mediaTimeAt(windows, t);
-  const currentMedia = at?.mediaId
-    ? links.data?.media[at.mediaId]
-    : undefined;
+  const currentMedia = at?.mediaId ? links.data?.media[at.mediaId] : undefined;
 
   /** Seek everything: the cursor is the page's single source of position. */
-  const seek = useCallback(
-    (next: number) => {
-      following.current = false;
-      setT(Math.max(0, next));
-    },
-    []
-  );
+  const seek = useCallback((next: number) => {
+    following.current = false;
+    setT(Math.max(0, next));
+  }, []);
 
   // The video follows the cursor, unless the video itself is driving it (play).
   useEffect(() => {
@@ -310,7 +308,11 @@ export default function ReviewPage({
                 <p className="type-caption text-ink-3">
                   Selected {formatClock(range[0])}–{formatClock(range[1])}
                 </p>
-                <Button size="sm" variant="ghost" onClick={() => setRange(null)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setRange(null)}
+                >
                   Clear
                 </Button>
               </div>
@@ -357,8 +359,9 @@ export default function ReviewPage({
                 </table>
               </div>
               <p className="type-caption text-ink-3">
-                Relative power, averaged over the block. Distance from baseline is
-                measured in the embedding space, so it compares across sessions.
+                Relative power, averaged over the block. Distance from baseline
+                is measured in the embedding space, so it compares across
+                sessions.
               </p>
             </Card>
           )}

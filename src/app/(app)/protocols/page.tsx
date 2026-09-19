@@ -30,10 +30,9 @@ function NewProtocolButton() {
   const workspace = useCurrentWorkspace();
   const create = useMutation({
     mutationFn: () =>
-      api.post<Card & { id: string }>(
-        inWorkspace("protocols", workspace),
-        { title: "New protocol" }
-      ),
+      api.post<Card & { id: string }>(inWorkspace("protocols", workspace), {
+        title: "New protocol",
+      }),
     onSuccess: (protocol) => router.push(`/protocols/${protocol.id}/edit`),
   });
   return (

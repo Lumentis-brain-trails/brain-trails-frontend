@@ -53,8 +53,11 @@ export function PublishDialog({
 
   const issues =
     publish.error instanceof ApiRequestError
-      ? ((publish.error.error as { details?: { errors?: { message: string }[] } })
-          .details?.errors ?? [])
+      ? ((
+          publish.error.error as {
+            details?: { errors?: { message: string }[] };
+          }
+        ).details?.errors ?? [])
       : [];
 
   return (

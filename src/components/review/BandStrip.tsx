@@ -81,7 +81,9 @@ export function BandStrip({
             y={0}
             width={Math.max(
               1,
-              ((features.t[1] ?? 1) - (features.t[0] ?? 0)) / Math.max(1, duration) * W
+              (((features.t[1] ?? 1) - (features.t[0] ?? 0)) /
+                Math.max(1, duration)) *
+                W
             )}
             height={H}
             fill="var(--ink-3)"

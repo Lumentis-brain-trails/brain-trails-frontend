@@ -49,7 +49,9 @@ function str(value: unknown): string | undefined {
 }
 
 function num(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 /**
@@ -135,7 +137,10 @@ export function mediaWindows(
         tEnd: endOf.get(blockId) ?? event.t,
         mediaStart: mediaTime / 1000,
       };
-    } else if (current && (STOPS.has(event.type) || event.type === "block_end")) {
+    } else if (
+      current &&
+      (STOPS.has(event.type) || event.type === "block_end")
+    ) {
       close(event.t);
     }
   }

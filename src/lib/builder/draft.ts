@@ -45,7 +45,13 @@ export interface Clip {
 const DEFAULT_BLOCK_S = 30;
 
 /** Kinds whose length the participant decides; their clip is marked variable. */
-const SELF_PACED = new Set(["instructions", "prompt", "text", "questionnaire", "quiz"]);
+const SELF_PACED = new Set([
+  "instructions",
+  "prompt",
+  "text",
+  "questionnaire",
+  "quiz",
+]);
 
 function num(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
@@ -72,7 +78,9 @@ export function clipSeconds(
   else if (node.kind === "breathing")
     seconds =
       (num(config.cycles, 1) *
-        (num(config.inhaleMs, 0) + num(config.holdMs, 0) + num(config.exhaleMs, 0))) /
+        (num(config.inhaleMs, 0) +
+          num(config.holdMs, 0) +
+          num(config.exhaleMs, 0))) /
         1000 +
       15;
   else if (node.kind === "go-no-go") seconds = 120;
@@ -117,7 +125,9 @@ export function clips(
     seconds: clipSeconds(node, media),
     label: labelOf(node),
     variable:
-      node.type !== "block" ? true : SELF_PACED.has(node.kind) || isSelfPacedRest(node),
+      node.type !== "block"
+        ? true
+        : SELF_PACED.has(node.kind) || isSelfPacedRest(node),
   }));
 }
 
@@ -305,7 +315,9 @@ export const ELEMENTS: {
     kind: "instructions",
     label: "Instructions",
     config: {
-      lines: [{ text: "Tell the participant what happens next.", holdMs: 2500 }],
+      lines: [
+        { text: "Tell the participant what happens next.", holdMs: 2500 },
+      ],
       advance: { mode: "key", label: "Continue" },
     },
   },

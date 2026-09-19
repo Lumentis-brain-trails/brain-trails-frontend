@@ -20,14 +20,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import {
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BlockInspector } from "@/components/builder/BlockInspector";
 import { Bin } from "@/components/builder/Bin";
 import { GroupInspector } from "@/components/builder/GroupInspector";
@@ -60,13 +53,14 @@ import {
 } from "@/lib/builder/draft";
 import { useHistory } from "@/lib/builder/history";
 import { KIND_SCHEMAS } from "@/lib/builder/schemas";
-import type {
-  ProtocolDetail,
-  ValidationResult,
-} from "@/lib/protocol/catalog";
+import type { ProtocolDetail, ValidationResult } from "@/lib/protocol/catalog";
 import { resolvePlan } from "@/lib/protocol/resolve";
 import { createMemorySink } from "@/lib/protocol/sink";
-import { parseTree, type ProtocolTree, type TreeNode } from "@/lib/protocol/tree";
+import {
+  parseTree,
+  type ProtocolTree,
+  type TreeNode,
+} from "@/lib/protocol/tree";
 import type { Media } from "@/lib/types";
 
 const AUTOSAVE_MS = 1500;
@@ -168,7 +162,8 @@ export default function BuilderPage({
   }, [conflict, rev, tree]);
 
   const check = useMutation({
-    mutationFn: () => api.post<ValidationResult>(`protocols/${id}/validate`, {}),
+    mutationFn: () =>
+      api.post<ValidationResult>(`protocols/${id}/validate`, {}),
     onSuccess: setReport,
   });
 
@@ -203,7 +198,11 @@ export default function BuilderPage({
   const addMedia = useCallback(
     (item: Media) => {
       edit((current) =>
-        insertAt(current, current.root.children.length, blockForMedia(current, item))
+        insertAt(
+          current,
+          current.root.children.length,
+          blockForMedia(current, item)
+        )
       );
     },
     [edit]
@@ -344,7 +343,11 @@ export default function BuilderPage({
           <Button size="sm" variant="secondary" onClick={() => check.mutate()}>
             {t("check")}
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setPreview(tree)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setPreview(tree)}
+          >
             {t("preview")}
           </Button>
           <Button size="sm" onClick={() => setPublishing(true)}>
@@ -485,9 +488,7 @@ export default function BuilderPage({
         />
       )}
 
-      {preview && (
-        <Preview tree={preview} onClose={() => setPreview(null)} />
-      )}
+      {preview && <Preview tree={preview} onClose={() => setPreview(null)} />}
     </main>
   );
 }
@@ -536,7 +537,11 @@ function Preview({
   const sink = useMemo(() => createMemorySink(), []);
   const plan = useMemo(() => {
     try {
-      return resolvePlan(tree, 1, { id: "preview", version: 0, title: "Preview" });
+      return resolvePlan(tree, 1, {
+        id: "preview",
+        version: 0,
+        title: "Preview",
+      });
     } catch {
       return null;
     }

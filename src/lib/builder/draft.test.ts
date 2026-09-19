@@ -55,7 +55,9 @@ test("a media block is as long as its media, and a self-paced one is marked vari
     ...block("clip", "video"),
     config: { media_id: "m1" },
   } as BlockNode);
-  const media = { m1: { id: "m1", kind: "video", title: "Sea", duration_s: 90 } };
+  const media = {
+    m1: { id: "m1", kind: "video", title: "Sea", duration_s: 90 },
+  };
   expect(clipSeconds(withMedia.root.children[0], media)).toBe(90);
   const free = tree(block("free", "rest", { mode: "self_paced" }));
   expect(clips(free)[0].variable).toBe(true);

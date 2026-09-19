@@ -45,7 +45,9 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
   });
 
   const items = [...(mine.data ?? []), ...(shared.data ?? [])]
-    .filter((item, index, all) => all.findIndex((i) => i.id === item.id) === index)
+    .filter(
+      (item, index, all) => all.findIndex((i) => i.id === item.id) === index
+    )
     .filter((item) => PLAYABLE.has(item.kind) && item.status === "ready")
     .filter((item) =>
       query ? item.title.toLowerCase().includes(query.toLowerCase()) : true
@@ -105,9 +107,7 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
                 </span>
                 <span className="type-caption text-ink-3">
                   {item.kind}
-                  {item.duration_s
-                    ? ` · ${Math.round(item.duration_s)} s`
-                    : ""}
+                  {item.duration_s ? ` · ${Math.round(item.duration_s)} s` : ""}
                 </span>
               </button>
             ))}
@@ -115,7 +115,11 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
               <p className="type-caption text-ink-3">{t("no_media")}</p>
             )}
           </div>
-          <Button size="sm" variant="secondary" onClick={() => setUploading(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setUploading(true)}
+          >
             <Icon name="plus" /> {t("upload")}
           </Button>
           {uploading && (
