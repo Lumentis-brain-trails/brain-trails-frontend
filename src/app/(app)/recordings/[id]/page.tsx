@@ -153,6 +153,16 @@ export default function RecordingDetailPage({
         </Card>
       )}
 
+      {rec?.status === "empty" && (
+        <div className="mb-6">
+          <ErrorBanner message="No EEG was recorded in this session: it ended before the headband sent any data." />
+        </div>
+      )}
+      {rec?.status === "capturing" && (
+        <div className="mb-6">
+          <ErrorBanner message="This session is still recording, or was closed before it finished. It is closed automatically after three hours." />
+        </div>
+      )}
       {rec?.status === "failed" && (
         <Card className="enter-up mb-6 space-y-4">
           <ErrorBanner message="Processing failed." />

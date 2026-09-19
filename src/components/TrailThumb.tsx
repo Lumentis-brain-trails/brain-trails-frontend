@@ -42,9 +42,13 @@ export function TrailThumb({ recording }: { recording: Recording }) {
           {busy && <Spinner />}
           {recording.status === "failed"
             ? "No trail: processing failed"
-            : busy
-              ? "Drawing the trail…"
-              : "Trail unavailable"}
+            : recording.status === "empty"
+              ? "No trail: no EEG was recorded"
+              : recording.status === "capturing"
+                ? "Recording in progress"
+                : busy
+                  ? "Drawing the trail…"
+                  : "Trail unavailable"}
         </span>
       </div>
     );
