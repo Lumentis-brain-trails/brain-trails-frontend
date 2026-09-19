@@ -42,50 +42,13 @@ import {
   sessionTimeAt,
   ticks as ticksOf,
 } from "@/lib/review/timeline";
-import type { Analysis, Recording } from "@/lib/types";
+import type { components } from "@/lib/api-types";
+import type { Analysis } from "@/lib/types";
 
-interface SessionDetail {
-  id: string;
-  title: string;
-  protocol_id: string | null;
-  protocol_version: number | null;
-  resolved_plan: {
-    steps?: { id: string; label?: string; kind?: string }[];
-  } | null;
-  events_url: string | null;
-}
-
-interface MediaLinks {
-  media: Record<
-    string,
-    { url: string | null; kind: string; poster_url: string | null }
-  >;
-}
-
-interface BlockMetrics {
-  block_id: string;
-  key: string;
-  label: string | null;
-  kind: string | null;
-  condition: string | null;
-  t_start_s: number;
-  t_end_s: number;
-  n_windows: number;
-  /** Relative powers, averaged over the block. */
-  bands: Record<string, number | null>;
-  ratios: Record<string, number | null>;
-  asymmetry: number | null;
-  artefact: number | null;
-  good_contact: number | null;
-  baseline_distance: number | null;
-}
-
-interface Features {
-  t: number[];
-  channels: string[];
-  bands_rel: Record<string, number[][]>;
-  artefact: number[];
-}
+type SessionDetail = components["schemas"]["SessionOut"];
+type MediaLinks = components["schemas"]["MediaLinks"];
+type BlockMetrics = components["schemas"]["BlockMetricsOut"];
+type Features = components["schemas"]["FeaturesOut"];
 
 export default function ReviewPage({
   params,
@@ -101,12 +64,7 @@ export default function ReviewPage({
   const recording = useQuery({
     queryKey: ["recording", id],
     queryFn: () =>
-      api.get<
-        Recording & {
-          session_id?: string | null;
-          quality?: { verdict?: string } | null;
-        }
-      >(`recordings/${id}`),
+      api.get<components["schemas"]["RecordingOut"]>(`recordings/${id}`),
   });
   const sessionId = recording.data?.session_id ?? null;
 
@@ -346,7 +304,10 @@ export default function ReviewPage({
                         <td className="py-1">
                           {block.label ?? block.block_id}
                           {block.condition ? (
-                            <span className="text-ink-3"> · {block.condition}</span>
+                            <span className="text-ink-3">
+                              {" "}
+                              · {block.condition}
+                            </span>
                           ) : null}
                         </td>
                         <td className="text-right tabular-nums">

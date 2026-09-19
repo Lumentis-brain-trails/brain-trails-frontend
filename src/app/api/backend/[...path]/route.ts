@@ -16,6 +16,7 @@ const ALLOWED_PREFIXES = [
   "sessions",
   "media",
   "protocols",
+  "annotations",
   "config",
   "workspaces",
 ];

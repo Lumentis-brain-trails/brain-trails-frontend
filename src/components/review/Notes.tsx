@@ -19,16 +19,9 @@ import { ApiRequestError, api } from "@/lib/api";
 import { formatClock } from "@/lib/builder/draft";
 import type { RunBlock } from "@/lib/review/timeline";
 
-export interface Annotation {
-  id: string;
-  kind: "instant" | "range" | "block" | "recording";
-  t_start_s: number | null;
-  t_end_s: number | null;
-  block_id: string | null;
-  body: string;
-  mine: boolean;
-  created_at: string;
-}
+import type { components } from "@/lib/api-types";
+
+export type Annotation = components["schemas"]["AnnotationOut"];
 
 export function Notes({
   recordingId,
