@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Record page: the device card's buttons wrap instead of overflowing. With the
+  simulator buttons shown (outside production) the row was wider than the card, which
+  clips its content, so "Simulated" was partly hidden and, with wider fonts, could not
+  be clicked at all - which is how the first CI end-to-end run failed.
+
 - Foundations for plan V3 (sprint S13), nothing visible changes: API types generated
   from the backend's OpenAPI (`npm run api:types`, `src/lib/api-types.ts`); the API
   client and the BFF gain `PUT`, `PATCH` and `If-Match`/`ETag`, and the BFF allows
