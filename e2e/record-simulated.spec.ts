@@ -26,7 +26,8 @@ test("a simulated session is uploaded and gets a trail", async ({
     .click();
   await page.getByRole("link", { name: "Play", exact: true }).click();
 
-  await page.getByRole("button", { name: "Simulated", exact: true }).click();
+  // the headband picker is a radiogroup, and the simulator is the default outside prod
+  await page.getByRole("radio", { name: "Simulated Muse 2" }).click();
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByText(/Connected to/)).toBeVisible();
   const override = page.getByLabel(/Start anyway/);
