@@ -5,9 +5,10 @@
  *
  * One line per band, averaged over the channels, on the session clock - the same axis as
  * the scrubber above it, so a bump in alpha and the clip that was playing line up
- * vertically without anyone having to compare two time scales. Relative power (each
- * band's share of the total) rather than absolute microvolts squared: it is what a
- * reader can compare across sessions and across people.
+ * vertically without anyone having to compare two time scales. Relative power (the
+ * backend's `bands_rel`: each band's share of the 1-45 Hz total) rather than absolute
+ * microvolts squared, because that is what a reader can compare across sessions and
+ * across people.
  *
  * Artefact load is drawn as a grey wash: where it is high, the lines above it mean
  * little, and saying so on the picture beats a caveat in a caption.
@@ -17,7 +18,8 @@ import { useMemo } from "react";
 
 export interface FeatureSeries {
   t: number[];
-  bands: Record<string, number[][]>;
+  /** Relative power per window and channel: already a share of the 1-45 Hz total. */
+  bands_rel: Record<string, number[][]>;
   artefact?: number[];
 }
 
@@ -43,24 +45,18 @@ export function BandStrip({
   duration: number;
   onSeek: (t: number) => void;
 }) {
-  const bands = useMemo(() => {
-    const names = Object.keys(features.bands);
-    const perBand = names.map((name) => ({
-      name,
-      values: features.bands[name].map(mean),
-    }));
-    // Relative power: each band's share of the total at that window.
-    const totals = features.t.map((_, i) =>
-      perBand.reduce((sum, band) => sum + (band.values[i] ?? 0), 0)
-    );
-    return perBand.map((band) => ({
-      name: band.name,
-      points: band.values.map((value, i) => ({
-        x: (features.t[i] / Math.max(1, duration)) * W,
-        y: H - (totals[i] > 0 ? value / totals[i] : 0) * H,
+  const bands = useMemo(
+    () =>
+      Object.entries(features.bands_rel).map(([name, perWindow]) => ({
+        name,
+        points: perWindow.map((channels, i) => ({
+          x: (features.t[i] / Math.max(1, duration)) * W,
+          // a share is already 0..1; the channels are averaged for one readable line
+          y: H - Math.max(0, Math.min(1, mean(channels))) * H,
+        })),
       })),
-    }));
-  }, [duration, features]);
+    [duration, features]
+  );
 
   return (
     <svg

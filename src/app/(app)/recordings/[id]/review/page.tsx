@@ -64,24 +64,27 @@ interface MediaLinks {
 
 interface BlockMetrics {
   block_id: string;
-  label: string;
-  kind: string;
-  condition?: string | null;
+  key: string;
+  label: string | null;
+  kind: string | null;
+  condition: string | null;
   t_start_s: number;
   t_end_s: number;
-  bands?: Record<string, number>;
-  ratios?: Record<string, number>;
-  asymmetry?: number | null;
-  artefact?: number | null;
-  good_contact?: number | null;
-  distance_from_baseline?: number | null;
+  n_windows: number;
+  /** Relative powers, averaged over the block. */
+  bands: Record<string, number | null>;
+  ratios: Record<string, number | null>;
+  asymmetry: number | null;
+  artefact: number | null;
+  good_contact: number | null;
+  baseline_distance: number | null;
 }
 
 interface Features {
   t: number[];
   channels: string[];
-  bands: Record<string, number[][]>;
-  artefact?: number[];
+  bands_rel: Record<string, number[][]>;
+  artefact: number[];
 }
 
 export default function ReviewPage({
@@ -272,7 +275,7 @@ export default function ReviewPage({
             <Card className="space-y-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-[15px] font-semibold">Band power</h2>
-                <BandLegend bands={Object.keys(features.data.bands)} />
+                <BandLegend bands={Object.keys(features.data.bands_rel)} />
               </div>
               <BandStrip
                 features={features.data}
@@ -336,11 +339,16 @@ export default function ReviewPage({
                   <tbody>
                     {blockMetrics.data.map((block) => (
                       <tr
-                        key={`${block.block_id}-${block.t_start_s}`}
+                        key={block.key}
                         className="cursor-pointer border-t border-hairline hover:bg-surface-2"
                         onClick={() => seek(block.t_start_s)}
                       >
-                        <td className="py-1">{block.label}</td>
+                        <td className="py-1">
+                          {block.label ?? block.block_id}
+                          {block.condition ? (
+                            <span className="text-ink-3"> · {block.condition}</span>
+                          ) : null}
+                        </td>
                         <td className="text-right tabular-nums">
                           {fmt(block.bands?.alpha)}
                         </td>
@@ -351,7 +359,7 @@ export default function ReviewPage({
                           {fmt(block.asymmetry)}
                         </td>
                         <td className="text-right tabular-nums">
-                          {fmt(block.distance_from_baseline)}
+                          {fmt(block.baseline_distance)}
                         </td>
                       </tr>
                     ))}
