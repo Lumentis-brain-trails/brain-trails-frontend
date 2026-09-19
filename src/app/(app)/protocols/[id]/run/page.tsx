@@ -32,11 +32,7 @@ import {
   HeadbandPreflight,
   type HeadbandSource,
 } from "@/components/run/HeadbandPreflight";
-import {
-  RunSurface,
-  enterFullscreen,
-  exitFullscreen,
-} from "@/components/run/RunSurface";
+import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
 import { useFocusMode } from "@/lib/focus";
@@ -64,6 +60,9 @@ import type { TaskResult } from "@/lib/protocol/types";
 import type { Media } from "@/lib/types";
 
 const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
+
+/** How long Start waits for the headband's first samples before giving up. */
+const SYNC_TIMEOUT_MS = 15_000;
 
 type Phase =
   "preflight" | "syncing" | "running" | "saving" | "saved" | "failed";
@@ -130,8 +129,10 @@ export default function RunProtocolPage({
   const [outcome, setOutcome] = useState<{
     aborted: boolean;
     captured: boolean;
+    reason?: "sync_failed" | "dropped";
   } | null>(null);
   const markers = useRef<readonly Marker[]>([]);
+  const syncStarted = useRef(0);
   useFocusMode(phase === "syncing" || phase === "running");
 
   const sink: MarkerSink | null = useMemo(
@@ -143,8 +144,6 @@ export default function RunProtocolPage({
     if (!media.data || !parsed?.ok) return;
     setStarting(true);
     setError(null);
-    // Full screen needs the click's user gesture: ask before the first await.
-    const fullscreen = enterFullscreen();
     try {
       const started = await startSession(mediaId, {
         title: media.data.title,
@@ -154,31 +153,16 @@ export default function RunProtocolPage({
           protocol_version: parsed.protocol.version,
         },
       });
-      await fullscreen;
       muse.startRecording();
+      syncStarted.current = performance.now();
       setSession(started);
       setPhase("syncing");
     } catch (e) {
-      exitFullscreen();
       setError(errorText(e));
     } finally {
       setStarting(false);
     }
   }, [media.data, mediaId, muse, parsed]);
-
-  // The protocol starts only once the device clock is fitted and the recording has its
-  // first sample: every marker then lands on the EEG clock, never on a guess.
-  useEffect(() => {
-    if (phase !== "syncing") return;
-    const timer = window.setInterval(() => {
-      const first = muse.readFirstSampleIndex();
-      if (muse.readTimelineFit() === null || first === null) return;
-      window.clearInterval(timer);
-      setAnchor(eegAnchor(performance.now(), muse.readTimelineFit, first));
-      setPhase("running");
-    }, 100);
-    return () => window.clearInterval(timer);
-  }, [muse, phase]);
 
   const save = useCallback(async () => {
     const end = ending.current;
@@ -204,22 +188,65 @@ export default function RunProtocolPage({
   }, [session]);
 
   const close = useCallback(
-    async (summary: Record<string, unknown>, aborted: boolean) => {
+    async (
+      summary: Record<string, unknown>,
+      aborted: boolean,
+      reason?: "sync_failed" | "dropped"
+    ) => {
       exitFullscreen();
       const stopped = muse.stopRecording();
-      const files = stopped
-        ? await buildCaptureFiles({
-            ...stopped,
-            deviceName: muse.deviceName ?? "Muse",
-            model: muse.model,
-          })
-        : null;
+      // A capture with no sample is nothing to analyse: the session closes as aborted.
+      const files =
+        stopped && stopped.capture.sampleCount > 0
+          ? await buildCaptureFiles({
+              ...stopped,
+              deviceName: muse.deviceName ?? "Muse",
+              model: muse.model,
+            })
+          : null;
       ending.current = { summary, aborted, files };
-      setOutcome({ aborted, captured: files !== null });
+      setOutcome({ aborted, captured: files !== null, reason });
       await save();
     },
     [muse, save]
   );
+
+  // The headband dropping during the run stops it and keeps what was recorded; waiting
+  // for a signal that never comes gives up after SYNC_TIMEOUT_MS.
+  useEffect(() => {
+    if (
+      (phase === "syncing" || phase === "running") &&
+      muse.status !== "connected"
+    ) {
+      const reason = phase === "syncing" ? "sync_failed" : "dropped";
+      // Deferred a tick: closing updates state, which an effect must not do inline.
+      const timer = window.setTimeout(() => {
+        markers.current = sink?.all() ?? [];
+        void close({}, true, reason);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [close, muse.status, phase, sink]);
+
+  // The protocol starts only once the device clock is fitted and the recording has its
+  // first sample: every marker then lands on the EEG clock, never on a guess.
+  useEffect(() => {
+    if (phase !== "syncing") return;
+    const timer = window.setInterval(() => {
+      const first = muse.readFirstSampleIndex();
+      if (muse.readTimelineFit() === null || first === null) {
+        if (performance.now() - syncStarted.current > SYNC_TIMEOUT_MS) {
+          window.clearInterval(timer);
+          void close({}, true, "sync_failed");
+        }
+        return;
+      }
+      window.clearInterval(timer);
+      setAnchor(eegAnchor(performance.now(), muse.readTimelineFit, first));
+      setPhase("running");
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [close, muse, phase]);
 
   const onFinish = useCallback(
     (taskResults: TaskResult[], produced: readonly Marker[]) => {
@@ -303,6 +330,11 @@ export default function RunProtocolPage({
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="type-title mb-4">{done ? t("complete") : t("stopped")}</h1>
+      {outcome?.reason && (
+        <div className="mb-6">
+          <ErrorBanner message={t(outcome.reason)} />
+        </div>
+      )}
       {phase === "saving" && (
         <Card className="mb-6">
           <p className="text-ink-2">

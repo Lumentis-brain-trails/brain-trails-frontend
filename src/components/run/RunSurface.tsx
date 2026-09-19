@@ -3,11 +3,12 @@
 /**
  * The participant surface around a running protocol (backend V3-0007, S16 v1).
  *
- * Full screen, the screen kept awake, and a steady recording light - the three things a
- * person wearing the headband needs to trust the run. Full screen is requested by the
- * caller inside the click that starts the run (browsers require a gesture); this
- * component holds the wake lock for as long as it is mounted and takes it again when the
- * tab comes back, because the browser drops it whenever the page is hidden.
+ * The screen kept awake, a steady recording light, and full screen on request - the
+ * things a person wearing the headband needs to trust the run. Full screen is a button,
+ * not automatic: entering it in the Start click coincided with the headband dropping in
+ * the first real test (2026-09-19), and a run must not depend on it. The wake lock is
+ * held while mounted and taken again when the tab comes back, because the browser drops
+ * it whenever the page is hidden.
  */
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect } from "react";
@@ -66,6 +67,13 @@ export function RunSurface({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-dvh">
+      <button
+        type="button"
+        onClick={() => void enterFullscreen()}
+        className="fixed top-4 left-4 z-50 rounded-full bg-surface-2/90 px-3 py-1.5 text-[12px] font-medium text-ink"
+      >
+        {t("fullscreen")}
+      </button>
       <div
         className="pointer-events-none fixed top-4 right-4 z-50 flex items-center gap-2 rounded-full bg-surface-2/90 px-3 py-1.5 text-[12px] font-medium text-ink"
         role="status"

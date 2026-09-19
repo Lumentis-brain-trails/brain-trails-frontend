@@ -76,7 +76,8 @@
     },
     "surface": {
       "recording": "Recording",
-      "fullscreen_failed": "Full screen was refused; the session runs in the window."
+      "fullscreen_failed": "Full screen was refused; the session runs in the window.",
+      "fullscreen": "Full screen"
     },
     "upload": {
       "title": "Saving the session",
@@ -88,7 +89,9 @@
       "back": "Back to protocols",
       "stopped": "Session stopped",
       "complete": "Session complete",
-      "nothing": "The session stopped before anything was recorded."
+      "nothing": "The session stopped before anything was recorded.",
+      "sync_failed": "No signal arrived from the headband. Check that it is on and paired, then try again.",
+      "dropped": "The headband disconnected, so the session stopped. What was recorded until then has been kept."
     }
   }
 }
