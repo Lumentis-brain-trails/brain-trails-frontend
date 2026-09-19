@@ -159,7 +159,7 @@ test("an empty catalog invites the first upload", async () => {
   get.mockResolvedValue([]);
   renderPage();
   await waitFor(() =>
-    expect(screen.getByText("Nothing in the library yet")).toBeInTheDocument()
+    expect(screen.getByText("No protocols yet")).toBeInTheDocument()
   );
 });
 
@@ -177,7 +177,7 @@ test("survives an API that predates tags and access, and still shows the catalog
   // One fallback row rather than three empty ones plus "nothing in the library yet".
   expect(await screen.findByText("Everything")).toBeTruthy();
   expect(screen.getByText("Signal Navigator")).toBeTruthy();
-  expect(screen.queryByText("Nothing in the library yet")).toBeNull();
+  expect(screen.queryByText("No protocols yet")).toBeNull();
   // Nothing is locked, so the beta-tester footnote stays away.
   expect(screen.queryByText(/Beta\s+testers get them first/)).toBeNull();
 });

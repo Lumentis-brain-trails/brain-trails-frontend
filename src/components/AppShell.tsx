@@ -15,11 +15,10 @@ type Section = { href: string; label: string; icon: IconName };
 /** Where the work happens, in the order a session goes: pick, record, read. */
 const MAIN: Section[] = [
   { href: "/home", label: "Home", icon: "home" },
-  { href: "/library", label: "Library", icon: "library" },
+  { href: "/protocols", label: "Protocols", icon: "protocol" },
   { href: "/record", label: "Record", icon: "record" },
   { href: "/recordings", label: "Recordings", icon: "recordings" },
   { href: "/neurometrics", label: "NeuroMetrics", icon: "graph" },
-  { href: "/protocols", label: "Protocols", icon: "protocol" },
 ];
 
 /**

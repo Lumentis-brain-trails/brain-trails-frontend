@@ -1,151 +1,231 @@
 "use client";
 
 /**
- * Runs one protocol.
+ * Plays one protocol with EEG (backend V3-0005, sprint S16).
  *
- * Three ways in, in order of how much they record:
+ * The route's id is the catalog item. Pre-flight pairs the headband and checks contact;
+ * Start opens a session, starts recording and waits for the device clock to be fitted,
+ * so every marker the protocol emits lands on the EEG clock (`eegAnchor`, V1-0001) and
+ * inside the signal. When the protocol ends - or is stopped - the capture is uploaded
+ * through the session's own forms and the session is closed; the backend then queues the
+ * analysis. An upload that fails keeps the files in memory and offers a retry.
  *
- * - `?media=<uuid>` - the real path. A pre-flight starts a session against that catalog
- *   item, which creates the live recording, and the run uses the *backend's* seed and
- *   module so a replay reproduces exactly what the participant saw.
- * - `?session=<uuid>` - a session someone else already started; markers stream into it.
- * - neither - practice. The run still happens and the marker stream is offered as a
- *   download, because the task has to be pilotable before a catalog row exists.
- *
- * Starting a session is deliberate rather than automatic: it creates a recording, and a
- * participant who backs out at the content warning should not leave an empty one behind.
+ * Deferred (Alessio, 2026-09-19): writing the capture to disk as it arrives, automatic
+ * Bluetooth reconnection and media preload - see the S16 sprint notes.
  */
 
+import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useMemo, useState } from "react";
+import {
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
 import "@/components/protocol/kinds";
-import { Button, Card, ErrorBanner } from "@/components/ui";
-import { ApiRequestError } from "@/lib/api";
+import {
+  HeadbandPreflight,
+  type HeadbandSource,
+} from "@/components/run/HeadbandPreflight";
+import {
+  RunSurface,
+  enterFullscreen,
+  exitFullscreen,
+} from "@/components/run/RunSurface";
+import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
+import { ApiRequestError, api } from "@/lib/api";
 import { useFocusMode } from "@/lib/focus";
 import {
-  SIGNAL_NAVIGATOR,
-  getProtocolModule,
-} from "@/lib/protocol/definitions/signalNavigator";
-import type { Marker } from "@/lib/protocol/marker";
+  BluetoothMuse,
+  SimulatedMuse,
+  bluetoothTransport,
+  type MuseDevice,
+} from "@/lib/muse/device";
+import { buildCaptureFiles, type CaptureFiles } from "@/lib/muse/captureFiles";
+import { MODEL_PROFILES } from "@/lib/muse/models";
+import { useMuse } from "@/lib/muse/useMuse";
+import { type ClockAnchor, eegAnchor } from "@/lib/protocol/clock";
+import { type Marker, toWireEvent } from "@/lib/protocol/marker";
 import type { PhaseSummary } from "@/lib/protocol/metrics";
-import { safeParseProtocol } from "@/lib/protocol/schema";
+import { protocolFor } from "@/lib/protocol/catalog";
 import {
   type StimulusSessionStart,
   finishSession,
-  resolveProtocol,
   startSession,
+  uploadCapture,
 } from "@/lib/protocol/session";
-import {
-  type MarkerSink,
-  createMemorySink,
-  createSessionSink,
-} from "@/lib/protocol/sink";
-import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
+import { type MarkerSink, createSessionSink } from "@/lib/protocol/sink";
+import type { TaskResult } from "@/lib/protocol/types";
+import type { Media } from "@/lib/types";
 
-type Phase = "preflight" | "running" | "done" | "aborted";
+const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
+
+type Phase =
+  "preflight" | "syncing" | "running" | "saving" | "saved" | "failed";
+
+/** What a finished or stopped run hands to the upload, kept for a retry. */
+interface Ending {
+  summary: Record<string, unknown>;
+  aborted: boolean;
+  files: CaptureFiles | null;
+}
+
+const errorText = (e: unknown) =>
+  e instanceof ApiRequestError
+    ? e.error.message
+    : e instanceof Error
+      ? e.message
+      : String(e);
 
 export default function RunProtocolPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ session?: string; media?: string; seed?: string }>;
 }) {
-  const { id } = use(params);
-  const {
-    session: sessionParam,
-    media: mediaId,
-    seed: seedParam,
-  } = use(searchParams);
+  const { id: mediaId } = use(params);
   const router = useRouter();
+  const t = useTranslations("run.upload");
 
-  const [session, setSession] = useState<StimulusSessionStart | null>(null);
+  const media = useQuery({
+    queryKey: ["media", mediaId, "run"],
+    queryFn: () => api.get<Media>(`media/${mediaId}`),
+    staleTime: Infinity,
+  });
+  const parsed = useMemo(
+    () => (media.data ? protocolFor(media.data) : null),
+    [media.data]
+  );
+
+  const transport = useSyncExternalStore(
+    () => () => {},
+    () => bluetoothTransport(),
+    () => undefined
+  );
+  const [source, setSource] = useState<HeadbandSource>(
+    SIMULATOR_ALLOWED ? "simulated" : "bluetooth"
+  );
+  const createDevice = useCallback((): MuseDevice => {
+    if (source === "bluetooth") return new BluetoothMuse();
+    return new SimulatedMuse({
+      model: source === "simulated-athena" ? "athena" : "muse-2",
+    });
+  }, [source]);
+  const muse = useMuse(createDevice);
+
+  const [phase, setPhase] = useState<Phase>("preflight");
+  const [override, setOverride] = useState(false);
   const [starting, setStarting] = useState(false);
-  // A session started elsewhere is already live, so there is nothing to pre-flight.
-  const [phase, setPhase] = useState<Phase>(
-    mediaId && !sessionParam ? "preflight" : "running"
-  );
-  const [results, setResults] = useState<TaskResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  // Held in state, not a ref: the results screen renders from it.
-  const [markers, setMarkers] = useState<readonly Marker[]>([]);
-  // The run owns the screen: the app chrome steps aside until it ends.
-  useFocusMode(phase === "running");
+  const [session, setSession] = useState<StimulusSessionStart | null>(null);
+  const [anchor, setAnchor] = useState<ClockAnchor | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<TaskResult[]>([]);
+  const ending = useRef<Ending | null>(null);
+  // What the result screen shows; the ref above keeps the files for a retry.
+  const [outcome, setOutcome] = useState<{
+    aborted: boolean;
+    captured: boolean;
+  } | null>(null);
+  const markers = useRef<readonly Marker[]>([]);
+  useFocusMode(phase === "syncing" || phase === "running");
 
-  const sessionId = session?.id ?? sessionParam ?? null;
-
-  /** What this build ships under this id, for the pre-flight and the practice path. */
-  const local = useMemo<ProtocolDefinition | null>(
-    () =>
-      getProtocolModule(id) ??
-      (id === SIGNAL_NAVIGATOR.id ? SIGNAL_NAVIGATOR : null),
-    [id]
+  const sink: MarkerSink | null = useMemo(
+    () => (session ? createSessionSink(session.id) : null),
+    [session]
   );
-
-  // Once a session exists the catalog decides what runs, not the URL.
-  const parsed = useMemo(() => {
-    if (session) return resolveProtocol(session.module, session.definition);
-    if (!local)
-      return { ok: false as const, error: `No protocol named "${id}".` };
-    return safeParseProtocol(local);
-  }, [id, local, session]);
-
-  const sink: MarkerSink = useMemo(
-    () => (sessionId ? createSessionSink(sessionId) : createMemorySink()),
-    [sessionId]
-  );
-
-  /** The backend's seed wins: a replay must reproduce this run exactly. */
-  const seed = useMemo(() => {
-    if (session) return session.seed;
-    const fromUrl = Number(seedParam);
-    return Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : 1;
-  }, [seedParam, session]);
 
   const begin = useCallback(async () => {
-    if (!mediaId) return;
+    if (!media.data || !parsed?.ok) return;
     setStarting(true);
     setError(null);
+    // Full screen needs the click's user gesture: ask before the first await.
+    const fullscreen = enterFullscreen();
     try {
       const started = await startSession(mediaId, {
-        title: local?.title,
-        params: { protocol_id: id, protocol_version: local?.version ?? null },
+        title: media.data.title,
+        device: MODEL_PROFILES[muse.model].apiDevice,
+        params: {
+          protocol_id: parsed.protocol.id,
+          protocol_version: parsed.protocol.version,
+        },
       });
+      await fullscreen;
+      muse.startRecording();
       setSession(started);
-      setPhase("running");
+      setPhase("syncing");
     } catch (e) {
-      const message =
-        e instanceof ApiRequestError
-          ? e.error.message
-          : e instanceof Error
-            ? e.message
-            : "The session could not be started.";
-      setError(message);
+      exitFullscreen();
+      setError(errorText(e));
     } finally {
       setStarting(false);
     }
-  }, [id, local, mediaId]);
+  }, [media.data, mediaId, muse, parsed]);
 
-  /** Close the session whichever way the run ended; an unfinished one never merges. */
+  // The protocol starts only once the device clock is fitted and the recording has its
+  // first sample: every marker then lands on the EEG clock, never on a guess.
+  useEffect(() => {
+    if (phase !== "syncing") return;
+    const timer = window.setInterval(() => {
+      const first = muse.readFirstSampleIndex();
+      if (muse.readTimelineFit() === null || first === null) return;
+      window.clearInterval(timer);
+      setAnchor(eegAnchor(performance.now(), muse.readTimelineFit, first));
+      setPhase("running");
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [muse, phase]);
+
+  const save = useCallback(async () => {
+    const end = ending.current;
+    if (!session || !end) return;
+    setPhase("saving");
+    setError(null);
+    try {
+      const capture =
+        end.files && session.upload
+          ? await uploadCapture(session.upload, end.files, setProgress)
+          : undefined;
+      await finishSession(session.id, {
+        summary: end.summary,
+        aborted: end.aborted || capture === undefined,
+        capture,
+        events: markers.current.map(toWireEvent),
+      });
+      setPhase("saved");
+    } catch (e) {
+      setError(errorText(e));
+      setPhase("failed");
+    }
+  }, [session]);
+
   const close = useCallback(
-    (summary: Record<string, unknown>, aborted: boolean) => {
-      if (!sessionId) return;
-      finishSession(sessionId, summary, aborted).catch((e: Error) =>
-        setError(
-          `The run ${aborted ? "stopped" : "finished"} but the session could not be closed: ${e.message}. The markers were already sent.`
-        )
-      );
+    async (summary: Record<string, unknown>, aborted: boolean) => {
+      exitFullscreen();
+      const stopped = muse.stopRecording();
+      const files = stopped
+        ? await buildCaptureFiles({
+            ...stopped,
+            deviceName: muse.deviceName ?? "Muse",
+            model: muse.model,
+          })
+        : null;
+      ending.current = { summary, aborted, files };
+      setOutcome({ aborted, captured: files !== null });
+      await save();
     },
-    [sessionId]
+    [muse, save]
   );
 
   const onFinish = useCallback(
     (taskResults: TaskResult[], produced: readonly Marker[]) => {
-      setMarkers(produced);
+      markers.current = produced;
       setResults(taskResults);
-      setPhase("done");
-      close(
+      void close(
         Object.fromEntries(taskResults.map((r) => [r.stepId, r.summary])),
         false
       );
@@ -154,96 +234,95 @@ export default function RunProtocolPage({
   );
 
   const onExit = useCallback(() => {
-    setMarkers(sink.all());
-    setPhase("aborted");
-    close({}, true);
+    markers.current = sink?.all() ?? [];
+    void close({}, true);
   }, [close, sink]);
 
-  const download = useCallback(() => {
-    const blob = new Blob([JSON.stringify(markers, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${id}-markers.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [id, markers]);
-
-  if (!parsed.ok) {
+  if (media.isPending) return <Spinner />;
+  if (media.isError || !parsed)
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <ErrorBanner message={errorText(media.error)} />
+      </main>
+    );
+  if (!parsed.ok)
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <ErrorBanner message={parsed.error} />
       </main>
     );
-  }
 
-  if (phase === "preflight") {
+  if (phase === "preflight")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="type-title mb-1">{parsed.protocol.title}</h1>
+        <h1 className="type-title mb-1">{media.data.title}</h1>
         <p className="mb-6 text-ink-2">
-          {parsed.protocol.steps.length} stages ·{" "}
           {parsed.protocol.steps.map((s) => s.label).join(" → ")}
         </p>
-
         {error && (
           <div className="mb-6">
             <ErrorBanner message={error} />
           </div>
         )}
-
-        <Card className="mb-6">
-          <p className="text-ink-2">
-            Starting creates a recording and begins the session. Everything the
-            task does is timestamped into it. You can stop at any point, and
-            what you have already done is kept.
-          </p>
-        </Card>
-
-        <div className="flex gap-3">
-          <Button onClick={begin} disabled={starting}>
-            {starting ? "Starting…" : "Start session"}
-          </Button>
-          <Button variant="ghost" onClick={() => router.push("/protocols")}>
-            Back
-          </Button>
-        </div>
+        <HeadbandPreflight
+          muse={muse}
+          source={source}
+          onSource={setSource}
+          simulatorAllowed={SIMULATOR_ALLOWED}
+          bluetoothSupported={transport !== null && transport !== undefined}
+          override={override}
+          onOverride={setOverride}
+          starting={starting}
+          onStart={() => void begin()}
+          onBack={() => router.push(`/protocols/${mediaId}`)}
+        />
       </main>
     );
-  }
 
-  if (phase === "running") {
+  if (phase === "syncing" || phase === "running")
     return (
-      <ProtocolRunner
-        protocol={parsed.protocol}
-        seed={seed}
-        sink={sink}
-        onFinish={onFinish}
-        onExit={onExit}
-      />
+      <RunSurface>
+        {phase === "syncing" || !anchor || !sink ? (
+          <div className="flex min-h-dvh items-center justify-center">
+            <Spinner />
+          </div>
+        ) : (
+          <ProtocolRunner
+            protocol={parsed.protocol}
+            seed={session?.seed ?? 1}
+            sink={sink}
+            anchor={anchor}
+            onFinish={onFinish}
+            onExit={onExit}
+          />
+        )}
+      </RunSurface>
     );
-  }
 
+  const done = outcome?.aborted === false;
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="type-title mb-1">
-        {phase === "done" ? "Route complete" : "Session stopped"}
-      </h1>
-      <p className="mb-6 text-ink-2">
-        {markers.length} markers recorded
-        {sessionId
-          ? " and sent."
-          : ". No session was attached, so nothing was uploaded."}
-      </p>
-
-      {error && (
-        <div className="mb-6">
-          <ErrorBanner message={error} />
+      <h1 className="type-title mb-4">{done ? t("complete") : t("stopped")}</h1>
+      {phase === "saving" && (
+        <Card className="mb-6">
+          <p className="text-ink-2">
+            {t("progress", { pct: Math.round(progress) })}
+          </p>
+        </Card>
+      )}
+      {phase === "failed" && (
+        <div className="mb-6 space-y-3">
+          <ErrorBanner message={t("failed", { message: error ?? "" })} />
+          <Button onClick={() => void save()}>{t("retry")}</Button>
         </div>
       )}
-
+      {phase === "saved" && (
+        <Card className="mb-6">
+          <p className="text-ink-2">
+            {outcome?.captured ? t("done") : t("nothing")}
+          </p>
+        </Card>
+      )}
       {results.map((result) => {
         const summary = result.summary as Partial<PhaseSummary>;
         if (summary.hitRate === undefined) return null;
@@ -263,28 +342,16 @@ export default function RunProtocolPage({
           </Card>
         );
       })}
-
-      <Card className="mb-6 border-transparent bg-warn-soft">
-        <p className="text-[14px] text-ink">
-          Fewer false docks alone does not mean better control &mdash; it can
-          reflect responding less often overall. Read hits, misses, false docks,
-          reaction time and criterion together, never one in isolation. This is
-          not a medical assessment or diagnosis.
-        </p>
-      </Card>
-
       <div className="flex gap-3">
-        <Button onClick={download}>Download marker stream</Button>
-        {session && (
+        {phase === "saved" && session && outcome?.captured && (
           <Button
-            variant="ghost"
             onClick={() => router.push(`/recordings/${session.recording_id}`)}
           >
-            Open the recording
+            {t("open")}
           </Button>
         )}
         <Button variant="ghost" onClick={() => router.push("/protocols")}>
-          Back to protocols
+          {t("back")}
         </Button>
       </div>
     </main>

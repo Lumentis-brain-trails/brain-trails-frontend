@@ -749,8 +749,11 @@ export interface paths {
          * Start Session
          * @description Start a session against a runnable catalog item, recorded in `?workspace=` (201).
          *
-         *     Creates the live recording and its analysis, so the EEG goes to the existing
-         *     websocket unchanged, and returns everything the stimulus needs to run: its
+         *     With `capture: upload` (the default, V3-0005) the recording waits for its files and
+         *     the response carries presigned forms for the session CSV, the extras sidecar and the
+         *     raw capture; the browser records locally and uploads at finish. With
+         *     `capture: stream` the recording and its analysis are created for the websocket, as
+         *     before. Either way the response carries what the stimulus needs to run: its
          *     manifest, its module or definition, and the `seed` a replay must reuse.
          *     404 when the item is not visible to the caller, 403 when it is locked or when the
          *     caller may not record in the workspace.
@@ -825,12 +828,17 @@ export interface paths {
         put?: never;
         /**
          * Finish Session
-         * @description Close the session and assemble its timeline (409 if already closed).
+         * @description Close the session: store its capture, assemble its timeline, start the analysis.
          *
-         *     The parts are merged into one JSONL object sorted by `t`, so a replay reads the
-         *     timeline in order whatever order the batches arrived in, and the parts are then
-         *     removed. A session with no events still closes: an aborted run is a fact worth
-         *     keeping, and its EEG recording exists either way.
+         *     Idempotent: finishing a session that is already closed returns it unchanged, so a
+         *     browser that lost the first answer can simply retry. For an `upload` session the
+         *     capture files are checked and moved under the recording and `full_pipeline` is
+         *     queued (the worker is woken, 0014); a missing file answers 422 and leaves the session
+         *     running, so the upload can be retried. An aborted run keeps whatever it uploaded; an
+         *     aborted run with no capture closes with its recording marked `failed`.
+         *
+         *     The timeline is the stored parts plus any events re-sent here, de-duplicated on
+         *     `(t, type, seq)` and sorted by `t`; the parts are then removed.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
         delete?: never;
@@ -1045,6 +1053,34 @@ export interface components {
             title: string;
         };
         /**
+         * CaptureForms
+         * @description Where the browser uploads a session's capture at finish (V3-0005).
+         *
+         *     The same three files /record uploads: the session CSV, the motion/PPG sidecar and
+         *     the raw Bluetooth capture. `max_mb` caps the first two, `max_ble_mb` the third.
+         */
+        CaptureForms: {
+            ble: components["schemas"]["app__routers__recordings__PresignForm"];
+            extras: components["schemas"]["app__routers__recordings__PresignForm"];
+            /** Max Ble Mb */
+            max_ble_mb: number;
+            /** Max Mb */
+            max_mb: number;
+            original: components["schemas"]["app__routers__recordings__PresignForm"];
+        };
+        /**
+         * CaptureKeys
+         * @description The keys of the capture files the browser uploaded, as the start response named them.
+         */
+        CaptureKeys: {
+            /** Ble */
+            ble?: string | null;
+            /** Extras */
+            extras?: string | null;
+            /** Original */
+            original: string;
+        };
+        /**
          * CohortIn
          * @description Create or change a cohort: a name, the profile it is for, and a target size.
          */
@@ -1214,6 +1250,8 @@ export interface components {
             payload?: {
                 [key: string]: unknown;
             };
+            /** Seq */
+            seq?: number | null;
             /** T */
             t: number;
             /** Type */
@@ -1239,7 +1277,12 @@ export interface components {
         };
         /**
          * FinishIn
-         * @description Close a session: the stimulus's own summary, and whether it was cut short.
+         * @description Close a session.
+         *
+         *     `summary` is the stimulus's own summary, run health included; `aborted` says it was
+         *     cut short. `capture` names the uploaded files of an `upload` session. `events` re-sends
+         *     the whole timeline when a live batch failed; duplicates are dropped on
+         *     `(t, type, seq)`.
          */
         FinishIn: {
             /**
@@ -1247,6 +1290,9 @@ export interface components {
              * @default false
              */
             aborted: boolean;
+            capture?: components["schemas"]["CaptureKeys"] | null;
+            /** Events */
+            events?: components["schemas"]["EventIn"][];
             /** Summary */
             summary?: {
                 [key: string]: unknown;
@@ -1720,6 +1766,12 @@ export interface components {
          */
         SessionStartIn: {
             /**
+             * Capture
+             * @default upload
+             * @enum {string}
+             */
+            capture: "upload" | "stream";
+            /**
              * Device
              * @default muse-2
              */
@@ -1740,14 +1792,16 @@ export interface components {
         };
         /**
          * SessionStartOut
-         * @description The session plus where to stream the EEG and what the stimulus needs to run.
+         * @description The session plus how its EEG gets to the server and what the stimulus needs.
+         *
+         *     `upload` capture returns the presigned forms; `stream` capture the analysis and the
+         *     websocket path instead.
          */
         SessionStartOut: {
-            /**
-             * Analysis Id
-             * Format: uuid
-             */
-            analysis_id: string;
+            /** Analysis Id */
+            analysis_id?: string | null;
+            /** Capture */
+            capture: string;
             /** Definition */
             definition: {
                 [key: string]: unknown;
@@ -1794,8 +1848,9 @@ export interface components {
             summary: {
                 [key: string]: unknown;
             };
+            upload?: components["schemas"]["CaptureForms"] | null;
             /** Ws Path */
-            ws_path: string;
+            ws_path?: string | null;
         };
         /**
          * SessionStatus

@@ -107,6 +107,7 @@ export function ProtocolRunner({
     anchorRef.current = anchor ?? runAnchor(t0Ref.current);
   }, [anchor, screen]);
 
+  const seqRef = useRef(0);
   const stamp = useCallback(
     (
       draft: MarkerDraft,
@@ -121,6 +122,7 @@ export function ProtocolRunner({
         tMonotonicMs: host,
         tRunMs: clock.toRunMs(host),
         tSessionS: clock.toSessionS(host),
+        seq: seqRef.current++,
         meta: {
           protocol_id: protocol.id,
           protocol_version: protocol.version,

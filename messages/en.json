@@ -53,5 +53,42 @@
   },
   "auth": {
     "waitlisted": "Your application is on the waiting list. We will write to you as soon as there is room."
+  },
+  "run": {
+    "preflight": {
+      "title": "Before you start",
+      "intro": "Put the headband on and wait until all four lights are green. The recording starts with the session and stops at its end.",
+      "source": "Headband",
+      "bluetooth": "Headband over Bluetooth",
+      "simulated": "Simulated Muse 2",
+      "simulated_athena": "Simulated Muse S Athena",
+      "connect": "Connect",
+      "connecting": "Connecting…",
+      "connected": "Connected to {name}",
+      "unsupported": "This browser cannot pair a headband. Use Chrome or Edge on a computer, or the Brain Trails app on iPhone and iPad.",
+      "contact_wait": "Waiting for good contact on all four sensors.",
+      "contact_ok": "Good contact on all four sensors.",
+      "override": "Start anyway with imperfect contact",
+      "start": "Start session",
+      "starting": "Starting…",
+      "clock_wait": "Syncing with the headband…",
+      "back": "Back"
+    },
+    "surface": {
+      "recording": "Recording",
+      "fullscreen_failed": "Full screen was refused; the session runs in the window."
+    },
+    "upload": {
+      "title": "Saving the session",
+      "progress": "Uploading the recording… {pct}%",
+      "failed": "The recording could not be uploaded: {message}",
+      "retry": "Retry upload",
+      "done": "Saved. The analysis is running.",
+      "open": "Open the recording",
+      "back": "Back to protocols",
+      "stopped": "Session stopped",
+      "complete": "Session complete",
+      "nothing": "The session stopped before anything was recorded."
+    }
   }
 }

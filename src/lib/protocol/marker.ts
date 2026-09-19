@@ -60,6 +60,11 @@ export interface Marker {
   tMonotonicMs: number;
   /** Milliseconds since protocol start; the fallback axis when `tSessionS` is null. */
   tRunMs: number;
+  /**
+   * The runner's own counter. With `t` and `type` it identifies the marker, so the
+   * backend stores it once when a batch is sent live and again at finish (V3-0005).
+   */
+  seq?: number;
   meta: MarkerMeta;
 }
 
@@ -75,6 +80,7 @@ export interface WireEvent {
   t: number;
   type: string;
   payload: Record<string, unknown>;
+  seq?: number;
 }
 
 /** Hard limits from the sessions endpoint; the sink must respect them. */
@@ -93,6 +99,7 @@ export function toWireEvent(m: Marker): WireEvent {
   return {
     t: Math.max(0, t),
     type: m.label,
+    ...(m.seq !== undefined ? { seq: m.seq } : {}),
     payload: {
       kind: m.kind,
       t_monotonic_ms: m.tMonotonicMs,
