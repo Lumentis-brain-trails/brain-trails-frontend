@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/admin/registrations": {
+    "/admin/applications": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,10 +12,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Registrations
-         * @description List users in the given status with their profiles, oldest first (admin only).
+         * List Applications
+         * @description The selection board: applications, oldest first, filtered (admin only).
+         *
+         *     Keyset-paginated on `(created_at, user_id)`; the next page's cursor comes back in
+         *     `X-Next-Cursor`. One query per page, whatever the filters.
          */
-        get: operations["list_registrations_admin_registrations_get"];
+        get: operations["list_applications_admin_applications_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -24,7 +27,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/registrations/{user_id}/approve": {
+    "/admin/applications/{user_id}/decide": {
         parameters: {
             query?: never;
             header?: never;
@@ -34,23 +37,22 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Approve
-         * @description Approve a pending registration (admin only).
+         * Decide
+         * @description Accept, waitlist or reject an application, placing it in a cohort (admin only).
          *
-         *     With `email_verification_required` off (the default until a sending domain
-         *     exists) the account becomes active at once - with its personal workspace - and can
-         *     log in. When on, a 24 h
-         *     verification link is issued and, in manual-mailer mode, returned so the admin
-         *     can deliver it by hand. 404 when unknown, 409 when not pending.
+         *     Accepting activates the account with its personal workspace - or, with email
+         *     verification required, issues a 24 h link (returned in manual-mailer mode). A
+         *     waitlisted or rejected application may be accepted later; an accepted one is final
+         *     (409 `invalid_state`). 404 for an unknown application or cohort.
          */
-        post: operations["approve_admin_registrations__user_id__approve_post"];
+        post: operations["decide_admin_applications__user_id__decide_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/admin/registrations/{user_id}/reissue-verification": {
+    "/admin/applications/{user_id}/reissue-verification": {
         parameters: {
             query?: never;
             header?: never;
@@ -61,16 +63,40 @@ export interface paths {
         put?: never;
         /**
          * Reissue Verification
-         * @description New single-use link for an approved-but-unverified user (lost/expired link).
+         * @description New single-use link for an accepted-but-unverified user (lost/expired link).
          */
-        post: operations["reissue_verification_admin_registrations__user_id__reissue_verification_post"];
+        post: operations["reissue_verification_admin_applications__user_id__reissue_verification_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/admin/registrations/{user_id}/reject": {
+    "/admin/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Cohorts
+         * @description Every cohort with its target and how many applicants sit in it, by decision.
+         */
+        get: operations["list_cohorts_admin_cohorts_get"];
+        put?: never;
+        /**
+         * Create Cohort
+         * @description Create a cohort (409 `name_taken` when the name exists).
+         */
+        post: operations["create_cohort_admin_cohorts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/cohorts/{cohort_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -79,15 +105,19 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        post?: never;
         /**
-         * Reject
-         * @description Reject a pending registration (admin only); 404 when unknown, 409 when not pending.
+         * Delete Cohort
+         * @description Delete a cohort; its users stay, with no cohort.
          */
-        post: operations["reject_admin_registrations__user_id__reject_post"];
-        delete?: never;
+        delete: operations["delete_cohort_admin_cohorts__cohort_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Cohort
+         * @description Rename a cohort or change its profile, target and notes.
+         */
+        patch: operations["update_cohort_admin_cohorts__cohort_id__patch"];
         trace?: never;
     };
     "/admin/stats": {
@@ -234,10 +264,13 @@ export interface paths {
         put?: never;
         /**
          * Register
-         * @description Create a `pending` account with its profile; admin review follows (Q11).
+         * @description Create a `pending` account with its profile and its beta application (V3-0008).
          *
-         *     Requires explicit consent (422 `consent_required`); the email is lower-cased and must
-         *     be unique (409 `email_taken`). Rate-limited per client address.
+         *     Registration is an application: the admin board decides who joins, and when. With
+         *     `beta_gate_accounts` off the account is accepted and activated at once. Requires
+         *     explicit consent (422 `consent_required`); the email is lower-cased and must be
+         *     unique (409 `email_taken`); a profile's credentials are checked (422). Rate-limited
+         *     per client address.
          */
         post: operations["register_auth_register_post"];
         delete?: never;
@@ -865,6 +898,109 @@ export interface components {
             window_s: number;
         };
         /**
+         * ApplicationDecision
+         * @description The admin's answer to a beta application; `pending` until one is given.
+         * @enum {string}
+         */
+        ApplicationDecision: "pending" | "accepted" | "waitlisted" | "rejected";
+        /**
+         * ApplicationIn
+         * @description The beta application that comes with a registration (decision V3-0008).
+         *
+         *     What selection needs: the requested profile and the credentials that go with it, what
+         *     the person wants to do, and the hardware and browser they will record with. Device
+         *     and browser are detected by the frontend and editable; an unsupported browser is
+         *     recorded, never refused. A therapist names a registration number, a lab profile an
+         *     institution, a lab member also a supervisor (422 otherwise).
+         */
+        ApplicationIn: {
+            /** Browser */
+            browser?: string | null;
+            /**
+             * Contact Ok
+             * @default false
+             */
+            contact_ok: boolean;
+            /** Country */
+            country?: string | null;
+            /** Device */
+            device?: string | null;
+            /** Expected Subjects */
+            expected_subjects?: number | null;
+            /** Headband */
+            headband?: ("muse-2" | "muse-s-athena" | "other" | "none") | null;
+            /** Institution */
+            institution?: string | null;
+            /** Language */
+            language?: string | null;
+            /** Organisation */
+            organisation?: string | null;
+            /** Purpose */
+            purpose?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /** @default private */
+            requested_profile: components["schemas"]["BetaProfile"];
+            /** Role Title */
+            role_title?: string | null;
+            /** Supervisor */
+            supervisor?: string | null;
+            /** Web Bluetooth */
+            web_bluetooth?: boolean | null;
+        };
+        /**
+         * ApplicationOut
+         * @description An application as the admin board shows it: the answers plus the decision.
+         */
+        ApplicationOut: {
+            /** Admin Note */
+            admin_note: string | null;
+            /** Browser */
+            browser?: string | null;
+            /**
+             * Contact Ok
+             * @default false
+             */
+            contact_ok: boolean;
+            /** Country */
+            country?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decision */
+            decision: string;
+            /** Device */
+            device?: string | null;
+            /** Expected Subjects */
+            expected_subjects?: number | null;
+            /** Headband */
+            headband?: ("muse-2" | "muse-s-athena" | "other" | "none") | null;
+            /** Institution */
+            institution?: string | null;
+            /** Invited By */
+            invited_by: string | null;
+            /** Language */
+            language?: string | null;
+            /** Organisation */
+            organisation?: string | null;
+            /** Purpose */
+            purpose?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /** @default private */
+            requested_profile: components["schemas"]["BetaProfile"];
+            /** Role Title */
+            role_title?: string | null;
+            /** Supervisor */
+            supervisor?: string | null;
+            /** Web Bluetooth */
+            web_bluetooth?: boolean | null;
+        };
+        /**
          * ApprovalOut
          * @description Result of an admin decision; `verification_url` is set only in manual-mailer mode.
          */
@@ -872,6 +1008,22 @@ export interface components {
             user: components["schemas"]["UserOut"];
             /** Verification Url */
             verification_url?: string | null;
+        };
+        /**
+         * BetaProfile
+         * @description What an applicant asks to be in the closed beta (V3-0008).
+         * @enum {string}
+         */
+        BetaProfile: "private" | "therapist" | "lab_lead" | "lab_member";
+        /**
+         * BoardRow
+         * @description One applicant on the admin board: account, profile, application, cohort.
+         */
+        BoardRow: {
+            application: components["schemas"]["ApplicationOut"];
+            cohort: components["schemas"]["CohortRef"] | null;
+            profile: components["schemas"]["ProfileIn"] | null;
+            user: components["schemas"]["UserOut"];
         };
         /** Body_upload_recordings_post */
         Body_upload_recordings_post: {
@@ -891,6 +1043,59 @@ export interface components {
             task_label?: string | null;
             /** Title */
             title: string;
+        };
+        /**
+         * CohortIn
+         * @description Create or change a cohort: a name, the profile it is for, and a target size.
+         */
+        CohortIn: {
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            profile?: components["schemas"]["BetaProfile"] | null;
+            /** Target */
+            target?: number | null;
+        };
+        /**
+         * CohortOut
+         * @description A cohort with its counts, computed from the users placed in it.
+         */
+        CohortOut: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            profile?: components["schemas"]["BetaProfile"] | null;
+            /** Target */
+            target?: number | null;
+        };
+        /**
+         * CohortRef
+         * @description The cohort a user was placed in.
+         */
+        CohortRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /**
          * CompleteIn
@@ -964,6 +1169,23 @@ export interface components {
             };
             /** Version */
             version: string;
+        };
+        /**
+         * DecideIn
+         * @description The admin's answer to an application, with the cohort it lands in and a note.
+         *
+         *     The note is for admins only; the applicant never sees it.
+         */
+        DecideIn: {
+            /** Cohort Id */
+            cohort_id?: string | null;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "accept" | "waitlist" | "reject";
+            /** Note */
+            note?: string | null;
         };
         /**
          * DeleteMeIn
@@ -1422,8 +1644,12 @@ export interface components {
         /**
          * RegisterIn
          * @description Registration payload; `consent` must be true and passwords are 10..200 characters.
+         *
+         *     `application` is optional so a client that predates the beta form still registers,
+         *     as a private-user application with no other answers.
          */
         RegisterIn: {
+            application?: components["schemas"]["ApplicationIn"] | null;
             /** Consent */
             consent: boolean;
             /**
@@ -1434,14 +1660,6 @@ export interface components {
             /** Password */
             password: string;
             profile: components["schemas"]["ProfileIn"];
-        };
-        /**
-         * RegistrationOut
-         * @description A user awaiting review together with the profile they submitted.
-         */
-        RegistrationOut: {
-            profile: components["schemas"]["ProfileIn"];
-            user: components["schemas"]["UserOut"];
         };
         /**
          * ReprocessIn
@@ -1763,10 +1981,16 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    list_registrations_admin_registrations_get: {
+    list_applications_admin_applications_get: {
         parameters: {
             query?: {
-                status?: string;
+                decision?: components["schemas"]["ApplicationDecision"] | null;
+                profile?: components["schemas"]["BetaProfile"] | null;
+                cohort?: string | null;
+                country?: string | null;
+                headband?: string | null;
+                limit?: number;
+                cursor?: string | null;
             };
             header?: never;
             path?: never;
@@ -1780,7 +2004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RegistrationOut"][];
+                    "application/json": components["schemas"]["BoardRow"][];
                 };
             };
             /** @description Validation Error */
@@ -1794,7 +2018,42 @@ export interface operations {
             };
         };
     };
-    approve_admin_registrations__user_id__approve_post: {
+    decide_admin_applications__user_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reissue_verification_admin_applications__user_id__reissue_verification_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1825,13 +2084,11 @@ export interface operations {
             };
         };
     };
-    reissue_verification_admin_registrations__user_id__reissue_verification_post: {
+    list_cohorts_admin_cohorts_get: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                user_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -1842,7 +2099,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApprovalOut"];
+                    "application/json": components["schemas"]["CohortOut"][];
+                };
+            };
+        };
+    };
+    create_cohort_admin_cohorts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -1856,12 +2137,12 @@ export interface operations {
             };
         };
     };
-    reject_admin_registrations__user_id__reject_post: {
+    delete_cohort_admin_cohorts__cohort_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                user_id: string;
+                cohort_id: string;
             };
             cookie?: never;
         };
@@ -1873,7 +2154,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApprovalOut"];
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_cohort_admin_cohorts__cohort_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */

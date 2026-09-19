@@ -4,9 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { type Resolver, useForm } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
+import { type ApplicationForm, toApplicationPayload } from "@/lib/application";
+import { useFeature } from "@/lib/features";
 import { AuthPanel } from "@/components/AuthPanel";
+import { ApplicationStep } from "@/components/application/ApplicationStep";
 import {
   type AccountForm,
   type ProfileForm,
@@ -29,16 +33,23 @@ const CONSENT_TEXT =
   "LuMentis for the Brain Trails research prototype, as described in the privacy note. " +
   "I can request export or deletion of all my data at any time. (Placeholder text - v2026-09-06.)";
 
-const STEPS = ["Account", "Profile", "Consent"] as const;
+type Step = "account" | "application" | "profile" | "consent";
 
-function Steps({ current }: { current: number }) {
+function Steps({
+  steps,
+  current,
+}: {
+  steps: { key: Step; label: string }[];
+  current: Step;
+}) {
+  const now = steps.findIndex((s) => s.key === current) + 1;
   return (
     <ol className="flex items-center gap-2" aria-label="Progress">
-      {STEPS.map((label, i) => {
+      {steps.map(({ key, label }, i) => {
         const n = i + 1;
-        const state = n < current ? "done" : n === current ? "now" : "todo";
+        const state = n < now ? "done" : n === now ? "now" : "todo";
         return (
-          <li key={label} className="flex items-center gap-2">
+          <li key={key} className="flex items-center gap-2">
             <span
               aria-current={state === "now" ? "step" : undefined}
               className={cn(
@@ -58,7 +69,7 @@ function Steps({ current }: { current: number }) {
             >
               {label}
             </span>
-            {i < STEPS.length - 1 && (
+            {i < steps.length - 1 && (
               <span aria-hidden className="mx-1 h-px w-6 bg-hairline-strong" />
             )}
           </li>
@@ -70,8 +81,17 @@ function Steps({ current }: { current: number }) {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const t = useTranslations("application");
+  const applying = useFeature("beta_applications");
+  const steps: { key: Step; label: string }[] = [
+    { key: "account", label: "Account" },
+    ...(applying ? [{ key: "application" as const, label: t("step") }] : []),
+    { key: "profile", label: "Profile" },
+    { key: "consent", label: "Consent" },
+  ];
+  const [step, setStep] = useState<Step>("account");
   const [account, setAccount] = useState<AccountForm | null>(null);
+  const [application, setApplication] = useState<ApplicationForm | null>(null);
   const [profile, setProfile] = useState<ProfileForm | null>(null);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +113,14 @@ export default function RegisterPage() {
     try {
       await api.post(
         "auth/register",
-        toRegisterPayload(account, profile, consent)
+        toRegisterPayload(
+          account,
+          profile,
+          consent,
+          applying && application
+            ? toApplicationPayload(application)
+            : undefined
+        )
       );
       router.push("/pending");
     } catch (e) {
@@ -112,10 +139,11 @@ export default function RegisterPage() {
         <div>
           <h1 className="type-title">Create your account.</h1>
           <p className="mt-2 text-ink-2">
-            Three short steps. Registrations are reviewed by an administrator.
+            A few short steps. Every registration is reviewed before the account
+            opens.
           </p>
         </div>
-        <Steps current={step} />
+        <Steps steps={steps} current={step} />
       </div>
       <AuthPanel>
         {error && (
@@ -124,14 +152,14 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {step === 1 && (
+        {step === "account" && (
           <form
             key="account"
             noValidate
             className="enter-up max-w-sm space-y-4"
             onSubmit={accountForm.handleSubmit((values) => {
               setAccount(values);
-              setStep(2);
+              setStep(applying ? "application" : "profile");
             })}
           >
             <Field
@@ -171,14 +199,25 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === 2 && (
+        {step === "application" && (
+          <ApplicationStep
+            initial={application}
+            onBack={() => setStep("account")}
+            onDone={(values) => {
+              setApplication(values);
+              setStep("profile");
+            }}
+          />
+        )}
+
+        {step === "profile" && (
           <form
             key="profile"
             noValidate
             className="enter-up space-y-8"
             onSubmit={profileForm.handleSubmit((values) => {
               setProfile(values);
-              setStep(3);
+              setStep("consent");
             })}
           >
             <section>
@@ -305,7 +344,7 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(applying ? "application" : "account")}
               >
                 Back
               </Button>
@@ -314,7 +353,7 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === 3 && (
+        {step === "consent" && (
           <div key="consent" className="enter-up max-w-lg space-y-6">
             <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
               {CONSENT_TEXT}
@@ -332,7 +371,7 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStep(2)}
+                onClick={() => setStep("profile")}
               >
                 Back
               </Button>

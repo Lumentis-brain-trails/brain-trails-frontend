@@ -17,7 +17,7 @@ const PROFILE = {
   handedness: "right",
 };
 
-/** Register a fresh user, approve it as the admin, and return its email. */
+/** Register a fresh user, accept its beta application as the admin, return its email. */
 export async function approvedUser(
   request: APIRequestContext
 ): Promise<string> {
@@ -34,8 +34,11 @@ export async function approvedUser(
   expect(login.status(), "admin login (see docs/E2E.md)").toBe(200);
   const { access_token } = await login.json();
   const approved = await request.post(
-    `${API_URL}/admin/registrations/${id}/approve`,
-    { headers: { Authorization: `Bearer ${access_token}` } }
+    `${API_URL}/admin/applications/${id}/decide`,
+    {
+      headers: { Authorization: `Bearer ${access_token}` },
+      data: { decision: "accept" },
+    }
   );
   expect(approved.status(), await approved.text()).toBe(200);
   return email;

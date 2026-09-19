@@ -13,6 +13,8 @@ import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 const STATUS_MESSAGES: Record<string, string> = {
   account_pending: "Your registration is still awaiting admin review.",
   account_rejected: "Your registration was not approved.",
+  account_waitlisted:
+    "Your application is on the waiting list. We will write to you as soon as there is room.",
   email_not_verified:
     "Your account is approved but the email is not verified yet. Ask an administrator for the link.",
   invalid_credentials: "Wrong email or password.",

@@ -141,16 +141,6 @@ export interface UserInfo {
   email_verified_at: string | null;
 }
 
-export interface Registration {
-  user: UserInfo;
-  profile: Record<string, string | number | string[] | null>;
-}
-
-export interface ApprovalResponse {
-  user: UserInfo;
-  verification_url: string | null;
-}
-
 export const TASK_LABELS = [
   "rest_eyes_open",
   "rest_eyes_closed",
