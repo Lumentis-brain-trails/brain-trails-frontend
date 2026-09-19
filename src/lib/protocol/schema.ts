@@ -17,9 +17,11 @@ const stepSchema = z.object({
   id: z
     .string()
     .min(1)
+    // Resolved plans add `~<iteration>` per enclosing loop and `__pre`/`__post` for the
+    // fixation and rest they insert (`resolve.ts`); tree ids may also carry '-'.
     .regex(
-      /^[a-z0-9_]+$/,
-      "step id must be lowercase letters, digits and underscores"
+      /^[a-z0-9_-]+(~[0-9]+)*(__pre|__post)?$/,
+      "step id must be lowercase letters, digits, '_' and '-', with optional loop suffixes"
     ),
   kind: z.string().min(1),
   label: z.string().min(1),
@@ -27,6 +29,14 @@ const stepSchema = z.object({
   startMarker: z.string().max(50).optional(),
   endMarker: z.string().max(50).optional(),
   config: z.unknown(),
+  block: z
+    .object({
+      block_id: z.string().min(1),
+      node_path: z.string().min(1),
+      iteration: z.number().int().min(0).nullable(),
+      condition: z.string().optional(),
+    })
+    .optional(),
 });
 
 const baseSchema = z.object({

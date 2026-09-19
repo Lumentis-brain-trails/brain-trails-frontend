@@ -15,6 +15,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,7 +24,12 @@ import {
 import { TimingProbeOverlay } from "@/components/TimingProbeOverlay";
 import { Button } from "@/components/ui";
 import { type ClockAnchor, runAnchor } from "@/lib/protocol/clock";
-import type { Marker, MarkerDraft } from "@/lib/protocol/marker";
+import {
+  type Marker,
+  type MarkerDraft,
+  UI_UNCERTAINTY_MS,
+  timingMeta,
+} from "@/lib/protocol/marker";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { hash32 } from "@/lib/protocol/rng";
 import type { MarkerSink } from "@/lib/protocol/sink";
@@ -100,8 +106,15 @@ export function ProtocolRunner({
 
   const step = protocol.steps[stepIndex];
 
-  // The run clock starts when the participant actually begins, not when the page mounts.
-  useEffect(() => {
+  /*
+   * The run clock starts when the participant actually begins, not when the page mounts.
+   *
+   * This and the start markers below are layout effects so they run before any kind's
+   * (passive) mount effect: a kind that emits on mount - a first-frame onset, a
+   * questionnaire's first render - must land after `session_start` and `block_start`,
+   * not before them. React runs children's passive effects before their parent's.
+   */
+  useLayoutEffect(() => {
     if (screen !== "running" || anchorRef.current) return;
     t0Ref.current = performance.now();
     anchorRef.current = anchor ?? runAnchor(t0Ref.current);
@@ -147,13 +160,21 @@ export function ProtocolRunner({
       if (!step) return;
       const onsetError = draft.meta?.onset_error_ms;
       if (typeof onsetError === "number") pageProbe.onset(onsetError);
-      sink.push(stamp(draft, atHostMs, protocolMeta(protocol, step)));
+      // A stimulus that did not say how its onset was observed was a timer or a
+      // handler (V3-0004): say so, rather than let it pass for frame-accurate.
+      const timing =
+        draft.kind === "stimulus" && draft.meta?.timing_source === undefined
+          ? timingMeta("ui", UI_UNCERTAINTY_MS)
+          : {};
+      sink.push(
+        stamp(draft, atHostMs, { ...protocolMeta(protocol, step), ...timing })
+      );
     },
     [protocol, sink, stamp, step]
   );
 
   // session_start, then each step's own start marker as it mounts.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (screen !== "running" || stepIndex !== 0) return;
     if (protocol.startMarker) {
       emitRun({
@@ -169,9 +190,21 @@ export function ProtocolRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
-  useEffect(() => {
-    if (screen !== "running" || !step?.startMarker) return;
-    emitForStep({ label: step.startMarker, kind: "stage" });
+  /*
+   * A step resolved from a tree block is bracketed by `block_start`/`block_end` (backend
+   * V3-0004); `emitForStep` adds the block fields. `blockStartRef` gives `block_end` its
+   * `duration` in seconds, the BIDS `events.tsv` column.
+   */
+  const blockStartRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (screen !== "running" || !step) return;
+    if (step.block && blockStartRef.current === null) {
+      const now = performance.now();
+      blockStartRef.current = now;
+      emitForStep({ label: "block_start", kind: "stage" }, now);
+    }
+    if (step.startMarker)
+      emitForStep({ label: step.startMarker, kind: "stage" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, stepIndex]);
 
@@ -225,6 +258,20 @@ export function ProtocolRunner({
       resultsRef.current = [...resultsRef.current, result];
       if (step?.endMarker)
         emitForStep({ label: step.endMarker, kind: "stage" });
+      if (step?.block && blockStartRef.current !== null) {
+        const now = performance.now();
+        emitForStep(
+          {
+            label: "block_end",
+            kind: "stage",
+            meta: {
+              duration: Math.round(now - blockStartRef.current) / 1000,
+            },
+          },
+          now
+        );
+        blockStartRef.current = null;
+      }
       void sink.flush();
 
       if (stepIndex + 1 >= protocol.steps.length) finish();

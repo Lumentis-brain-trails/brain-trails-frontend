@@ -67,6 +67,25 @@ export interface ProtocolStep {
   /** Emitted on completion, e.g. "challenge_a_end". */
   endMarker?: string;
   config: unknown;
+  /**
+   * Where this step came from in the protocol tree, set by `resolvePlan` on the step a
+   * block produced (not on the fixation or rest it inserts around it). The runner
+   * brackets such a step with `block_start`/`block_end` and stamps these fields onto
+   * every marker of the step, which is what per-block analysis and BIDS read.
+   */
+  block?: StepBlock;
+}
+
+/** Provenance of a resolved step (backend decision V3-0004, "Events"). */
+export interface StepBlock {
+  /** The block node's id in the tree; shared by every loop copy. */
+  block_id: string;
+  /** Slash-joined node ids (or child indices) from the root to the block. */
+  node_path: string;
+  /** Position in the innermost enclosing loop's presentation order; null outside loops. */
+  iteration: number | null;
+  /** The block's condition after `$var` substitution; BIDS `trial_type`. */
+  condition?: string;
 }
 
 export interface ProtocolDefinition {
@@ -80,7 +99,10 @@ export interface ProtocolDefinition {
   steps: ProtocolStep[];
 }
 
-/** Provenance stamped onto every marker of a run. */
+/**
+ * Provenance stamped onto every marker of a step: the protocol and step, plus, for a
+ * step resolved from a tree block, the block fields analysis groups by (V3-0004).
+ */
 export function protocolMeta(
   protocol: ProtocolDefinition,
   step: ProtocolStep
@@ -91,5 +113,15 @@ export function protocolMeta(
     step_id: step.id,
     task_kind: step.kind,
     phase: step.phase ?? step.id,
+    ...(step.block
+      ? {
+          block_id: step.block.block_id,
+          node_path: step.block.node_path,
+          iteration: step.block.iteration,
+          ...(step.block.condition !== undefined
+            ? { condition: step.block.condition }
+            : {}),
+        }
+      : {}),
   };
 }

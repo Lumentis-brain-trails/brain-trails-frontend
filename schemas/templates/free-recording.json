@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": null,
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "free_recording",
+        "kind": "rest",
+        "label": "Free recording",
+        "config": { "mode": "self_paced" }
+      }
+    ]
+  }
+}

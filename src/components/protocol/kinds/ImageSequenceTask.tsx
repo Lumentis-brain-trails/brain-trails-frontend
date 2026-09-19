@@ -20,6 +20,7 @@ import {
   planImageSequence,
   sourcesToPreload,
 } from "@/lib/protocol/imageSequence";
+import { FRAME_MS, timingMeta } from "@/lib/protocol/marker";
 import { mulberry32 } from "@/lib/protocol/rng";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
 
@@ -87,6 +88,7 @@ function ImageSequenceRenderer({
               planned_onset_ms: item.plannedOnsetMs,
               actual_onset_ms: nowMs,
               onset_error_ms: error,
+              ...timingMeta("raf", FRAME_MS),
               ...(Math.abs(error) > LATE_FRAME_MS ? { late_frame: true } : {}),
             },
           },
