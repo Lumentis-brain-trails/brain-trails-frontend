@@ -23,6 +23,8 @@ interface MediaPresign {
 }
 
 /** Lowercase words joined by dashes: the backend rejects anything else. */
+const AUDIO_EXTENSION = /\.(mp3|m4a|aac|ogg|opus|wav|flac)$/i;
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -51,9 +53,15 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const kind: "video" | "audio" = file?.type.startsWith("audio/")
+    ? "audio"
+    : AUDIO_EXTENSION.test(file?.name ?? "")
+      ? "audio"
+      : "video";
+
   const readDuration = (f: File) =>
     new Promise<number | null>((resolve) => {
-      const video = document.createElement("video");
+      const video = document.createElement(kind);
       video.preload = "metadata";
       video.onloadedmetadata = () => {
         URL.revokeObjectURL(video.src);
@@ -65,8 +73,8 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Choose a video first.");
-      if (!title.trim()) throw new Error("Give the video a title.");
+      if (!file) throw new Error("Choose a file first.");
+      if (!title.trim()) throw new Error("Give it a title.");
       const presign = await api.post<MediaPresign>("media/uploads", {
         filename: file.name,
       });
@@ -76,7 +84,7 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
       setProgress(0);
       await uploadToStorage(presign.source, file, setProgress);
       return api.post<Media>("media", {
-        kind: "video",
+        kind,
         title: title.trim(),
         slug: slugify(title) || slugify(file.name),
         description: description.trim() || null,
@@ -86,7 +94,10 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["media"] });
-      toast("success", "Video added to your library.");
+      toast(
+        "success",
+        "Uploaded. It is checked in the background and appears when ready."
+      );
       onClose();
     },
     onError: (e: Error) => {
@@ -104,7 +115,7 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet
-      title="Upload a video"
+      title="Upload a video or audio"
       onClose={onClose}
       dismissible={!upload.isPending}
     >
@@ -139,7 +150,7 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
             ref={fileRef}
             id="media-file"
             type="file"
-            accept="video/mp4,video/webm,video/quicktime"
+            accept="video/mp4,video/webm,video/quicktime,audio/*"
             className="hidden"
             onChange={(e) => pick(e.target.files?.[0])}
           />

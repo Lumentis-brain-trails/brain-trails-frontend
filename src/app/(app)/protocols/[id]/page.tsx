@@ -17,8 +17,10 @@ import {
 
 const KIND_LABEL: Record<Media["kind"], string> = {
   video: "Video",
+  audio: "Audio",
+  text: "Text",
+  quiz: "Quiz",
   game: "Game",
-  scenario: "Scenario",
 };
 
 /**
@@ -84,7 +86,11 @@ export default function MediaDetailPage({
           <h1 className="type-title">{media.title}</h1>
           <p className="type-caption mt-1 text-ink-3">
             {KIND_LABEL[media.kind]}
-            {media.visibility === "official" ? " · Official" : " · Private"}
+            {media.visibility === "official"
+              ? " · Official"
+              : media.visibility === "public"
+                ? " · Community"
+                : " · Your workspace"}
           </p>
         </div>
         {locked || !protocol.ok ? (

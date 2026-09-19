@@ -19,7 +19,7 @@ function item(over: Partial<Media>): Media {
   return {
     id: crypto.randomUUID(),
     kind: "video",
-    visibility: "private",
+    visibility: "workspace",
     status: "ready",
     access: "open",
     tags: [],
@@ -30,6 +30,9 @@ function item(over: Partial<Media>): Media {
     manifest: {},
     definition: {},
     duration_s: 120,
+    language: null,
+    review_state: "none",
+    probe: {},
     created_at: new Date().toISOString(),
     mine: true,
     ...over,
@@ -61,7 +64,7 @@ test("builds one row per tag and keeps other people's videos out of yours", asyn
       tags: ["attention"],
     }),
     item({
-      kind: "scenario",
+      kind: "quiz",
       title: "Breath Pacing",
       mine: false,
       visibility: "official",
@@ -97,7 +100,7 @@ test("asks for locked items, since showing what is coming is the point", async (
 test("a locked item is shown but cannot be opened", async () => {
   get.mockResolvedValue([
     item({
-      kind: "scenario",
+      kind: "quiz",
       title: "Visual Oddballs",
       mine: false,
       visibility: "official",
@@ -123,14 +126,14 @@ test("runnable items lead their row, ahead of locked ones", async () => {
   get.mockResolvedValue([
     item({
       title: "Zebra Locked",
-      kind: "scenario",
+      kind: "quiz",
       mine: false,
       tags: ["attention"],
       access: "locked",
     }),
     item({
       title: "Apple Locked",
-      kind: "scenario",
+      kind: "quiz",
       mine: false,
       tags: ["attention"],
       access: "locked",

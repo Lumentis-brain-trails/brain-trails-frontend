@@ -4,8 +4,10 @@ import { Icon, cn } from "@/components/ui";
 
 const KIND_LABEL: Record<Media["kind"], string> = {
   video: "Video",
+  audio: "Audio",
+  text: "Text",
+  quiz: "Quiz",
   game: "Game",
-  scenario: "Scenario",
 };
 
 /** Cover stand-in for items without an image: a stable hue per slug, so a card is recognisable. */
