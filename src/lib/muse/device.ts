@@ -2,15 +2,36 @@
  * Muse device drivers behind one small interface.
  *
  * `BluetoothMuse` talks to a real headband through Web Bluetooth (Chrome and
- * Edge on desktop). `SimulatedMuse` produces a plausible EEG stream with the
- * same packet shape and counters, so the record page, the timeline and the
- * quality lights can be exercised in tests, in CI and on machines without a
- * headset. The page never depends on which one it got.
+ * Edge on desktop). Two generations are supported and they do not speak the
+ * same protocol: the Muse 2 and Muse S (gen 2) notify once per electrode
+ * (`protocol.ts`), the Muse S Athena multiplexes everything through one
+ * characteristic (`athena.ts`). Which one is on the head is detected after the
+ * GATT connection, not guessed from the advertised name.
+ *
+ * `SimulatedMuse` produces a plausible EEG stream with the same packet shape
+ * and clock, so the record page, the timeline and the quality lights can be
+ * exercised in tests, in CI and on machines without a headset.
+ *
+ * Whatever the source, listeners receive samples already placed on the
+ * device's own clock: a packet carries the index of its first sample and as
+ * many samples as that band sends. Nothing above this file knows how a
+ * generation numbers its packets or how many samples it puts in one.
  */
+import {
+  ATHENA_AUX_CHARACTERISTIC,
+  ATHENA_DATA_CHARACTERISTIC,
+  ATHENA_MOTION_RATE_HZ,
+  ATHENA_MOTION_SAMPLES,
+  ATHENA_START_SEQUENCE,
+  AthenaClock,
+  decodeAthenaMessage,
+} from "./athena";
+import { MODEL_PROFILES, type ModelProfile, type MuseModel } from "./models";
 import {
   ACCELEROMETER_CHARACTERISTIC,
   ACCELEROMETER_SCALE,
   CONTROL_CHARACTERISTIC,
+  CounterClock,
   decodeEegPacket,
   decodeImuPacket,
   decodePpgPacket,
@@ -23,9 +44,7 @@ import {
   PPG_CHARACTERISTICS,
   PPG_RATE_HZ,
   PPG_SAMPLES_PER_PACKET,
-  type ImuPacket,
   type PpgChannel,
-  type PpgPacket,
   EEG_CHANNELS,
   EEG_CHARACTERISTICS,
   encodeCommand,
@@ -36,14 +55,25 @@ import {
   START_SEQUENCE,
   TELEMETRY_CHARACTERISTIC,
   type EegChannel,
-  type EegPacket,
   type Telemetry,
 } from "./protocol";
+
+/**
+ * Samples of one stream, already positioned on the device clock.
+ *
+ * `sampleIndex` is the index of the first sample; a lost notification shows up
+ * as a jump, which is how both the session file and the timeline account for
+ * it. Motion packets count xyz readings, not the individual axes.
+ */
+export interface SamplePacket {
+  sampleIndex: number;
+  samples: Float32Array;
+}
 
 /** One EEG notification as delivered to listeners, stamped on arrival. */
 export interface EegEvent {
   channel: EegChannel;
-  packet: EegPacket;
+  packet: SamplePacket;
   /** `performance.now()` at arrival: the host-side anchor for the timeline. */
   hostMs: number;
 }
@@ -51,14 +81,14 @@ export interface EegEvent {
 /** Accelerometer or gyroscope notification, stamped on arrival. */
 export interface MotionEvent {
   kind: "acc" | "gyro";
-  packet: ImuPacket;
+  packet: SamplePacket;
   hostMs: number;
 }
 
 /** PPG notification for one optical channel, stamped on arrival. */
 export interface PpgEvent {
   channel: PpgChannel;
-  packet: PpgPacket;
+  packet: SamplePacket;
   hostMs: number;
 }
 
@@ -74,6 +104,8 @@ export interface MuseListeners {
 export interface MuseDevice {
   /** Human-readable name, available after `connect()`. */
   readonly name: string;
+  /** Which generation this turned out to be; known after `connect()`. */
+  readonly model: MuseModel;
   /** Pair, subscribe to EEG and telemetry, and start streaming. */
   connect(): Promise<void>;
   /** Stop streaming and release the link. Safe to call twice. */
@@ -82,6 +114,11 @@ export interface MuseDevice {
     event: K,
     listener: MuseListeners[K]
   ): () => void;
+}
+
+/** The facts that differ between generations, for a connected device. */
+export function profileOf(device: MuseDevice): ModelProfile {
+  return MODEL_PROFILES[device.model];
 }
 
 /** True when this browser exposes Web Bluetooth (Chrome/Edge on desktop). */
@@ -120,13 +157,16 @@ class Emitter {
   }
 }
 
-/** Real headband over Web Bluetooth. */
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Real headband over Web Bluetooth, either generation. */
 export class BluetoothMuse implements MuseDevice {
   private emitter = new Emitter();
   private device: BluetoothDevice | null = null;
   private control: BluetoothRemoteGATTCharacteristic | null = null;
   private subscriptions: BluetoothRemoteGATTCharacteristic[] = [];
   name = "Muse";
+  model: MuseModel = "muse-2";
 
   constructor(private readonly bluetooth: Bluetooth = navigator.bluetooth) {}
 
@@ -138,9 +178,12 @@ export class BluetoothMuse implements MuseDevice {
   }
 
   async connect(): Promise<void> {
-    // The chooser only lists headbands; the service filter is what the Muse advertises.
+    // The chooser only lists headbands. Athena firmware does not always put the
+    // service in its advertisement, so the name is accepted as well and the
+    // service is requested explicitly for the bands matched that way.
     this.device = await this.bluetooth.requestDevice({
-      filters: [{ services: [MUSE_SERVICE] }],
+      filters: [{ services: [MUSE_SERVICE] }, { namePrefix: "Muse" }],
+      optionalServices: [MUSE_SERVICE],
     });
     this.name = this.device.name ?? "Muse";
     const gatt = this.device.gatt;
@@ -152,6 +195,24 @@ export class BluetoothMuse implements MuseDevice {
     const service = await server.getPrimaryService(MUSE_SERVICE);
     this.control = await service.getCharacteristic(CONTROL_CHARACTERISTIC);
 
+    // Only the Athena carries the multiplexed data characteristic; on the older
+    // bands asking for it is how we learn it is not there.
+    const multiplexed = await optionalCharacteristic(
+      service,
+      ATHENA_DATA_CHARACTERISTIC
+    );
+    if (multiplexed) {
+      this.model = "athena";
+      await this.subscribeAthena(service, multiplexed);
+    } else {
+      this.model = "muse-2";
+      await this.subscribeLegacy(service);
+    }
+  }
+
+  /** Muse 2 / Muse S: one notify characteristic per electrode and per sensor. */
+  private async subscribeLegacy(service: BluetoothRemoteGATTService) {
+    const eegClock = new CounterClock();
     for (const channel of EEG_CHANNELS) {
       const characteristic = await service.getCharacteristic(
         EEG_CHARACTERISTICS[channel]
@@ -159,9 +220,10 @@ export class BluetoothMuse implements MuseDevice {
       characteristic.addEventListener("characteristicvaluechanged", (ev) => {
         const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
         if (!value) return;
+        const { counter, samples } = decodeEegPacket(value);
         this.emitter.emit("eeg", {
           channel,
-          packet: decodeEegPacket(value),
+          packet: { sampleIndex: eegClock.next(counter), samples },
           hostMs: performance.now(),
         });
       });
@@ -173,31 +235,35 @@ export class BluetoothMuse implements MuseDevice {
       [ACCELEROMETER_CHARACTERISTIC, "acc", ACCELEROMETER_SCALE],
       [GYROSCOPE_CHARACTERISTIC, "gyro", GYROSCOPE_SCALE],
     ] as const) {
+      const clock = new CounterClock(IMU_SAMPLES_PER_PACKET, true);
       const characteristic = await service.getCharacteristic(uuid);
       characteristic.addEventListener("characteristicvaluechanged", (ev) => {
         const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-        if (value)
-          this.emitter.emit("motion", {
-            kind,
-            packet: decodeImuPacket(value, scale),
-            hostMs: performance.now(),
-          });
+        if (!value) return;
+        const { counter, samples } = decodeImuPacket(value, scale);
+        this.emitter.emit("motion", {
+          kind,
+          packet: { sampleIndex: clock.next(counter), samples },
+          hostMs: performance.now(),
+        });
       });
       await characteristic.startNotifications();
       this.subscriptions.push(characteristic);
     }
     for (const channel of PPG_CHANNELS) {
+      const clock = new CounterClock(PPG_SAMPLES_PER_PACKET, true);
       const characteristic = await service.getCharacteristic(
         PPG_CHARACTERISTICS[channel]
       );
       characteristic.addEventListener("characteristicvaluechanged", (ev) => {
         const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
-        if (value)
-          this.emitter.emit("ppg", {
-            channel,
-            packet: decodePpgPacket(value),
-            hostMs: performance.now(),
-          });
+        if (!value) return;
+        const { counter, samples } = decodePpgPacket(value);
+        this.emitter.emit("ppg", {
+          channel,
+          packet: { sampleIndex: clock.next(counter), samples },
+          hostMs: performance.now(),
+        });
       });
       await characteristic.startNotifications();
       this.subscriptions.push(characteristic);
@@ -211,6 +277,71 @@ export class BluetoothMuse implements MuseDevice {
     this.subscriptions.push(telemetry);
 
     for (const command of START_SEQUENCE) await this.send(command);
+  }
+
+  /**
+   * Athena: every stream arrives on one or two characteristics as tagged
+   * subpackets. The optics stream (fNIRS and PPG) is left switched off by the
+   * preset and skipped by the decoder, so what reaches the listeners is the
+   * four electrodes and motion, exactly as from an older band.
+   */
+  private async subscribeAthena(
+    service: BluetoothRemoteGATTService,
+    data: BluetoothRemoteGATTCharacteristic
+  ) {
+    const eegClock = new AthenaClock(SAMPLE_RATE_HZ);
+    const motionClock = new AthenaClock(ATHENA_MOTION_RATE_HZ);
+    const handle = (ev: Event) => {
+      const value = (ev.target as BluetoothRemoteGATTCharacteristic).value;
+      if (!value) return;
+      const hostMs = performance.now();
+      for (const part of decodeAthenaMessage(value)) {
+        if (part.sensor === "eeg") {
+          const sampleIndex = eegClock.next(part.tick, part.sampleCount);
+          for (const channel of EEG_CHANNELS)
+            this.emitter.emit("eeg", {
+              channel,
+              packet: { sampleIndex, samples: part.channels[channel] },
+              hostMs,
+            });
+        } else if (part.sensor === "motion") {
+          const sampleIndex = motionClock.next(
+            part.tick,
+            ATHENA_MOTION_SAMPLES
+          );
+          this.emitter.emit("motion", {
+            kind: "acc",
+            packet: { sampleIndex, samples: part.acc },
+            hostMs,
+          });
+          this.emitter.emit("motion", {
+            kind: "gyro",
+            packet: { sampleIndex, samples: part.gyro },
+            hostMs,
+          });
+        } else {
+          this.emitter.emit("telemetry", {
+            sequence: 0,
+            batteryPercent: part.batteryPercent,
+            voltageMv: null,
+            temperatureC: null,
+          });
+        }
+      }
+    };
+    for (const characteristic of [
+      data,
+      await optionalCharacteristic(service, ATHENA_AUX_CHARACTERISTIC),
+    ]) {
+      if (!characteristic) continue;
+      characteristic.addEventListener("characteristicvaluechanged", handle);
+      await characteristic.startNotifications();
+      this.subscriptions.push(characteristic);
+    }
+    for (const step of ATHENA_START_SEQUENCE) {
+      await this.send(step.command);
+      await wait(step.waitMs);
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -232,6 +363,18 @@ export class BluetoothMuse implements MuseDevice {
   }
 }
 
+/** `getCharacteristic`, but a characteristic this band lacks is not an error. */
+async function optionalCharacteristic(
+  service: BluetoothRemoteGATTService,
+  uuid: string
+): Promise<BluetoothRemoteGATTCharacteristic | null> {
+  try {
+    return await service.getCharacteristic(uuid);
+  } catch {
+    return null;
+  }
+}
+
 /** Options for the synthetic headband. */
 export interface SimulatedMuseOptions {
   /** Emit packets on a timer (default) or only when `tick()` is called (tests). */
@@ -242,12 +385,21 @@ export interface SimulatedMuseOptions {
   alphaUv?: number;
   /** Start counter, to exercise wrap-around. */
   startCounter?: number;
+  /**
+   * Which generation to imitate. `athena` sends the Athena's shorter EEG
+   * packets and no PPG, so the record page can be exercised against both
+   * packet shapes without a headset.
+   */
+  model?: "muse-2" | "athena";
 }
 
+/** Athena EEG subpackets carry four samples per channel, not twelve. */
+const ATHENA_SIM_SAMPLES_PER_PACKET = 4;
+
 /**
- * Synthetic Muse: 10 Hz alpha plus pink-ish noise and slow drift, twelve
- * samples per packet, counters that wrap like the firmware's, telemetry once
- * a second. Deterministic given the seed so tests stay stable.
+ * Synthetic Muse: 10 Hz alpha plus pink-ish noise and slow drift, counters
+ * that wrap like the firmware's, telemetry once a second. Deterministic given
+ * the seed so tests stay stable.
  */
 export class SimulatedMuse implements MuseDevice {
   private emitter = new Emitter();
@@ -259,10 +411,19 @@ export class SimulatedMuse implements MuseDevice {
   private ppgCounter = 0;
   private imuDueMs = 0;
   private ppgDueMs = 0;
-  readonly name = "Muse-SIM";
+  private readonly samplesPerPacket: number;
+  private readonly telemetryEvery: number;
+  readonly name: string;
+  readonly model: MuseModel = "simulated";
 
   constructor(private readonly options: SimulatedMuseOptions = {}) {
     this.counter = options.startCounter ?? 0;
+    this.samplesPerPacket =
+      options.model === "athena"
+        ? ATHENA_SIM_SAMPLES_PER_PACKET
+        : SAMPLES_PER_PACKET;
+    this.telemetryEvery = Math.round(SAMPLE_RATE_HZ / this.samplesPerPacket);
+    this.name = options.model === "athena" ? "Athena-SIM" : "Muse-SIM";
   }
 
   on<K extends keyof MuseListeners>(
@@ -274,7 +435,7 @@ export class SimulatedMuse implements MuseDevice {
 
   async connect(): Promise<void> {
     if (this.options.autoplay ?? true) {
-      const periodMs = (SAMPLES_PER_PACKET / SAMPLE_RATE_HZ) * 1000;
+      const periodMs = (this.samplesPerPacket / SAMPLE_RATE_HZ) * 1000;
       this.timer = setInterval(() => this.tick(), periodMs);
     }
   }
@@ -285,17 +446,18 @@ export class SimulatedMuse implements MuseDevice {
     this.emitter.emit("disconnected");
   }
 
-  /** Emit one packet per channel (and telemetry every ~21 packets). */
+  /** Emit one packet per channel (and telemetry about once a second). */
   tick(hostMs: number = performance.now()): void {
     const counter = this.counter;
     this.counter = (this.counter + 1) & 0xffff;
+    const sampleIndex = counter * this.samplesPerPacket;
     const flat = new Set(this.options.flatChannels ?? []);
     const alpha = this.options.alphaUv ?? 20;
     for (const channel of EEG_CHANNELS) {
-      const samples = new Float32Array(SAMPLES_PER_PACKET);
+      const samples = new Float32Array(this.samplesPerPacket);
       if (!flat.has(channel)) {
-        for (let i = 0; i < SAMPLES_PER_PACKET; i++) {
-          const t = (counter * SAMPLES_PER_PACKET + i) / SAMPLE_RATE_HZ;
+        for (let i = 0; i < this.samplesPerPacket; i++) {
+          const t = (sampleIndex + i) / SAMPLE_RATE_HZ;
           samples[i] =
             alpha * Math.sin(2 * Math.PI * 10 * t) +
             5 * Math.sin(2 * Math.PI * 0.3 * t) +
@@ -304,12 +466,12 @@ export class SimulatedMuse implements MuseDevice {
       }
       this.emitter.emit("eeg", {
         channel,
-        packet: { counter, samples },
+        packet: { sampleIndex, samples },
         hostMs,
       });
     }
-    this.emitExtras(counter, hostMs);
-    if (++this.packetsSinceTelemetry >= 21) {
+    this.emitExtras(sampleIndex, hostMs);
+    if (++this.packetsSinceTelemetry >= this.telemetryEvery) {
       this.packetsSinceTelemetry = 0;
       this.emitter.emit("telemetry", {
         sequence: counter,
@@ -321,9 +483,9 @@ export class SimulatedMuse implements MuseDevice {
   }
 
   /** Motion at 52 Hz and PPG at 64 Hz, paced against the 256 Hz EEG ticks. */
-  private emitExtras(eegCounter: number, hostMs: number): void {
-    const tickMs = (SAMPLES_PER_PACKET / SAMPLE_RATE_HZ) * 1000;
-    const tSec = (eegCounter * SAMPLES_PER_PACKET) / SAMPLE_RATE_HZ;
+  private emitExtras(eegSampleIndex: number, hostMs: number): void {
+    const tickMs = (this.samplesPerPacket / SAMPLE_RATE_HZ) * 1000;
+    const tSec = eegSampleIndex / SAMPLE_RATE_HZ;
     this.imuDueMs += tickMs;
     const imuPeriod = (IMU_SAMPLES_PER_PACKET / IMU_RATE_HZ) * 1000;
     while (this.imuDueMs >= imuPeriod) {
@@ -338,25 +500,26 @@ export class SimulatedMuse implements MuseDevice {
         gyro[i * 3 + 1] = 0.5 * (this.random() - 0.5);
         gyro[i * 3 + 2] = 0;
       }
-      const counter = this.imuCounter;
-      this.imuCounter = (this.imuCounter + 1) & 0xffff;
+      const sampleIndex = this.imuCounter * IMU_SAMPLES_PER_PACKET;
+      this.imuCounter += 1;
       this.emitter.emit("motion", {
         kind: "acc",
-        packet: { counter, samples: acc },
+        packet: { sampleIndex, samples: acc },
         hostMs,
       });
       this.emitter.emit("motion", {
         kind: "gyro",
-        packet: { counter, samples: gyro },
+        packet: { sampleIndex, samples: gyro },
         hostMs,
       });
     }
+    if (this.options.model === "athena") return; // no PPG, as on the real band
     this.ppgDueMs += tickMs;
     const ppgPeriod = (PPG_SAMPLES_PER_PACKET / PPG_RATE_HZ) * 1000;
     while (this.ppgDueMs >= ppgPeriod) {
       this.ppgDueMs -= ppgPeriod;
-      const counter = this.ppgCounter;
-      this.ppgCounter = (this.ppgCounter + 1) & 0xffff;
+      const sampleIndex = this.ppgCounter * PPG_SAMPLES_PER_PACKET;
+      this.ppgCounter += 1;
       for (const channel of PPG_CHANNELS) {
         const samples = new Float32Array(PPG_SAMPLES_PER_PACKET);
         for (let i = 0; i < PPG_SAMPLES_PER_PACKET; i++) {
@@ -369,7 +532,7 @@ export class SimulatedMuse implements MuseDevice {
         }
         this.emitter.emit("ppg", {
           channel,
-          packet: { counter, samples },
+          packet: { sampleIndex, samples },
           hostMs,
         });
       }

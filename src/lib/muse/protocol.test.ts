@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   ACCELEROMETER_SCALE,
+  CounterClock,
   decodeImuPacket,
   decodePpgPacket,
   decodeEegPacket,
@@ -124,5 +125,35 @@ describe("muse protocol", () => {
     expect(p.counter).toBe(3);
     expect(p.samples[0]).toBe(66051);
     expect(p.samples[5]).toBe(16777215);
+  });
+});
+
+describe("CounterClock", () => {
+  test("turns packet counters into sample indices", () => {
+    const clock = new CounterClock();
+    expect(clock.next(10)).toBe(120);
+    expect(clock.next(11)).toBe(132);
+    expect(clock.next(14)).toBe(168); // two packets lost: a hole, not a shift
+  });
+
+  test("unwraps the 16-bit counter", () => {
+    const clock = new CounterClock();
+    clock.next(65534);
+    clock.next(65535);
+    expect(clock.next(0)).toBe(65536 * 12);
+  });
+
+  test("puts a sibling electrode's packet back on the same index", () => {
+    const clock = new CounterClock();
+    expect(clock.next(5)).toBe(60);
+    expect(clock.next(5)).toBe(60); // same packet, another electrode
+    expect(clock.next(4)).toBe(48); // one that overtook it on the way up
+    expect(clock.next(6)).toBe(72);
+  });
+
+  test("alwaysAdvance never places two packets of one stream together", () => {
+    const clock = new CounterClock(3, true);
+    expect(clock.next(7)).toBe(21);
+    expect(clock.next(7)).toBe(24);
   });
 });

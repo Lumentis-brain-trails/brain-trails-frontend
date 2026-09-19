@@ -1,8 +1,12 @@
 /**
- * Muse 2 Bluetooth Low Energy protocol: identifiers, command framing and packet
- * decoding. Pure functions only, so every byte-level rule is unit-testable
- * without a headset. Facts verified against the muse-js reference
+ * Muse 2 and Muse S (gen 2) Bluetooth Low Energy protocol: identifiers, command
+ * framing and packet decoding. Pure functions only, so every byte-level rule is
+ * unit-testable without a headset. Facts verified against the muse-js reference
  * implementation (MIT) and Interaxon's public packet layout.
+ *
+ * The Muse S Athena speaks a different wire format on the same GATT service;
+ * see `athena.ts`. What both generations share -- the electrode names, their
+ * order and the 256 Hz sampling rate -- is defined here and imported there.
  */
 
 /** GATT primary service advertised by every Muse headband. */
@@ -30,10 +34,14 @@ export const EEG_CHARACTERISTICS: Record<EegChannel, string> = {
 export const EEG_CHANNELS = ["TP9", "AF7", "AF8", "TP10"] as const;
 export type EegChannel = (typeof EEG_CHANNELS)[number];
 
-/** Nominal EEG sampling rate of the Muse 2. */
+/** Nominal EEG sampling rate, the same on every Muse generation. */
 export const SAMPLE_RATE_HZ = 256;
 
-/** Samples carried by one EEG notification. */
+/**
+ * Samples carried by one EEG notification on these bands. The Athena's
+ * subpackets are shorter, so nothing above the driver may assume this number:
+ * packets travel with their own sample count.
+ */
 export const SAMPLES_PER_PACKET = 12;
 
 /** Accelerometer and gyroscope: 52 Hz, three xyz samples per notification. */
@@ -130,14 +138,18 @@ export function decodeEegPacket(data: DataView): EegPacket {
   return { counter, samples };
 }
 
-/** Battery and thermal telemetry, one notification per second. */
+/**
+ * Battery and thermal telemetry, one notification per second. The Athena has
+ * no telemetry characteristic and reports only its state of charge, inside the
+ * data stream, so everything but the battery is nullable.
+ */
 export interface Telemetry {
   sequence: number;
   /** State of charge, 0..100. */
   batteryPercent: number;
   /** Fuel-gauge voltage in millivolts. */
-  voltageMv: number;
-  temperatureC: number;
+  voltageMv: number | null;
+  temperatureC: number | null;
 }
 
 /** Decode a telemetry notification (scale factors from muse-js). */
@@ -191,4 +203,47 @@ export function decodePpgPacket(data: DataView): PpgPacket {
       data.getUint8(o + 2);
   }
   return { counter: data.getUint16(0, false), samples };
+}
+
+const COUNTER_MODULO = 0x10000;
+
+/**
+ * Turns these bands' 16-bit packet counter into a sample index on the device
+ * clock, the way `AthenaClock` does for the Athena's 256 kHz tick. Drivers own
+ * one per stream, so nothing downstream has to know how a band numbers its
+ * packets.
+ *
+ * The four electrodes share one counter and arrive interleaved, so by default
+ * a delta of zero or a small negative one means a sibling channel of a packet
+ * already seen: it maps to the same index without moving the clock forward.
+ * Streams with a counter of their own (motion, PPG) pass `alwaysAdvance` and
+ * never place two packets at the same index.
+ */
+export class CounterClock {
+  private lastRaw: number | null = null;
+  private unwrapped = 0;
+
+  constructor(
+    private readonly samplesPerPacket: number = SAMPLES_PER_PACKET,
+    private readonly alwaysAdvance = false
+  ) {}
+
+  /** Index of the first sample of the packet numbered `rawCounter`. */
+  next(rawCounter: number): number {
+    if (this.lastRaw === null) {
+      this.lastRaw = rawCounter;
+      this.unwrapped = rawCounter;
+      return rawCounter * this.samplesPerPacket;
+    }
+    let delta = rawCounter - this.lastRaw;
+    if (delta > COUNTER_MODULO / 2) delta -= COUNTER_MODULO;
+    if (delta < -COUNTER_MODULO / 2) delta += COUNTER_MODULO;
+    if (delta <= 0 && this.alwaysAdvance) delta = 1;
+    const value = this.unwrapped + delta;
+    if (delta > 0) {
+      this.lastRaw = rawCounter;
+      this.unwrapped = value;
+    }
+    return value * this.samplesPerPacket;
+  }
 }

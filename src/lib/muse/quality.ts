@@ -21,13 +21,21 @@ export interface ChannelQuality {
 
 /** Fewer samples than this (1 s at 256 Hz) and the light stays grey. */
 export const MIN_SAMPLES = 256;
-/** Absolute value beyond which a sample is considered at the ADC rail. */
+/**
+ * Absolute value beyond which a sample is considered at the ADC rail, for the
+ * Muse 2's +-1000 uV range. Bands with a narrower range pass their own (see
+ * `ModelProfile.eegRailUv`), otherwise a railed Athena electrode, which cannot
+ * exceed 725 uV, would read as merely noisy.
+ */
 export const RAIL_UV = 990;
 export const FLAT_STD_UV = 1.5;
 export const NOISY_STD_UV = 100;
 
 /** Assess one electrode from its most recent samples (microvolts). */
-export function assessChannel(samples: ArrayLike<number>): ChannelQuality {
+export function assessChannel(
+  samples: ArrayLike<number>,
+  railUv: number = RAIL_UV
+): ChannelQuality {
   const n = samples.length;
   if (n < MIN_SAMPLES) {
     return { level: "unknown", stdUv: null, hint: "Waiting for signal" };
@@ -37,7 +45,7 @@ export function assessChannel(samples: ArrayLike<number>): ChannelQuality {
   for (let i = 0; i < n; i++) {
     const v = samples[i];
     sum += v;
-    if (Math.abs(v) > RAIL_UV) railed += 1;
+    if (Math.abs(v) > railUv) railed += 1;
   }
   const mean = sum / n;
   let ss = 0;
