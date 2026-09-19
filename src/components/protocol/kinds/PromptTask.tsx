@@ -48,6 +48,13 @@ function PromptRenderer({
   const [canAdvance, setCanAdvance] = useState(
     config.advance.mode !== "either"
   );
+  // Seconds left of a minimum dwell, so a button that cannot be pressed yet says why
+  // instead of looking broken (Alessio, 2026-09-19: "it always takes long to start").
+  const [waitS, setWaitS] = useState(() =>
+    config.advance.mode === "either"
+      ? Math.ceil(config.advance.minMs / 1000)
+      : 0
+  );
   const doneRef = useRef(false);
 
   const finish = useCallback(() => {
@@ -94,6 +101,16 @@ function PromptRenderer({
     return () => timers.forEach(clearTimeout);
   }, [config.advance, finish]);
 
+  // Counts the dwell down once a second; display only, nothing depends on it.
+  useEffect(() => {
+    if (config.advance.mode !== "either") return;
+    const timer = setInterval(
+      () => setWaitS((left) => (left > 0 ? left - 1 : 0)),
+      1000
+    );
+    return () => clearInterval(timer);
+  }, [config.advance.mode]);
+
   useEffect(() => {
     if (!canAdvance || config.advance.mode === "timed") return;
     const onKey = (event: KeyboardEvent) => {
@@ -126,7 +143,7 @@ function PromptRenderer({
       </div>
       {label && (
         <Button onClick={finish} disabled={!canAdvance} aria-label={label}>
-          {label}
+          {canAdvance || waitS <= 0 ? label : `${label} in ${waitS} s`}
         </Button>
       )}
       {config.footnote && (

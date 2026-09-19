@@ -75,6 +75,12 @@ export interface ProtocolRunnerProps {
   seed: number;
   sink: MarkerSink;
   anchor?: ClockAnchor;
+  /**
+   * The host already showed the content warning (the run page's consent gate, S18), so
+   * the runner does not show it a second time. It still opens with the motion notice
+   * when a step moves things on screen, because that choice is made here.
+   */
+  warningShown?: boolean;
   onFinish: (results: TaskResult[], markers: readonly Marker[]) => void;
   onExit: (reason: "user" | "error") => void;
 }
@@ -86,11 +92,20 @@ export function ProtocolRunner({
   seed,
   sink,
   anchor,
+  warningShown = false,
   onFinish,
   onExit,
 }: ProtocolRunnerProps) {
+  // Something to say before the first block: a warning nobody has shown yet, or the
+  // motion choice for a protocol that moves things on screen.
+  const movesOnScreen = useMemo(
+    () => protocol.steps.some((s) => getTaskKind(s.kind).motionSensitive),
+    [protocol.steps]
+  );
   const [screen, setScreen] = useState<Screen>(
-    protocol.contentWarning ? "warning" : "running"
+    (protocol.contentWarning && !warningShown) || movesOnScreen
+      ? "warning"
+      : "running"
   );
   const [stepIndex, setStepIndex] = useState(0);
   // The participant can override the OS preference on the notice screen.
@@ -317,15 +332,19 @@ export function ProtocolRunner({
       <Shell onStop={() => onExit("user")}>
         <div className="flex h-full flex-col items-center justify-center gap-6 px-6 text-center">
           <h1 className="type-title">{protocol.title}</h1>
-          <p className="max-w-xl text-ink-2">{protocol.contentWarning}</p>
-          <label className="flex items-center gap-2 text-[14px] text-ink-2">
-            <input
-              type="checkbox"
-              checked={reducedMotion}
-              onChange={(event) => setMotionOverride(event.target.checked)}
-            />
-            Reduce motion
-          </label>
+          {protocol.contentWarning && !warningShown && (
+            <p className="max-w-xl text-ink-2">{protocol.contentWarning}</p>
+          )}
+          {movesOnScreen && (
+            <label className="flex items-center gap-2 text-[14px] text-ink-2">
+              <input
+                type="checkbox"
+                checked={reducedMotion}
+                onChange={(event) => setMotionOverride(event.target.checked)}
+              />
+              Reduce motion
+            </label>
+          )}
           <Button onClick={() => setScreen("running")}>Begin</Button>
           <p className="type-caption text-ink-3">
             This is not a medical assessment or diagnosis. You can stop at any
