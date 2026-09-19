@@ -260,7 +260,7 @@ export default function RecordPage() {
                 }
                 mono
               />
-              <ListRow className="justify-end gap-2">
+              <ListRow className="flex-wrap justify-end gap-2">
                 {connected ? (
                   <Button
                     variant="secondary"
