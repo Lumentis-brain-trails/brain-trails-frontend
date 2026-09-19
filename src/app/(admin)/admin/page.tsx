@@ -84,10 +84,10 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <Link
-          href="/admin/registrations"
+          href="/admin/applications"
           className="pressable inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover"
         >
-          Review registrations
+          Review applications
           {pending > 0 && (
             <span className="rounded-full bg-white/25 px-2 text-[12px] tabular-nums">
               {pending}
@@ -243,10 +243,10 @@ export default function AdminDashboardPage() {
               </table>
             </Card>
             <Link
-              href="/admin/registrations"
+              href="/admin/applications"
               className="type-caption mt-3 inline-flex items-center gap-1 font-medium text-accent hover:underline"
             >
-              All registrations <Icon name="chevron" className="h-3.5 w-3.5" />
+              All applications <Icon name="chevron" className="h-3.5 w-3.5" />
             </Link>
           </section>
         </>

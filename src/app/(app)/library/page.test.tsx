@@ -6,7 +6,14 @@ import type { Media } from "@/lib/types";
 import LibraryPage from "./page";
 
 const get = vi.fn();
-vi.mock("@/lib/api", () => ({ api: { get: (p: string) => get(p) } }));
+vi.mock("@/lib/api", () => ({
+  api: {
+    get: (p: string) =>
+      p === "workspaces"
+        ? Promise.resolve([{ id: "w1", kind: "personal" }])
+        : get(p),
+  },
+}));
 
 function item(over: Partial<Media>): Media {
   return {
@@ -83,7 +90,7 @@ test("asks for locked items, since showing what is coming is the point", async (
   get.mockResolvedValue([]);
   renderPage();
   await waitFor(() => expect(get).toHaveBeenCalled());
-  expect(get).toHaveBeenCalledWith("media?include_locked=true");
+  expect(get).toHaveBeenCalledWith("media?include_locked=true&workspace=w1");
 });
 
 /** A locked card must not be a link: there is nothing behind it to open. */

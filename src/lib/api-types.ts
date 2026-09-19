@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/admin/registrations": {
+    "/admin/applications": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,10 +12,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Registrations
-         * @description List users in the given status with their profiles, oldest first (admin only).
+         * List Applications
+         * @description The selection board: applications, oldest first, filtered (admin only).
+         *
+         *     Keyset-paginated on `(created_at, user_id)`; the next page's cursor comes back in
+         *     `X-Next-Cursor`. One query per page, whatever the filters.
          */
-        get: operations["list_registrations_admin_registrations_get"];
+        get: operations["list_applications_admin_applications_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -24,7 +27,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/registrations/{user_id}/approve": {
+    "/admin/applications/{user_id}/decide": {
         parameters: {
             query?: never;
             header?: never;
@@ -34,22 +37,22 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Approve
-         * @description Approve a pending registration (admin only).
+         * Decide
+         * @description Accept, waitlist or reject an application, placing it in a cohort (admin only).
          *
-         *     With `email_verification_required` off (the default until a sending domain
-         *     exists) the account becomes active at once and can log in. When on, a 24 h
-         *     verification link is issued and, in manual-mailer mode, returned so the admin
-         *     can deliver it by hand. 404 when unknown, 409 when not pending.
+         *     Accepting activates the account with its personal workspace - or, with email
+         *     verification required, issues a 24 h link (returned in manual-mailer mode). A
+         *     waitlisted or rejected application may be accepted later; an accepted one is final
+         *     (409 `invalid_state`). 404 for an unknown application or cohort.
          */
-        post: operations["approve_admin_registrations__user_id__approve_post"];
+        post: operations["decide_admin_applications__user_id__decide_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/admin/registrations/{user_id}/reissue-verification": {
+    "/admin/applications/{user_id}/reissue-verification": {
         parameters: {
             query?: never;
             header?: never;
@@ -60,16 +63,40 @@ export interface paths {
         put?: never;
         /**
          * Reissue Verification
-         * @description New single-use link for an approved-but-unverified user (lost/expired link).
+         * @description New single-use link for an accepted-but-unverified user (lost/expired link).
          */
-        post: operations["reissue_verification_admin_registrations__user_id__reissue_verification_post"];
+        post: operations["reissue_verification_admin_applications__user_id__reissue_verification_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/admin/registrations/{user_id}/reject": {
+    "/admin/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Cohorts
+         * @description Every cohort with its target and how many applicants sit in it, by decision.
+         */
+        get: operations["list_cohorts_admin_cohorts_get"];
+        put?: never;
+        /**
+         * Create Cohort
+         * @description Create a cohort (409 `name_taken` when the name exists).
+         */
+        post: operations["create_cohort_admin_cohorts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/cohorts/{cohort_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -78,15 +105,19 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        post?: never;
         /**
-         * Reject
-         * @description Reject a pending registration (admin only); 404 when unknown, 409 when not pending.
+         * Delete Cohort
+         * @description Delete a cohort; its users stay, with no cohort.
          */
-        post: operations["reject_admin_registrations__user_id__reject_post"];
-        delete?: never;
+        delete: operations["delete_cohort_admin_cohorts__cohort_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Cohort
+         * @description Rename a cohort or change its profile, target and notes.
+         */
+        patch: operations["update_cohort_admin_cohorts__cohort_id__patch"];
         trace?: never;
     };
     "/admin/stats": {
@@ -118,7 +149,7 @@ export interface paths {
         };
         /**
          * Users Overview
-         * @description Per-user input statistics.
+         * @description Per-user input statistics: recordings each account started as operator.
          */
         get: operations["users_overview_admin_users_get"];
         put?: never;
@@ -168,7 +199,10 @@ export interface paths {
         post?: never;
         /**
          * Delete Me
-         * @description GDPR erasure: removes the account, every row and every stored object.
+         * @description GDPR erasure by rows: the workspaces the caller owns alone, every object, the account.
+         *
+         *     401 on a wrong password; 403 for an admin, who must drop the role first (the
+         *     official catalog lives in an admin's workspace). See `app.workspaces.erase_account`.
          */
         delete: operations["delete_me_auth_me_delete"];
         options?: never;
@@ -185,7 +219,10 @@ export interface paths {
         };
         /**
          * Export Me
-         * @description GDPR portability: profile + recordings metadata + short-lived file links.
+         * @description GDPR portability: profile, and everything in the workspaces the caller owns.
+         *
+         *     Metadata of every recording, media item and session, with short-lived links to the
+         *     stored files (raw and standardized signal, media sources, event timelines).
          */
         get: operations["export_me_auth_me_export_get"];
         put?: never;
@@ -227,10 +264,13 @@ export interface paths {
         put?: never;
         /**
          * Register
-         * @description Create a `pending` account with its profile; admin review follows (Q11).
+         * @description Create a `pending` account with its profile and its beta application (V3-0008).
          *
-         *     Requires explicit consent (422 `consent_required`); the email is lower-cased and must
-         *     be unique (409 `email_taken`). Rate-limited per client address.
+         *     Registration is an application: the admin board decides who joins, and when. With
+         *     `beta_gate_accounts` off the account is accepted and activated at once. Requires
+         *     explicit consent (422 `consent_required`); the email is lower-cased and must be
+         *     unique (409 `email_taken`); a profile's credentials are checked (422). Rate-limited
+         *     per client address.
          */
         post: operations["register_auth_register_post"];
         delete?: never;
@@ -249,6 +289,8 @@ export interface paths {
         /**
          * Verify Email
          * @description Consume a single-use verification link and move the account approved -> active.
+         *
+         *     Activation creates the personal workspace (`app.workspaces.activate`).
          *
          *     The token is looked up by hash: 400 `invalid_token` when unknown, already used or
          *     expired, 400 `invalid_state` when the user is not awaiting verification.
@@ -315,11 +357,11 @@ export interface paths {
         };
         /**
          * List Media
-         * @description The catalog for this user: their items plus the official ones, newest first.
+         * @description The catalog for this user, newest first: their workspaces' items and official ones.
          *
-         *     `kind` filters to one row of the home page; `mine=true` narrows to the user's own
-         *     uploads; `tag` narrows to one library row. Ready items only - a draft has no
-         *     confirmed file yet.
+         *     `kind` filters to one row of the home page; `mine=true` narrows to items of the
+         *     workspaces the caller builds in; `tag` narrows to one library row; `?workspace=`
+         *     narrows to one workspace. Ready items only - a draft has no confirmed file yet.
          *
          *     Locked items are left out unless `include_locked` asks for them, so a caller that
          *     wants something runnable gets only runnable things. The library asks for them,
@@ -329,14 +371,15 @@ export interface paths {
         put?: never;
         /**
          * Create Media
-         * @description Create a catalog item (201).
+         * @description Create a catalog item in `?workspace=` (default: the caller's personal one) (201).
          *
-         *     A video must name a `source_key` from `/media/uploads` that belongs to the caller
-         *     and actually exists in storage (422 otherwise), and its size counts against the
-         *     quota. A game needs a `module`, a scenario a non-empty `definition`. Marking an
-         *     item `official` is admin-only (403), as is creating a game or a scenario, tagging an
-         *     item, or locking one: the curated catalog is editorial, not user-generated, until
-         *     the sandbox exists (decision V2-0002).
+         *     A video must name a `source_key` from `/media/uploads` of the same workspace that
+         *     actually exists in storage (403/422 otherwise); its size counts against the
+         *     workspace's quota and the files move to the item's own prefix. A game needs a
+         *     `module`, a scenario a non-empty `definition`. Marking an item `official` is
+         *     admin-only (403), as is creating a game or a scenario, tagging an item, or locking
+         *     one: the curated catalog is editorial, not user-generated, until the sandbox exists
+         *     (decision V2-0002). An official item is granted to everyone (`viewer@user:*`).
          */
         post: operations["create_media_media_post"];
         delete?: never;
@@ -358,8 +401,9 @@ export interface paths {
          * Presign Media Upload
          * @description Step 1 of a video upload: presigned forms for the file and its optional cover.
          *
-         *     413 when the user is already at their quota; the per-file cap travels inside the
-         *     form, so S3 itself rejects an oversized upload.
+         *     The forms point under the workspace's pending prefix (V3-0009). 403 without
+         *     `can_build` on the workspace; 413 when it is already at its quota. The per-file cap
+         *     travels inside the form, so S3 itself rejects an oversized upload.
          */
         post: operations["presign_media_upload_media_uploads_post"];
         delete?: never;
@@ -384,7 +428,10 @@ export interface paths {
         post?: never;
         /**
          * Delete Media
-         * @description Delete an item and its files: the owner, or an admin for the official catalog.
+         * @description Delete an item, its files and its grants.
+         *
+         *     Whoever builds in its workspace may delete it; an admin may also take down an item
+         *     everyone can see (the official catalog), which is audited.
          */
         delete: operations["delete_media_media__media_id__delete"];
         options?: never;
@@ -403,7 +450,7 @@ export interface paths {
         put?: never;
         /**
          * Set Official
-         * @description Promote an item into the official catalog (admin only).
+         * @description Promote an item into the official catalog (admin only): everyone may now view it.
          */
         post: operations["set_official_media__media_id__official_post"];
         delete?: never;
@@ -441,7 +488,10 @@ export interface paths {
         };
         /**
          * List Recordings
-         * @description List the caller's recordings newest first; `before` paginates by `created_at`.
+         * @description Recordings the caller may see, newest first, one page at a time.
+         *
+         *     `?workspace=` narrows to one workspace. Keyset pagination on `(created_at, id)`: the
+         *     next page's cursor comes back in the `X-Next-Cursor` header, absent on the last page.
          */
         get: operations["list_recordings_recordings_get"];
         put?: never;
@@ -449,8 +499,10 @@ export interface paths {
          * Upload
          * @description Proxied upload: store the file, create the recording and queue a job (202).
          *
-         *     Validates cleaner, task label, extension and device (422) and streams the body
-         *     through a temp file to enforce `max_upload_mb` (413) before touching S3.
+         *     The recording is created in `?workspace=` (default: the caller's personal one; 403
+         *     without `can_record`). Validates cleaner, task label, extension and device (422) and
+         *     streams the body through a temp file to enforce `max_upload_mb` (413) before
+         *     touching S3.
          */
         post: operations["upload_recordings_post"];
         delete?: never;
@@ -470,7 +522,12 @@ export interface paths {
         put?: never;
         /**
          * Complete Upload
-         * @description Step 2: the file is in S3; verify it and create recording + job.
+         * @description Step 2: the files are in the pending area; verify them, create recording + job.
+         *
+         *     The original and its sidecars must sit in one pending folder of the target workspace
+         *     (403 otherwise); each is checked for presence (404) and size (413), then moved under
+         *     the recording's prefix. Completing the same upload twice finds nothing left to
+         *     move (404 `upload_missing`).
          */
         post: operations["complete_upload_recordings_complete_post"];
         delete?: never;
@@ -492,7 +549,8 @@ export interface paths {
          * Start Stream
          * @description Create a `stream` recording (status processing) and its empty analysis (201).
          *
-         *     422 for an unknown task label or device. `ws_path` is where samples go next.
+         *     In `?workspace=` (default personal; 403 without `can_record`). 422 for an unknown
+         *     task label or device. `ws_path` is where samples go next.
          */
         post: operations["start_stream_recordings_stream_post"];
         delete?: never;
@@ -512,7 +570,11 @@ export interface paths {
         put?: never;
         /**
          * Presign Upload
-         * @description Step 1 of the browser upload: a direct-to-S3 form, no size-limited proxies.
+         * @description Step 1 of the browser upload: direct-to-S3 forms, no size-limited proxies.
+         *
+         *     The forms point under `uploads-pending/{workspace}/{upload}/` (V3-0009): nothing is a
+         *     recording until `complete` accepts it, and an abandoned upload expires by a bucket
+         *     lifecycle rule. 403 without `can_record` on the workspace.
          */
         post: operations["presign_upload_recordings_uploads_post"];
         delete?: never;
@@ -530,14 +592,17 @@ export interface paths {
         };
         /**
          * Get Recording
-         * @description Return one recording with its latest job; 404 unless owned by the caller.
+         * @description Return one recording with its latest job; 404 unless the caller may see it.
          */
         get: operations["get_recording_recordings__recording_id__get"];
         put?: never;
         post?: never;
         /**
          * Delete Recording
-         * @description Remove the recording, its analyses and every stored artifact.
+         * @description Remove the recording, its analyses, its session and every stored artifact.
+         *
+         *     Everything the recording owns sits under one prefix (V3-0009), timeline included.
+         *     404 unless visible, 403 without `can_delete`, 409 while a job is active.
          */
         delete: operations["delete_recording_recordings__recording_id__delete"];
         options?: never;
@@ -554,7 +619,7 @@ export interface paths {
         };
         /**
          * Get Analysis
-         * @description Return the latest (or the requested) analysis with its points; 404 unless owned.
+         * @description Return the latest (or the requested) analysis with its points; 404 unless visible.
          *
          *     409 `not_ready` while no analysis exists yet.
          */
@@ -576,7 +641,7 @@ export interface paths {
         };
         /**
          * Download
-         * @description Return a presigned GET link for the raw file; 404 unless owned and present.
+         * @description Return a presigned GET link for the raw file; 404 unless visible and present.
          */
         get: operations["download_recordings__recording_id__download_get"];
         put?: never;
@@ -596,7 +661,7 @@ export interface paths {
         };
         /**
          * Get Neurometrics
-         * @description Return the radius sweep of the latest (or requested) analysis; 404 unless owned.
+         * @description Return the radius sweep of the latest (or requested) analysis; 404 unless visible.
          *
          *     409 `not_ready` when the analysis has no sweep yet - because it predates NeuroMetrics,
          *     because the recording is too short, or because the job has not run. The levels come
@@ -609,8 +674,9 @@ export interface paths {
          * @description Queue a sweep over an analysis that already has its embeddings (202).
          *
          *     This is the backfill for recordings analysed before NeuroMetrics existed; it reuses the
-         *     stored vectors, so it never pays for the embedder again. 404 unless owned, 409 while a
-         *     job is already active or when there is nothing to sweep.
+         *     stored vectors, so it never pays for the embedder again. 404 unless visible, 403
+         *     without `can_edit`, 409 while a job is already active or when there is nothing to
+         *     sweep.
          */
         post: operations["rebuild_neurometrics_recordings__recording_id__neurometrics_post"];
         delete?: never;
@@ -632,8 +698,9 @@ export interface paths {
          * Reprocess
          * @description Queue a new full_pipeline job over the raw file with the given cleaner (202).
          *
-         *     404 unless owned (or the raw file is missing), 422 for an unknown cleaner, 409 while
-         *     a job is already queued or running. The recording drops back to `uploaded`.
+         *     404 unless visible (or the raw file is missing), 403 without `can_edit`, 422 for an
+         *     unknown cleaner, 409 while a job is already queued or running. The recording drops
+         *     back to `uploaded`.
          */
         post: operations["reprocess_recordings__recording_id__reprocess_post"];
         delete?: never;
@@ -653,7 +720,7 @@ export interface paths {
          * Get Signal
          * @description Return up to 30 s of the standardized or cleaned signal, decimated to `target_hz`.
          *
-         *     Reads the parquet from storage; 404 unless owned, 409 before processing, 422 when
+         *     Reads the parquet from storage; 404 unless visible, 409 before processing, 422 when
          *     `start` is past the end of the recording.
          */
         get: operations["get_signal_recordings__recording_id__signal_get"];
@@ -674,18 +741,19 @@ export interface paths {
         };
         /**
          * List Sessions
-         * @description The caller's sessions, newest first.
+         * @description Sessions the caller may see, newest first; `?workspace=` narrows to one.
          */
         get: operations["list_sessions_sessions_get"];
         put?: never;
         /**
          * Start Session
-         * @description Start a session against a visible catalog item (201).
+         * @description Start a session against a runnable catalog item, recorded in `?workspace=` (201).
          *
          *     Creates the live recording and its analysis, so the EEG goes to the existing
          *     websocket unchanged, and returns everything the stimulus needs to run: its
          *     manifest, its module or definition, and the `seed` a replay must reuse.
-         *     404 when the item is not visible to the caller, 403 when it is locked.
+         *     404 when the item is not visible to the caller, 403 when it is locked or when the
+         *     caller may not record in the workspace.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -714,7 +782,8 @@ export interface paths {
          *
          *     The recording goes too: a session's EEG has no meaning without what was on screen.
          *     Deleting the recording is enough - the session row cascades with it - so the row is
-         *     never deleted twice.
+         *     never deleted twice. The timeline lives under the recording's prefix (V3-0009), so
+         *     one prefix deletion takes everything.
          */
         delete: operations["delete_session_sessions__session_id__delete"];
         options?: never;
@@ -770,6 +839,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Workspaces
+         * @description Every workspace the caller holds a relation in, personal first, then by creation.
+         */
+        get: operations["list_workspaces_workspaces_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -809,6 +898,109 @@ export interface components {
             window_s: number;
         };
         /**
+         * ApplicationDecision
+         * @description The admin's answer to a beta application; `pending` until one is given.
+         * @enum {string}
+         */
+        ApplicationDecision: "pending" | "accepted" | "waitlisted" | "rejected";
+        /**
+         * ApplicationIn
+         * @description The beta application that comes with a registration (decision V3-0008).
+         *
+         *     What selection needs: the requested profile and the credentials that go with it, what
+         *     the person wants to do, and the hardware and browser they will record with. Device
+         *     and browser are detected by the frontend and editable; an unsupported browser is
+         *     recorded, never refused. A therapist names a registration number, a lab profile an
+         *     institution, a lab member also a supervisor (422 otherwise).
+         */
+        ApplicationIn: {
+            /** Browser */
+            browser?: string | null;
+            /**
+             * Contact Ok
+             * @default false
+             */
+            contact_ok: boolean;
+            /** Country */
+            country?: string | null;
+            /** Device */
+            device?: string | null;
+            /** Expected Subjects */
+            expected_subjects?: number | null;
+            /** Headband */
+            headband?: ("muse-2" | "muse-s-athena" | "other" | "none") | null;
+            /** Institution */
+            institution?: string | null;
+            /** Language */
+            language?: string | null;
+            /** Organisation */
+            organisation?: string | null;
+            /** Purpose */
+            purpose?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /** @default private */
+            requested_profile: components["schemas"]["BetaProfile"];
+            /** Role Title */
+            role_title?: string | null;
+            /** Supervisor */
+            supervisor?: string | null;
+            /** Web Bluetooth */
+            web_bluetooth?: boolean | null;
+        };
+        /**
+         * ApplicationOut
+         * @description An application as the admin board shows it: the answers plus the decision.
+         */
+        ApplicationOut: {
+            /** Admin Note */
+            admin_note: string | null;
+            /** Browser */
+            browser?: string | null;
+            /**
+             * Contact Ok
+             * @default false
+             */
+            contact_ok: boolean;
+            /** Country */
+            country?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decision */
+            decision: string;
+            /** Device */
+            device?: string | null;
+            /** Expected Subjects */
+            expected_subjects?: number | null;
+            /** Headband */
+            headband?: ("muse-2" | "muse-s-athena" | "other" | "none") | null;
+            /** Institution */
+            institution?: string | null;
+            /** Invited By */
+            invited_by: string | null;
+            /** Language */
+            language?: string | null;
+            /** Organisation */
+            organisation?: string | null;
+            /** Purpose */
+            purpose?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /** @default private */
+            requested_profile: components["schemas"]["BetaProfile"];
+            /** Role Title */
+            role_title?: string | null;
+            /** Supervisor */
+            supervisor?: string | null;
+            /** Web Bluetooth */
+            web_bluetooth?: boolean | null;
+        };
+        /**
          * ApprovalOut
          * @description Result of an admin decision; `verification_url` is set only in manual-mailer mode.
          */
@@ -816,6 +1008,22 @@ export interface components {
             user: components["schemas"]["UserOut"];
             /** Verification Url */
             verification_url?: string | null;
+        };
+        /**
+         * BetaProfile
+         * @description What an applicant asks to be in the closed beta (V3-0008).
+         * @enum {string}
+         */
+        BetaProfile: "private" | "therapist" | "lab_lead" | "lab_member";
+        /**
+         * BoardRow
+         * @description One applicant on the admin board: account, profile, application, cohort.
+         */
+        BoardRow: {
+            application: components["schemas"]["ApplicationOut"];
+            cohort: components["schemas"]["CohortRef"] | null;
+            profile: components["schemas"]["ProfileIn"] | null;
+            user: components["schemas"]["UserOut"];
         };
         /** Body_upload_recordings_post */
         Body_upload_recordings_post: {
@@ -835,6 +1043,59 @@ export interface components {
             task_label?: string | null;
             /** Title */
             title: string;
+        };
+        /**
+         * CohortIn
+         * @description Create or change a cohort: a name, the profile it is for, and a target size.
+         */
+        CohortIn: {
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            profile?: components["schemas"]["BetaProfile"] | null;
+            /** Target */
+            target?: number | null;
+        };
+        /**
+         * CohortOut
+         * @description A cohort with its counts, computed from the users placed in it.
+         */
+        CohortOut: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            profile?: components["schemas"]["BetaProfile"] | null;
+            /** Target */
+            target?: number | null;
+        };
+        /**
+         * CohortRef
+         * @description The cohort a user was placed in.
+         */
+        CohortRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /**
          * CompleteIn
@@ -877,26 +1138,26 @@ export interface components {
                 beta_applications: boolean;
                 /** @description Band power, per-block metrics, usability verdict (S20). */
                 block_metrics: boolean;
-                /** @description The experiment builder (S19). */
+                /** @description The protocol builder: timeline, media bin, groups (S19). */
                 builder: boolean;
+                /** @description Protocol catalog with detail page and Play; /library is gone (S16). */
+                catalog: boolean;
                 /** @description Operator console on the same machine (S21). */
                 console: boolean;
                 /** @description Remote operator console over the live relay (S23). */
                 console_remote: boolean;
-                /** @description Experiment model, runtime and official templates (S18). */
-                experiments: boolean;
                 /** @description BIDS exports (S25). */
                 exports: boolean;
-                /** @description The library starts every runnable item; /protocols is gone (S16). */
-                library_door: boolean;
                 /** @description Workspace, public and official circles; review queue (S17). */
                 library_publish: boolean;
-                /** @description Audio, image sets, text, questionnaires; media probe; quotas (S17). */
+                /** @description Media bin: audio, image sets, text, questionnaires; probe; quotas (S17). */
                 library_v2: boolean;
                 /** @description Locales other than English on client-facing surfaces (S26). */
                 locales: boolean;
                 /** @description TOTP enforced for anyone who can see another person's data (S26). */
                 mfa_required: boolean;
+                /** @description Protocol model, runtime, official templates, protocol from media (S18). */
+                protocols: boolean;
                 /** @description Recording review with annotations (S20). */
                 review: boolean;
                 /** @description Sessions capture EEG in the browser and upload it at finish (S16). */
@@ -908,6 +1169,23 @@ export interface components {
             };
             /** Version */
             version: string;
+        };
+        /**
+         * DecideIn
+         * @description The admin's answer to an application, with the cohort it lands in and a note.
+         *
+         *     The note is for admins only; the applicant never sees it.
+         */
+        DecideIn: {
+            /** Cohort Id */
+            cohort_id?: string | null;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "accept" | "waitlist" | "reject";
+            /** Note */
+            note?: string | null;
         };
         /**
          * DeleteMeIn
@@ -1366,8 +1644,12 @@ export interface components {
         /**
          * RegisterIn
          * @description Registration payload; `consent` must be true and passwords are 10..200 characters.
+         *
+         *     `application` is optional so a client that predates the beta form still registers,
+         *     as a private-user application with no other answers.
          */
         RegisterIn: {
+            application?: components["schemas"]["ApplicationIn"] | null;
             /** Consent */
             consent: boolean;
             /**
@@ -1378,14 +1660,6 @@ export interface components {
             /** Password */
             password: string;
             profile: components["schemas"]["ProfileIn"];
-        };
-        /**
-         * RegistrationOut
-         * @description A user awaiting review together with the profile they submitted.
-         */
-        RegistrationOut: {
-            profile: components["schemas"]["ProfileIn"];
-            user: components["schemas"]["UserOut"];
         };
         /**
          * ReprocessIn
@@ -1645,6 +1919,32 @@ export interface components {
             type: string;
         };
         /**
+         * WorkspaceOut
+         * @description A workspace the caller belongs to, with the relations they hold in it.
+         */
+        WorkspaceOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Relations */
+            relations: string[];
+            /** Slug */
+            slug: string;
+            /** Status */
+            status: string;
+        };
+        /**
          * PresignForm
          * @description A presigned POST: where to send the file and the fields that must ride along.
          */
@@ -1681,10 +1981,16 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    list_registrations_admin_registrations_get: {
+    list_applications_admin_applications_get: {
         parameters: {
             query?: {
-                status?: string;
+                decision?: components["schemas"]["ApplicationDecision"] | null;
+                profile?: components["schemas"]["BetaProfile"] | null;
+                cohort?: string | null;
+                country?: string | null;
+                headband?: string | null;
+                limit?: number;
+                cursor?: string | null;
             };
             header?: never;
             path?: never;
@@ -1698,7 +2004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RegistrationOut"][];
+                    "application/json": components["schemas"]["BoardRow"][];
                 };
             };
             /** @description Validation Error */
@@ -1712,7 +2018,42 @@ export interface operations {
             };
         };
     };
-    approve_admin_registrations__user_id__approve_post: {
+    decide_admin_applications__user_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reissue_verification_admin_applications__user_id__reissue_verification_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1743,13 +2084,11 @@ export interface operations {
             };
         };
     };
-    reissue_verification_admin_registrations__user_id__reissue_verification_post: {
+    list_cohorts_admin_cohorts_get: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                user_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -1760,7 +2099,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApprovalOut"];
+                    "application/json": components["schemas"]["CohortOut"][];
+                };
+            };
+        };
+    };
+    create_cohort_admin_cohorts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -1774,12 +2137,12 @@ export interface operations {
             };
         };
     };
-    reject_admin_registrations__user_id__reject_post: {
+    delete_cohort_admin_cohorts__cohort_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                user_id: string;
+                cohort_id: string;
             };
             cookie?: never;
         };
@@ -1791,7 +2154,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApprovalOut"];
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_cohort_admin_cohorts__cohort_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -2093,6 +2491,7 @@ export interface operations {
                 tag?: ("attention" | "anxiety" | "cognitive_decline") | null;
                 include_locked?: boolean;
                 limit?: number;
+                workspace?: string | null;
             };
             header?: never;
             path?: never;
@@ -2122,7 +2521,9 @@ export interface operations {
     };
     create_media_media_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2155,7 +2556,9 @@ export interface operations {
     };
     presign_media_upload_media_uploads_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2303,7 +2706,8 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
-                before?: string | null;
+                cursor?: string | null;
+                workspace?: string | null;
             };
             header?: never;
             path?: never;
@@ -2333,7 +2737,9 @@ export interface operations {
     };
     upload_recordings_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2366,7 +2772,9 @@ export interface operations {
     };
     complete_upload_recordings_complete_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2399,7 +2807,9 @@ export interface operations {
     };
     start_stream_recordings_stream_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2432,7 +2842,9 @@ export interface operations {
     };
     presign_upload_recordings_uploads_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2728,6 +3140,7 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                workspace?: string | null;
             };
             header?: never;
             path?: never;
@@ -2757,7 +3170,9 @@ export interface operations {
     };
     start_session_sessions_post: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2916,6 +3331,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workspaces_workspaces_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"][];
                 };
             };
         };

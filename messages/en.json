@@ -8,5 +8,50 @@
     "not_found": "This could not be found. It may have been deleted.",
     "rate_limited": "Too many attempts. Wait a minute and try again.",
     "conflict": "This changed somewhere else. Reload to see the latest version."
+  },
+  "application": {
+    "step": "Application",
+    "title": "Your application",
+    "intro": "Brain Trails is in a closed beta. Tell us who you are and how you would use it: we read every application and choose a small group to start with.",
+    "profile": {
+      "label": "I am applying as",
+      "private": "Myself, for my own use",
+      "therapist": "A psychotherapist",
+      "lab_lead": "The lead of a research lab",
+      "lab_member": "A researcher or student in a lab"
+    },
+    "organisation": "Organisation",
+    "role_title": "Role",
+    "registration_no": "Professional registration number",
+    "registration_no_hint": "Your registration with your professional body.",
+    "institution": "Institution",
+    "supervisor": "Supervisor",
+    "purpose": "What would you like to do with Brain Trails?",
+    "headband": {
+      "label": "Which headband do you own?",
+      "muse-2": "Muse 2",
+      "muse-s-athena": "Muse S Athena",
+      "other": "Another EEG headband",
+      "none": "None yet"
+    },
+    "device": "Device you will record on",
+    "browser": "Browser",
+    "detected": "Filled in from this browser; correct it if you will record elsewhere.",
+    "bluetooth_ok": "This browser can pair a headband.",
+    "bluetooth_missing": "This browser cannot pair a headband over Bluetooth. You can still apply: tell us which device you would record on.",
+    "country": "Country",
+    "country_hint": "Two letters, for example IT.",
+    "language": "Language",
+    "language_hint": "For example it or en.",
+    "expected_subjects": "How many people would you record?",
+    "expected_subjects_hint": "Patients or participants, roughly.",
+    "contact_ok": "You may contact me for feedback during the beta.",
+    "required": "Required for this profile.",
+    "invalid_country": "Use the two-letter country code.",
+    "back": "Back",
+    "continue": "Continue"
+  },
+  "auth": {
+    "waitlisted": "Your application is on the waiting list. We will write to you as soon as there is room."
   }
 }

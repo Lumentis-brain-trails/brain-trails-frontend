@@ -1,5 +1,6 @@
 /** Zod schemas mirroring the backend contracts (app/schemas.py). */
 import { z } from "zod";
+import type { ApplicationPayload } from "@/lib/application";
 
 export const profileSchema = z.object({
   full_name: z.string().min(2).max(200),
@@ -33,11 +34,16 @@ export type ProfileForm = z.output<typeof profileSchema>;
 export type ProfileFormInput = z.input<typeof profileSchema>;
 export type AccountForm = z.output<typeof accountSchema>;
 
-/** Convert form values into the backend payload. */
+/**
+ * Convert form values into the backend payload. `application` is sent only when the
+ * beta application step was shown (flag `beta_applications`); without it the backend
+ * files a private-user application.
+ */
 export function toRegisterPayload(
   account: AccountForm,
   profile: ProfileForm,
-  consent: boolean
+  consent: boolean,
+  application?: ApplicationPayload
 ) {
   const clean = (v: string | undefined) =>
     v === "" || v === undefined ? null : v;
@@ -45,6 +51,7 @@ export function toRegisterPayload(
     email: account.email,
     password: account.password,
     consent,
+    ...(application ? { application } : {}),
     profile: {
       ...profile,
       gender: clean(profile.gender),
