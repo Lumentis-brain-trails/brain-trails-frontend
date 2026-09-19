@@ -104,19 +104,40 @@ describe("templates", () => {
     expect(orders.size).toBe(2);
   });
 
-  test("signal navigator keeps the code definition's steps and configs", () => {
+  /**
+   * The task itself must not drift from the code definition it replaced: the go/no-go
+   * and breathing blocks keep their numbers exactly. The framing around them did change
+   * on purpose (2026-09-19): the arrival screen no longer holds the participant for 30
+   * seconds behind a disabled button - that settling time is now a real eyes-open
+   * baseline block, which is both visible and analysable.
+   */
+  test("signal navigator keeps the task blocks of the code definition", () => {
     const protocol = run("signal-navigator.json");
     const reference = parseProtocol(SIGNAL_NAVIGATOR);
     expect(protocol.contentWarning).toBe(reference.contentWarning);
-    expect(protocol.steps.map((s) => s.id)).toEqual(
-      reference.steps.map((s) => s.id)
+    expect(protocol.steps.map((s) => s.id)).toEqual([
+      "arrival",
+      "settle",
+      "challenge_a",
+      "reset",
+      "challenge_b",
+      "outro",
+    ]);
+    for (const ref of reference.steps) {
+      if (ref.kind === "prompt") continue;
+      const step = protocol.steps.find((s) => s.id === ref.id);
+      expect(step, ref.id).toBeTruthy();
+      expect(step!.kind).toBe(ref.kind);
+      expect(step!.label).toBe(ref.label);
+      expect(step!.config).toEqual(ref.config);
+      expect(step!.block?.condition).toBe(ref.phase);
+    }
+    const settle = protocol.steps.find((s) => s.id === "settle")!;
+    expect(settle.kind).toBe("baseline");
+    expect(settle.config).toMatchObject({ eyes: "open", duration_s: 30 });
+    const arrival = protocol.steps.find((s) => s.id === "arrival")!;
+    expect((arrival.config as { advance: { mode: string } }).advance.mode).toBe(
+      "key"
     );
-    protocol.steps.forEach((step, i) => {
-      const ref = reference.steps[i];
-      expect(step.kind).toBe(ref.kind === "prompt" ? "instructions" : ref.kind);
-      expect(step.label).toBe(ref.label);
-      expect(step.config).toEqual(ref.config);
-      expect(step.block?.condition).toBe(ref.phase);
-    });
   });
 });

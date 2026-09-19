@@ -29,11 +29,21 @@
             }
           ],
           "advance": {
-            "mode": "either",
-            "minMs": 30000,
-            "maxMs": 45000,
+            "mode": "key",
             "label": "Start"
           }
+        }
+      },
+      {
+        "type": "block",
+        "id": "settle",
+        "kind": "baseline",
+        "label": "Settle",
+        "condition": "arrival",
+        "config": {
+          "eyes": "open",
+          "duration_s": 30,
+          "end_tone": false
         }
       },
       {

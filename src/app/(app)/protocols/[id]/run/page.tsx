@@ -352,6 +352,7 @@ export default function RunProtocolPage({
         ) : (
           <ProtocolRunner
             protocol={plan}
+            warningShown={needsConsentGate(manifest)}
             seed={session?.seed ?? 1}
             sink={sink}
             anchor={anchor}
