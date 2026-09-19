@@ -155,3 +155,103 @@ test("a video protocol goes from pre-flight to the runner with the simulated hea
   expect(await screen.findByRole("status", {}, { timeout: 5000 })).toBeTruthy();
   await act(() => new Promise((r) => setTimeout(r, 1500)));
 }, 20_000);
+
+/**
+ * Free recording is a protocol like any other (V3-0004 amendment): one self-paced rest
+ * block. This is the path the E2E takes, so it is worth a jsdom check of its own.
+ */
+test("free recording runs its self-paced block and finishes on demand", async () => {
+  const freeTree = {
+    schema: 1,
+    manifest: {},
+    root: {
+      type: "sequence",
+      children: [
+        {
+          type: "block",
+          id: "free_recording",
+          kind: "rest",
+          label: "Free recording",
+          config: { mode: "self_paced" },
+        },
+      ],
+    },
+  };
+  get.mockResolvedValue({
+    ...protocol,
+    title: "Free recording",
+    definition: freeTree,
+    draft: freeTree,
+    outline: [
+      { kind: "rest", label: "Free recording", count: 1, duration_s: 60 },
+    ],
+  });
+  post.mockImplementation((path: string) =>
+    path.endsWith("/plan")
+      ? Promise.resolve(undefined)
+      : Promise.resolve({
+          id: "s2",
+          status: "running",
+          protocol_id: "p1",
+          protocol_version: 1,
+          title: "Free recording",
+          recording_id: "r2",
+          seed: 3,
+          params: {},
+          summary: {},
+          n_events: 0,
+          started_at: "2026-09-19T00:00:00Z",
+          ended_at: null,
+          capture: "upload",
+          protocol_version_id: "v1",
+          upload: {
+            original: form,
+            extras: form,
+            ble: form,
+            max_mb: 50,
+            max_ble_mb: 200,
+          },
+          manifest: {},
+          definition: freeTree,
+          media: {},
+          media_expires_at: "2026-09-19T01:00:00Z",
+        })
+  );
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  await act(async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={client}>
+          <Suspense fallback="loading">
+            <RunProtocolPage params={Promise.resolve({ id: "p1" })} />
+          </Suspense>
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    );
+  });
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: messages.run.preflight.connect },
+      { timeout: 5000 }
+    )
+  );
+  await screen.findByText(/Connected to/, {}, { timeout: 5000 });
+  const override = screen.queryByLabelText(messages.run.preflight.override);
+  if (override) fireEvent.click(override);
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.run.preflight.start })
+    );
+  });
+  // the block's own Finish button ends an open-ended session
+  const finish = await screen.findByRole(
+    "button",
+    { name: messages.kinds.rest.finish },
+    { timeout: 5000 }
+  );
+  expect(finish).toBeTruthy();
+  await act(() => new Promise((r) => setTimeout(r, 1500)));
+}, 20_000);
