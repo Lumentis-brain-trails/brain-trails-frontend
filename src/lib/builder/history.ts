@@ -10,7 +10,7 @@
  * which is what a server round trip (a reload after a conflict) needs.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const LIMIT = 50;
 
@@ -29,62 +29,74 @@ export interface History<T> {
 }
 
 export function useHistory<T>(initial: T): History<T> {
-  const [past, setPast] = useState<T[]>([]);
-  const [present, setPresent] = useState<T>(initial);
-  const [future, setFuture] = useState<T[]>([]);
-  // The present is read inside callbacks that must not change identity on every edit.
-  const presentRef = useRef(present);
-  presentRef.current = present;
+  // One state object rather than three: every transition is then a pure update, which
+  // is what the React compiler asks for (no ref written during a render) and what makes
+  // "undo" exactly the inverse of "set".
+  const [state, setState] = useState<{ past: T[]; present: T; future: T[] }>({
+    past: [],
+    present: initial,
+    future: [],
+  });
 
   const set = useCallback((next: T | ((current: T) => T)) => {
-    const current = presentRef.current;
-    const value =
-      typeof next === "function" ? (next as (c: T) => T)(current) : next;
-    if (value === current) return;
-    setPast((p) => [...p, current].slice(-LIMIT));
-    setFuture([]);
-    setPresent(value);
+    setState((current) => {
+      const value =
+        typeof next === "function"
+          ? (next as (c: T) => T)(current.present)
+          : next;
+      if (value === current.present) return current;
+      return {
+        past: [...current.past, current.present].slice(-LIMIT),
+        present: value,
+        future: [],
+      };
+    });
   }, []);
 
-  const replace = useCallback((next: T) => setPresent(next), []);
+  const replace = useCallback(
+    (next: T) => setState((current) => ({ ...current, present: next })),
+    []
+  );
 
   const undo = useCallback(() => {
-    setPast((p) => {
-      if (p.length === 0) return p;
-      const previous = p[p.length - 1];
-      setFuture((f) => [presentRef.current, ...f].slice(0, LIMIT));
-      setPresent(previous);
-      return p.slice(0, -1);
+    setState((current) => {
+      if (current.past.length === 0) return current;
+      return {
+        past: current.past.slice(0, -1),
+        present: current.past[current.past.length - 1],
+        future: [current.present, ...current.future].slice(0, LIMIT),
+      };
     });
   }, []);
 
   const redo = useCallback(() => {
-    setFuture((f) => {
-      if (f.length === 0) return f;
-      const [next, ...rest] = f;
-      setPast((p) => [...p, presentRef.current].slice(-LIMIT));
-      setPresent(next);
-      return rest;
+    setState((current) => {
+      if (current.future.length === 0) return current;
+      const [next, ...rest] = current.future;
+      return {
+        past: [...current.past, current.present].slice(-LIMIT),
+        present: next,
+        future: rest,
+      };
     });
   }, []);
 
-  const reset = useCallback((next: T) => {
-    setPast([]);
-    setFuture([]);
-    setPresent(next);
-  }, []);
+  const reset = useCallback(
+    (next: T) => setState({ past: [], present: next, future: [] }),
+    []
+  );
 
   return useMemo(
     () => ({
-      present,
-      canUndo: past.length > 0,
-      canRedo: future.length > 0,
+      present: state.present,
+      canUndo: state.past.length > 0,
+      canRedo: state.future.length > 0,
       set,
       replace,
       undo,
       redo,
       reset,
     }),
-    [future.length, past.length, present, redo, replace, reset, set, undo]
+    [redo, replace, reset, set, state, undo]
   );
 }

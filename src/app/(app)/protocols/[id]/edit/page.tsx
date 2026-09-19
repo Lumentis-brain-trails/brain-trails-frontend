@@ -153,7 +153,9 @@ export default function BuilderPage({
 
   // Autosave: one request per burst of edits, and none while a conflict is open.
   const saveRef = useRef(save);
-  saveRef.current = save;
+  useEffect(() => {
+    saveRef.current = save;
+  });
   const dirtyRef = useRef(false);
   useEffect(() => {
     if (rev === null || conflict || loadedFor.current === null) return;

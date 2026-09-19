@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { ProtocolCard } from "@/lib/protocol/catalog";
 import ProtocolsPage from "./page";
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 const get = vi.fn();
 vi.mock("@/lib/api", () => ({
   ApiRequestError: class extends Error {},
