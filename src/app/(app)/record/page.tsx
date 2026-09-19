@@ -23,11 +23,12 @@ import { SessionSheet, type StoppedSession } from "@/components/SessionSheet";
 import { TASK_LABELS } from "@/lib/types";
 import {
   BluetoothMuse,
-  isWebBluetoothSupported,
+  bluetoothTransport,
   SimulatedMuse,
   type MuseDevice,
 } from "@/lib/muse/device";
 import { EEG_CHANNELS, SAMPLE_RATE_HZ } from "@/lib/muse/protocol";
+import { isAppleMobile } from "@/lib/muse/nativeBluetooth";
 import { useMuse } from "@/lib/muse/useMuse";
 import { useFocusMode } from "@/lib/focus";
 
@@ -45,13 +46,15 @@ const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
  * is kept in the raw Bluetooth capture uploaded beside it (V2-0006).
  */
 export default function RecordPage() {
-  // Web Bluetooth support is a client-only fact: the server snapshot is null so
-  // the server render and the first client render agree.
-  const supported = useSyncExternalStore(
+  // How the page reaches a headband (Web Bluetooth, the native shell, or
+  // nothing) is a client-only fact: the server snapshot is undefined so the
+  // server render and the first client render agree.
+  const transport = useSyncExternalStore(
     () => () => {},
-    () => isWebBluetoothSupported(),
-    () => null
+    () => bluetoothTransport(),
+    () => undefined
   );
+  const supported = transport === undefined ? null : transport !== null;
   const [source, setSource] = useState<
     "bluetooth" | "simulated" | "simulated-athena"
   >("bluetooth");
@@ -109,12 +112,18 @@ export default function RecordPage() {
             green lights, then start.
           </p>
         </div>
-        <BrowserStatus supported={supported} />
+        <BrowserStatus supported={supported} native={transport === "native"} />
       </div>
 
       {supported === false && (
         <div className="mb-6">
-          <ErrorBanner message="This browser cannot talk to the Muse. Use Chrome or Edge on a computer, or try the simulated headband below." />
+          <ErrorBanner
+            message={
+              isAppleMobile()
+                ? "Browsers on iPhone and iPad cannot talk to the Muse. Open Brain Trails in its iOS app, or try the simulated headband below."
+                : "This browser cannot talk to the Muse. Use Chrome or Edge, or try the simulated headband below."
+            }
+          />
         </div>
       )}
       {muse.error && (
@@ -474,7 +483,13 @@ function LiveSession({
   );
 }
 
-function BrowserStatus({ supported }: { supported: boolean | null }) {
+function BrowserStatus({
+  supported,
+  native,
+}: {
+  supported: boolean | null;
+  native: boolean;
+}) {
   if (supported === null) return null;
   return (
     <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-2">
@@ -483,19 +498,30 @@ function BrowserStatus({ supported }: { supported: boolean | null }) {
           "h-2 w-2 rounded-full " + (supported ? "bg-ok" : "bg-danger")
         }
       />
-      {supported ? "Web Bluetooth ready" : "Web Bluetooth unavailable"}
+      {native
+        ? "Bluetooth ready"
+        : supported
+          ? "Web Bluetooth ready"
+          : "Web Bluetooth unavailable"}
     </span>
   );
 }
 
-/** First-class state, not an error: the browser simply lacks Web Bluetooth. */
+/**
+ * First-class state, not an error: the browser simply lacks Web Bluetooth. On
+ * iPhone and iPad that is every browser (Apple gives WebKit no Bluetooth), so
+ * the way in is the Brain Trails app, which is this same site with a native
+ * Bluetooth bridge.
+ */
 function Unsupported() {
+  const apple = isAppleMobile();
   return (
     <main className="mx-auto max-w-2xl px-6 py-24 text-center">
       <h1 className="type-title">This browser can&apos;t talk to the Muse.</h1>
       <p className="mx-auto mt-3 max-w-md text-ink-2">
-        Web Bluetooth is available in Chrome and Edge on a computer. Open Brain
-        Trails there to record, or upload a file exported from Mind Monitor.
+        {apple
+          ? "No browser on iPhone or iPad is allowed to use Bluetooth. Open Brain Trails in its iOS app to record here, or upload a file exported from Mind Monitor."
+          : "Web Bluetooth is available in Chrome and Edge, on a computer or an Android device. Open Brain Trails there to record, or upload a file exported from Mind Monitor."}
       </p>
       <div className="mt-8 flex justify-center gap-3">
         <Link href="/recordings" className={buttonClass()}>

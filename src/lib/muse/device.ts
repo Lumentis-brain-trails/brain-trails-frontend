@@ -2,7 +2,9 @@
  * Muse device drivers behind one small interface.
  *
  * `BluetoothMuse` talks to a real headband through Web Bluetooth (Chrome and
- * Edge on desktop). Two generations are supported and they do not speak the
+ * Edge on desktop and Android) or, inside the native shell on iPhone and
+ * iPad, through the same interface laid over CoreBluetooth
+ * (`nativeBluetooth.ts`). Two generations are supported and they do not speak the
  * same protocol: the Muse 2 and Muse S (gen 2) notify once per electrode
  * (`protocol.ts`), the Muse S Athena multiplexes everything through one
  * characteristic (`athena.ts`). Which one is on the head is detected after the
@@ -32,6 +34,7 @@ import {
   decodeAthenaMessage,
 } from "./athena";
 import { MODEL_PROFILES, type ModelProfile, type MuseModel } from "./models";
+import { isNativeShell, loadNativeBluetooth } from "./nativeBluetooth";
 import {
   ACCELEROMETER_CHARACTERISTIC,
   AUX_CHARACTERISTIC,
@@ -152,6 +155,26 @@ export function isWebBluetoothSupported(
   );
 }
 
+/**
+ * How this page can reach a headband: the browser's own Web Bluetooth, the
+ * native shell's CoreBluetooth bridge (iPhone and iPad, where no browser has
+ * Web Bluetooth), or not at all.
+ */
+export type BluetoothTransport = "web" | "native";
+
+/** Which transport is available here, or null when the page has none. */
+export function bluetoothTransport(): BluetoothTransport | null {
+  if (isNativeShell()) return "native";
+  return isWebBluetoothSupported() ? "web" : null;
+}
+
+/** A `Bluetooth`, or a way to get one that is only loaded when needed. */
+export type BluetoothProvider = Bluetooth | (() => Promise<Bluetooth>);
+
+function defaultBluetooth(): BluetoothProvider {
+  return isNativeShell() ? loadNativeBluetooth : navigator.bluetooth;
+}
+
 /** Tiny typed emitter shared by both drivers. */
 class Emitter {
   private listeners: { [K in keyof MuseListeners]: Set<MuseListeners[K]> } = {
@@ -189,7 +212,9 @@ export class BluetoothMuse implements MuseDevice {
   name = "Muse";
   model: MuseModel = "muse-2";
 
-  constructor(private readonly bluetooth: Bluetooth = navigator.bluetooth) {}
+  constructor(
+    private readonly bluetooth: BluetoothProvider = defaultBluetooth()
+  ) {}
 
   on<K extends keyof MuseListeners>(
     event: K,
@@ -202,7 +227,11 @@ export class BluetoothMuse implements MuseDevice {
     // The chooser only lists headbands. Athena firmware does not always put the
     // service in its advertisement, so the name is accepted as well and the
     // service is requested explicitly for the bands matched that way.
-    this.device = await this.bluetooth.requestDevice({
+    const bluetooth =
+      typeof this.bluetooth === "function"
+        ? await this.bluetooth()
+        : this.bluetooth;
+    this.device = await bluetooth.requestDevice({
       filters: [{ services: [MUSE_SERVICE] }, { namePrefix: "Muse" }],
       optionalServices: [MUSE_SERVICE],
     });
