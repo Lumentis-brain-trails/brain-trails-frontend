@@ -1,8 +1,9 @@
 /**
  * UI primitives of the Brain Trails design system.
  *
- * Everything here is built on the tokens in globals.css: monochrome surfaces, one
- * accent for interaction, hairline separators, press feedback on pointer-down.
+ * Everything here is built on the tokens in globals.css: monochrome surfaces, ink
+ * for interaction (the accent tokens resolve to it), hairline separators, press
+ * feedback on pointer-down. Colour is left to the trail.
  * Components stay deliberately small; composition happens in the pages.
  */
 import { type ComponentProps, forwardRef } from "react";
@@ -18,8 +19,9 @@ const BUTTON_VARIANT: Record<ButtonVariant, string> = {
   primary:
     "bg-accent text-on-accent hover:bg-accent-hover disabled:opacity-40 disabled:hover:bg-accent",
   secondary:
-    "bg-surface-2 text-ink hover:bg-surface-3 disabled:opacity-40 disabled:hover:bg-surface-2",
-  ghost: "bg-transparent text-accent hover:bg-accent-soft disabled:opacity-40",
+    "border border-hairline-strong bg-transparent text-ink hover:bg-surface-2 disabled:opacity-40 disabled:hover:bg-transparent",
+  ghost:
+    "bg-transparent text-ink-2 hover:bg-accent-soft hover:text-ink disabled:opacity-40",
   danger:
     "bg-danger-soft text-danger hover:bg-danger hover:text-white disabled:opacity-40",
 };
@@ -27,8 +29,25 @@ const BUTTON_VARIANT: Record<ButtonVariant, string> = {
 const BUTTON_SIZE: Record<ButtonSize, string> = {
   sm: "h-8 px-3.5 text-[13px]",
   md: "h-10 px-5 text-[15px]",
-  lg: "h-12 px-7 text-[17px]",
+  lg: "h-12 px-7 text-[16px] font-semibold",
 };
+
+/**
+ * The button look as a class string, for a `Link` that should read as a button
+ * without nesting a <button> inside an <a>.
+ */
+export function buttonClass(
+  variant: ButtonVariant = "primary",
+  size: ButtonSize = "md",
+  className?: string
+): string {
+  return cn(
+    "pressable inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap select-none disabled:cursor-not-allowed",
+    BUTTON_VARIANT[variant],
+    BUTTON_SIZE[size],
+    className
+  );
+}
 
 export const Button = forwardRef<
   HTMLButtonElement,
@@ -41,12 +60,7 @@ export const Button = forwardRef<
     <button
       ref={ref}
       type={type}
-      className={cn(
-        "pressable inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap select-none disabled:cursor-not-allowed",
-        BUTTON_VARIANT[variant],
-        BUTTON_SIZE[size],
-        className
-      )}
+      className={buttonClass(variant, size, className)}
       {...props}
     />
   );
@@ -235,9 +249,7 @@ export function Stat({
   return (
     <Card className="p-5">
       <p className="type-caption text-ink-3">{label}</p>
-      <p className="mt-1 text-[28px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
-        {value}
-      </p>
+      <p className="type-figure mt-1.5">{value}</p>
       {hint && <p className="type-caption mt-2 text-ink-3">{hint}</p>}
     </Card>
   );
@@ -353,27 +365,9 @@ export function Icon({
   name,
   className,
 }: {
-  name:
-    | "chevron"
-    | "back"
-    | "plus"
-    | "download"
-    | "trash"
-    | "check"
-    | "copy"
-    | "lock";
+  name: IconName;
   className?: string;
 }) {
-  const paths: Record<typeof name, string> = {
-    chevron: "M6 3l5 5-5 5",
-    back: "M10 3L5 8l5 5",
-    plus: "M8 3v10M3 8h10",
-    download: "M8 2v8m0 0l3-3M8 10L5 7M3 13h10",
-    trash: "M3 4h10M6 4V2.5h4V4M5 4l.6 9h4.8L11 4",
-    check: "M3 8.5l3 3 7-7",
-    copy: "M6 6h7v7H6zM3 10V3h7",
-    lock: "M5 7V5a3 3 0 016 0v2M3.5 7h9v6.5h-9z",
-  };
   return (
     <svg
       aria-hidden
@@ -381,7 +375,7 @@ export function Icon({
       className={cn("h-4 w-4 shrink-0", className)}
     >
       <path
-        d={paths[name]}
+        d={ICON_PATHS[name]}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.6"
@@ -391,3 +385,34 @@ export function Icon({
     </svg>
   );
 }
+
+const ICON_PATHS = {
+  chevron: "M6 3l5 5-5 5",
+  back: "M10 3L5 8l5 5",
+  plus: "M8 3v10M3 8h10",
+  download: "M8 2v8m0 0l3-3M8 10L5 7M3 13h10",
+  trash: "M3 4h10M6 4V2.5h4V4M5 4l.6 9h4.8L11 4",
+  check: "M3 8.5l3 3 7-7",
+  copy: "M6 6h7v7H6zM3 10V3h7",
+  lock: "M5 7V5a3 3 0 016 0v2M3.5 7h9v6.5h-9z",
+  home: "M2.5 7.5L8 3l5.5 4.5M4 6.5V13h3v-3.5h2V13h3V6.5",
+  library: "M2.5 3.5h11v9h-11zM6.8 6v4l3.2-2z",
+  record:
+    "M2.5 8a5.5 5.5 0 1011 0 5.5 5.5 0 10-11 0M6 8a2 2 0 104 0 2 2 0 10-4 0",
+  recordings: "M2.5 11c1.5-4 2.5-6 3.5-3s2 4 3.5 0 2.5-3 4-5",
+  graph:
+    "M2.5 4.5a1.5 1.5 0 103 0 1.5 1.5 0 10-3 0M10.5 4.5a1.5 1.5 0 103 0 1.5 1.5 0 10-3 0M6.5 12a1.5 1.5 0 103 0 1.5 1.5 0 10-3 0M5.5 4.5h5M4.7 5.8l2.6 4.9M11.3 5.8l-2.6 4.9",
+  protocol: "M5.5 4h8M5.5 8h8M5.5 12h8M2.5 4h.01M2.5 8h.01M2.5 12h.01",
+  person:
+    "M5.5 5.5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0M3 13.5c.6-2.4 2.6-3.7 5-3.7s4.4 1.3 5 3.7",
+  shield: "M8 2l5 2v4c0 3-2.2 5-5 6-2.8-1-5-3-5-6V4z",
+  sun: "M5.5 8a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1",
+  moon: "M13 9.6A5.5 5.5 0 016.4 3 5.5 5.5 0 1013 9.6z",
+  signout: "M9.5 3H3.5v10h6M7 8h7M11.5 5.5L14 8l-2.5 2.5",
+  menu: "M2.5 4.5h11M2.5 8h11M2.5 11.5h11",
+  close: "M4 4l8 8M12 4l-8 8",
+  stop: "M4.5 4.5h7v7h-7z",
+  flag: "M4 14V2.5M4 3h8l-1.8 3L12 9H4",
+} as const;
+
+export type IconName = keyof typeof ICON_PATHS;

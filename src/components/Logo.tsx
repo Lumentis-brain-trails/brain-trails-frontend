@@ -1,7 +1,7 @@
 /**
- * The mark: a trail through a square. Monochrome by design so it sits quietly
- * in the header and inherits `currentColor`; the single accent dot is the
- * present moment at the end of the path.
+ * The mark: a trail through a square. Monochrome by design so it sits quietly in
+ * the chrome and inherits `currentColor`; the one coloured dot is the present
+ * moment at the end of the path, in the trail's end colour.
  */
 export function Logo({
   size = 28,
@@ -37,19 +37,7 @@ export function Logo({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="23" cy="12" r="2.6" fill="var(--accent)" />
+      <circle cx="23" cy="12" r="2.6" fill="var(--trail-end)" />
     </svg>
-  );
-}
-
-export function Wordmark({ size = 17 }: { size?: number }) {
-  return (
-    <span
-      className="flex items-center gap-2.5 font-semibold tracking-[-0.02em]"
-      style={{ fontSize: size }}
-    >
-      <Logo size={Math.round(size * 1.5)} />
-      Brain Trails
-    </span>
   );
 }

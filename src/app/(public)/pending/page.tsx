@@ -33,7 +33,7 @@ export default function PendingPage() {
         </p>
         <Link
           href="/login"
-          className="pressable mt-8 inline-flex h-10 items-center rounded-full px-5 font-medium text-accent hover:bg-accent-soft"
+          className="pressable mt-8 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[16px] font-semibold text-on-accent hover:bg-accent-hover"
         >
           Go to sign in
         </Link>

@@ -243,14 +243,14 @@ function GoNoGoRenderer({
         aria-label="Signal Navigator stimulus area"
       />
       <div className="flex items-center justify-between gap-4 px-6 py-4">
-        <span className="text-xs text-neutral-500" aria-live="off">
+        <span className="type-caption text-ink-3" aria-live="off">
           Trial {Math.min(progress.index + 1, progress.total)} of{" "}
           {progress.total}
         </span>
         <button
           type="button"
           onPointerDown={(event) => onPress(event.timeStamp)}
-          className="rounded-full bg-indigo-600 px-10 py-4 text-base font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+          className="pressable rounded-full bg-accent px-10 py-4 text-base font-semibold text-on-accent hover:bg-accent-hover"
         >
           Dock
         </button>

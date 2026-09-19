@@ -5,7 +5,14 @@ import Link from "next/link";
 import { use } from "react";
 import { api } from "@/lib/api";
 import { mediaAccess, type Media } from "@/lib/types";
-import { Button, Card, ErrorBanner, KeyValue, Skeleton } from "@/components/ui";
+import {
+  Button,
+  buttonClass,
+  Card,
+  ErrorBanner,
+  KeyValue,
+  Skeleton,
+} from "@/components/ui";
 
 const KIND_LABEL: Record<Media["kind"], string> = {
   video: "Video",
@@ -44,8 +51,8 @@ export default function MediaDetailPage({
       <main className="mx-auto max-w-3xl px-6 py-10">
         <ErrorBanner message="This item is not in your library." />
         <div className="mt-6">
-          <Link href="/library">
-            <Button variant="secondary">Back to the library</Button>
+          <Link href="/library" className={buttonClass("secondary")}>
+            Back to the library
           </Link>
         </div>
       </main>

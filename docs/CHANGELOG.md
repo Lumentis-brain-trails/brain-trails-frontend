@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Interface: the entry screen's look carries into the app. A collapsible sidebar
+  (icon rail, opens over the page on hover) replaces the top header and gains
+  Home, Protocols and the account; a light/dark switch in the sidebar (stored
+  choice, else the system setting, no flash on load); trails, terrain paths and EEG
+  channels are drawn in the ribbons' four colours; titles use Manrope; primary
+  buttons are ink instead of blue. Sign in, register and the other auth screens sit
+  on the dark ribbon ground. New Home page (start a trail, the week, recent trails
+  drawn from their own data), now the landing page after sign-in. Recording and
+  protocol runs switch to a full-screen focus mode. Removed the old `AppHeader`,
+  `Wordmark` and the unused `TrailIllustration`; the protocol screens drop the
+  Tailwind default palette for the design tokens.
 - Record page: the Muse S Athena records too. Its multiplexed BLE protocol (one
   characteristic, 14-bit samples, 256 kHz device clock) has its own decoder in
   `src/lib/muse/athena.ts`; which generation is on the head is detected after

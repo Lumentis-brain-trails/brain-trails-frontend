@@ -118,7 +118,7 @@ function PromptRenderer({
           <p
             key={index}
             data-motion="decor"
-            className="text-xl leading-relaxed whitespace-pre-line text-neutral-100"
+            className="text-xl leading-relaxed whitespace-pre-line text-ink"
           >
             {line.text}
           </p>
@@ -130,7 +130,7 @@ function PromptRenderer({
         </Button>
       )}
       {config.footnote && (
-        <p className="text-xs text-neutral-400">{config.footnote}</p>
+        <p className="type-caption text-ink-3">{config.footnote}</p>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import type { Analysis } from "@/lib/types";
 import { densityField, energyField } from "@/lib/landscape";
-import { useChartTheme } from "@/lib/theme";
+import { trailColorscale, useChartTheme } from "@/lib/theme";
 import { Segmented } from "./ui";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -114,7 +114,7 @@ export function TrailPlot({
                   z: field.z,
                   type: "contour" as const,
                   colorscale: [
-                    [0, theme.trail1],
+                    [0, theme.terrain.fill],
                     [0.5, theme.hairline],
                     [1, "rgba(0,0,0,0)"],
                   ] as [number, string][],
@@ -133,7 +133,7 @@ export function TrailPlot({
             y: ys,
             mode: "lines",
             type: "scatter",
-            line: { color: theme.trail0, width: 1.5, shape: "spline" },
+            line: { color: theme.hairline, width: 1.5, shape: "spline" },
             hoverinfo: "skip",
             showlegend: false,
           },
@@ -144,10 +144,7 @@ export function TrailPlot({
             type: "scatter",
             marker: {
               color: ts,
-              colorscale: [
-                [0, theme.trail0],
-                [1, theme.trail1],
-              ],
+              colorscale: trailColorscale(theme),
               size: 7,
               line: { width: 0 },
               colorbar: {
@@ -166,7 +163,7 @@ export function TrailPlot({
             hoverlabel: {
               bgcolor: theme.ink,
               bordercolor: theme.ink,
-              font: { color: theme.trail0 === "#d2d2d7" ? "#fff" : "#000" },
+              font: { color: theme.canvas },
             },
             showlegend: false,
           },
@@ -222,6 +219,11 @@ export function TrailPlot({
                 },
               },
           paper_bgcolor: "rgba(0,0,0,0)",
+          modebar: {
+            bgcolor: "rgba(0,0,0,0)",
+            color: theme.ink3,
+            activecolor: theme.ink,
+          },
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { family: "-apple-system, BlinkMacSystemFont, system-ui" },
           legend: {

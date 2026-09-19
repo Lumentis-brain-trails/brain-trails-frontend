@@ -3,18 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { formatDuration } from "@/lib/format";
 import type { Recording } from "@/lib/types";
 import { Card, EmptyState, Icon, Skeleton } from "@/components/ui";
 
 /** Three minutes at one window per second: below this the dynamics are unmeasurable. */
 const MIN_DURATION_S = 180;
-
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "–";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m ? `${m} min ${s} s` : `${s} s`;
-}
 
 /**
  * Pick a session to read the shape of.

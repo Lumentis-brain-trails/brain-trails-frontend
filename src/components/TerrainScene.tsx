@@ -6,7 +6,7 @@ import { Line, OrbitControls, Sphere } from "@react-three/drei";
 import * as THREE from "three";
 import type { Field } from "@/lib/landscape";
 import { terrainGeometry, trailOnTerrain } from "@/lib/terrainMesh";
-import type { ChartTheme } from "@/lib/theme";
+import { trailColorAt, type ChartTheme } from "@/lib/theme";
 
 /**
  * The trail's terrain, in 3D: a mesh raised by the session's own energy field and
@@ -59,18 +59,8 @@ export function TerrainScene({
         camera={{ position: [0, extent * 1.4, extent * 1.8], fov: 45 }}
         gl={{ antialias: true }}
       >
-        <color
-          attach="background"
-          args={[theme.ink === "#1d1d1f" ? "#f5f5f7" : "#0d1117"]}
-        />
-        <fog
-          attach="fog"
-          args={[
-            theme.ink === "#1d1d1f" ? "#f5f5f7" : "#0d1117",
-            extent * 2,
-            extent * 5,
-          ]}
-        />
+        <color attach="background" args={[theme.terrain.low]} />
+        <fog attach="fog" args={[theme.terrain.low, extent * 2, extent * 5]} />
         <ambientLight intensity={0.6} />
         <directionalLight
           position={[extent, extent * 2, extent]}
@@ -78,12 +68,8 @@ export function TerrainScene({
           castShadow
         />
 
-        <Terrain geometry={geometry} />
-        <Trail
-          vertices={trailVertices}
-          trail0={theme.trail0}
-          trail1={theme.trail1}
-        />
+        <Terrain geometry={geometry} theme={theme} />
+        <Trail vertices={trailVertices} stops={theme.trail} />
         <Sphere
           args={[extent * 0.012, 16, 16]}
           position={[
@@ -137,17 +123,14 @@ const fragmentShader = /* glsl */ `
   uniform float uMax;
   uniform vec3 uLightDir;
 
+  uniform vec3 uLow;
+  uniform vec3 uHigh;
+  uniform vec3 uLine;
+
+  // Monochrome, from basin (heavily visited, low energy) to ridge (barrier): the
+  // colour on screen belongs to the trail walked across it.
   vec3 ramp(float h) {
-    // Topo-map style: basin (heavily visited, low energy) to ridge (barrier).
-    vec3 c0 = vec3(0.10, 0.24, 0.20);
-    vec3 c1 = vec3(0.20, 0.42, 0.24);
-    vec3 c2 = vec3(0.55, 0.52, 0.30);
-    vec3 c3 = vec3(0.48, 0.38, 0.28);
-    vec3 c4 = vec3(0.92, 0.93, 0.95);
-    if (h < 0.25) return mix(c0, c1, h / 0.25);
-    if (h < 0.55) return mix(c1, c2, (h - 0.25) / 0.30);
-    if (h < 0.8) return mix(c2, c3, (h - 0.55) / 0.25);
-    return mix(c3, c4, (h - 0.8) / 0.20);
+    return mix(uLow, uHigh, smoothstep(0.0, 1.0, h));
   }
 
   void main() {
@@ -161,15 +144,17 @@ const fragmentShader = /* glsl */ `
     float distToLine = abs(fract(hs) - 0.5) * -1.0 + 0.5;
     float aa = max(fwidth(hs), 0.0001) * 1.2;
     float line = smoothstep(0.0, aa, distToLine);
-    vec3 withContour = mix(vec3(0.15, 0.12, 0.08), lit, line);
+    vec3 withContour = mix(uLine, lit, line);
     gl_FragColor = vec4(withContour, 1.0);
   }
 `;
 
 function Terrain({
   geometry,
+  theme,
 }: {
   geometry: ReturnType<typeof terrainGeometry>;
+  theme: ChartTheme;
 }) {
   const geo = useMemo(() => {
     const { resolution, vertices } = geometry;
@@ -194,8 +179,11 @@ function Terrain({
       uMin: { value: geometry.minHeight },
       uMax: { value: geometry.maxHeight },
       uLightDir: { value: new THREE.Vector3(0.5, 1, 0.3) },
+      uLow: { value: new THREE.Color(theme.terrain.low) },
+      uHigh: { value: new THREE.Color(theme.terrain.high) },
+      uLine: { value: new THREE.Color(theme.terrain.line) },
     }),
-    [geometry]
+    [geometry, theme]
   );
 
   return (
@@ -211,25 +199,24 @@ function Terrain({
 
 function Trail({
   vertices,
-  trail0,
-  trail1,
+  stops,
 }: {
   vertices: ReturnType<typeof trailOnTerrain>;
-  trail0: string;
-  trail1: string;
+  stops: readonly string[];
 }) {
   const points = useMemo(
     () => vertices.map((v) => new THREE.Vector3(v.x, v.y, v.z)),
     [vertices]
   );
   const colors = useMemo(() => {
-    const from = new THREE.Color(trail0);
-    const to = new THREE.Color(trail1);
     const first = vertices[0]?.t ?? 0;
     const last = vertices[vertices.length - 1]?.t ?? 1;
     const span = Math.max(last - first, 1e-9);
-    return vertices.map((v) => from.clone().lerp(to, (v.t - first) / span));
-  }, [vertices, trail0, trail1]);
+    return vertices.map((v) => {
+      const [r, g, b] = trailColorAt(stops, (v.t - first) / span);
+      return new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
+    });
+  }, [vertices, stops]);
 
   return <Line points={points} vertexColors={colors} lineWidth={2.5} />;
 }

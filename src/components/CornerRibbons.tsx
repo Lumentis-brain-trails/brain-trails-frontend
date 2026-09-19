@@ -36,6 +36,8 @@ type Ribbon = {
   tailRadius: number;
   /** Slide in and out of the corner along this vector, in fractions of the viewport. */
   travel: [number, number];
+  /** Out of the frame, into its own corner: where `retreat` pushes it. */
+  out: [number, number];
   /** Seconds for one in-and-out cycle. */
   period: number;
   phase: number;
@@ -61,6 +63,7 @@ const RIBBONS: Ribbon[] = [
     headRadius: 0.072,
     tailRadius: 0.038,
     travel: [0.1, 0.03],
+    out: [-0.5, -1],
     period: 12,
     phase: 0,
   },
@@ -76,6 +79,7 @@ const RIBBONS: Ribbon[] = [
     headRadius: 0.078,
     tailRadius: 0.036,
     travel: [-0.08, -0.06],
+    out: [0.5, 1],
     period: 14,
     phase: 2.2,
   },
@@ -160,13 +164,14 @@ function drawRibbon(
   ribbon: Ribbon,
   time: number,
   w: number,
-  h: number
+  h: number,
+  retreat: number
 ): void {
   const unit = Math.min(w, h) || 1;
   const k = (time / ribbon.period) * Math.PI * 2 + ribbon.phase;
   const inOut = (Math.sin(k) + 1) / 2;
-  const ox = ribbon.travel[0] * w * (inOut - 0.5);
-  const oy = ribbon.travel[1] * h * (inOut - 0.5);
+  const ox = ribbon.travel[0] * w * (inOut - 0.5) + ribbon.out[0] * retreat * w;
+  const oy = ribbon.travel[1] * h * (inOut - 0.5) + ribbon.out[1] * retreat * h;
   const sway = Math.sin(k * 1.6 + 0.8) * 0.05;
   const at = (p: Point, sx: number, sy: number): Point => [
     p[0] * w + ox + sx * w,
@@ -216,7 +221,19 @@ function drawRibbon(
   ctx.fill();
 }
 
-export function CornerRibbons({ className }: { className?: string }) {
+/**
+ * `retreat` (a fraction of the viewport) tucks both ribbons further into their
+ * corners: 0 is the entry screen, the auth screens pass a little more so the form
+ * has the middle to itself. The ribbons glide there from the entry-screen position
+ * on mount, which is what makes "Sign in" feel like the same room stepping aside.
+ */
+export function CornerRibbons({
+  className,
+  retreat = 0,
+}: {
+  className?: string;
+  retreat?: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -248,12 +265,20 @@ export function CornerRibbons({ className }: { className?: string }) {
       low.height = lowHeight;
     };
 
+    // Settle from the entry-screen position into `retreat` over the story duration.
+    const SETTLE_S = 0.9;
+    const retreatAt = (time: number) => {
+      if (reduced.matches) return retreat;
+      const k = Math.min(1, time / SETTLE_S);
+      return retreat * (1 - Math.pow(1 - k, 3));
+    };
+
     const frame = (time: number) => {
       lctx.filter = "none";
       lctx.clearRect(0, 0, lowWidth, lowHeight);
       if (canBlur) lctx.filter = `blur(${BLUR_LOW}px)`;
       for (const ribbon of RIBBONS)
-        drawRibbon(lctx, ribbon, time, lowWidth, lowHeight);
+        drawRibbon(lctx, ribbon, time, lowWidth, lowHeight, retreatAt(time));
       lctx.filter = "none";
       ctx.clearRect(0, 0, width, height);
       ctx.imageSmoothingEnabled = true;
@@ -307,7 +332,7 @@ export function CornerRibbons({ className }: { className?: string }) {
       document.removeEventListener("visibilitychange", onVisibility);
       reduced.removeEventListener("change", onReducedChange);
     };
-  }, []);
+  }, [retreat]);
 
   return <canvas ref={canvasRef} aria-hidden className={className} />;
 }

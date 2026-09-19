@@ -14,7 +14,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Card, ErrorBanner, Spinner } from "@/components/ui";
+import { buttonClass, Card, ErrorBanner, Spinner } from "@/components/ui";
 import "@/components/protocol/kinds";
 import { api } from "@/lib/api";
 import {
@@ -39,10 +39,10 @@ export default function ProtocolsPage() {
   );
 
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">Protocols</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+    <main className="mx-auto max-w-4xl px-6 py-10">
+      <header className="mb-8">
+        <h1 className="type-title">Protocols</h1>
+        <p className="mt-1 text-ink-2">
           Each protocol is a sequence of tasks and prompts that emits a timed
           marker stream.
         </p>
@@ -61,18 +61,14 @@ export default function ProtocolsPage() {
 
       {games.data?.length === 0 && unpublished.length === 0 && (
         <Card>
-          <p className="text-sm text-neutral-500">
-            No protocols are published yet.
-          </p>
+          <p className="text-ink-2">No protocols are published yet.</p>
         </Card>
       )}
 
       {unpublished.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-1 text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-            Not in the catalog
-          </h2>
-          <p className="mb-3 text-xs text-neutral-500">
+          <h2 className="type-subhead mb-1">Not in the catalog</h2>
+          <p className="type-caption mb-3 text-ink-3">
             These ship with this build but have no catalog entry, so no session
             can be recorded against them. An administrator publishes one as a
             game naming its module.
@@ -82,14 +78,14 @@ export default function ProtocolsPage() {
               <Card key={module}>
                 <div className="flex items-start justify-between gap-6">
                   <div>
-                    <h3 className="font-semibold">{definition.title}</h3>
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <h3 className="type-subhead">{definition.title}</h3>
+                    <p className="type-caption mt-1 text-ink-3">
                       module <code>{module}</code>
                     </p>
                   </div>
                   <Link
                     href={`/protocols/${definition.id}/run`}
-                    className="shrink-0 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                    className={buttonClass("secondary", "sm")}
                   >
                     Try without recording
                   </Link>
@@ -100,7 +96,7 @@ export default function ProtocolsPage() {
         </section>
       )}
 
-      <p className="mt-6 text-xs text-neutral-500">
+      <p className="type-caption mt-8 text-ink-3">
         These tasks are not a medical assessment and do not diagnose any
         condition.
       </p>
@@ -117,20 +113,20 @@ function CatalogRow({ item }: { item: Media }) {
     <Card>
       <div className="flex items-start justify-between gap-6">
         <div>
-          <h2 className="font-semibold">{item.title}</h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h2 className="type-subhead">{item.title}</h2>
+          <p className="type-caption mt-1 text-ink-3">
             {definition
               ? `${definition.steps.length} steps · version ${definition.version}`
               : `module ${item.module ?? "—"}`}
             {item.visibility === "official" && " · official"}
           </p>
           {definition && (
-            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="mt-2 text-[14px] text-ink-2">
               {definition.steps.map((step) => step.label).join(" → ")}
             </p>
           )}
           {!runnable && (
-            <p className="mt-2 text-sm text-red-600">
+            <p className="mt-2 text-[14px] text-danger">
               {parsed && !parsed.ok
                 ? parsed.error
                 : `This build cannot run module "${item.module ?? "—"}".`}
@@ -140,7 +136,7 @@ function CatalogRow({ item }: { item: Media }) {
         {runnable && (
           <Link
             href={`/protocols/${definition!.id}/run?media=${item.id}`}
-            className="shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+            className={buttonClass("primary", "sm")}
           >
             Start
           </Link>

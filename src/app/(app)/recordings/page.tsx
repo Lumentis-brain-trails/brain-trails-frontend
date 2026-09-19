@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { formatDate, formatDuration } from "@/lib/format";
 import type { Recording } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UploadDialog } from "@/components/UploadDialog";
@@ -15,21 +16,6 @@ import {
   Skeleton,
   Stat,
 } from "@/components/ui";
-
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "–";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m ? `${m} min ${s} s` : `${s} s`;
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export default function RecordingsPage() {
   const [showUpload, setShowUpload] = useState(false);

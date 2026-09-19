@@ -22,9 +22,12 @@ const FRAME_MS = 100;
 export function LiveSignal({
   getRecent,
   active,
+  height = 260,
 }: {
   getRecent: (seconds: number) => Record<EegChannel, Float32Array>;
   active: boolean;
+  /** Plot height in CSS pixels; the width follows the container. */
+  height?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
@@ -38,7 +41,7 @@ export function LiveSignal({
     plotRef.current = new uPlot(
       {
         width: el.clientWidth,
-        height: 260,
+        height,
         cursor: { show: false },
         legend: { show: false },
         scales: {
@@ -66,14 +69,14 @@ export function LiveSignal({
       el
     );
     const onResize = () =>
-      plotRef.current?.setSize({ width: el.clientWidth, height: 260 });
+      plotRef.current?.setSize({ width: el.clientWidth, height });
     window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
       plotRef.current?.destroy();
       plotRef.current = null;
     };
-  }, [theme]);
+  }, [theme, height]);
 
   useEffect(() => {
     if (!active) return;
@@ -99,7 +102,7 @@ export function LiveSignal({
 
   return (
     <div>
-      <div ref={containerRef} className="min-h-[260px]" />
+      <div ref={containerRef} style={{ minHeight: height }} />
       <div className="flex flex-wrap gap-4 px-1 pt-2">
         {EEG_CHANNELS.map((c, i) => (
           <span

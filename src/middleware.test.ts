@@ -21,6 +21,8 @@ describe("middleware", () => {
 
   test("guards only the authenticated areas", () => {
     expect(config.matcher).toEqual([
+      "/home",
+      "/account",
       "/library",
       "/library/:path*",
       "/recordings/:path*",

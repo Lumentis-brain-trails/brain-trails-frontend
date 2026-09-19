@@ -263,11 +263,9 @@ export function ProtocolRunner({
     return (
       <Shell onStop={() => onExit("user")}>
         <div className="flex h-full flex-col items-center justify-center gap-6 px-6 text-center">
-          <h1 className="text-2xl font-semibold text-neutral-100">
-            {protocol.title}
-          </h1>
-          <p className="max-w-xl text-neutral-300">{protocol.contentWarning}</p>
-          <label className="flex items-center gap-2 text-sm text-neutral-300">
+          <h1 className="type-title">{protocol.title}</h1>
+          <p className="max-w-xl text-ink-2">{protocol.contentWarning}</p>
+          <label className="flex items-center gap-2 text-[14px] text-ink-2">
             <input
               type="checkbox"
               checked={reducedMotion}
@@ -276,7 +274,7 @@ export function ProtocolRunner({
             Reduce motion
           </label>
           <Button onClick={() => setScreen("running")}>Begin</Button>
-          <p className="text-xs text-neutral-500">
+          <p className="type-caption text-ink-3">
             This is not a medical assessment or diagnosis. You can stop at any
             time.
           </p>
@@ -303,12 +301,10 @@ export function ProtocolRunner({
         reducedMotion={reducedMotion}
       />
       {screen === "confirm-exit" && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="max-w-sm rounded-xl border border-neutral-700 bg-neutral-900 p-6 text-center">
-            <h2 className="mb-2 font-semibold text-neutral-100">
-              Stop this session?
-            </h2>
-            <p className="mb-5 text-sm text-neutral-400">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-(--scrim)">
+          <div className="enter-pop max-w-sm rounded-[var(--radius-sheet)] border border-hairline bg-surface p-6 text-center shadow-(--shadow-sheet)">
+            <h2 className="type-heading mb-2">Stop this session?</h2>
+            <p className="mb-5 text-[14px] text-ink-2">
               What you have done so far is kept. You cannot resume this run.
             </p>
             <div className="flex justify-center gap-3">
@@ -336,10 +332,13 @@ function Shell({
   label?: string;
 }) {
   return (
-    <div className="relative flex h-dvh flex-col bg-[#080b14]">
+    <div
+      data-theme="dark"
+      className="relative flex h-dvh flex-col bg-[#080b14] text-ink"
+    >
       <div className="flex items-center justify-between px-6 py-3">
-        <span className="text-sm text-neutral-400">{label ?? ""}</span>
-        <Button variant="ghost" onClick={onStop} className="text-neutral-300">
+        <span className="text-[14px] text-ink-2">{label ?? ""}</span>
+        <Button variant="ghost" onClick={onStop}>
           Stop
         </Button>
       </div>

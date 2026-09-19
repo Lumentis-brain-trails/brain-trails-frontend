@@ -92,7 +92,7 @@ function BreathingRenderer({
           <div
             data-motion="decor"
             aria-hidden="true"
-            className="h-40 w-40 rounded-full bg-indigo-500/25 ring-2 ring-indigo-400/50"
+            className="h-40 w-40 rounded-full bg-(--trail-c)/25 ring-2 ring-(--trail-c)/50"
             style={
               reducedMotion
                 ? undefined
@@ -102,17 +102,14 @@ function BreathingRenderer({
                   }
             }
           />
-          <p
-            aria-live="polite"
-            className="text-2xl font-medium text-neutral-100"
-          >
+          <p aria-live="polite" className="type-title">
             {current ? PHASE_WORD[current.phase] : "Settle"}
           </p>
           {reducedMotion && current && (
-            <div className="h-1 w-40 overflow-hidden rounded bg-neutral-700">
+            <div className="h-1 w-40 overflow-hidden rounded-full bg-surface-3">
               <div
                 data-motion="status"
-                className="h-full bg-indigo-400"
+                className="h-full bg-(--trail-c)"
                 style={{
                   animation: `bt-breath-progress ${current.durationMs}ms linear forwards`,
                 }}
@@ -125,7 +122,7 @@ function BreathingRenderer({
       {isRule && (
         <p
           aria-live="polite"
-          className="max-w-xl text-2xl leading-relaxed whitespace-pre-line text-neutral-100"
+          className="max-w-xl text-2xl leading-relaxed whitespace-pre-line text-ink"
         >
           {current?.text}
         </p>

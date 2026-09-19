@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
+import { AuthPanel } from "@/components/AuthPanel";
 import {
   type AccountForm,
   type ProfileForm,
@@ -116,227 +117,232 @@ export default function RegisterPage() {
         </div>
         <Steps current={step} />
       </div>
-      {error && (
-        <div className="mb-6">
-          <ErrorBanner message={error} />
-        </div>
-      )}
-
-      {step === 1 && (
-        <form
-          key="account"
-          noValidate
-          className="enter-up max-w-sm space-y-4"
-          onSubmit={accountForm.handleSubmit((values) => {
-            setAccount(values);
-            setStep(2);
-          })}
-        >
-          <Field
-            label="Email"
-            error={accountForm.formState.errors.email?.message}
-          >
-            <Input
-              type="email"
-              autoComplete="email"
-              autoFocus
-              {...accountForm.register("email")}
-            />
-          </Field>
-          <Field
-            label="Password"
-            hint="At least 10 characters."
-            error={accountForm.formState.errors.password?.message}
-          >
-            <Input
-              type="password"
-              autoComplete="new-password"
-              {...accountForm.register("password")}
-            />
-          </Field>
-          <div className="pt-2">
-            <Button type="submit">Continue</Button>
+      <AuthPanel>
+        {error && (
+          <div className="mb-6">
+            <ErrorBanner message={error} />
           </div>
-          <p className="pt-4 text-[14px] text-ink-2">
-            Already registered?{" "}
-            <Link className="text-accent hover:underline" href="/login">
-              Sign in
-            </Link>
-          </p>
-        </form>
-      )}
+        )}
 
-      {step === 2 && (
-        <form
-          key="profile"
-          noValidate
-          className="enter-up space-y-8"
-          onSubmit={profileForm.handleSubmit((values) => {
-            setProfile(values);
-            setStep(3);
-          })}
-        >
-          <section>
-            <h2 className="type-subhead">About you</h2>
-            <p className="type-caption mt-1 mb-4 text-ink-3">
-              Required. This information contextualises your EEG data.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full name" error={perr.full_name?.message}>
-                <Input autoFocus {...profileForm.register("full_name")} />
-              </Field>
-              <Field label="Birth year" error={perr.birth_year?.message}>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  {...profileForm.register("birth_year")}
-                />
-              </Field>
-              <Field label="Sex at birth" error={perr.sex_at_birth?.message}>
-                <Input {...profileForm.register("sex_at_birth")} />
-              </Field>
-              <Field label="Handedness" error={perr.handedness?.message}>
-                <Select {...profileForm.register("handedness")}>
-                  <option value="">Choose…</option>
-                  <option value="right">Right</option>
-                  <option value="left">Left</option>
-                  <option value="ambidextrous">Ambidextrous</option>
-                </Select>
-              </Field>
+        {step === 1 && (
+          <form
+            key="account"
+            noValidate
+            className="enter-up max-w-sm space-y-4"
+            onSubmit={accountForm.handleSubmit((values) => {
+              setAccount(values);
+              setStep(2);
+            })}
+          >
+            <Field
+              label="Email"
+              error={accountForm.formState.errors.email?.message}
+            >
+              <Input
+                type="email"
+                autoComplete="email"
+                autoFocus
+                {...accountForm.register("email")}
+              />
+            </Field>
+            <Field
+              label="Password"
+              hint="At least 10 characters."
+              error={accountForm.formState.errors.password?.message}
+            >
+              <Input
+                type="password"
+                autoComplete="new-password"
+                {...accountForm.register("password")}
+              />
+            </Field>
+            <div className="pt-2">
+              <Button type="submit">Continue</Button>
             </div>
-          </section>
-
-          <section>
-            <h2 className="type-subhead">Background</h2>
-            <p className="type-caption mt-1 mb-4 text-ink-3">
-              Optional. Leave blank what you prefer not to share.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Gender">
-                <Input {...profileForm.register("gender")} />
-              </Field>
-              <Field label="Education level">
-                <Input {...profileForm.register("education_level")} />
-              </Field>
-              <Field label="Occupation">
-                <Input {...profileForm.register("occupation")} />
-              </Field>
-              <Field
-                label="Native languages"
-                hint="Comma separated, e.g. it, en"
+            <p className="pt-4 text-[14px] text-ink-2">
+              Already registered?{" "}
+              <Link
+                className="font-semibold text-ink hover:underline"
+                href="/login"
               >
-                <Input {...profileForm.register("native_languages")} />
-              </Field>
-              <Field label="Musical training (years)">
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  {...profileForm.register("musical_training_years")}
-                />
-              </Field>
-              <Field label="Meditation practice">
-                <Input
-                  placeholder="none / occasional / daily"
-                  {...profileForm.register("meditation_practice")}
-                />
-              </Field>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="type-subhead">Habits and health</h2>
-            <p className="type-caption mt-1 mb-4 text-ink-3">
-              Optional. Helps interpret the signal.
+                Sign in
+              </Link>
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Caffeine (cups per day)">
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  {...profileForm.register("caffeine_cups_per_day")}
-                />
-              </Field>
-              <Field label="Average sleep (hours)">
-                <Input
-                  type="number"
-                  step="0.5"
-                  inputMode="decimal"
-                  {...profileForm.register("avg_sleep_hours")}
-                />
-              </Field>
-              <Field label="Nicotine use">
-                <Input {...profileForm.register("nicotine_use")} />
-              </Field>
-              <Field label="Alcohol use">
-                <Input {...profileForm.register("alcohol_use")} />
-              </Field>
-              <Field label="Vision correction">
-                <Input
-                  placeholder="none / glasses / lenses"
-                  {...profileForm.register("vision_correction")}
-                />
-              </Field>
-              <Field label="Hearing issues">
-                <Input {...profileForm.register("hearing_issues")} />
-              </Field>
-            </div>
-            <div className="mt-4 space-y-4">
-              <Field label="Medications">
-                <Input {...profileForm.register("medications")} />
-              </Field>
-              <Field label="Neurological conditions">
-                <Input {...profileForm.register("neurological_conditions")} />
-              </Field>
-              <Field label="Psychiatric conditions">
-                <Input {...profileForm.register("psychiatric_conditions")} />
-              </Field>
-              <Field label="Notes">
-                <Textarea rows={3} {...profileForm.register("notes")} />
-              </Field>
-            </div>
-          </section>
+          </form>
+        )}
 
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setStep(1)}
-            >
-              Back
-            </Button>
-            <Button type="submit">Continue</Button>
-          </div>
-        </form>
-      )}
+        {step === 2 && (
+          <form
+            key="profile"
+            noValidate
+            className="enter-up space-y-8"
+            onSubmit={profileForm.handleSubmit((values) => {
+              setProfile(values);
+              setStep(3);
+            })}
+          >
+            <section>
+              <h2 className="type-subhead">About you</h2>
+              <p className="type-caption mt-1 mb-4 text-ink-3">
+                Required. This information contextualises your EEG data.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Full name" error={perr.full_name?.message}>
+                  <Input autoFocus {...profileForm.register("full_name")} />
+                </Field>
+                <Field label="Birth year" error={perr.birth_year?.message}>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    {...profileForm.register("birth_year")}
+                  />
+                </Field>
+                <Field label="Sex at birth" error={perr.sex_at_birth?.message}>
+                  <Input {...profileForm.register("sex_at_birth")} />
+                </Field>
+                <Field label="Handedness" error={perr.handedness?.message}>
+                  <Select {...profileForm.register("handedness")}>
+                    <option value="">Choose…</option>
+                    <option value="right">Right</option>
+                    <option value="left">Left</option>
+                    <option value="ambidextrous">Ambidextrous</option>
+                  </Select>
+                </Field>
+              </div>
+            </section>
 
-      {step === 3 && (
-        <div key="consent" className="enter-up max-w-lg space-y-6">
-          <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
-            {CONSENT_TEXT}
-          </p>
-          <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
-            />
-            <span>I have read the note and I consent.</span>
-          </label>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setStep(2)}
-            >
-              Back
-            </Button>
-            <Button onClick={submitAll} disabled={!consent || submitting}>
-              {submitting ? "Submitting…" : "Submit registration"}
-            </Button>
+            <section>
+              <h2 className="type-subhead">Background</h2>
+              <p className="type-caption mt-1 mb-4 text-ink-3">
+                Optional. Leave blank what you prefer not to share.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Gender">
+                  <Input {...profileForm.register("gender")} />
+                </Field>
+                <Field label="Education level">
+                  <Input {...profileForm.register("education_level")} />
+                </Field>
+                <Field label="Occupation">
+                  <Input {...profileForm.register("occupation")} />
+                </Field>
+                <Field
+                  label="Native languages"
+                  hint="Comma separated, e.g. it, en"
+                >
+                  <Input {...profileForm.register("native_languages")} />
+                </Field>
+                <Field label="Musical training (years)">
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    {...profileForm.register("musical_training_years")}
+                  />
+                </Field>
+                <Field label="Meditation practice">
+                  <Input
+                    placeholder="none / occasional / daily"
+                    {...profileForm.register("meditation_practice")}
+                  />
+                </Field>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="type-subhead">Habits and health</h2>
+              <p className="type-caption mt-1 mb-4 text-ink-3">
+                Optional. Helps interpret the signal.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Caffeine (cups per day)">
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    {...profileForm.register("caffeine_cups_per_day")}
+                  />
+                </Field>
+                <Field label="Average sleep (hours)">
+                  <Input
+                    type="number"
+                    step="0.5"
+                    inputMode="decimal"
+                    {...profileForm.register("avg_sleep_hours")}
+                  />
+                </Field>
+                <Field label="Nicotine use">
+                  <Input {...profileForm.register("nicotine_use")} />
+                </Field>
+                <Field label="Alcohol use">
+                  <Input {...profileForm.register("alcohol_use")} />
+                </Field>
+                <Field label="Vision correction">
+                  <Input
+                    placeholder="none / glasses / lenses"
+                    {...profileForm.register("vision_correction")}
+                  />
+                </Field>
+                <Field label="Hearing issues">
+                  <Input {...profileForm.register("hearing_issues")} />
+                </Field>
+              </div>
+              <div className="mt-4 space-y-4">
+                <Field label="Medications">
+                  <Input {...profileForm.register("medications")} />
+                </Field>
+                <Field label="Neurological conditions">
+                  <Input {...profileForm.register("neurological_conditions")} />
+                </Field>
+                <Field label="Psychiatric conditions">
+                  <Input {...profileForm.register("psychiatric_conditions")} />
+                </Field>
+                <Field label="Notes">
+                  <Textarea rows={3} {...profileForm.register("notes")} />
+                </Field>
+              </div>
+            </section>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStep(1)}
+              >
+                Back
+              </Button>
+              <Button type="submit">Continue</Button>
+            </div>
+          </form>
+        )}
+
+        {step === 3 && (
+          <div key="consent" className="enter-up max-w-lg space-y-6">
+            <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
+              {CONSENT_TEXT}
+            </p>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+              />
+              <span>I have read the note and I consent.</span>
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStep(2)}
+              >
+                Back
+              </Button>
+              <Button onClick={submitAll} disabled={!consent || submitting}>
+                {submitting ? "Submitting…" : "Submit registration"}
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </AuthPanel>
     </main>
   );
 }
