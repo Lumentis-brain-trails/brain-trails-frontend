@@ -222,6 +222,24 @@ describe("AthenaClock", () => {
     expect(clock.next(0, 4)).toBe(4); // wrapped, not rewound
   });
 
+  test("an implausible tick rebases the clock instead of minting a huge gap", () => {
+    const clock = new AthenaClock(SAMPLE_RATE_HZ);
+    clock.next(0, 4);
+    // A jump of an hour of ticks cannot be a dropout on a live link; taken at
+    // face value it would report a million samples lost and make a sound
+    // recording read as empty.
+    const index = clock.next(3600 * DEVICE_CLOCK_HZ, 4);
+    expect(index).toBe(4);
+    // And the clock keeps running from there, still on the device's rate.
+    expect(clock.next(3601 * DEVICE_CLOCK_HZ, 4)).toBe(4 + SAMPLE_RATE_HZ);
+  });
+
+  test("a real dropout under the limit is still reported as a gap", () => {
+    const clock = new AthenaClock(SAMPLE_RATE_HZ);
+    clock.next(0, 4);
+    expect(clock.next(2 * DEVICE_CLOCK_HZ, 4)).toBe(2 * SAMPLE_RATE_HZ);
+  });
+
   test("times motion against its own 52 Hz rate", () => {
     const clock = new AthenaClock(ATHENA_MOTION_RATE_HZ);
     clock.next(0, 3);

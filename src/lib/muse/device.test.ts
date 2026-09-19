@@ -116,8 +116,21 @@ const ATHENA_UUIDS = [
  * listed characteristics exist, because asking for a missing one is how the
  * driver tells the two generations apart.
  */
-function fakeBluetooth(uuids: string[] = LEGACY_UUIDS, name = "Muse-1A2B") {
+/** Quirks of a particular band or browser, for the tests that need them. */
+interface FakeQuirks {
+  /** Characteristics that exist but refuse `startNotifications`. */
+  refusesNotify?: string[];
+  /** An older browser without `writeValueWithoutResponse`. */
+  noWriteWithoutResponse?: boolean;
+}
+
+function fakeBluetooth(
+  uuids: string[] = LEGACY_UUIDS,
+  name = "Muse-1A2B",
+  quirks: FakeQuirks = {}
+) {
   const written: string[] = [];
+  const writtenWithoutResponse: string[] = [];
   const characteristics = new Map<string, FakeCharacteristic>();
   class FakeCharacteristic extends EventTarget {
     value?: DataView;
@@ -126,11 +139,19 @@ function fakeBluetooth(uuids: string[] = LEGACY_UUIDS, name = "Muse-1A2B") {
       super();
     }
     async startNotifications() {
+      if (quirks.refusesNotify?.includes(this.uuid))
+        throw new DOMException("Not supported", "NotSupportedError");
       this.notifying = true;
       return this;
     }
+    writeValueWithoutResponse = quirks.noWriteWithoutResponse
+      ? undefined
+      : async (bytes: Uint8Array) => {
+          writtenWithoutResponse.push(decodeCommand(bytes));
+          written.push(decodeCommand(bytes));
+        };
     async writeValue(bytes: Uint8Array) {
-      written.push(new TextDecoder().decode(bytes.subarray(1)).trim());
+      written.push(decodeCommand(bytes));
     }
     notify(view: DataView) {
       this.value = view;
@@ -172,9 +193,15 @@ function fakeBluetooth(uuids: string[] = LEGACY_UUIDS, name = "Muse-1A2B") {
   return {
     bluetooth: bluetooth as unknown as Bluetooth,
     written,
+    writtenWithoutResponse,
     characteristics,
     requested,
   };
+}
+
+/** A command as it goes on the wire: length byte, ASCII, newline. */
+function decodeCommand(bytes: Uint8Array): string {
+  return new TextDecoder().decode(bytes.subarray(1)).trim();
 }
 
 describe("BluetoothMuse", () => {
@@ -245,7 +272,9 @@ describe("BluetoothMuse on a Muse S Athena", () => {
 
     expect(muse.model).toBe("athena");
     expect(muse.name).toBe("MuseS-4B1C");
-    // p21 is the preset without the optode array: EEG and motion only.
+    // The band will not start on one preset: it is primed on p21, started,
+    // halted, moved to p1034 and started again. Each dc001 has its own L1.
+    // Getting this wrong is the difference between a stream and silence.
     expect(fake.written).toEqual([
       "v6",
       "s",
@@ -253,6 +282,10 @@ describe("BluetoothMuse on a Muse S Athena", () => {
       "p21",
       "s",
       "dc001",
+      "L1",
+      "h",
+      "p1034",
+      "s",
       "dc001",
       "L1",
     ]);
@@ -264,6 +297,52 @@ describe("BluetoothMuse on a Muse S Athena", () => {
     );
     // The per-electrode characteristics of the older bands are not there.
     expect(fake.characteristics.has(EEG_CHARACTERISTICS.TP9)).toBe(false);
+  });
+
+  test("an aux characteristic that cannot notify does not cost us the stream", async () => {
+    // Firmware that exposes 273e0014 without notify used to make connect()
+    // reject, taking the working data characteristic down with it.
+    const fake = fakeBluetooth(ATHENA_UUIDS, "MuseS-4B1C", {
+      refusesNotify: [ATHENA_AUX_CHARACTERISTIC],
+    });
+    const muse = new BluetoothMuse(fake.bluetooth);
+    const events: EegEvent[] = [];
+    muse.on("eeg", (e) => events.push(e));
+    await connectFast(muse);
+
+    expect(muse.model).toBe("athena");
+    expect(
+      fake.characteristics.get(ATHENA_DATA_CHARACTERISTIC)?.notifying
+    ).toBe(true);
+    fake.characteristics.get(ATHENA_DATA_CHARACTERISTIC)!.notify(
+      athenaMessage(
+        athenaPacket({
+          tick: 0,
+          primaryTag: 0x11,
+          primaryData: eegPayload([
+            [0x2000, 0x2000, 0x2000, 0x2000],
+            [0x2000, 0x2000, 0x2000, 0x2000],
+            [0x2000, 0x2000, 0x2000, 0x2000],
+            [0x2000, 0x2000, 0x2000, 0x2000],
+          ]),
+        })
+      )
+    );
+    expect(events).toHaveLength(EEG_CHANNELS.length);
+  });
+
+  test("commands go out without a response when the browser offers it", async () => {
+    const fake = fakeBluetooth(ATHENA_UUIDS, "MuseS-4B1C");
+    await connectFast(new BluetoothMuse(fake.bluetooth));
+    expect(fake.writtenWithoutResponse).toEqual(fake.written);
+
+    // An older browser without the explicit method still gets the handshake.
+    const old = fakeBluetooth(ATHENA_UUIDS, "MuseS-4B1C", {
+      noWriteWithoutResponse: true,
+    });
+    await connectFast(new BluetoothMuse(old.bluetooth));
+    expect(old.writtenWithoutResponse).toEqual([]);
+    expect(old.written).toEqual(fake.written);
   });
 
   test("hands the four electrodes to listeners on the device clock", async () => {
