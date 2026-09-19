@@ -222,5 +222,58 @@
       "incorrect": "Not quite",
       "next": "Next"
     }
+  },
+  "builder": {
+    "back": "Back",
+    "not_found": "This protocol is not in your catalog.",
+    "read_only": "This protocol belongs to someone else. Make a copy to edit it.",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "undo": "Undo",
+    "redo": "Redo",
+    "check": "Check",
+    "preview": "Preview",
+    "publish": {
+      "title": "Publish this protocol",
+      "name": "Name",
+      "summary": "One line for the card",
+      "summary_hint": "What it does, in a sentence.",
+      "description": "Description",
+      "tags": "Tags",
+      "cancel": "Cancel",
+      "publish": "Publish",
+      "publish_version": "Publish version {version}",
+      "invalid": "This protocol cannot be published yet:",
+      "failed": "Publishing failed. Try again."
+    },
+    "conflict": "This protocol was saved somewhere else. Reload it to keep editing; your unsaved changes here would overwrite theirs.",
+    "reload": "Reload",
+    "zoom": "Zoom",
+    "group": "Group",
+    "ungroup": "Ungroup",
+    "findings": "Findings",
+    "all_good": "No problems found.",
+    "select_a_clip": "Select a clip to edit it.",
+    "preview_empty": "There is nothing to preview yet: drag something onto the timeline.",
+    "close": "Close",
+    "timeline": {
+      "title": "Timeline",
+      "empty": "Drag media or an element here.",
+      "insert_at": "Insert at position {position}",
+      "blocks": "{count} blocks",
+      "total": "Total {time}",
+      "group_blocks": "Group · {count} blocks",
+      "errors": "{count} errors",
+      "warnings": "{count} warnings"
+    },
+    "bin": {
+      "title": "Bin",
+      "media": "Media",
+      "elements": "Elements",
+      "search": "Search your media",
+      "no_media": "Nothing to use yet. Upload a video or a sound.",
+      "upload": "Upload"
+    },
+    "publish_action": "Publish"
   }
 }
