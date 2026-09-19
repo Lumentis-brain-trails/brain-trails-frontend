@@ -197,9 +197,10 @@ export function buildSessionCsv(
 /**
  * Non-EEG streams the headband sends; kept for later analyses.
  *
- * The `ppg_*` streams exist on the Muse 2 and the Muse S only. The Athena
- * replaces that sensor with the fNIRS optode array, which this version does
- * not record, so an Athena session has motion rows and no optical ones.
+ * The `ppg_*` streams are decoded on the Muse 2 and the Muse S only. The
+ * Athena's PPG shares one optics stream with its fNIRS optodes and is not
+ * decoded yet, so an Athena session has motion rows here and its optics in
+ * the raw Bluetooth capture (`capture.ts`).
  */
 export type ExtraStream =
   "acc" | "gyro" | "ppg_ambient" | "ppg_infrared" | "ppg_red";

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Record page: nothing the headband sends is lost any more (backend decision
+  V2-0006). Every Bluetooth notification and command is kept byte for byte in a
+  raw capture (`src/lib/muse/capture.ts`) and uploaded as a third file,
+  `ble.bin.gz`, next to the session and its extras; it starts with the handshake
+  replies seen since connection. This keeps what no decoder reads yet: the
+  Athena's optics stream (PPG and fNIRS), aux EEG channels, the Muse 2's AUX
+  input, telemetry and control replies. The driver emits a `raw` event before
+  decoding, so a packet a decoder rejects is still captured. The recording now
+  also says which band produced it (`muse-s-athena` instead of always
+  `muse-2`). A capture over the API's cap is left behind with a warning rather
+  than failing the upload.
 - Interface: the entry screen's look carries into the app. A collapsible sidebar
   (icon rail, opens over the page on hover) replaces the top header and gains
   Home, Protocols and the account; a light/dark switch in the sidebar (stored

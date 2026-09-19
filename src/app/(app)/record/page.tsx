@@ -41,7 +41,8 @@ const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
  *
  * Either headband generation can be worn: which protocol the band speaks is
  * settled by the driver after pairing, and the session file is the same four
- * electrodes either way.
+ * electrodes either way. Everything else the band sends -- decoded or not --
+ * is kept in the raw Bluetooth capture uploaded beside it (V2-0006).
  */
 export default function RecordPage() {
   // Web Bluetooth support is a client-only fact: the server snapshot is null so
@@ -76,6 +77,7 @@ export default function RecordPage() {
       capture: result.capture,
       timeline: result.timeline,
       extras: result.extras,
+      raw: result.raw,
       deviceName: muse.deviceName ?? "Muse",
       model: muse.model,
       title: title.trim() || `Session ${new Date().toLocaleString()}`,
@@ -228,6 +230,15 @@ export default function RecordPage() {
                     : muse.sensors.ppgInfrared !== null
                       ? muse.sensors.ppgInfrared.toFixed(0)
                       : "—"
+                }
+                mono
+              />
+              <KeyValue
+                label="Raw link"
+                value={
+                  connected && source === "bluetooth"
+                    ? `${muse.sensors.rawPackets} packets · every byte kept`
+                    : "—"
                 }
                 mono
               />

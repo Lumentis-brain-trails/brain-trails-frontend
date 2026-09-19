@@ -13,12 +13,14 @@
  * and cross-checked between them:
  * https://github.com/Amused-EEG/amused-py -- https://github.com/DominiqueMakowski/OpenMuse
  *
- * **fNIRS is deliberately not recorded.** The Athena's optode array and its
- * PPG share one "optics" stream, and no preset gives us the motion we need
- * without also switching that stream on, so it arrives and is discarded here:
- * optics tags are framed -- a packet containing one has to be walked over to
- * reach the subpackets behind it -- and then dropped. A session file is the
- * same four electrodes plus motion whichever headband produced it.
+ * **Optics are not decoded yet, but they are recorded.** The Athena's optode
+ * array and its PPG share one "optics" stream, and no preset gives us the
+ * motion we need without also switching it on. This decoder frames optics
+ * tags -- a packet containing one has to be walked over to reach the
+ * subpackets behind it -- and skips them, so the session file and the extras
+ * are the same four electrodes plus motion whichever headband produced them.
+ * The bytes themselves reach the raw capture untouched (backend decision
+ * V2-0006, `capture.ts`), where a PPG/fNIRS decoder can find them later.
  */
 import { EEG_CHANNELS, SAMPLE_RATE_HZ, type EegChannel } from "./protocol";
 
@@ -49,10 +51,10 @@ export const ATHENA_PRIMING_PRESET = "p21";
 /**
  * The streaming preset: EEG at 256 Hz, accelerometer and gyroscope at 52 Hz,
  * battery -- and the optode array, which we cannot switch off without also
- * losing the motion we need. So the optics arrive on the wire and are thrown
- * away in {@link decodeSubpacket}: **no fNIRS and no PPG ever reaches a file**,
- * which is what a uniform input across headbands asks for. Telling the two
- * apart inside that one optics stream is the fNIRS work that was deferred.
+ * losing the motion we need. So the optics arrive on the wire and are skipped
+ * by {@link decodeSubpacket}: they reach the raw capture, not the decoded
+ * files. Telling the PPG from the fNIRS inside that one optics stream is the
+ * decoder still to write.
  */
 export const ATHENA_PRESET = "p1034";
 
@@ -266,7 +268,7 @@ function decodeSubpacket(
         batteryPercent: (payload[0] | (payload[1] << 8)) / 256,
       };
     case "optics":
-      return null; // fNIRS and PPG: framed over, never recorded
+      return null; // fNIRS and PPG: framed over; kept only in the raw capture
   }
 }
 
@@ -274,7 +276,8 @@ function decodeSubpacket(
  * Decode a 28-byte EEG subpacket: 14-bit unsigned samples packed LSB-first,
  * channel-major within each sample, converted to zero-centred microvolts.
  * Channels beyond the four scalp electrodes (the amplified aux inputs of the
- * eight-channel modes) are dropped so the stream matches the Muse 2's.
+ * eight-channel modes) are left to the raw capture so the decoded stream
+ * matches the Muse 2's.
  */
 export function decodeAthenaEeg(
   payload: Uint8Array,

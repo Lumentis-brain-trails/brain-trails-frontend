@@ -10,6 +10,17 @@ export interface Presign {
   max_mb: number;
 }
 
+/**
+ * What `POST /recordings/uploads` returns for a browser session: the form for
+ * the EEG file plus one per sidecar asked for. The raw capture has its own,
+ * larger cap (`max_ble_mb`, backend decision V2-0006).
+ */
+export interface SessionPresign extends Presign {
+  max_ble_mb: number;
+  extras: Presign | null;
+  ble: Presign | null;
+}
+
 export function uploadToStorage(
   presign: Presign,
   file: Blob,

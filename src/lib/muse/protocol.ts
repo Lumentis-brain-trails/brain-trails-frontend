@@ -20,8 +20,7 @@ export const TELEMETRY_CHARACTERISTIC = "273e000b-4c4d-454d-96be-f03bac821358";
 
 /**
  * One notify characteristic per EEG electrode, in the device's own order.
- * Only the four scalp electrodes are used: AUX (273e0007) is the unpopulated
- * fifth input on a Muse 2 and is not subscribed.
+ * Only the four scalp electrodes are decoded; AUX, below, is the fifth input.
  */
 export const EEG_CHARACTERISTICS: Record<EegChannel, string> = {
   TP9: "273e0003-4c4d-454d-96be-f03bac821358",
@@ -29,6 +28,12 @@ export const EEG_CHARACTERISTICS: Record<EegChannel, string> = {
   AF8: "273e0005-4c4d-454d-96be-f03bac821358",
   TP10: "273e0006-4c4d-454d-96be-f03bac821358",
 };
+
+/**
+ * The fifth EEG input (unpopulated on a Muse 2, a micro-USB electrode on some
+ * bands). Subscribed so the raw capture keeps it, never decoded.
+ */
+export const AUX_CHARACTERISTIC = "273e0007-4c4d-454d-96be-f03bac821358";
 
 /** Channel order used everywhere downstream (matches the backend pipeline). */
 export const EEG_CHANNELS = ["TP9", "AF7", "AF8", "TP10"] as const;

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { buildCaptureBlob, type RawCapture } from "@/lib/muse/capture";
 import {
   buildExtrasCsv,
   buildSessionCsv,
@@ -12,7 +13,11 @@ import {
 } from "@/lib/muse/session";
 import { MODEL_PROFILES, type MuseModel } from "@/lib/muse/models";
 import type { TimelineStats } from "@/lib/muse/timeline";
-import { uploadToStorage, type Presign } from "@/lib/upload";
+import {
+  uploadToStorage,
+  type Presign,
+  type SessionPresign,
+} from "@/lib/upload";
 import { Button, ErrorBanner, KeyValue } from "@/components/ui";
 import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
@@ -22,11 +27,14 @@ export interface StoppedSession {
   capture: SessionCapture;
   timeline: TimelineStats;
   extras: ExtrasRecorder;
+  raw: RawCapture;
   deviceName: string;
   model: MuseModel;
   title: string;
   taskLabel: string;
 }
+
+const fmtMb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 const fmtSeconds = (s: number) => {
   const m = Math.floor(s / 60);
@@ -38,7 +46,9 @@ const fmtSeconds = (s: number) => {
  * Shown after Stop: what was captured (duration, lost samples, jitter, drift)
  * and two ways out, upload or discard. The upload builds the canonical CSV in
  * memory, sends it straight to storage through the presigned form and then
- * registers the recording exactly like a file upload would.
+ * registers the recording exactly like a file upload would. Two sidecars go
+ * with it when there is something in them: the decoded extras and the raw
+ * Bluetooth capture (backend decision V2-0006).
  */
 export function SessionSheet({
   session,
@@ -56,7 +66,10 @@ export function SessionSheet({
   const lost = capture.missingSamples;
 
   const upload = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<{
+      recording_id: string;
+      captureSkipped: boolean;
+    }> => {
       const csv = buildSessionCsv(capture, {
         deviceName: session.deviceName,
         model: session.model,
@@ -76,32 +89,70 @@ export function SessionSheet({
               type: "text/csv",
             })
           : null;
-      const presign = await api.post<Presign & { extras: Presign | null }>(
-        "recordings/uploads",
-        { filename: `${slug}.csv`, with_extras: extrasBlob !== null }
-      );
+      const captureBlob = await buildCaptureBlob(session.raw.stop(), {
+        model: session.model,
+        deviceName: session.deviceName,
+        startedAt: capture.startedAt.toISOString(),
+        timeline: {
+          hostMsAtIndex0: timeline.hostMsAtIndex0,
+          msPerSample: timeline.msPerSample,
+          firstSampleIndex: capture.firstSampleIndex,
+        },
+        userAgent: navigator.userAgent,
+      });
+      const presign = await api.post<SessionPresign>("recordings/uploads", {
+        filename: `${slug}.csv`,
+        with_extras: extrasBlob !== null,
+        with_ble: captureBlob !== null,
+      });
       if (blob.size > presign.max_mb * 1024 * 1024)
         throw new Error(`Session exceeds ${presign.max_mb} MB.`);
+      // An oversized capture must not cost the session: the EEG still goes up,
+      // and the user is told what was left behind.
+      const captureFits =
+        captureBlob !== null &&
+        captureBlob.size <= presign.max_ble_mb * 1024 * 1024;
+      const files: [Presign, Blob][] = [[presign, blob]];
+      if (extrasBlob && presign.extras)
+        files.push([presign.extras, extrasBlob]);
+      if (captureBlob && captureFits && presign.ble)
+        files.push([presign.ble, captureBlob]);
+      const total = files.reduce((n, [, b]) => n + b.size, 0);
+      let done = 0;
       setProgress(0);
-      await uploadToStorage(presign, blob, (pct) =>
-        setProgress(extrasBlob ? pct * 0.7 : pct)
-      );
-      if (extrasBlob && presign.extras) {
-        await uploadToStorage(presign.extras, extrasBlob, (pct) =>
-          setProgress(70 + pct * 0.3)
+      for (const [form, file] of files) {
+        await uploadToStorage(form, file, (pct) =>
+          setProgress(((done + (file.size * pct) / 100) / total) * 100)
         );
+        done += file.size;
       }
-      return api.post<{ recording_id: string }>("recordings/complete", {
-        key: presign.key,
-        title: session.title.trim(),
-        task_label: session.taskLabel || null,
-        cleaner: "classic",
-        extras_key: extrasBlob && presign.extras ? presign.extras.key : null,
-      });
+      const sent = (form: Presign | null) =>
+        form && files.some(([f]) => f === form) ? form.key : null;
+      const completed = await api.post<{ recording_id: string }>(
+        "recordings/complete",
+        {
+          key: presign.key,
+          title: session.title.trim(),
+          task_label: session.taskLabel || null,
+          device: MODEL_PROFILES[session.model].apiDevice,
+          cleaner: "classic",
+          extras_key: sent(presign.extras),
+          ble_key: sent(presign.ble),
+        }
+      );
+      return {
+        ...completed,
+        captureSkipped: captureBlob !== null && !captureFits,
+      };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["recordings"] });
       toast("success", "Session uploaded. Processing started.");
+      if (data.captureSkipped)
+        toast(
+          "error",
+          "The raw Bluetooth capture was too large to upload and was not kept."
+        );
       router.push(`/recordings/${data.recording_id}`);
     },
     onError: (e: Error) => {
@@ -155,12 +206,20 @@ export function SessionSheet({
               const ppg = (c.ppg_infrared ?? 0) * 6;
               if (motion + ppg === 0) return "none";
               const parts = [`${motion} motion`];
-              // The Athena streams no PPG: its optical sensor is the fNIRS
-              // array, which this version does not record.
+              // The Athena's PPG is not decoded yet; it is in the raw capture.
               if (MODEL_PROFILES[session.model].hasPpg)
                 parts.push(`${ppg} PPG samples`);
               return parts.join(" · ");
             })()}
+            mono
+          />
+          <KeyValue
+            label="Raw capture"
+            value={
+              session.raw.count > 0
+                ? `${session.raw.count} packets · ${fmtMb(session.raw.payloadBytes)}`
+                : "none (simulated)"
+            }
             mono
           />
           <KeyValue
