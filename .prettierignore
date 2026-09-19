@@ -2,3 +2,6 @@ node_modules
 .next
 package-lock.json
 assets
+
+# native iOS shell: Xcode and Capacitor own these files
+/ios

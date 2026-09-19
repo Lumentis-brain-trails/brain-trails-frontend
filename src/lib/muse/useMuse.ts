@@ -236,12 +236,17 @@ export function useMuse(createDevice: () => MuseDevice) {
       }));
     } catch (err) {
       teardown();
+      // Duck-typed: not every browser rejects with an `Error`.
+      const { name, message: text } = (err ?? {}) as {
+        name?: unknown;
+        message?: unknown;
+      };
       const message =
-        err instanceof DOMException && err.name === "NotFoundError"
+        name === "NotFoundError"
           ? "No headband selected."
-          : err instanceof Error
-            ? err.message
-            : "Could not connect.";
+          : typeof text === "string" && text
+            ? text
+            : `Could not connect (${String(err)}).`;
       setState((s) => ({ ...s, status: "error", error: message }));
     }
   }, [createDevice, rings, teardown]);

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Bluetooth on iPhone and iPad. No browser there can use Bluetooth (WebKit has no
+  Web Bluetooth), so the site now also runs inside a native shell
+  (`capacitor.config.ts`, `ios/`): a web view on the same deployment with a
+  CoreBluetooth bridge. `src/lib/muse/nativeBluetooth.ts` presents that bridge as
+  the `Bluetooth` object the existing driver takes, so the decoders, the clock and
+  the raw capture are shared; `bluetoothTransport()` reports `web`, `native` or
+  none, and the plugin is only downloaded inside the shell. In Safari on iOS the
+  record page now says why it cannot connect and where to go instead of naming
+  "Chrome on a computer". Building and signing: `docs/IOS_SHELL.md`.
 - Record page: nothing the headband sends is lost any more (backend decision
   V2-0006). Every Bluetooth notification and command is kept byte for byte in a
   raw capture (`src/lib/muse/capture.ts`) and uploaded as a third file,

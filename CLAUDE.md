@@ -30,6 +30,8 @@ nothing secret may ever be committed.
 | `src/lib/terrainMesh.ts`                 | energy field -> 3D vertex grid + trail path, framework-free (Three.js lives in `TerrainScene`)                                                                                                                                     |
 | `src/lib/types.ts`                       | API response types (mirror the backend `schemas.py`)                                                                                                                                                                               |
 | `src/components/`                        | `ui.tsx` primitives, `TrailPlot` (flat/terrain toggle) with `TerrainScene` (react-three-fiber), `BallMapperGraph`/`MetricCurve` (Plotly), `SignalPreview` (uPlot), `UploadDialog`, `AppShell` (sidebar, appearance switch), toasts |
+| `src/lib/muse/`                          | Muse driver: `device.ts` (one driver over Web Bluetooth or the native bridge), `nativeBluetooth.ts` (Capacitor BLE dressed as `Bluetooth`), decoders, capture                                                                      |
+| `capacitor.config.ts`, `ios/`, `shell/`  | the iOS shell: web view on the deployment + CoreBluetooth, because iOS browsers have no Bluetooth (`docs/IOS_SHELL.md`)                                                                                                            |
 | `docs/`                                  | ENVIRONMENTS, decisions                                                                                                                                                                                                            |
 
 ## Commands
