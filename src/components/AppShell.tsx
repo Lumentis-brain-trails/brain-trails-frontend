@@ -16,6 +16,7 @@ type Section = { href: string; label: string; icon: IconName };
 const MAIN: Section[] = [
   { href: "/home", label: "Home", icon: "home" },
   { href: "/protocols", label: "Protocols", icon: "protocol" },
+  { href: "/media", label: "My media", icon: "library" },
   { href: "/record", label: "Record", icon: "record" },
   { href: "/recordings", label: "Recordings", icon: "recordings" },
   { href: "/neurometrics", label: "NeuroMetrics", icon: "graph" },

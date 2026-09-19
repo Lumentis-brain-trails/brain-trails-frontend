@@ -17,7 +17,6 @@ import { MediaCard } from "@/components/MediaCard";
 import {
   EmptyState,
   ErrorBanner,
-  Icon,
   Skeleton,
   buttonClass,
 } from "@/components/ui";
@@ -29,7 +28,7 @@ type Row = { key: string; title: string; hint: string; items: Media[] };
  * browsing tag, plus a row of your own, each scrolling sideways like a streaming
  * service; a card opens the protocol's page, where Play starts it. Until protocols are
  * rows of their own (S18) an item here is a module-backed protocol or a video, which
- * plays as a one-block protocol. Uploading lives in `/protocols/media`.
+ * plays as a one-block protocol. Uploading lives in `/media`.
  *
  * Rows are built from a single catalog request rather than one request per row: the
  * whole visible catalog is tens of items, and one round trip keeps the first paint
@@ -112,9 +111,6 @@ export default function LibraryPage() {
             Pick what to play while you record. Your EEG runs alongside it.
           </p>
         </div>
-        <Link href="/protocols/media" className={buttonClass("secondary")}>
-          <Icon name="plus" /> Your media
-        </Link>
       </header>
 
       {catalog.isPending && (
@@ -137,7 +133,7 @@ export default function LibraryPage() {
           title="No protocols yet"
           text="Upload a video to record against, or ask an admin to publish the first protocol."
           action={
-            <Link href="/protocols/media" className={buttonClass()}>
+            <Link href="/media" className={buttonClass()}>
               Upload a video
             </Link>
           }
