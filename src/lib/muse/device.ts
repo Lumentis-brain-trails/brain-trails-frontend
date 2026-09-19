@@ -211,6 +211,8 @@ export class BluetoothMuse implements MuseDevice {
   private subscriptions: BluetoothRemoteGATTCharacteristic[] = [];
   name = "Muse";
   model: MuseModel = "muse-2";
+  /** What `connect()` was doing, so a failure can say where it stopped. */
+  private stage = "";
 
   constructor(
     private readonly bluetooth: BluetoothProvider = defaultBluetooth()
@@ -223,7 +225,38 @@ export class BluetoothMuse implements MuseDevice {
     return this.emitter.on(event, listener);
   }
 
+  /**
+   * Pair and start streaming. A failure is rethrown as an `Error` naming the
+   * step that failed: browsers disagree on what they reject with (some reject
+   * with a bare string), and "could not connect" alone cannot be acted on. A
+   * closed chooser stays a `NotFoundError`, which the UI reads as "nothing
+   * selected".
+   */
   async connect(): Promise<void> {
+    try {
+      await this.pairAndStart();
+    } catch (err) {
+      // Duck-typed on purpose: a DOMException is not an `Error` everywhere.
+      const { name, message } = (err ?? {}) as {
+        name?: unknown;
+        message?: unknown;
+      };
+      if (this.stage === "choose a headband" && name === "NotFoundError")
+        throw err;
+      const detail =
+        typeof err === "string"
+          ? err
+          : typeof message === "string"
+            ? `${String(name ?? "Error")}: ${message}`
+            : JSON.stringify(err);
+      throw new Error(`Bluetooth failed at "${this.stage}" (${detail})`, {
+        cause: err,
+      });
+    }
+  }
+
+  private async pairAndStart(): Promise<void> {
+    this.stage = "load Bluetooth";
     // The chooser only lists headbands. Athena firmware does not always put the
     // service in its advertisement, so the name is accepted as well and the
     // service is requested explicitly for the bands matched that way.
@@ -231,6 +264,7 @@ export class BluetoothMuse implements MuseDevice {
       typeof this.bluetooth === "function"
         ? await this.bluetooth()
         : this.bluetooth;
+    this.stage = "choose a headband";
     this.device = await bluetooth.requestDevice({
       filters: [{ services: [MUSE_SERVICE] }, { namePrefix: "Muse" }],
       optionalServices: [MUSE_SERVICE],
@@ -241,9 +275,13 @@ export class BluetoothMuse implements MuseDevice {
     this.device.addEventListener("gattserverdisconnected", () =>
       this.emitter.emit("disconnected")
     );
+    this.stage = "open the link";
     const server = await gatt.connect();
+    this.stage = "find the Muse service";
     const service = await server.getPrimaryService(MUSE_SERVICE);
+    this.stage = "find the control characteristic";
     this.control = await service.getCharacteristic(CONTROL_CHARACTERISTIC);
+    this.stage = "detect the model";
 
     // Only the Athena carries the multiplexed data characteristic; on the older
     // bands asking for it is how we learn it is not there.
@@ -302,6 +340,7 @@ export class BluetoothMuse implements MuseDevice {
 
     const eegClock = new CounterClock();
     for (const channel of EEG_CHANNELS) {
+      this.stage = `subscribe to EEG ${channel}`;
       const characteristic = await service.getCharacteristic(
         EEG_CHARACTERISTICS[channel]
       );
@@ -322,6 +361,7 @@ export class BluetoothMuse implements MuseDevice {
       [GYROSCOPE_CHARACTERISTIC, "gyro", GYROSCOPE_SCALE],
     ] as const) {
       const clock = new CounterClock(IMU_SAMPLES_PER_PACKET, true);
+      this.stage = `subscribe to ${kind}`;
       const characteristic = await service.getCharacteristic(uuid);
       this.listen(characteristic, (value, hostMs) => {
         const { counter, samples } = decodeImuPacket(value, scale);
@@ -336,6 +376,7 @@ export class BluetoothMuse implements MuseDevice {
     }
     for (const channel of PPG_CHANNELS) {
       const clock = new CounterClock(PPG_SAMPLES_PER_PACKET, true);
+      this.stage = `subscribe to PPG ${channel}`;
       const characteristic = await service.getCharacteristic(
         PPG_CHARACTERISTICS[channel]
       );
@@ -350,6 +391,7 @@ export class BluetoothMuse implements MuseDevice {
       await characteristic.startNotifications();
       this.subscriptions.push(characteristic);
     }
+    this.stage = "subscribe to telemetry";
     const telemetry = await service.getCharacteristic(TELEMETRY_CHARACTERISTIC);
     this.listen(telemetry, (value) =>
       this.emitter.emit("telemetry", decodeTelemetry(value))
@@ -357,6 +399,7 @@ export class BluetoothMuse implements MuseDevice {
     await telemetry.startNotifications();
     this.subscriptions.push(telemetry);
 
+    this.stage = "send the start commands";
     for (const command of START_SEQUENCE) await this.send(command);
   }
 
@@ -432,6 +475,7 @@ export class BluetoothMuse implements MuseDevice {
     if (subscribed === 0)
       throw new Error("This Muse would not start its data stream");
 
+    this.stage = "send the start commands";
     for (const step of ATHENA_START_SEQUENCE) {
       await this.send(step.command);
       await wait(step.waitMs);

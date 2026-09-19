@@ -197,9 +197,31 @@ describe("BluetoothMuse over the native bridge", () => {
     const fake = fakeBackend();
     fake.spies.getServices.mockResolvedValueOnce([]);
     const muse = new BluetoothMuse(nativeBluetooth(fake.backend));
-    await expect(muse.connect()).rejects.toMatchObject({
-      name: "NotFoundError",
-    });
+    await expect(muse.connect()).rejects.toThrow(
+      /at "find the Muse service" \(NotFoundError: Service .* not found\)/
+    );
+  });
+
+  test("a failure names its step, even when the browser rejects with a string", async () => {
+    const fake = fakeBackend();
+    fake.spies.startNotifications.mockImplementation(
+      async (_d: string, _s: string, characteristic: string) => {
+        if (characteristic === EEG_CHARACTERISTICS.TP9)
+          throw "Characteristic is not notifiable";
+      }
+    );
+    const muse = new BluetoothMuse(nativeBluetooth(fake.backend));
+    await expect(muse.connect()).rejects.toThrow(
+      'Bluetooth failed at "subscribe to EEG TP9" (Characteristic is not notifiable)'
+    );
+  });
+
+  test("closing the chooser stays a NotFoundError", async () => {
+    const fake = fakeBackend();
+    const cancelled = new DOMException("User cancelled", "NotFoundError");
+    fake.spies.requestDevice.mockRejectedValueOnce(cancelled);
+    const muse = new BluetoothMuse(nativeBluetooth(fake.backend));
+    await expect(muse.connect()).rejects.toBe(cancelled);
   });
 
   test("the Bluetooth can be supplied lazily", async () => {
