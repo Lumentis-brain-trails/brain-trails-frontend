@@ -261,8 +261,12 @@ export default function ProtocolPage({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link href={`/protocols/${p.id}/edit`} className={buttonClass()}>
+              Edit
+            </Link>
             {(p.current_version === null || draftChanged) && (
               <Button
+                variant="secondary"
                 onClick={() => publish.mutate()}
                 disabled={publish.isPending}
               >

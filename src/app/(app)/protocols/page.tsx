@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ApiRequestError, api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { type ProtocolCard as Card } from "@/lib/protocol/catalog";
@@ -13,13 +14,33 @@ import {
 } from "@/lib/types";
 import { ProtocolCard } from "@/components/ProtocolCard";
 import {
+  Button,
   EmptyState,
   ErrorBanner,
+  Icon,
   Skeleton,
   buttonClass,
 } from "@/components/ui";
 
 type Row = { key: string; title: string; hint: string; items: Card[] };
+
+/** Start a protocol from nothing and open it in the builder (S19). */
+function NewProtocolButton() {
+  const router = useRouter();
+  const workspace = useCurrentWorkspace();
+  const create = useMutation({
+    mutationFn: () =>
+      api.post<Card & { id: string }>(inWorkspace("protocols", workspace), {
+        title: "New protocol",
+      }),
+    onSuccess: (protocol) => router.push(`/protocols/${protocol.id}/edit`),
+  });
+  return (
+    <Button onClick={() => create.mutate()} disabled={create.isPending}>
+      <Icon name="plus" /> New protocol
+    </Button>
+  );
+}
 
 /**
  * The protocol catalog (V3-0004, S16-S18): rows of cards scrolling sideways like a
@@ -102,6 +123,7 @@ export default function ProtocolsPage() {
             Pick what to play while you record. Your EEG runs alongside it.
           </p>
         </div>
+        <NewProtocolButton />
       </header>
 
       {catalog.isPending && (

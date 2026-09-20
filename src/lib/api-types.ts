@@ -247,6 +247,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/annotations/{annotation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Annotation
+         * @description Delete a note. 403 unless the caller wrote it; its author tuple goes with it.
+         */
+        delete: operations["delete_annotation_annotations__annotation_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Annotation
+         * @description Change a note's text or anchor. 403 unless the caller wrote it.
+         *
+         *     422 `bad_span` when the edit would leave the range ending before it starts.
+         */
+        patch: operations["update_annotation_annotations__annotation_id__patch"];
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -985,6 +1011,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings/{recording_id}/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Annotations
+         * @description Notes on this recording, newest first, one page at a time.
+         *
+         *     Keyset pagination on `(created_at, id)` like every other list; the next page's
+         *     cursor comes back in `X-Next-Cursor`, absent on the last page.
+         */
+        get: operations["list_annotations_recordings__recording_id__annotations_get"];
+        put?: never;
+        /**
+         * Create Annotation
+         * @description Pin a note on this recording; 403 without `can_annotate` on it.
+         *
+         *     The author tuple is written in the same transaction as the row (V3-0002), so a note
+         *     can never exist without someone entitled to edit it.
+         */
+        post: operations["create_annotation_recordings__recording_id__annotations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_id}/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Blocks
+         * @description Per-block metrics of the latest analysis, in the order the blocks ran.
+         *
+         *     An empty list when the recording has no session, when its timeline carried no
+         *     `block_start`, or when the analysis predates S20: the review page shows the trail
+         *     without a block table rather than an error. 409 `not_ready` only when there is no
+         *     analysis at all.
+         */
+        get: operations["get_blocks_recordings__recording_id__blocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/recordings/{recording_id}/download": {
         parameters: {
             query?: never;
@@ -997,6 +1078,35 @@ export interface paths {
          * @description Return a presigned GET link for the raw file; 404 unless visible and present.
          */
         get: operations["download_recordings__recording_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_id}/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Features
+         * @description The per-window feature table of the latest analysis, ready to plot.
+         *
+         *     One round trip for a whole session: a 40-minute recording is ~2400 windows times
+         *     five bands times four channels, which is why `downsample=k` exists. It folds every
+         *     `k` consecutive windows into one - the mean for levels, the **maximum** for the
+         *     artefact load, so a bad stretch survives being zoomed out - and `t` keeps the first
+         *     window's start time of each group.
+         *
+         *     409 `not_ready` when the recording has no analysis, or an analysis without features
+         *     (one produced before S20, or a run whose feature stage failed).
+         */
+        get: operations["get_features_recordings__recording_id__features_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1305,6 +1415,79 @@ export interface components {
             window_s: number;
         };
         /**
+         * AnnotationIn
+         * @description A new note. The kind decides which anchor fields are required.
+         *
+         *     `instant` needs `t_start_s`; `range` needs both times, ordered; `block` needs
+         *     `block_id`; `recording` needs nothing and ignores the rest. Validating here rather
+         *     than only in the database means the client is told which field is missing.
+         */
+        AnnotationIn: {
+            /** Block Id */
+            block_id?: string | null;
+            /** Body */
+            body: string;
+            /** Kind */
+            kind: string;
+            /** T End S */
+            t_end_s?: number | null;
+            /** T Start S */
+            t_start_s?: number | null;
+        };
+        /**
+         * AnnotationOut
+         * @description One note. `mine` says whether the caller may edit or delete it.
+         */
+        AnnotationOut: {
+            /** Author User Id */
+            author_user_id: string | null;
+            /** Block Id */
+            block_id: string | null;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Mine */
+            mine: boolean;
+            /** T End S */
+            t_end_s: number | null;
+            /** T Start S */
+            t_start_s: number | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AnnotationPatch
+         * @description What an author may change: the text and where it points.
+         *
+         *     Every field is optional and only the ones present are applied, so a client that
+         *     moves a range does not have to resend the body. The kind is not among them: a note
+         *     that changes what it points at is a different note.
+         */
+        AnnotationPatch: {
+            /** Block Id */
+            block_id?: string | null;
+            /** Body */
+            body?: string | null;
+            /** T End S */
+            t_end_s?: number | null;
+            /** T Start S */
+            t_start_s?: number | null;
+        };
+        /**
          * ApplicationDecision
          * @description The admin's answer to a beta application; `pending` until one is given.
          * @enum {string}
@@ -1422,6 +1605,59 @@ export interface components {
          * @enum {string}
          */
         BetaProfile: "private" | "therapist" | "lab_lead" | "lab_member";
+        /**
+         * BlockMetricsOut
+         * @description What the signal did during one block of the protocol that produced this recording.
+         *
+         *     `key` distinguishes the repetitions of a looped block, which share `block_id`.
+         *     `bands` are relative powers (shares of the 1-45 Hz total), `bands_uv2` the absolute
+         *     ones; both are averaged over the block's windows and channels. `baseline_distance`
+         *     is the mean cosine distance of this block's window embeddings to the mean embedding
+         *     of the eyes-closed baseline block, null when the protocol has none - it is computed
+         *     on the raw vectors, not on the trail, so it compares across sessions (V2-0005).
+         */
+        BlockMetricsOut: {
+            /** Artefact */
+            artefact: number | null;
+            /** Asymmetry */
+            asymmetry: number | null;
+            /** Bands */
+            bands: {
+                [key: string]: number | null;
+            };
+            /** Bands Uv2 */
+            bands_uv2: {
+                [key: string]: number | null;
+            };
+            /** Baseline Distance */
+            baseline_distance: number | null;
+            /** Block Id */
+            block_id: string;
+            /** Condition */
+            condition: string | null;
+            /** Good Contact */
+            good_contact: number | null;
+            /** Iteration */
+            iteration: number | null;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string | null;
+            /** Label */
+            label: string | null;
+            /** N Windows */
+            n_windows: number;
+            /** Node Path */
+            node_path: string | null;
+            /** Ratios */
+            ratios: {
+                [key: string]: number | null;
+            };
+            /** T End S */
+            t_end_s: number;
+            /** T Start S */
+            t_start_s: number;
+        };
         /**
          * BoardRow
          * @description One applicant on the admin board: account, profile, application, cohort.
@@ -1702,6 +1938,51 @@ export interface components {
             n_events: number;
             /** N Parts */
             n_parts: number;
+        };
+        /**
+         * FeaturesOut
+         * @description The per-window feature table of one analysis (S20).
+         *
+         *     Row `i` of every array describes the same window as the trail's point `i`, so the
+         *     review page joins them by index and never by time.
+         *
+         *     Shapes: `bands`, `bands_rel` and `ratios` map a name to `[window][channel]`;
+         *     `asymmetry` and `artefact` are one value per window. `bands` is absolute power in
+         *     microvolts squared, `bands_rel` the same bands as a share of the 1-45 Hz total.
+         *     `null` inside `ratios` or `asymmetry` means the quantity does not exist for that
+         *     window (a zero denominator, a missing electrode), never zero.
+         */
+        FeaturesOut: {
+            /** Artefact */
+            artefact: number[];
+            /** Asymmetry */
+            asymmetry: (number | null)[];
+            /** Bands */
+            bands: {
+                [key: string]: number[][];
+            };
+            /** Bands Rel */
+            bands_rel: {
+                [key: string]: number[][];
+            };
+            /** Channels */
+            channels: string[];
+            /** Context S */
+            context_s: number;
+            /** Downsample */
+            downsample: number;
+            /** N Windows */
+            n_windows: number;
+            /** Ratios */
+            ratios: {
+                [key: string]: (number | null)[][];
+            };
+            /** Step S */
+            step_s: number;
+            /** T */
+            t: number[];
+            /** Window S */
+            window_s: number;
         };
         /**
          * FinishIn
@@ -2336,6 +2617,10 @@ export interface components {
         /**
          * RecordingOut
          * @description Recording summary for list and detail views, with its most recent job.
+         *
+         *     `session_id` is the session that produced it, when one did, so the review page can
+         *     go straight from a recording to its timeline; `quality` is the pipeline's usability
+         *     verdict (S20), null until the recording has been analysed.
          */
         RecordingOut: {
             /**
@@ -2351,6 +2636,12 @@ export interface components {
              */
             id: string;
             job: components["schemas"]["JobOut"] | null;
+            /** Quality */
+            quality?: {
+                [key: string]: unknown;
+            } | null;
+            /** Session Id */
+            session_id?: string | null;
             /** Source */
             source: string;
             /** Status */
@@ -2413,6 +2704,10 @@ export interface components {
         /**
          * SessionOut
          * @description A session as the app sees it; `events_url` is a short-lived link when finished.
+         *
+         *     `resolved_plan` is the flat plan the browser ran (V3-0004): the review page reads
+         *     each block's label, kind and config from it rather than from the protocol version,
+         *     which may have moved on. Null for a session that never posted one.
          */
         SessionOut: {
             /** Ended At */
@@ -2439,6 +2734,10 @@ export interface components {
              * Format: uuid
              */
             recording_id: string;
+            /** Resolved Plan */
+            resolved_plan?: {
+                [key: string]: unknown;
+            } | null;
             /** Seed */
             seed: number;
             /**
@@ -2546,6 +2845,10 @@ export interface components {
              * Format: uuid
              */
             recording_id: string;
+            /** Resolved Plan */
+            resolved_plan?: {
+                [key: string]: unknown;
+            } | null;
             /** Seed */
             seed: number;
             /**
@@ -3150,6 +3453,72 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+        };
+    };
+    delete_annotation_annotations__annotation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                annotation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_annotation_annotations__annotation_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                annotation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnnotationPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4347,6 +4716,106 @@ export interface operations {
             };
         };
     };
+    list_annotations_recordings__recording_id__annotations_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_annotation_recordings__recording_id__annotations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnnotationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_blocks_recordings__recording_id__blocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockMetricsOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     download_recordings__recording_id__download_get: {
         parameters: {
             query?: never;
@@ -4365,6 +4834,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DownloadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_features_recordings__recording_id__features_get: {
+        parameters: {
+            query?: {
+                downsample?: number;
+            };
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeaturesOut"];
                 };
             };
             /** @description Validation Error */

@@ -20,6 +20,7 @@ import {
   SectionTitle,
   Skeleton,
   Spinner,
+  buttonClass,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 
@@ -122,6 +123,12 @@ export default function RecordingDetailPage({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href={`/recordings/${id}/review`}
+            className={buttonClass("secondary")}
+          >
+            Review
+          </Link>
           {isLive && (
             <span className="inline-flex items-center gap-2 rounded-full bg-danger-soft px-3 py-1 text-[12px] font-semibold tracking-wide text-danger">
               <span
