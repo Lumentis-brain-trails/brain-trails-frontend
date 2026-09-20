@@ -50,6 +50,9 @@ type MediaLinks = components["schemas"]["MediaLinks"];
 type BlockMetrics = components["schemas"]["BlockMetricsOut"];
 type Features = components["schemas"]["FeaturesOut"];
 
+/** How many points the band chart is worth drawing. */
+const MAX_POINTS = 600;
+
 export default function ReviewPage({
   params,
 }: {
@@ -83,10 +86,16 @@ export default function ReviewPage({
     queryFn: () => api.get<MediaLinks>(`sessions/${sessionId}/media-urls`),
     enabled: sessionId !== null,
   });
+  // `downsample` is a factor (fold every k windows into one), not a point budget: one
+  // window per second, so k keeps the chart at about MAX_POINTS whatever the length.
+  const fold = Math.max(
+    1,
+    Math.ceil((recording.data?.duration_s ?? 0) / MAX_POINTS)
+  );
   const features = useQuery({
-    queryKey: ["features", id],
+    queryKey: ["features", id, fold],
     queryFn: () =>
-      api.get<Features>(`recordings/${id}/features?downsample=600`),
+      api.get<Features>(`recordings/${id}/features?downsample=${fold}`),
     enabled: recording.data?.status === "done",
     retry: false,
   });
