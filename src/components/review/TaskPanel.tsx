@@ -22,6 +22,7 @@ type Behaviour = components["schemas"]["BehaviourOut"];
 type Erp = components["schemas"]["ErpOut"];
 type Locked = components["schemas"]["ErpLockedOut"];
 type Prestimulus = components["schemas"]["PrestimulusOut"];
+type Interoception = components["schemas"]["InteroceptionOut"];
 
 export interface TaskBlock {
   key: string;
@@ -30,6 +31,7 @@ export interface TaskBlock {
   behaviour?: Behaviour | null;
   erp?: Erp | null;
   prestimulus?: Prestimulus | null;
+  interoception?: Interoception | null;
 }
 
 const FLAG_TEXT: Record<string, string> = {
@@ -51,16 +53,53 @@ const SERIES = [
 ];
 
 const CONDITION_TEXT: Record<string, string> = {
-  nogo_correct: "Withheld (no-go)",
-  go_hit: "Docked (go)",
-  error: "False dock",
-  correct: "Correct dock",
+  nogo_correct: "Withheld",
+  go_hit: "Answered",
+  incongruent: "Arrows disagree",
+  congruent: "Arrows agree",
+  error: "Error",
+  correct: "Correct answer",
+};
+
+/** A level of a task's design, in a reader's words; unknown ones keep their name. */
+const LEVEL_TEXT: Record<string, string> = {
+  congruent: "Arrows agree",
+  incongruent: "Arrows disagree",
+  match: "Match",
+  nonmatch: "No match",
+  lure: "Near miss",
+  none: "No cue",
+  center: "Cue at the cross",
+  double: "Cue above and below",
+  spatial: "Cue at the place",
+};
+
+const EFFECT_TEXT: Record<string, { label: string; hint: string }> = {
+  congruency_ms: {
+    label: "Conflict cost",
+    hint: "How much slower when the outer arrows disagree: the work of shutting them out.",
+  },
+  alerting_ms: {
+    label: "Alerting",
+    hint: "How much a warning that says only 'now' speeds the answer (no cue minus double cue).",
+  },
+  orienting_ms: {
+    label: "Orienting",
+    hint: "How much knowing the place adds to a warning (centre cue minus cue at the place).",
+  },
 };
 
 export function TaskPanel({ block }: { block: TaskBlock }) {
   const b = block.behaviour;
-  if (!b) return null;
+  if (!b)
+    return block.interoception ? (
+      <CountingPanel block={block} counting={block.interoception} />
+    ) : null;
   const quarters = b.quarters ?? [];
+  // A task with no withhold trials (arrows, coding) has wrong keys, not false alarms.
+  const choice = b.n_nogo === 0;
+  const levels = Object.entries({ ...(b.conditions ?? {}), ...(b.cues ?? {}) });
+  const effects = Object.entries(b.effects ?? {});
 
   return (
     <div className="space-y-3" data-testid={`task-${block.key}`}>
@@ -68,7 +107,8 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
         {block.label ?? block.block_id}
         <span className="font-normal text-ink-3">
           {" "}
-          · {b.n} trials ({b.n_go} go, {b.n_nogo} no-go)
+          · {b.n} trials
+          {choice ? "" : ` (${b.n_go} go, ${b.n_nogo} no-go)`}
           {b.n_practice > 0 ? `, ${b.n_practice} practice` : ""}
           {b.n_excluded > 0 ? `, ${b.n_excluded} excluded` : ""}
         </span>
@@ -83,18 +123,45 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
       )}
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] sm:grid-cols-4">
-        <Stat label="Hits" value={pct(b.hit_rate)} />
-        <Stat label="False docks" value={pct(b.commission_rate)} />
-        <Stat
-          label="Sensitivity (d′)"
-          value={num(b.d_prime)}
-          hint="Telling cargo from debris, apart from how readily you press."
-        />
-        <Stat
-          label="Bias (c)"
-          value={num(b.criterion)}
-          hint="Above zero: holds back when unsure. Below: presses when unsure."
-        />
+        <Stat label={choice ? "Correct" : "Hits"} value={pct(b.hit_rate)} />
+        {choice ? (
+          <>
+            <Stat
+              label="Wrong key"
+              value={pct(b.error_rate)}
+              hint="Answered, but the other way."
+            />
+            <Stat
+              label="Too slow"
+              value={pct(b.omission_rate)}
+              hint="No answer inside the time allowed."
+            />
+            <Stat
+              label="Correct per minute"
+              value={
+                b.throughput_per_min === null ||
+                b.throughput_per_min === undefined
+                  ? "—"
+                  : b.throughput_per_min.toFixed(1)
+              }
+              hint="The score of a timed block: right answers for each minute of task."
+            />
+          </>
+        ) : (
+          <>
+            <Stat label="False alarms" value={pct(b.commission_rate)} />
+            <Stat
+              label="Sensitivity (d′)"
+              value={num(b.d_prime)}
+              hint="Telling targets from the rest, apart from how readily you press."
+            />
+            <Stat
+              label="Bias (c)"
+              value={num(b.criterion)}
+              hint="Above zero: holds back when unsure. Below: presses when unsure."
+            />
+          </>
+        )}
         <Stat label="Median RT" value={ms(b.rt.median_ms)} />
         <Stat
           label="RT spread (MAD)"
@@ -109,9 +176,49 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
         <Stat
           label="After an error"
           value={signedMs(b.post_error_slowing_ms)}
-          hint="Slowing on the trial after a false dock: noticing and adjusting."
+          hint="Slowing on the trial after a mistake: noticing and adjusting."
         />
       </dl>
+
+      {effects.length > 0 && (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] sm:grid-cols-3">
+          {effects.map(([name, value]) => (
+            <Stat
+              key={name}
+              label={EFFECT_TEXT[name]?.label ?? name}
+              value={signedMs(value)}
+              hint={EFFECT_TEXT[name]?.hint}
+            />
+          ))}
+        </dl>
+      )}
+
+      {levels.length > 1 && (
+        <table className="w-full text-[13px]">
+          <thead className="text-ink-3">
+            <tr>
+              <th className="text-left font-medium">Kind of trial</th>
+              <th className="pl-3 text-right font-medium">Trials</th>
+              <th className="pl-3 text-right font-medium">Right</th>
+              <th className="pl-3 text-right font-medium">Median RT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {levels.map(([name, level]) => (
+              <tr key={name} className="border-t border-hairline">
+                <td className="py-1">{LEVEL_TEXT[name] ?? name}</td>
+                <td className="pl-3 text-right tabular-nums">{level.n}</td>
+                <td className="pl-3 text-right tabular-nums">
+                  {pct(level.accuracy)}
+                </td>
+                <td className="pl-3 text-right tabular-nums">
+                  {ms(level.median_rt_ms)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {quarters.length === 4 && (
         <div>
@@ -126,8 +233,12 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
             <thead className="text-ink-3">
               <tr>
                 <th className="text-left font-medium">Quarter</th>
-                <th className="pl-3 text-right font-medium">Hits</th>
-                <th className="pl-3 text-right font-medium">False docks</th>
+                <th className="pl-3 text-right font-medium">
+                  {choice ? "Correct" : "Hits"}
+                </th>
+                {!choice && (
+                  <th className="pl-3 text-right font-medium">False alarms</th>
+                )}
                 <th className="pl-3 text-right font-medium">Median RT</th>
               </tr>
             </thead>
@@ -138,9 +249,11 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
                   <td className="pl-3 text-right tabular-nums">
                     {pct(q.hit_rate)}
                   </td>
-                  <td className="pl-3 text-right tabular-nums">
-                    {pct(q.commission_rate)}
-                  </td>
+                  {!choice && (
+                    <td className="pl-3 text-right tabular-nums">
+                      {pct(q.commission_rate)}
+                    </td>
+                  )}
                   <td className="pl-3 text-right tabular-nums">
                     {ms(q.median_rt_ms)}
                   </td>
@@ -153,7 +266,7 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
 
       {Object.keys(b.nogo_types ?? {}).length > 0 && (
         <p className="text-[13px] text-ink-2">
-          False docks by kind:{" "}
+          False alarms by kind:{" "}
           {Object.entries(b.nogo_types)
             .map(
               ([name, v]) =>
@@ -168,9 +281,18 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
           <ErpChart
             title="Around the target"
             locked={block.erp.stimulus}
-            windows={[
-              { name: "N2", from: 200, to: 350, value: block.erp.stimulus.n2 },
-            ]}
+            windows={
+              block.erp.stimulus.n2
+                ? [
+                    {
+                      name: "N2",
+                      from: 200,
+                      to: 350,
+                      value: block.erp.stimulus.n2,
+                    },
+                  ]
+                : []
+            }
             minEpochs={block.erp.min_epochs.stimulus}
           />
           <ErpChart
@@ -193,6 +315,75 @@ export function TaskPanel({ block }: { block: TaskBlock }) {
       )}
 
       {block.prestimulus && <PrestimulusLine p={block.prestimulus} />}
+    </div>
+  );
+}
+
+/** A heartbeat-counting block: what was reported against what the pulse sensor counted. */
+function CountingPanel({
+  block,
+  counting,
+}: {
+  block: TaskBlock;
+  counting: Interoception;
+}) {
+  return (
+    <div className="space-y-3" data-testid={`task-${block.key}`}>
+      <h3 className="text-[14px] font-semibold">
+        {block.label ?? block.block_id}
+        <span className="font-normal text-ink-3">
+          {" "}
+          · {counting.intervals.length} rounds
+        </span>
+      </h3>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
+        <Stat
+          label="Accuracy"
+          value={pct(counting.accuracy)}
+          hint="1 minus the share of beats missed or added, averaged over the rounds. 100% is a perfect count."
+        />
+        <Stat
+          label="Confidence"
+          value={
+            counting.confidence === null || counting.confidence === undefined
+              ? "—"
+              : `${counting.confidence.toFixed(1)} / 10`
+          }
+        />
+      </dl>
+      <table className="w-full text-[13px]">
+        <thead className="text-ink-3">
+          <tr>
+            <th className="text-left font-medium">Round</th>
+            <th className="pl-3 text-right font-medium">Counted</th>
+            <th className="pl-3 text-right font-medium">Happened</th>
+            <th className="pl-3 text-right font-medium">Accuracy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {counting.intervals.map((row) => (
+            <tr key={row.interval_index} className="border-t border-hairline">
+              <td className="py-1">
+                {row.duration_s === null || row.duration_s === undefined
+                  ? row.interval_index + 1
+                  : `${Math.round(row.duration_s)} s`}
+              </td>
+              <td className="pl-3 text-right tabular-nums">{row.reported}</td>
+              <td className="pl-3 text-right tabular-nums">
+                {row.actual ?? "—"}
+              </td>
+              <td className="pl-3 text-right tabular-nums">
+                {pct(row.accuracy)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="type-caption text-ink-3">
+        {counting.n_scored === 0
+          ? "The real beats could not be counted: this headband has no pulse sensor, or the pulse was not clean while counting."
+          : "Real beats come from the headband's pulse sensor. Counting can be helped along by guessing the time, so read this as a score on this task, not as a trait."}
+      </p>
     </div>
   );
 }

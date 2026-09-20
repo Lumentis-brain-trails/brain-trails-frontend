@@ -192,6 +192,130 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
       help: "3 shows 3, 2, 1 - one number per second.",
     },
   },
+  flanker: {
+    n: {
+      label: "Trials",
+      help: "How many rows of arrows. 96 takes about three minutes; with cues use a multiple of 8 so every combination comes up equally often.",
+    },
+    congruentRatio: {
+      label: "Share of agreeing rows",
+      help: "The fraction of rows whose outer arrows point the same way as the middle one, from 0 to 1. At 0.5 the disagreement cannot be predicted.",
+    },
+    cues: {
+      label: "Cues before the row",
+      help: "Leave empty for the plain arrows task. With cues the row appears above or below the cross and a brief asterisk may come first: this is the Attention Network Test. Use all four for its three scores.",
+      options: {
+        none: "No cue",
+        center: "At the cross (when, not where)",
+        double: "Above and below (when, not where)",
+        spatial: "Where the row will appear",
+      },
+    },
+    practice: {
+      label: "This is a practice round",
+      help: "Marks every trial as practice: played, never scored.",
+    },
+    feedback: {
+      label: "Say right or wrong",
+      help: "Shows Correct, Wrong side or Too slow after each row. Use it for practice; in the real block it changes how people respond.",
+    },
+    maxRun: {
+      label: "Longest streak",
+      help: "The most rows of the same type in a row.",
+      advanced: true,
+    },
+    cueMs: {
+      label: "Cue stays on (ms)",
+      help: "100 ms is the standard: long enough to see, too short to look at.",
+      advanced: true,
+    },
+    cueTargetMs: {
+      label: "Cue to row (ms)",
+      help: "The quiet gap between the cue going off and the row appearing.",
+      advanced: true,
+    },
+    stimulusMs: {
+      label: "Time to answer (ms)",
+      help: "The row stays up until an answer or this long, then counts as too slow.",
+      advanced: true,
+    },
+    itiMs: {
+      label: "Pause between rows (ms)",
+      help: "Shortest and longest time on the cross between two rows. Varying it stops people answering to the rhythm.",
+      advanced: true,
+    },
+  },
+  "n-back": {
+    n: {
+      label: "Letters",
+      help: "How many letters are shown. 60 takes two and a half minutes.",
+    },
+    load: {
+      label: "How far back",
+      help: "1: is it the same as the previous letter? 2: the same as the one before that? 3 is hard for most people. Compare blocks of different loads to see effort rise.",
+    },
+    matchRatio: {
+      label: "Share of matches",
+      help: "The fraction of letters that repeat the one from that far back, from 0 to 1. About 0.3 is standard.",
+    },
+    lureRatio: {
+      label: "Share of near misses",
+      help: "Letters that repeat one step off: they feel like a match and must be let go. They tell remembering the order from merely recognising a recent letter. 0 turns them off.",
+      advanced: true,
+    },
+    practice: {
+      label: "This is a practice round",
+      help: "Marks every trial as practice: played, never scored.",
+    },
+    stimulusMs: {
+      label: "Letter stays on (ms)",
+      help: "The letter disappears after this long; the answer can still come.",
+      advanced: true,
+    },
+    isiMs: {
+      label: "Blank after the letter (ms)",
+      help: "The pace is fixed: every letter gets its time plus this blank, answered or not.",
+      advanced: true,
+    },
+  },
+  coding: {
+    duration_s: {
+      label: "Length (seconds)",
+      help: "How long the participant keeps matching. 90 seconds is the standard; the score is how many they get right in that time.",
+    },
+    practice: {
+      label: "This is a practice round",
+      help: "Marks every answer as practice: played, never scored.",
+    },
+    pairs: {
+      label: "Symbols in the key",
+      help: "How many symbol-digit pairs to look up, from 2 to 9. Nine is the standard; fewer makes it easier to memorise and less of a speed test.",
+    },
+    itiMs: {
+      label: "Pause between symbols (ms)",
+      help: "A brief blank after each answer, so two identical-looking moments are not mistaken for one.",
+      advanced: true,
+    },
+  },
+  heartbeat: {
+    intervals_s: {
+      label: "Counting rounds (seconds each)",
+      help: "One number per round. Use different lengths, or people multiply a guessed heart rate by the time. The headband's pulse sensor counts the real beats.",
+    },
+    shuffle: {
+      label: "Rounds in a random order",
+      help: "A different order each session, so the lengths cannot be learned.",
+    },
+    confidence: {
+      label: "Ask how sure they are",
+      help: "After each round. How well confidence follows accuracy is its own measure, and the more telling one in anxiety.",
+    },
+    ready_s: {
+      label: "Get-ready time (seconds)",
+      help: "How long the instruction is shown before the starting tone.",
+      advanced: true,
+    },
+  },
   breathing: {
     cycles: { label: "Breaths", help: "How many full in-and-out cycles." },
     inhaleMs: {

@@ -7,6 +7,7 @@
  * in one place.
  */
 
+import { STAGE_GROUND } from "@/lib/protocol/stage";
 import type { Scene } from "@/lib/protocol/engine";
 
 export interface Theme {
@@ -21,7 +22,7 @@ export interface Theme {
 }
 
 export const SPACE_THEME: Theme = {
-  background: "#080b14",
+  background: STAGE_GROUND,
   star: "#7b8496",
   dock: "#94a3b8",
   cargo: "#4f8ff7",

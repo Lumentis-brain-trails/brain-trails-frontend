@@ -1,0 +1,163 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": "Arrows flash on the screen for about four minutes, and you answer quickly. You can stop at any time.",
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "First you rest, then a quick game with arrows.",
+              "holdMs": 4000
+            },
+            {
+              "text": "About seven minutes in all.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule",
+        "kind": "instructions",
+        "label": "The rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "A row of arrows will appear.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Which way does the MIDDLE arrow point?\nPress the left or right arrow key, or tap the side.",
+              "holdMs": 6000
+            },
+            {
+              "text": "The other arrows may point the other way. Ignore them.\nBe fast, but be right.",
+              "holdMs": 6000
+            },
+            {
+              "text": "A short practice first. It will tell you how you did.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Practise"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "practice",
+        "kind": "flanker",
+        "label": "Practice",
+        "condition": "practice",
+        "config": {
+          "n": 12,
+          "congruentRatio": 0.5,
+          "cues": [],
+          "practice": true,
+          "feedback": true,
+          "markers": {
+            "trialStart": "practice_trial_start",
+            "stimulusOnset": "practice_stimulus_onset",
+            "response": "practice_response",
+            "outcome": "practice_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "ready",
+        "kind": "instructions",
+        "label": "For real",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "That was practice.\nNow about four minutes, without the hints.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "arrows",
+        "kind": "flanker",
+        "label": "Middle arrow",
+        "condition": "flanker",
+        "config": {
+          "n": 160,
+          "congruentRatio": 0.5,
+          "cues": [],
+          "markers": {
+            "trialStart": "flanker_trial_start",
+            "stimulusOnset": "flanker_stimulus_onset",
+            "response": "flanker_response",
+            "outcome": "flanker_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "All done.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

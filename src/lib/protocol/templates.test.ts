@@ -40,13 +40,19 @@ function run(file: string, seed = 1) {
 }
 
 describe("templates", () => {
-  test("the five official templates are present", () => {
+  test("the official templates are present", () => {
     expect(FILES).toEqual([
+      "attention-networks.json",
+      "breath-pacing.json",
       "emotion-video.json",
+      "flanker-control.json",
       "free-recording.json",
+      "interoceptive-focus.json",
+      "processing-speed.json",
       "resting-baseline.json",
       "signal-navigator.json",
       "sustained-focus.json",
+      "working-memory-span.json",
     ]);
   });
 
@@ -207,5 +213,106 @@ describe("templates", () => {
       expect(minutes).toBeGreaterThan(5);
       expect(minutes).toBeLessThan(7);
     }
+  });
+
+  /**
+   * The task protocols share a shape, asserted once: a resting baseline right after the
+   * welcome (every later block is compared with it), practice flagged as practice so
+   * learning the keys is never scored, and the real block unflagged.
+   */
+  test.each([
+    ["flanker-control.json", "arrows"],
+    ["attention-networks.json", "networks_a"],
+    ["working-memory-span.json", "two_back"],
+    ["processing-speed.json", "coding_a"],
+  ])(
+    "%s: baseline first, flagged practice, an unflagged real block",
+    (file, real) => {
+      const steps = run(file).steps;
+      expect(steps[0].kind).toBe("instructions");
+      expect(steps[1].kind).toBe("baseline");
+      const config = (id: string) =>
+        steps.find((s) => s.id === id)!.config as Record<string, unknown>;
+      expect(config("practice").practice).toBe(true);
+      expect(config(real).practice).toBeUndefined();
+      expect(steps.at(-1)!.id).toBe("outro");
+    }
+  );
+
+  test("attention networks: all four cues, in blocks whose cells divide evenly", () => {
+    const steps = run("attention-networks.json").steps;
+    for (const id of ["networks_a", "networks_b"]) {
+      const config = steps.find((s) => s.id === id)!.config as {
+        n: number;
+        cues: string[];
+      };
+      expect([...config.cues].sort()).toEqual([
+        "center",
+        "double",
+        "none",
+        "spatial",
+      ]);
+      // 4 cues x 2 congruencies x 2 directions
+      expect(config.n % 16).toBe(0);
+    }
+    const plain = run("flanker-control.json").steps.find(
+      (s) => s.id === "arrows"
+    )!.config as { cues: string[]; n: number };
+    expect(plain.cues).toEqual([]);
+    // enough incongruent trials for their errors to carry an ERN (backend V3-0010)
+    expect(plain.n).toBeGreaterThanOrEqual(144);
+  });
+
+  test("working memory: the load rises from one block to the next", () => {
+    const steps = run("working-memory-span.json").steps;
+    const loads = steps
+      .filter(
+        (s) =>
+          s.kind === "n-back" && !(s.config as { practice?: boolean }).practice
+      )
+      .map((s) => (s.config as { load: number }).load);
+    expect(loads).toEqual([1, 2]);
+    expect(
+      steps.some(
+        (s) => (s.config as { instrument?: string }).instrument === "nasa_tlx"
+      )
+    ).toBe(true);
+  });
+
+  test("breath pacing: a slow pace with a longer breath out, between two baselines", () => {
+    const steps = run("breath-pacing.json").steps;
+    const paced = steps.find((s) => s.id === "paced")!.config as {
+      cycles: number;
+      inhaleMs: number;
+      exhaleMs: number;
+    };
+    const cycleS = (paced.inhaleMs + paced.exhaleMs) / 1000;
+    expect(60 / cycleS).toBeCloseTo(6, 5); // six breaths a minute
+    expect(paced.exhaleMs).toBeGreaterThan(paced.inhaleMs);
+    expect(paced.cycles * cycleS).toBe(300);
+    const closed = steps.filter(
+      (s) =>
+        s.kind === "baseline" &&
+        (s.config as { eyes: string }).eyes === "closed"
+    );
+    expect(closed.map((s) => s.id)).toEqual([
+      "eyes_closed",
+      "eyes_closed_after",
+    ]);
+  });
+
+  test("interoceptive focus: rounds of different lengths, confidence asked", () => {
+    const counting = run("interoceptive-focus.json").steps.find(
+      (s) => s.id === "counting"
+    )!.config as {
+      intervals_s: number[];
+      confidence: boolean;
+      shuffle: boolean;
+    };
+    expect(new Set(counting.intervals_s).size).toBe(
+      counting.intervals_s.length
+    );
+    expect(counting.intervals_s.length).toBeGreaterThanOrEqual(3);
+    expect(counting).toMatchObject({ confidence: true, shuffle: true });
   });
 });

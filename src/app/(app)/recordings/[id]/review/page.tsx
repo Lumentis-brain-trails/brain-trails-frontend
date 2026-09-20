@@ -308,6 +308,7 @@ export default function ReviewPage({
                       <th className="pl-3 text-right font-medium">
                         From baseline
                       </th>
+                      <th className="pl-3 text-right font-medium">Pulse</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -338,6 +339,18 @@ export default function ReviewPage({
                         <td className="pl-3 text-right tabular-nums">
                           {fmt(block.baseline_distance)}
                         </td>
+                        <td
+                          className="pl-3 text-right tabular-nums"
+                          title={
+                            block.cardiac?.rmssd_ms
+                              ? `Beat-to-beat variability (RMSSD) ${Math.round(block.cardiac.rmssd_ms)} ms`
+                              : undefined
+                          }
+                        >
+                          {block.cardiac?.hr_bpm
+                            ? Math.round(block.cardiac.hr_bpm)
+                            : "—"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -346,16 +359,19 @@ export default function ReviewPage({
               <p className="type-caption text-ink-3">
                 Relative power, averaged over the block. Distance from baseline
                 is measured in the embedding space, so it compares across
-                sessions.
+                sessions. Pulse is beats a minute from the headband&apos;s
+                optical sensor, where it has one.
               </p>
             </Card>
           )}
 
-          {blockMetrics.data?.some((block) => block.behaviour) && (
+          {blockMetrics.data?.some(
+            (block) => block.behaviour || block.interoception
+          ) && (
             <Card className="space-y-4">
               <h2 className="text-[15px] font-semibold">Task performance</h2>
               {blockMetrics.data
-                .filter((block) => block.behaviour)
+                .filter((block) => block.behaviour || block.interoception)
                 .map((block) => (
                   <TaskPanel key={block.key} block={block} />
                 ))}

@@ -9,12 +9,13 @@
  * frame of the game and changes when the game does. The other kinds are a plain symbol
  * on the participant's dark stage.
  */
+import { STAGE_GROUND } from "@/lib/protocol/stage";
 import { useEffect, useRef } from "react";
 import { paint } from "@/components/protocol/kinds/render";
 import { cn } from "@/components/ui";
 import { identityOf } from "@/lib/builder/kinds";
 
-const STAGE = "#080b14";
+const STAGE = STAGE_GROUND;
 
 export function KindCover({
   kind,
@@ -107,6 +108,37 @@ const SYMBOLS: Record<string, React.ReactNode> = {
       <circle cx="80" cy="45" r="14" fill="currentColor" stroke="none" />
     </>
   ),
+  flanker: (
+    <>
+      <path d="M30 45h18M42 39l6 6-6 6M56 45h18M68 39l6 6-6 6" opacity="0.45" />
+      <path d="M100 45H82M88 39l-6 6 6 6" strokeWidth="4" />
+      <path d="M108 45h18M120 39l6 6-6 6M134 45h-0" opacity="0.45" />
+    </>
+  ),
+  "n-back": (
+    <>
+      <rect x="34" y="33" width="24" height="24" rx="4" opacity="0.3" />
+      <rect x="68" y="33" width="24" height="24" rx="4" opacity="0.55" />
+      <rect
+        x="102"
+        y="33"
+        width="24"
+        height="24"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+      />
+      <path d="M46 66c10 10 58 10 68 0" opacity="0.6" />
+    </>
+  ),
+  coding: (
+    <>
+      <path d="M44 28h72M44 44h72M44 60h72M68 28v32M92 28v32" opacity="0.45" />
+      <path d="M52 36l8-4v8zM76 32h8v8h-8z" />
+      <circle cx="104" cy="36" r="4" />
+    </>
+  ),
+  heartbeat: <path d="M28 46h30l8-16 12 32 10-22 6 6h38" />,
   quiz: (
     <>
       <path d="M52 30h56" />

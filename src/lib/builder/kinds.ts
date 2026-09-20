@@ -61,6 +61,30 @@ export const KIND_IDENTITY: Record<string, KindIdentity> = {
     tone: "var(--trail-d)",
     family: "task",
   },
+  flanker: {
+    label: "Arrows (flanker)",
+    hint: "Which way does the middle arrow point? The arrows around it may disagree. With cues it is the Attention Network Test.",
+    tone: "#f2a33c",
+    family: "task",
+  },
+  "n-back": {
+    label: "Letter memory (n-back)",
+    hint: "Letters one at a time: press when this one is the letter from a few steps ago.",
+    tone: "#9b8cff",
+    family: "task",
+  },
+  coding: {
+    label: "Symbol coding",
+    hint: "Match symbols to digits against the clock: how many in ninety seconds.",
+    tone: "#49c2a8",
+    family: "task",
+  },
+  heartbeat: {
+    label: "Heartbeat counting",
+    hint: "Count your own heartbeats between two tones, without touching your pulse.",
+    tone: "#e9668a",
+    family: "task",
+  },
   baseline: {
     label: "Resting baseline",
     hint: "Sitting still, eyes open or closed: what every other block is compared to.",

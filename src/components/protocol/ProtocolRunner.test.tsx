@@ -1,4 +1,6 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { SPACE_THEME } from "@/components/protocol/kinds/render";
+import { STAGE_GROUND } from "@/lib/protocol/stage";
 import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
@@ -67,6 +69,28 @@ describe("ProtocolRunner", () => {
     );
     return { sink, onFinish, onExit };
   }
+
+  test("an experiment runs on a black, still ground, whatever the app's theme", () => {
+    const { container } = render(
+      <div data-theme="light">
+        <ProtocolRunner
+          protocol={TWO_PROMPTS}
+          seed={1}
+          sink={createMemorySink()}
+          onFinish={vi.fn()}
+          onExit={vi.fn()}
+        />
+      </div>
+    );
+    const stage = container.querySelector("[data-theme='dark']") as HTMLElement;
+    // pinned dark so ink stays light on it, and black, not the app's tinted ground
+    expect(stage).not.toBeNull();
+    expect(stage.className).toContain("bg-black");
+    // nothing decorative behind a task: no gradient, no animation, no image
+    expect(stage.outerHTML).not.toMatch(/gradient|animate-|blur|ribbon|aurora/);
+    expect(SPACE_THEME.background).toBe(STAGE_GROUND);
+    expect(STAGE_GROUND).toBe("#000000");
+  });
 
   test("advances through every step and brackets the run with markers", async () => {
     const { sink, onFinish } = renderRunner();

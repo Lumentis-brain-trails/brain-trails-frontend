@@ -35,6 +35,10 @@ const KIND_WORDS: Record<string, string> = {
   quiz: "Quiz",
   breathing: "Paced breathing",
   "go-no-go": "Go/no-go game",
+  flanker: "Arrows game",
+  "n-back": "Letter memory game",
+  coding: "Symbol coding",
+  heartbeat: "Heartbeat counting",
   "image-sequence": "Images",
   group: "Group",
 };

@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": "Arrows and brief flashes appear on the screen for about eight minutes, and you answer quickly. You can stop at any time.",
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "First you rest, then two rounds of a game with arrows.",
+              "holdMs": 4000
+            },
+            {
+              "text": "About twelve minutes in all.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule",
+        "kind": "instructions",
+        "label": "The rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Keep your eyes on the cross.\nA row of arrows will appear above or below it.",
+              "holdMs": 6000
+            },
+            {
+              "text": "Which way does the MIDDLE arrow point?\nPress the left or right arrow key, or tap the side.",
+              "holdMs": 6000
+            },
+            {
+              "text": "Sometimes a star flashes first. It tells you the arrows are coming,\nand sometimes where. Keep looking at the cross.",
+              "holdMs": 7000
+            },
+            {
+              "text": "A short practice first. It will tell you how you did.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Practise"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "practice",
+        "kind": "flanker",
+        "label": "Practice",
+        "condition": "practice",
+        "config": {
+          "n": 16,
+          "congruentRatio": 0.5,
+          "cues": ["none", "center", "double", "spatial"],
+          "practice": true,
+          "feedback": true,
+          "markers": {
+            "trialStart": "practice_trial_start",
+            "stimulusOnset": "practice_stimulus_onset",
+            "response": "practice_response",
+            "outcome": "practice_outcome",
+            "cueOnset": "practice_cue_onset"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "ready",
+        "kind": "instructions",
+        "label": "For real",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "That was practice.\nNow two rounds of four minutes, with a break between.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "networks_a",
+        "kind": "flanker",
+        "label": "Round one",
+        "condition": "networks",
+        "config": {
+          "n": 96,
+          "congruentRatio": 0.5,
+          "cues": ["none", "center", "double", "spatial"],
+          "markers": {
+            "trialStart": "ant_trial_start",
+            "stimulusOnset": "ant_stimulus_onset",
+            "response": "ant_response",
+            "outcome": "ant_outcome",
+            "cueOnset": "ant_cue_onset"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "break",
+        "kind": "rest",
+        "label": "Break",
+        "condition": "rest",
+        "config": {
+          "mode": "timed",
+          "duration_s": 30,
+          "message": "Rest your eyes. Round two starts by itself."
+        }
+      },
+      {
+        "type": "block",
+        "id": "networks_b",
+        "kind": "flanker",
+        "label": "Round two",
+        "condition": "networks",
+        "config": {
+          "n": 96,
+          "congruentRatio": 0.5,
+          "cues": ["none", "center", "double", "spatial"],
+          "markers": {
+            "trialStart": "ant_trial_start",
+            "stimulusOnset": "ant_stimulus_onset",
+            "response": "ant_response",
+            "outcome": "ant_outcome",
+            "cueOnset": "ant_cue_onset"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "All done.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

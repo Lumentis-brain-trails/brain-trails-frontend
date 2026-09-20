@@ -288,7 +288,7 @@ function VideoRenderer({
   }, [config.durationMs, config.endOn, finish]);
 
   return (
-    <div className="flex h-full items-center justify-center bg-[#080b14]">
+    <div className="flex h-full items-center justify-center bg-black">
       {error ? (
         <p className="px-6 text-center text-sm text-red-400">{error}</p>
       ) : (

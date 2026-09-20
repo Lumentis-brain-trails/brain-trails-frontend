@@ -20,6 +20,10 @@ import { questionnaireTaskKind } from "./QuestionnaireTask";
 import { quizTaskKind } from "./QuizTask";
 import { restTaskKind } from "./RestTask";
 import { textTaskKind } from "./TextTask";
+import { codingTaskKind } from "./CodingTask";
+import { flankerTaskKind } from "./FlankerTask";
+import { heartbeatTaskKind } from "./HeartbeatTask";
+import { nBackTaskKind } from "./NBackTask";
 import type { TaskKind } from "@/lib/protocol/types";
 import type { PromptConfig } from "./PromptTask";
 
@@ -57,6 +61,10 @@ export function registerBuiltInKinds(): void {
   if (!hasTaskKind(questionnaireTaskKind.name))
     registerTaskKind(questionnaireTaskKind);
   if (!hasTaskKind(quizTaskKind.name)) registerTaskKind(quizTaskKind);
+  if (!hasTaskKind(flankerTaskKind.name)) registerTaskKind(flankerTaskKind);
+  if (!hasTaskKind(nBackTaskKind.name)) registerTaskKind(nBackTaskKind);
+  if (!hasTaskKind(codingTaskKind.name)) registerTaskKind(codingTaskKind);
+  if (!hasTaskKind(heartbeatTaskKind.name)) registerTaskKind(heartbeatTaskKind);
 }
 
 registerBuiltInKinds();

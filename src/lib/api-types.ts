@@ -1603,19 +1603,49 @@ export interface components {
          * BehaviourOut
          * @description How a task block was performed. Read together, never one number alone.
          *
-         *     `d_prime` and `criterion` are null under five trials per class. `flags` names the
+         *     `d_prime` and `criterion` are null under five trials per class, and in a task with
+         *     no withhold trials (a flanker). `error_rate` is wrong-key presses, 0 in a one-key
+         *     task. `effects` holds the reaction-time contrasts the block's design supports:
+         *     `congruency_ms` (flanker conflict cost), and the Attention Network Test's
+         *     `alerting_ms` and `orienting_ms`; a contrast is null under eight correct trials a
+         *     side. `throughput_per_min` is the score of a timed block. `flags` names the
          *     reasons to distrust the block: `few_trials`, `many_invalid`, `low_hit_rate`,
          *     `many_anticipations`, `clock_estimated`.
          */
         BehaviourOut: {
+            /** Accuracy */
+            accuracy?: number | null;
             /** Commission Rate */
             commission_rate: number | null;
+            /**
+             * Conditions
+             * @default {}
+             */
+            conditions: {
+                [key: string]: components["schemas"]["LevelOut"];
+            };
             /** Correct Rejection Rate */
             correct_rejection_rate: number | null;
             /** Criterion */
             criterion: number | null;
+            /**
+             * Cues
+             * @default {}
+             */
+            cues: {
+                [key: string]: components["schemas"]["LevelOut"];
+            };
             /** D Prime */
             d_prime: number | null;
+            /**
+             * Effects
+             * @default {}
+             */
+            effects: {
+                [key: string]: number | null;
+            };
+            /** Error Rate */
+            error_rate?: number | null;
             ex_gaussian: components["schemas"]["ExGaussianOut"] | null;
             /** Flags */
             flags: string[];
@@ -1644,6 +1674,8 @@ export interface components {
             rt: components["schemas"]["ReactionTimeOut"];
             /** Rt Slope Ms Per Min */
             rt_slope_ms_per_min: number | null;
+            /** Throughput Per Min */
+            throughput_per_min?: number | null;
         };
         /**
          * BetaProfile
@@ -1662,8 +1694,9 @@ export interface components {
          *     of the eyes-closed baseline block, null when the protocol has none - it is computed
          *     on the raw vectors, not on the trail, so it compares across sessions (V2-0005).
          *
-         *     A task block (go/no-go) also carries `behaviour`, `erp` and `prestimulus`; they are
-         *     null on every other block and on analyses that predate them.
+         *     A task block (go/no-go, flanker, n-back, coding) also carries `behaviour`, `erp` and
+         *     `prestimulus`; any block may carry `cardiac`, and a heartbeat-counting block
+         *     `interoception`. All are null where they do not apply and on older analyses.
          */
         BlockMetricsOut: {
             /** Artefact */
@@ -1683,11 +1716,13 @@ export interface components {
             behaviour?: components["schemas"]["BehaviourOut"] | null;
             /** Block Id */
             block_id: string;
+            cardiac?: components["schemas"]["CardiacOut"] | null;
             /** Condition */
             condition: string | null;
             erp?: components["schemas"]["ErpOut"] | null;
             /** Good Contact */
             good_contact: number | null;
+            interoception?: components["schemas"]["InteroceptionOut"] | null;
             /** Iteration */
             iteration: number | null;
             /** Key */
@@ -1766,6 +1801,26 @@ export interface components {
             extras?: string | null;
             /** Original */
             original: string;
+        };
+        /**
+         * CardiacOut
+         * @description Heart rate and variability of a block, from the headband's pulse sensor.
+         *
+         *     Null on the row when the band has no sensor or the pulse was clean over less than
+         *     60% of the block. The variability figures need thirty accepted intervals and come
+         *     from a 64 Hz forehead sensor: compare them within a person, not with ECG norms.
+         */
+        CardiacOut: {
+            /** Coverage */
+            coverage: number | null;
+            /** Hr Bpm */
+            hr_bpm: number | null;
+            /** N Beats */
+            n_beats: number;
+            /** Rmssd Ms */
+            rmssd_ms: number | null;
+            /** Sdnn Ms */
+            sdnn_ms: number | null;
         };
         /**
          * CohortIn
@@ -1892,6 +1947,24 @@ export interface components {
             };
             /** Version */
             version: string;
+        };
+        /**
+         * CountingIntervalOut
+         * @description One round of heartbeat counting; `actual` is null where the pulse was not clean.
+         */
+        CountingIntervalOut: {
+            /** Accuracy */
+            accuracy: number | null;
+            /** Actual */
+            actual: number | null;
+            /** Confidence */
+            confidence: number | null;
+            /** Duration S */
+            duration_s: number | null;
+            /** Interval Index */
+            interval_index: number;
+            /** Reported */
+            reported: number;
         };
         /**
          * DecideIn
@@ -2140,6 +2213,20 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * InteroceptionOut
+         * @description A heartbeat-counting block: `1 - |actual - reported| / actual`, averaged.
+         */
+        InteroceptionOut: {
+            /** Accuracy */
+            accuracy: number | null;
+            /** Confidence */
+            confidence: number | null;
+            /** Intervals */
+            intervals: components["schemas"]["CountingIntervalOut"][];
+            /** N Scored */
+            n_scored: number;
+        };
+        /**
          * IssueOut
          * @description One validation finding; `rule` is stable, `path` points into the tree.
          */
@@ -2199,6 +2286,22 @@ export interface components {
             sigma: number;
             /** Stress */
             stress: number | null;
+        };
+        /**
+         * LevelOut
+         * @description One level of a task's design: `congruent`, `match`, a cue type.
+         *
+         *     How many trials, how right, how fast; `median_rt_ms` is over correct presses only.
+         */
+        LevelOut: {
+            /** Accuracy */
+            accuracy: number | null;
+            /** Error Rate */
+            error_rate: number | null;
+            /** Median Rt Ms */
+            median_rt_ms: number | null;
+            /** N */
+            n: number;
         };
         /**
          * LoginIn
