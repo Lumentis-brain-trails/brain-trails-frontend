@@ -6,7 +6,6 @@ import {
   THEME_STORAGE_KEY,
   readTheme,
   setTheme,
-  trailColorAt,
   trailColorscale,
   trailHexAt,
   useChartTheme,
@@ -107,18 +106,18 @@ describe("trail ramp", () => {
     expect(scale[3][1]).toBe("#ff9cce");
   });
 
-  test("trailColorAt hits the stops and interpolates between them", () => {
+  test("the ramp hits its stops and interpolates between them", () => {
     const stops = ["#000000", "#ffffff", "#ff0000"];
-    expect(trailColorAt(stops, 0)).toEqual([0, 0, 0]);
-    expect(trailColorAt(stops, 0.25)).toEqual([0.5, 0.5, 0.5]);
-    expect(trailColorAt(stops, 1)).toEqual([1, 0, 0]);
+    expect(trailHexAt(stops, 0)).toBe("#000000");
+    expect(trailHexAt(stops, 0.25)).toBe("#808080");
+    expect(trailHexAt(stops, 1)).toBe("#ff0000");
   });
 
-  test("trailColorAt clamps out-of-range and non-finite input", () => {
+  test("the ramp clamps out-of-range and non-finite input", () => {
     const stops = ["#000000", "#ffffff"];
-    expect(trailColorAt(stops, -3)).toEqual([0, 0, 0]);
-    expect(trailColorAt(stops, 7)).toEqual([1, 1, 1]);
-    expect(trailColorAt(stops, Number.NaN)).toEqual([0, 0, 0]);
+    expect(trailHexAt(stops, -3)).toBe("#000000");
+    expect(trailHexAt(stops, 7)).toBe("#ffffff");
+    expect(trailHexAt(stops, Number.NaN)).toBe("#000000");
   });
 
   test("trailHexAt returns the stops as hex at their positions", () => {

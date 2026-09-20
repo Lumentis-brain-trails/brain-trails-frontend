@@ -18,12 +18,41 @@ where it ends. That reading carries the whole product:
   subtree pins `data-theme="dark"`.
 - Inside the app the chrome is monochrome and **the trail is drawn in the ribbons'
   four stops** (`--trail-a` .. `--trail-d`, `CHART_THEMES` in `lib/theme.ts`):
-  trail plots, the 3D terrain's path, trail thumbnails, the EEG channel colours.
+  trail plots, trail thumbnails, the EEG channel colours.
   Energy surfaces and every other chart stay neutral.
 - A ribbon appears inside the app in one place only: the corner of Home's "Start a
   new trail" card (`.ribbon-glow`), because a trail is about to start there.
+- The mark (`Logo`) is the only blue in the product: three ribbons tied into a
+  trefoil knot, each one a trail running into the other two. It keeps its own
+  colours rather than following `currentColor`, and it is the same artwork in the
+  rail, the favicon (`app/icon.svg`) and the iOS app icon.
 - Titles (`type-display`, `type-title`, `type-heading`, `type-figure`) use Manrope;
   text you read at length stays on the system face.
+
+## The trail
+
+Wherever a trail is drawn - the recording's own picture, the review, the thumbnail
+in a list - it is the same object, built from `lib/trailPath.ts`:
+
+- **One curve, not a chain.** The windows are samples, not corners; the drawn path
+  is a centripetal Catmull-Rom spline through them, so the trail reads as one
+  movement instead of a broken line with a knot at every window.
+- **The colour is in the stroke.** No renderer can run a gradient along a path, so
+  the ramp is approximated by stroking short runs of the curve in flat colours
+  (`TrailRibbon`), thick, with round caps.
+- **The windows stay visible, and quiet.** Fine dots in the ground colour where the
+  real windows fall, so what you can hover and click is still on screen without the
+  path turning into beads. Thumbnails leave them off: at that size they are noise.
+- **The ends are marked.** An open ring in `--trail-a` where it starts, a filled dot
+  with a soft halo in `--trail-d` where it ends.
+- **The ground is the session's own landscape**, and stays neutral: one soft blob
+  per region of the Ball Mapper cover, as wide as the cover's radius and as dark as
+  the time spent there, so overlapping blobs darken into a basin. One flat picture,
+  no camera: the 3D terrain that used to sit behind a toggle read as topography the
+  arbitrary units do not support, and hid half the trail behind a ridge.
+
+Smoothing is how the path is _drawn_, never what is measured: the windows are the
+data and every renderer still hit-tests them.
 
 ## Appearance
 
@@ -91,8 +120,8 @@ panel, Escape/scrim to dismiss, non-dismissible while a mutation runs).
 - Confirmation dialogs only for destructive, irreversible actions (delete
   recording, delete account).
 - Copy is short and specific: "Recordings", "New recording", "Delete everything".
-- No mascots, no decorative illustration beyond the trail itself and the ribbons,
-  which are the brand mark: full on the entry and auth screens, one still glow on
-  Home's new-trail card, nowhere else.
+- No mascots, no decorative illustration beyond the trail itself, the knot mark and
+  the ribbons: full on the entry and auth screens, one still glow on Home's
+  new-trail card, nowhere else.
 - Thumbnails of a trail are drawn from its own analysis (`TrailThumb`); a recording
   without one says so instead of showing a stand-in shape.

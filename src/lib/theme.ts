@@ -74,8 +74,8 @@ export function useTheme(): ThemeName {
 }
 
 /**
- * Resolved design tokens for canvas-based charts (Plotly, uPlot, three.js) that
- * cannot read CSS variables themselves. Mirrors globals.css.
+ * Resolved design tokens for canvas-based charts (Plotly, uPlot) that cannot read
+ * CSS variables themselves. Mirrors globals.css.
  */
 export interface ChartTheme {
   /** Page ground, and the text colour on an `ink` hover label. */
@@ -83,12 +83,8 @@ export interface ChartTheme {
   ink: string;
   ink3: string;
   hairline: string;
-  /**
-   * Energy surfaces, neutral so colour stays with the trail: `fill` for the flat
-   * contour, `low`/`high` for a basin and a ridge of the 3D terrain, `line` for its
-   * contour lines.
-   */
-  terrain: { fill: string; low: string; high: string; line: string };
+  /** Energy surfaces, neutral so colour stays with the trail. */
+  terrain: { fill: string };
   /** The trail's time ramp, first window to last: the ribbons' four stops. */
   trail: readonly [string, string, string, string];
   trailStart: string;
@@ -113,12 +109,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     ink: "#1d1d1f",
     ink3: "#86868b",
     hairline: "rgba(0,0,0,0.08)",
-    terrain: {
-      fill: "rgba(29,29,31,0.28)",
-      low: "#c4c8d1",
-      high: "#f5f5f7",
-      line: "#a3a9b5",
-    },
+    terrain: { fill: "rgba(29,29,31,0.28)" },
     trail: LIGHT_TRAIL,
     trailStart: LIGHT_TRAIL[0],
     trailEnd: LIGHT_TRAIL[3],
@@ -130,12 +121,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     ink: "#f5f5f7",
     ink3: "#7c8497",
     hairline: "rgba(255,255,255,0.08)",
-    terrain: {
-      fill: "rgba(241,244,250,0.3)",
-      low: "#0b0e14",
-      high: "#3a4252",
-      line: "#56607a",
-    },
+    terrain: { fill: "rgba(241,244,250,0.3)" },
     trail: DARK_TRAIL,
     trailStart: DARK_TRAIL[0],
     trailEnd: DARK_TRAIL[3],
@@ -155,10 +141,9 @@ export function trailColorscale(theme: ChartTheme): [number, string][] {
 
 /**
  * The trail colour at `u` in [0, 1] (clamped), as sRGB fractions in [0, 1]:
- * a piecewise-linear walk through the four stops, for renderers that colour one
- * vertex at a time (three.js).
+ * a piecewise-linear walk through the four stops.
  */
-export function trailColorAt(
+function trailColorAt(
   stops: readonly string[],
   u: number
 ): [number, number, number] {
@@ -175,7 +160,11 @@ export function trailColorAt(
   ];
 }
 
-/** `trailColorAt` as a `#rrggbb` string, for SVG and CSS. */
+/**
+ * The trail colour at `u` in [0, 1] as a `#rrggbb` string, for SVG and CSS:
+ * a piecewise-linear walk through the stops, clamped at both ends and at any
+ * input that is not a finite number.
+ */
 export function trailHexAt(stops: readonly string[], u: number): string {
   return `#${trailColorAt(stops, u)
     .map((v) =>

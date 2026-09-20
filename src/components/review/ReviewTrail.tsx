@@ -7,17 +7,20 @@
  * The recording's trail already exists as a picture (`TrailPlot`); this is the reading
  * version of it - flat, small, and tied to the session clock. Clicking a window is a
  * seek, which is what makes "where was I when the trail went there?" answerable in one
- * gesture.
+ * gesture, so the windows are marked on the ribbon even though the ribbon is drawn as
+ * one continuous curve: you have to see what you can click.
  */
 
 import { useMemo } from "react";
-import { trailHexAt, useChartTheme } from "@/lib/theme";
+import { TrailRibbon } from "@/components/TrailRibbon";
+import { useChartTheme } from "@/lib/theme";
 import { fitToBox } from "@/lib/thumb";
 import type { Analysis } from "@/lib/types";
 
 const W = 520;
 const H = 320;
 const PAD = 22;
+const WIDTH = 5.4;
 
 export function ReviewTrail({
   analysis,
@@ -49,10 +52,26 @@ export function ReviewTrail({
       PAD
     );
     return {
-      mapped: points.map((p) => ({ ...map({ x: p.pc1, y: p.pc2 }), point: p })),
+      mapped: points.map((p, i) => ({
+        ...map({ x: p.pc1, y: p.pc2 }),
+        u: i / Math.max(1, points.length - 1),
+        point: p,
+      })),
       map,
     };
   }, [analysis.landscape, points]);
+
+  // The block's own stretch of the ribbon, in the same time fractions the ribbon is
+  // drawn with. No window inside the block leaves an empty range, which dims all of
+  // it - the honest reading of "the cursor is not on any window of this block".
+  const uRange = useMemo((): [number, number] | null => {
+    if (!range) return null;
+    const inside = mapped.filter(
+      (p) => p.point.t_start >= range[0] && p.point.t_end <= range[1]
+    );
+    if (inside.length === 0) return [1, 0];
+    return [inside[0].u, inside[inside.length - 1].u];
+  }, [mapped, range]);
 
   const nodes = (analysis.landscape?.positions ?? []).map(([x, y], i) => ({
     ...map({ x, y }),
@@ -81,27 +100,14 @@ export function ReviewTrail({
           stroke="var(--hairline-strong)"
         />
       ))}
-      {mapped.slice(1).map((p, i) => {
-        const previous = mapped[i];
-        const inRange =
-          !range || (p.point.t_start >= range[0] && p.point.t_end <= range[1]);
-        return (
-          <line
-            key={i}
-            x1={previous.x}
-            y1={previous.y}
-            x2={p.x}
-            y2={p.y}
-            stroke={trailHexAt(
-              theme.trail,
-              (i + 1) / Math.max(1, mapped.length - 1)
-            )}
-            strokeWidth={inRange ? 2.4 : 1.2}
-            strokeOpacity={inRange ? 1 : 0.35}
-            strokeLinecap="round"
-          />
-        );
-      })}
+      <TrailRibbon
+        points={mapped}
+        stops={theme.trail}
+        width={WIDTH}
+        casing="var(--surface)"
+        range={uRange}
+        showWindows
+      />
       {mapped.map((p, i) => (
         <circle
           key={`hit-${i}`}

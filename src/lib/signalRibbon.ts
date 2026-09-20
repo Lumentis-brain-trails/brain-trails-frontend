@@ -13,7 +13,7 @@
  * legible as *local* trouble while the band stays one object.
  *
  * Everything here is framework-free and deterministic; the canvas work lives in
- * `components/SignalRibbon.tsx`, the way `terrainMesh` sits under `TerrainScene`.
+ * `components/SignalRibbon.tsx`, the way `trailPath` sits under `TrailRibbon`.
  */
 
 import { EEG_CHANNELS, type EegChannel } from "./muse/protocol";

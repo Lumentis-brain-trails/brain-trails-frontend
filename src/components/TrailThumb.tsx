@@ -2,8 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { trailHexAt, useChartTheme } from "@/lib/theme";
+import { useChartTheme } from "@/lib/theme";
 import { downsample, fitToBox } from "@/lib/thumb";
+import { TrailRibbon } from "@/components/TrailRibbon";
 import type { Analysis, Recording } from "@/lib/types";
 import { Spinner } from "@/components/ui";
 
@@ -11,12 +12,18 @@ const W = 260;
 const H = 150;
 const PAD = 18;
 const MAX_POINTS = 120;
+/** Thin for a 260x150 box: enough to read the shape, cheap in a long list. */
+const SAMPLES = 180;
+const WIDTH = 3.4;
 
 /**
- * A recording's own trail in miniature: the terrain's balls as faint rings, the
- * path drawn segment by segment through the time ramp, the last window marked.
- * Real data only - a recording that has no analysis yet says so instead of
- * showing a stand-in shape.
+ * A recording's own trail in miniature: the terrain's balls as faint rings and the
+ * ribbon walked over them, from the first window's colour to the last. At this
+ * size the windows themselves are left off the ribbon - they would be noise - but
+ * the shape is the same curve the recording's own page draws.
+ *
+ * Real data only: a recording that has no analysis yet says so instead of showing
+ * a stand-in shape.
  */
 export function TrailThumb({ recording }: { recording: Recording }) {
   const theme = useChartTheme();
@@ -66,8 +73,10 @@ export function TrailThumb({ recording }: { recording: Recording }) {
   }));
   const map = fitToBox([...trail, ...nodes], W, H, PAD);
   const maxMass = Math.max(1, ...nodes.map((n) => n.mass));
-  const pts = trail.map(map);
-  const last = pts[pts.length - 1];
+  const pts = trail.map((p, i) => ({
+    ...map(p),
+    u: i / Math.max(1, trail.length - 1),
+  }));
 
   return (
     <div className={frame}>
@@ -90,19 +99,13 @@ export function TrailThumb({ recording }: { recording: Recording }) {
             />
           );
         })}
-        {pts.slice(1).map((p, i) => (
-          <line
-            key={i}
-            x1={pts[i].x}
-            y1={pts[i].y}
-            x2={p.x}
-            y2={p.y}
-            stroke={trailHexAt(theme.trail, (i + 1) / (pts.length - 1))}
-            strokeWidth={2.2}
-            strokeLinecap="round"
-          />
-        ))}
-        {last && <circle cx={last.x} cy={last.y} r={4} fill={theme.trailEnd} />}
+        <TrailRibbon
+          points={pts}
+          stops={theme.trail}
+          width={WIDTH}
+          samples={SAMPLES}
+          casing="var(--surface)"
+        />
       </svg>
     </div>
   );
