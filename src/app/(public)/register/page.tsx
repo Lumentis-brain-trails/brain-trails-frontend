@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
 import { useAppConfig } from "@/lib/features";
 import { useTaxonomies } from "@/lib/taxonomies";
@@ -21,8 +21,10 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { ListField } from "@/components/form/ListField";
 import {
   type AccountForm,
+  type BasicsForm,
   type BetaForm,
   accountSchema,
+  basicsSchema,
   betaSchema,
   toRegisterPayload,
 } from "@/lib/schemas";
@@ -33,11 +35,11 @@ const CONSENT_TEXT =
   "LuMentis for the Brain Trails research prototype, as described in the privacy note. " +
   "I can request export or deletion of all my data at any time.";
 
-type Step = "account" | "beta" | "consent";
+type Step = "account" | "you" | "consent";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "account", label: "Account" },
-  { key: "beta", label: "Beta" },
+  { key: "you", label: "You" },
   { key: "consent", label: "Consent" },
 ];
 
@@ -85,6 +87,7 @@ export default function RegisterPage() {
   const lists = useTaxonomies();
   const [step, setStep] = useState<Step>("account");
   const [account, setAccount] = useState<AccountForm | null>(null);
+  const [basics, setBasics] = useState<BasicsForm | null>(null);
   const [beta, setBeta] = useState<BetaForm | null>(null);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +95,11 @@ export default function RegisterPage() {
 
   const accountForm = useForm<AccountForm>({
     resolver: zodResolver(accountSchema),
+  });
+  // zod v4 coerce makes the schema input `unknown`, which react-hook-form cannot carry
+  // as a field type; the cast pins the form to the parsed output type.
+  const basicsForm = useForm<BasicsForm>({
+    resolver: zodResolver(basicsSchema) as unknown as Resolver<BasicsForm>,
   });
   const betaForm = useForm<BetaForm>({
     resolver: zodResolver(betaSchema),
@@ -105,13 +113,13 @@ export default function RegisterPage() {
   const use = betaForm.watch("intended_use");
 
   async function submitAll() {
-    if (!account || !beta || !consent) return;
+    if (!account || !basics || !beta || !consent) return;
     setSubmitting(true);
     setError(null);
     try {
       const user = await api.post<{ status: string }>(
         "auth/register",
-        toRegisterPayload(account, consent, beta)
+        toRegisterPayload(account, consent, beta, basics)
       );
       // Where they go depends on what the account already is: open and waiting for the
       // email, open outright, or still an application waiting for an admin.
@@ -130,7 +138,7 @@ export default function RegisterPage() {
         <div>
           <h1 className="type-title">Create your account.</h1>
           <p className="mt-2 text-ink-2">
-            Three short steps. We ask about you later, when it matters.
+            Three short steps. Four questions about you, and the rest later.
           </p>
         </div>
         <Steps current={step} />
@@ -149,7 +157,7 @@ export default function RegisterPage() {
             className="enter-up max-w-sm space-y-4"
             onSubmit={accountForm.handleSubmit((values) => {
               setAccount(values);
-              setStep("beta");
+              setStep("you");
             })}
           >
             <Field
@@ -189,45 +197,100 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === "beta" && (
+        {step === "you" && (
           <form
-            key="beta"
+            key="you"
             noValidate
-            className="enter-up max-w-lg space-y-6"
-            onSubmit={betaForm.handleSubmit((values) => {
-              setBeta(values);
+            className="enter-up max-w-lg space-y-8"
+            onSubmit={basicsForm.handleSubmit((values) => {
+              setBasics(values);
+              setBeta(betaForm.getValues());
               setStep("consent");
             })}
           >
-            <div>
-              <h2 className="type-heading">Would you like to test it early?</h2>
-              <p className="mt-2 text-pretty text-ink-2">
-                Beta testers get new features before everyone else, and we ask
-                them what they think. It is free, and saying no here changes
-                nothing about your account.
-              </p>
-            </div>
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
-                {...betaForm.register("wants_beta")}
-              />
-              <span>Yes, I would like to be a beta tester.</span>
-            </label>
-            {wantsBeta && (
-              <div className="enter-up">
+            <section className="space-y-4">
+              <div>
+                <h2 className="type-heading">A little about you.</h2>
+                <p className="mt-2 text-pretty text-ink-2">
+                  Four questions. They are the ones an EEG cannot be read
+                  without - which hand you write with changes where activity
+                  shows up on the scalp. Everything else can wait.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Full name"
+                  error={basicsForm.formState.errors.full_name?.message}
+                >
+                  <Input
+                    autoComplete="name"
+                    autoFocus
+                    {...basicsForm.register("full_name")}
+                  />
+                </Field>
+                <Field
+                  label="Year of birth"
+                  error={basicsForm.formState.errors.birth_year?.message}
+                >
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="1995"
+                    {...basicsForm.register("birth_year")}
+                  />
+                </Field>
                 <ListField
-                  label="How do you expect to use it?"
-                  hint="It helps us choose who to invite first. You can change it later."
-                  options={lists.data?.intended_use}
-                  value={use}
-                  field={betaForm.register("intended_use")}
-                  otherField={betaForm.register("intended_use_other")}
-                  placeholder="Not sure yet"
+                  label="Sex at birth"
+                  options={lists.data?.sex_at_birth}
+                  field={basicsForm.register("sex_at_birth")}
+                  value={basicsForm.watch("sex_at_birth")}
+                  error={basicsForm.formState.errors.sex_at_birth?.message}
+                  placeholder="Select"
+                  info="A variable in the analysis, asked as it is recorded at birth. Your gender is yours to describe, on the account page."
+                />
+                <ListField
+                  label="Handedness"
+                  options={lists.data?.handedness}
+                  field={basicsForm.register("handedness")}
+                  value={basicsForm.watch("handedness")}
+                  error={basicsForm.formState.errors.handedness?.message}
+                  placeholder="Select"
                 />
               </div>
-            )}
+            </section>
+
+            <section className="space-y-4 border-t border-hairline pt-6">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                  {...betaForm.register("wants_beta")}
+                />
+                <span>
+                  <span className="block">
+                    I would like to be a beta tester.
+                  </span>
+                  <span className="type-caption text-ink-3">
+                    New features before everyone else, free, and we ask what you
+                    think. Saying no changes nothing about your account.
+                  </span>
+                </span>
+              </label>
+              {wantsBeta && (
+                <div className="enter-up">
+                  <ListField
+                    label="How do you expect to use it?"
+                    hint="It helps us choose who to invite first. You can change it later."
+                    options={lists.data?.intended_use}
+                    value={use}
+                    field={betaForm.register("intended_use")}
+                    otherField={betaForm.register("intended_use_other")}
+                    placeholder="Not sure yet"
+                  />
+                </div>
+              )}
+            </section>
+
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -271,7 +334,7 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStep("beta")}
+                onClick={() => setStep("you")}
               >
                 Back
               </Button>
