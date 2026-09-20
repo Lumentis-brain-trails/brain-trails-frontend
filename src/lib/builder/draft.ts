@@ -76,9 +76,11 @@ export function clipSeconds(
   const mediaId = config.media_id;
   if (typeof config.duration_s === "number") seconds = config.duration_s;
   else if (node.kind === "countdown") seconds = num(config.from, 3);
-  else if (typeof mediaId === "string" && media[mediaId])
-    seconds = num(media[mediaId].duration_s, DEFAULT_BLOCK_S);
-  else if (node.kind === "breathing")
+  else if (typeof mediaId === "string" && media[mediaId]) {
+    // a trimmed clip lasts as long as its stretch, not as long as its file
+    const whole = num(media[mediaId].duration_s, DEFAULT_BLOCK_S);
+    seconds = Math.max(0, num(config.end_s, whole) - num(config.start_s, 0));
+  } else if (node.kind === "breathing")
     seconds =
       (num(config.cycles, 1) *
         (num(config.inhaleMs, 0) +
@@ -375,6 +377,41 @@ export const ELEMENTS: {
     },
   },
 ];
+
+/**
+ * Cut a video or sound clip in two at `atS` (media seconds): the first keeps the
+ * stretch before, the second the stretch after, both over the same file. Returns the
+ * tree unchanged when the clip is not a trimmable block or the cut falls outside it.
+ */
+export function splitAt(
+  tree: ProtocolTree,
+  index: number,
+  atS: number,
+  media: Record<string, BinMedia> = {}
+): ProtocolTree {
+  const node = tree.root.children[index];
+  if (!node || node.type !== "block") return tree;
+  if (node.kind !== "video" && node.kind !== "audio") return tree;
+  const config = node.config as Record<string, unknown>;
+  const start = num(config.start_s, 0);
+  const mediaId = config.media_id;
+  const whole =
+    typeof mediaId === "string" ? media[mediaId]?.duration_s : undefined;
+  const end = num(config.end_s, num(whole, Number.POSITIVE_INFINITY));
+  const cut = Math.round(atS * 100) / 100;
+  if (!(cut > start + MIN_PART_S) || !(cut < end - MIN_PART_S)) return tree;
+  const first = { ...node, config: { ...config, end_s: cut } } as BlockNode;
+  const label = typeof node.label === "string" ? node.label : node.kind;
+  const second = {
+    ...node,
+    id: freeId(tree, label),
+    config: { ...config, start_s: cut },
+  } as BlockNode;
+  return insertAt(replaceAt(tree, index, first), index + 1, second);
+}
+
+/** No part of a split clip is shorter than this: a sliver is a slip of the hand. */
+const MIN_PART_S = 0.5;
 
 /** A block for a media item the author dragged in from the bin. */
 export function blockForMedia(tree: ProtocolTree, item: BinMedia): BlockNode {

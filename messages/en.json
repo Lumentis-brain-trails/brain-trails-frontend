@@ -339,7 +339,11 @@
     "monitor": {
       "empty": "Drag a video or an element onto the timeline below. What the participant will see shows up here.",
       "group": "Group",
-      "play": "Play the protocol"
+      "play": "Play the protocol",
+      "split": "Split here",
+      "split_hint": "Pause the video where you want the cut, then split: you get two clips over the same video, and can put a questionnaire or a rest between them.",
+      "trimmed": "from {from} to {to}",
+      "the_end": "the end"
     }
   }
 }
