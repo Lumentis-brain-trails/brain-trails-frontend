@@ -1600,6 +1600,52 @@ export interface components {
             verification_url?: string | null;
         };
         /**
+         * BehaviourOut
+         * @description How a task block was performed. Read together, never one number alone.
+         *
+         *     `d_prime` and `criterion` are null under five trials per class. `flags` names the
+         *     reasons to distrust the block: `few_trials`, `many_invalid`, `low_hit_rate`,
+         *     `many_anticipations`, `clock_estimated`.
+         */
+        BehaviourOut: {
+            /** Commission Rate */
+            commission_rate: number | null;
+            /** Correct Rejection Rate */
+            correct_rejection_rate: number | null;
+            /** Criterion */
+            criterion: number | null;
+            /** D Prime */
+            d_prime: number | null;
+            ex_gaussian: components["schemas"]["ExGaussianOut"] | null;
+            /** Flags */
+            flags: string[];
+            /** Hit Rate */
+            hit_rate: number | null;
+            /** N */
+            n: number;
+            /** N Excluded */
+            n_excluded: number;
+            /** N Go */
+            n_go: number;
+            /** N Nogo */
+            n_nogo: number;
+            /** N Practice */
+            n_practice: number;
+            /** Nogo Types */
+            nogo_types: {
+                [key: string]: components["schemas"]["NogoTypeOut"];
+            };
+            /** Omission Rate */
+            omission_rate: number | null;
+            /** Post Error Slowing Ms */
+            post_error_slowing_ms: number | null;
+            /** Quarters */
+            quarters: components["schemas"]["TrialRatesOut"][];
+            rt: components["schemas"]["ReactionTimeOut"];
+            /** Rt Slope Ms Per Min */
+            rt_slope_ms_per_min: number | null;
+        };
+        /**
          * BetaProfile
          * @description What an applicant asks to be in the closed beta (V3-0008).
          * @enum {string}
@@ -1615,6 +1661,9 @@ export interface components {
          *     is the mean cosine distance of this block's window embeddings to the mean embedding
          *     of the eyes-closed baseline block, null when the protocol has none - it is computed
          *     on the raw vectors, not on the trail, so it compares across sessions (V2-0005).
+         *
+         *     A task block (go/no-go) also carries `behaviour`, `erp` and `prestimulus`; they are
+         *     null on every other block and on analyses that predate them.
          */
         BlockMetricsOut: {
             /** Artefact */
@@ -1631,10 +1680,12 @@ export interface components {
             };
             /** Baseline Distance */
             baseline_distance: number | null;
+            behaviour?: components["schemas"]["BehaviourOut"] | null;
             /** Block Id */
             block_id: string;
             /** Condition */
             condition: string | null;
+            erp?: components["schemas"]["ErpOut"] | null;
             /** Good Contact */
             good_contact: number | null;
             /** Iteration */
@@ -1649,6 +1700,7 @@ export interface components {
             n_windows: number;
             /** Node Path */
             node_path: string | null;
+            prestimulus?: components["schemas"]["PrestimulusOut"] | null;
             /** Ratios */
             ratios: {
                 [key: string]: number | null;
@@ -1906,6 +1958,69 @@ export interface components {
             draft_rev: number;
         };
         /**
+         * ErpConditionOut
+         * @description One averaged condition; `wave_uv` is null under the minimum of clean epochs.
+         */
+        ErpConditionOut: {
+            /** N */
+            n: number;
+            /** N Rejected */
+            n_rejected: number;
+            /** Wave Uv */
+            wave_uv: number[] | null;
+        };
+        /**
+         * ErpLockedOut
+         * @description Averages locked to one kind of event, with their mean-amplitude contrasts.
+         *
+         *     Stimulus-locked carries `n2` and `p3_frontal` (`nogo_correct`, `go_hit`,
+         *     `difference`); response-locked carries `ern` and `pe` (`error`, `correct`,
+         *     `difference`). Microvolts at the frontal pair.
+         */
+        ErpLockedOut: {
+            /** Conditions */
+            conditions: {
+                [key: string]: components["schemas"]["ErpConditionOut"];
+            };
+            /** Ern */
+            ern?: {
+                [key: string]: number | null;
+            } | null;
+            /** N2 */
+            n2?: {
+                [key: string]: number | null;
+            } | null;
+            /** P3 Frontal */
+            p3_frontal?: {
+                [key: string]: number | null;
+            } | null;
+            /** Pe */
+            pe?: {
+                [key: string]: number | null;
+            } | null;
+            /** Times Ms */
+            times_ms: number[];
+        };
+        /**
+         * ErpOut
+         * @description Frontal event-related potentials of a task block (AF7/AF8 on a Muse 2).
+         *
+         *     Not a parietal P3: a Muse has no parietal electrode, and `p3_frontal` is named for
+         *     what it is. Onsets carry up to a frame of jitter, so only window means are given.
+         */
+        ErpOut: {
+            /** Channels */
+            channels: string[];
+            /** Min Epochs */
+            min_epochs: {
+                [key: string]: number;
+            };
+            /** Reject Uv */
+            reject_uv: number;
+            response: components["schemas"]["ErpLockedOut"];
+            stimulus: components["schemas"]["ErpLockedOut"];
+        };
+        /**
          * EventIn
          * @description One thing the stimulus did, at `t` seconds from the start of the recording.
          */
@@ -1938,6 +2053,18 @@ export interface components {
             n_events: number;
             /** N Parts */
             n_parts: number;
+        };
+        /**
+         * ExGaussianOut
+         * @description Ex-Gaussian fit of the reaction times: Gaussian body, exponential tail (`tau`).
+         */
+        ExGaussianOut: {
+            /** Mu Ms */
+            mu_ms: number | null;
+            /** Sigma Ms */
+            sigma_ms: number | null;
+            /** Tau Ms */
+            tau_ms: number | null;
         };
         /**
          * FeaturesOut
@@ -2328,6 +2455,18 @@ export interface components {
             };
         };
         /**
+         * NogoTypeOut
+         * @description One kind of no-go trial of a cued block (`red_cargo`, `green_debris`, ...).
+         */
+        NogoTypeOut: {
+            /** Commission Rate */
+            commission_rate: number | null;
+            /** Commissions */
+            commissions: number;
+            /** N */
+            n: number;
+        };
+        /**
          * OutlineItem
          * @description One top-level step of a protocol in plain words, for the detail page.
          */
@@ -2407,6 +2546,28 @@ export interface components {
             max_mb: number;
             /** Url */
             url: string;
+        };
+        /**
+         * PrestimulusOut
+         * @description Alpha power in the second before each go trial, against the response that followed.
+         *
+         *     `rho` is Spearman's correlation with the reaction time over hits (positive: more
+         *     alpha before, slower after); `log_alpha` the mean log10 power before fast hits,
+         *     slow hits and misses.
+         */
+        PrestimulusOut: {
+            /** Log Alpha */
+            log_alpha: {
+                [key: string]: number | null;
+            };
+            /** N Hits */
+            n_hits: number;
+            /** N Misses */
+            n_misses: number;
+            /** P Value */
+            p_value: number | null;
+            /** Rho */
+            rho: number | null;
         };
         /**
          * ProfileIn
@@ -2613,6 +2774,31 @@ export interface components {
              * @default false
              */
             rights_attested: boolean;
+        };
+        /**
+         * ReactionTimeOut
+         * @description Correct go reaction times, in milliseconds from target onset.
+         *
+         *     `slow_rate` is the share more than 2.5 scaled MADs above the median (attention
+         *     lapses), `anticipation_rate` the share of all presses under 150 ms (guesses).
+         */
+        ReactionTimeOut: {
+            /** Anticipation Rate */
+            anticipation_rate: number | null;
+            /** Commission Median Ms */
+            commission_median_ms: number | null;
+            /** Cv */
+            cv: number | null;
+            /** Mad Ms */
+            mad_ms: number | null;
+            /** Mean Ms */
+            mean_ms: number | null;
+            /** Median Ms */
+            median_ms: number | null;
+            /** Sd Ms */
+            sd_ms: number | null;
+            /** Slow Rate */
+            slow_rate: number | null;
         };
         /**
          * RecordingOut
@@ -2942,6 +3128,24 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+        };
+        /**
+         * TrialRatesOut
+         * @description Counts and rates of a slice of a task block (one quarter of its trials).
+         */
+        TrialRatesOut: {
+            /** Commission Rate */
+            commission_rate: number | null;
+            /** Hit Rate */
+            hit_rate: number | null;
+            /** Median Rt Ms */
+            median_rt_ms: number | null;
+            /** N */
+            n: number;
+            /** N Go */
+            n_go: number;
+            /** N Nogo */
+            n_nogo: number;
         };
         /**
          * UploadOut
