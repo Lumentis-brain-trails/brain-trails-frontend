@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": "Objects move across the screen for about six minutes without a break. A reduced-motion mode is available, and you can stop at any time.",
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "First you rest, then one long route.",
+              "holdMs": 4000
+            },
+            {
+              "text": "About nine minutes in all.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_open",
+        "kind": "baseline",
+        "label": "Eyes open",
+        "condition": "baseline",
+        "config": {
+          "eyes": "open",
+          "duration_s": 30,
+          "end_tone": false
+        }
+      },
+      {
+        "type": "block",
+        "id": "mood_before",
+        "kind": "questionnaire",
+        "label": "How do you feel?",
+        "condition": "before",
+        "config": {
+          "instrument": "sam",
+          "prompt": "Think of how you feel right now."
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule",
+        "kind": "instructions",
+        "label": "The rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Cargo will cross your screen.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Press Dock for blue cargo.\nLet debris pass.",
+              "holdMs": 4000
+            },
+            {
+              "text": "A short practice first.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Practise"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "practice",
+        "kind": "go-no-go",
+        "label": "Practice",
+        "condition": "practice",
+        "config": {
+          "variant": "simple",
+          "n": 16,
+          "goRatio": 0.75,
+          "maxRun": 4,
+          "maxNogoRun": 1,
+          "travelMs": [800, 1200],
+          "itiMs": [300, 500],
+          "practice": true,
+          "markers": {
+            "trialStart": "practice_trial_start",
+            "stimulusOnset": "practice_stimulus_onset",
+            "response": "practice_response",
+            "outcome": "practice_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "ready",
+        "kind": "instructions",
+        "label": "The long route",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "That was practice.\nThe route ahead is about six minutes.",
+              "holdMs": 5000
+            },
+            {
+              "text": "Most of it is cargo.\nStay ready for the debris.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "focus",
+        "kind": "go-no-go",
+        "label": "Hold your focus",
+        "condition": "focus",
+        "config": {
+          "variant": "simple",
+          "n": 240,
+          "goRatio": 0.85,
+          "maxRun": 12,
+          "maxNogoRun": 1,
+          "travelMs": [800, 1200],
+          "itiMs": [300, 500],
+          "markers": {
+            "trialStart": "focus_trial_start",
+            "stimulusOnset": "focus_stimulus_onset",
+            "response": "focus_response",
+            "outcome": "focus_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "mood_after",
+        "kind": "questionnaire",
+        "label": "And now?",
+        "condition": "after",
+        "config": {
+          "instrument": "sam",
+          "prompt": "Think of how you feel now that the route is over."
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "Route complete.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

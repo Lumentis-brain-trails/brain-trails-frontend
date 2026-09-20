@@ -1,26 +1,420 @@
+/*
+ * Brain Trails design system.
+ *
+ * Two layers: the motion tokens shared with the design assets (assets/motion) and the
+ * visual tokens below. The chrome is monochrome - off-white/near-black surfaces, grey
+ * text ramps, ink for interaction - so the trail (the product) is the only thing that
+ * carries colour. Its four stops are the entry screen's two ribbons: the warm one
+ * (amber -> cyan) is where a trail starts, the cool one (violet -> pink) where it ends.
+ * Semantic colours exist only for status.
+ *
+ * Appearance is an explicit choice: `data-theme` on <html> is set before first paint by
+ * the script in app/layout.tsx (stored choice, else the system setting) and flipped by
+ * the sidebar toggle. Any subtree can pin itself with its own `data-theme` (the auth
+ * screens are always dark, like the entry screen).
+ */
+@import "../../assets/motion/motion.css";
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --canvas: #fbfbfd;
+  --surface: #ffffff;
+  --surface-2: #f5f5f7;
+  --surface-3: #e8e8ed;
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: #86868b;
+  --hairline: rgba(0, 0, 0, 0.08);
+  --hairline-strong: rgba(0, 0, 0, 0.16);
+  /* interaction is ink, not a hue: colour belongs to the trail */
+  --accent: #1d1d1f;
+  --accent-hover: #000000;
+  --accent-soft: rgba(29, 29, 31, 0.08);
+  --on-accent: #ffffff;
+  --ok: #248a3d;
+  --ok-soft: rgba(52, 199, 89, 0.14);
+  --warn: #b25000;
+  --warn-soft: rgba(255, 159, 10, 0.16);
+  --danger: #d70015;
+  --danger-soft: rgba(255, 59, 48, 0.12);
+  --glass: rgba(251, 251, 253, 0.78);
+  --scrim: rgba(0, 0, 0, 0.32);
+  --shadow-sheet:
+    0 24px 60px -20px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* the trail's time ramp, deepened so it reads on white; same values in lib/theme.ts */
+  --trail-a: #e8a02a;
+  --trail-b: #1bafc4;
+  --trail-c: #7c5ce6;
+  --trail-d: #e2569c;
+  --ribbon-opacity: 0.55;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --canvas: #07090e;
+  --surface: #10131a;
+  --surface-2: #181c25;
+  --surface-3: #232835;
+  --ink: #f5f5f7;
+  --ink-2: #9ea8bd;
+  --ink-3: #7c8497;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --accent: #f1f4fa;
+  --accent-hover: #ffffff;
+  --accent-soft: rgba(241, 244, 250, 0.12);
+  --on-accent: #06090f;
+  --ok: #30d158;
+  --ok-soft: rgba(48, 209, 88, 0.16);
+  --warn: #ff9f0a;
+  --warn-soft: rgba(255, 159, 10, 0.16);
+  --danger: #ff453a;
+  --danger-soft: rgba(255, 69, 58, 0.16);
+  --glass: rgba(7, 9, 14, 0.72);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-sheet:
+    0 24px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-card: none;
+
+  /* the ribbons' own colours: on a dark ground they read as light */
+  --trail-a: #f9ba4a;
+  --trail-b: #60d8e8;
+  --trail-c: #a082ee;
+  --trail-d: #ff9cce;
+  --ribbon-opacity: 0.7;
+}
+
+:root,
+[data-theme] {
+  --trail-start: var(--trail-a);
+  --trail-end: var(--trail-d);
+  --trail-gradient: linear-gradient(
+    90deg,
+    var(--trail-a) 0%,
+    var(--trail-b) 33%,
+    var(--trail-c) 66%,
+    var(--trail-d) 100%
+  );
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  /* brand face: the entry screen and every title (see docs/DESIGN.md) */
+  --font-display:
+    var(--font-manrope), -apple-system, BlinkMacSystemFont, system-ui,
+    "Helvetica Neue", sans-serif;
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --radius-sheet: 22px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* ---- typography ramp --------------------------------------------------- */
+/* Titles speak in the brand face; everything you read at length stays on the system
+   face, which ships optical sizing and tracking tables. */
+.type-display,
+.type-title,
+.type-heading,
+.type-figure {
+  font-family: var(--font-display);
+}
+.type-display {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+.type-title {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  font-weight: 700;
+}
+.type-heading {
+  font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+.type-figure {
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.type-subhead {
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: -0.008em;
+  font-weight: 600;
+}
+.type-body-lg {
+  font-size: 1.1875rem;
+  line-height: 1.45;
+  letter-spacing: -0.006em;
+}
+.type-caption {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  letter-spacing: 0.002em;
+}
+.type-eyebrow {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ---- materials ---------------------------------------------------------- */
+.material-glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .material-glass {
+    background: var(--canvas);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ---- motion helpers built on the shared tokens -------------------------- */
+.enter-up {
+  animation: m-fade-up var(--m-base) var(--m-out) both;
+}
+.enter-pop {
+  animation: m-pop var(--m-base) var(--m-out) both;
+}
+.enter-fade {
+  animation: m-fade-in var(--m-base) var(--m-out) both;
+}
+.stagger > * {
+  animation: m-fade-up var(--m-base) var(--m-out) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: calc(var(--m-stagger) * 0);
+}
+.stagger > *:nth-child(2) {
+  animation-delay: calc(var(--m-stagger) * 1);
+}
+.stagger > *:nth-child(3) {
+  animation-delay: calc(var(--m-stagger) * 2);
+}
+.stagger > *:nth-child(4) {
+  animation-delay: calc(var(--m-stagger) * 3);
+}
+.stagger > *:nth-child(5) {
+  animation-delay: calc(var(--m-stagger) * 4);
+}
+.stagger > *:nth-child(n + 6) {
+  animation-delay: calc(var(--m-stagger) * 5);
+}
+
+/* press feedback on pointer-down, never on release */
+.pressable {
+  transition:
+    transform var(--m-instant) var(--m-out),
+    background-color var(--m-fast) var(--m-out),
+    color var(--m-fast) var(--m-out),
+    opacity var(--m-fast) var(--m-out),
+    box-shadow var(--m-fast) var(--m-out);
+}
+.pressable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* skeleton: a travelling sheen, not a blink */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  animation: m-shimmer 1.4s var(--m-inout) infinite;
+}
+[data-theme="dark"] {
+  .skeleton::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+  }
+}
+
+/* live indicator ring */
+.ping::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: m-ping 1.6s var(--m-out) infinite;
+}
+
+/* focus rings: visible, on the accent, never on click */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* uPlot: adopt our palette */
+.uplot,
+.u-legend {
+  font-family: var(--font-sans) !important;
+  color: var(--ink-2);
+}
+.u-legend .u-series > * {
+  font-size: 12px;
+}
+.u-axis {
+  color: var(--ink-3);
+}
+
+/* ---- app shell: the sidebar ---------------------------------------------- */
+/*
+ * A 64 px rail of icons that opens into a 240 px panel on hover (or keyboard focus)
+ * as an overlay: the page underneath never moves. Only transform and opacity animate:
+ * the panel's ground is a pseudo-element scaled from the rail's width to its own, the
+ * labels fade in. Opening waits a beat so a pointer crossing the rail on its way to
+ * the page does not flash it open; closing does not wait.
+ */
+.app-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 240px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset -1px 0 0 var(--hairline);
+  transform-origin: left center;
+  transform: scaleX(calc(64 / 240));
+  transition: transform var(--m-base) var(--m-out);
+  z-index: -1;
+}
+.app-sidebar .reveal {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--m-fast) var(--m-out);
+}
+.app-sidebar:hover::before,
+.app-sidebar:has(:focus-visible)::before,
+.app-sidebar[data-open="true"]::before {
+  transform: none;
+  box-shadow:
+    inset -1px 0 0 var(--hairline),
+    24px 0 60px -30px rgba(0, 0, 0, 0.35);
+  transition-delay: 90ms;
+}
+.app-sidebar:hover .reveal,
+.app-sidebar:has(:focus-visible) .reveal,
+.app-sidebar[data-open="true"] .reveal {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 120ms;
+}
+.app-sidebar[data-open="true"]::before,
+.app-sidebar[data-open="true"] .reveal {
+  transition-delay: 0ms;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .app-sidebar::before {
+    background: var(--canvas);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Focus mode (a recording, a protocol run): the chrome steps aside entirely. */
+.app-sidebar,
+.app-topbar {
+  transition: transform var(--m-slow) var(--m-out);
+}
+html[data-focus] .app-sidebar {
+  transform: translateX(-100%);
+}
+html[data-focus] .app-topbar {
+  transform: translateY(-100%);
+}
+html[data-focus] .app-main {
+  padding-left: 0;
+  padding-top: 0;
+}
+
+/* ---- ribbon glow --------------------------------------------------------- */
+/* A still, blurred ribbon for a card corner: where a new trail starts. */
+.ribbon-glow {
+  position: absolute;
+  width: 360px;
+  height: 110px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #f4de80, var(--trail-a));
+  box-shadow: 0 22px 0 -4px var(--trail-b);
+  filter: blur(26px);
+  opacity: var(--ribbon-opacity);
+  pointer-events: none;
 }

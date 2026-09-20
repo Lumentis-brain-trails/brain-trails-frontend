@@ -1,0 +1,185 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": null,
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "A short rest, then two rounds of matching symbols to numbers against the clock.",
+              "holdMs": 5000
+            },
+            {
+              "text": "About six minutes in all.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_open",
+        "kind": "baseline",
+        "label": "Eyes open",
+        "condition": "baseline",
+        "config": {
+          "eyes": "open",
+          "duration_s": 45,
+          "end_tone": false
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule",
+        "kind": "instructions",
+        "label": "The rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "A table at the top pairs each symbol with a number.",
+              "holdMs": 5000
+            },
+            {
+              "text": "A symbol appears in the middle.\nPress its number, on the keyboard or on the screen.",
+              "holdMs": 6000
+            },
+            {
+              "text": "As many as you can, without mistakes. A short practice first.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Practise"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "practice",
+        "kind": "coding",
+        "label": "Practice",
+        "condition": "practice",
+        "config": {
+          "duration_s": 20,
+          "pairs": 9,
+          "practice": true,
+          "markers": {
+            "trialStart": "practice_trial_start",
+            "stimulusOnset": "practice_stimulus_onset",
+            "response": "practice_response",
+            "outcome": "practice_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "ready",
+        "kind": "instructions",
+        "label": "For real",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Now ninety seconds. The table has changed.\nGo as fast as you can while staying right.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "coding_a",
+        "kind": "coding",
+        "label": "Round one",
+        "condition": "coding",
+        "config": {
+          "duration_s": 90,
+          "pairs": 9,
+          "markers": {
+            "trialStart": "coding_trial_start",
+            "stimulusOnset": "coding_stimulus_onset",
+            "response": "coding_response",
+            "outcome": "coding_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "break",
+        "kind": "rest",
+        "label": "Break",
+        "condition": "rest",
+        "config": {
+          "mode": "timed",
+          "duration_s": 20,
+          "message": "Shake out your hands. One more round, with a new table."
+        }
+      },
+      {
+        "type": "block",
+        "id": "coding_b",
+        "kind": "coding",
+        "label": "Round two",
+        "condition": "coding",
+        "config": {
+          "duration_s": 90,
+          "pairs": 9,
+          "markers": {
+            "trialStart": "coding_trial_start",
+            "stimulusOnset": "coding_stimulus_onset",
+            "response": "coding_response",
+            "outcome": "coding_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "All done.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

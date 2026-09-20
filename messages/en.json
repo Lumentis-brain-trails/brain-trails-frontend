@@ -1,0 +1,386 @@
+{
+  "errors": {
+    "unknown": "Something went wrong. Try again in a moment.",
+    "network": "The server could not be reached. Check your connection and try again.",
+    "unauthorized": "Your session has ended. Sign in again.",
+    "forbidden": "You do not have access to this.",
+    "forbidden_path": "This part of the service is not available from the app.",
+    "not_found": "This could not be found. It may have been deleted.",
+    "rate_limited": "Too many attempts. Wait a minute and try again.",
+    "conflict": "This changed somewhere else. Reload to see the latest version."
+  },
+  "application": {
+    "step": "Application",
+    "title": "Your application",
+    "intro": "Brain Trails is in a closed beta. Tell us who you are and how you would use it: we read every application and choose a small group to start with.",
+    "profile": {
+      "label": "I am applying as",
+      "private": "Myself, for my own use",
+      "therapist": "A psychotherapist",
+      "lab_lead": "The lead of a research lab",
+      "lab_member": "A researcher or student in a lab"
+    },
+    "organisation": "Organisation",
+    "role_title": "Role",
+    "registration_no": "Professional registration number",
+    "registration_no_hint": "Your registration with your professional body.",
+    "institution": "Institution",
+    "supervisor": "Supervisor",
+    "purpose": "What would you like to do with Brain Trails?",
+    "headband": {
+      "label": "Which headband do you own?",
+      "muse-2": "Muse 2",
+      "muse-s-athena": "Muse S Athena",
+      "other": "Another EEG headband",
+      "none": "None yet"
+    },
+    "device": "Device you will record on",
+    "browser": "Browser",
+    "detected": "Filled in from this browser; correct it if you will record elsewhere.",
+    "bluetooth_ok": "This browser can pair a headband.",
+    "bluetooth_missing": "This browser cannot pair a headband over Bluetooth. You can still apply: tell us which device you would record on.",
+    "country": "Country",
+    "country_hint": "Two letters, for example IT.",
+    "language": "Language",
+    "language_hint": "For example it or en.",
+    "expected_subjects": "How many people would you record?",
+    "expected_subjects_hint": "Patients or participants, roughly.",
+    "contact_ok": "You may contact me for feedback during the beta.",
+    "required": "Required for this profile.",
+    "invalid_country": "Use the two-letter country code.",
+    "back": "Back",
+    "continue": "Continue"
+  },
+  "auth": {
+    "waitlisted": "Your application is on the waiting list. We will write to you as soon as there is room."
+  },
+  "run": {
+    "preflight": {
+      "title": "Before you start",
+      "intro": "Put the headband on and wait until all four lights are green. The recording starts with the session and stops at its end.",
+      "source": "Headband",
+      "bluetooth": "Headband over Bluetooth",
+      "simulated": "Simulated Muse 2",
+      "simulated_athena": "Simulated Muse S Athena",
+      "connect": "Connect",
+      "connecting": "Connecting…",
+      "connected": "Connected to {name}",
+      "unsupported": "This browser cannot pair a headband. Use Chrome or Edge on a computer, or the Brain Trails app on iPhone and iPad.",
+      "contact_wait": "Waiting for good contact on all four sensors.",
+      "contact_ok": "Good contact on all four sensors.",
+      "override": "Start anyway with imperfect contact",
+      "start": "Start session",
+      "starting": "Starting…",
+      "clock_wait": "Syncing with the headband…",
+      "back": "Back"
+    },
+    "surface": {
+      "recording": "Recording",
+      "fullscreen_failed": "Full screen was refused; the session runs in the window.",
+      "fullscreen": "Full screen"
+    },
+    "upload": {
+      "title": "Saving the session",
+      "progress": "Uploading the recording… {pct}%",
+      "failed": "The recording could not be uploaded: {message}",
+      "retry": "Retry upload",
+      "done": "Saved. The analysis is running.",
+      "open": "Open the recording",
+      "back": "Back to protocols",
+      "stopped": "Session stopped",
+      "complete": "Session complete",
+      "nothing": "The session stopped before anything was recorded.",
+      "sync_failed": "No signal arrived from the headband. Check that it is on and paired, then try again.",
+      "dropped": "The headband disconnected, so the session stopped. What was recorded until then has been kept."
+    },
+    "consent": {
+      "title": "Before you begin",
+      "warning": "Content notice",
+      "consent": "Consent",
+      "agree": "I have read this and I agree to take part.",
+      "accept": "Continue",
+      "decline": "Back",
+      "required": "Tick the box to continue."
+    }
+  },
+  "signals": {
+    "title": "Sensor contact",
+    "levels": {
+      "unknown": "Waiting",
+      "good": "Good",
+      "noisy": "Noisy",
+      "saturated": "Saturated",
+      "flat": "No contact"
+    },
+    "hints": {
+      "unknown": "Waiting for signal",
+      "good": "Good contact",
+      "noisy": "Relax and hold still",
+      "saturated": "Lift and reseat",
+      "flat": "Press it gently down"
+    },
+    "help": {
+      "open": "Where the sensors sit",
+      "title": "Where the sensors sit",
+      "intro": "The band holds four dry electrodes against the skin: two on the forehead just above the eyebrows, two behind the ears. The lights follow the band from left to right as you wear it, so the leftmost light is the sensor behind your left ear.",
+      "where": {
+        "TP9": "Behind the left ear",
+        "AF7": "Left forehead, above the eyebrow",
+        "AF8": "Right forehead, above the eyebrow",
+        "TP10": "Behind the right ear"
+      },
+      "reference_label": "Fpz",
+      "reference": "Reference, centre of the forehead"
+    }
+  },
+  "kinds": {
+    "common": {
+      "continue": "Continue",
+      "loading": "Loading…",
+      "media_error": "This could not be played. You can continue with the session."
+    },
+    "fixation": {
+      "label": "Fixation cross"
+    },
+    "baseline": {
+      "open": "Keep your eyes open and rest your gaze on the cross.",
+      "closed": "Close your eyes and relax. A tone will tell you when to open them.",
+      "closed_silent": "Close your eyes and relax until the screen changes."
+    },
+    "rest": {
+      "timed": "Take a short break.",
+      "self_paced": "Take your time. Press Finish when you are done.",
+      "elapsed": "Elapsed {time}",
+      "finish": "Finish"
+    },
+    "countdown": {
+      "label": "Starting in"
+    },
+    "audio": {
+      "listen": "Listen"
+    },
+    "text": {
+      "error": "This text could not be loaded. You can continue with the session."
+    },
+    "questionnaire": {
+      "submit": "Submit",
+      "unanswered": "Answer every question to continue.",
+      "point": "{value} of {max}",
+      "sam": {
+        "valence": {
+          "question": "How pleasant did you feel?",
+          "low": "Unhappy",
+          "high": "Happy"
+        },
+        "arousal": {
+          "question": "How calm or excited did you feel?",
+          "low": "Calm",
+          "high": "Excited"
+        },
+        "dominance": {
+          "question": "How much in control did you feel?",
+          "low": "Controlled",
+          "high": "In control"
+        }
+      },
+      "nasa_tlx": {
+        "mental": {
+          "question": "How mentally demanding was the task?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "physical": {
+          "question": "How physically demanding was the task?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "temporal": {
+          "question": "How hurried or rushed was the pace of the task?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "performance": {
+          "question": "How successful were you in doing what you were asked to do?",
+          "low": "Perfect",
+          "high": "Failure"
+        },
+        "effort": {
+          "question": "How hard did you have to work to reach your level of performance?",
+          "low": "Very low",
+          "high": "Very high"
+        },
+        "frustration": {
+          "question": "How insecure, discouraged, irritated, stressed or annoyed were you?",
+          "low": "Very low",
+          "high": "Very high"
+        }
+      }
+    },
+    "quiz": {
+      "progress": "Question {n} of {total}",
+      "correct": "Correct",
+      "incorrect": "Not quite",
+      "next": "Next"
+    },
+    "choice": {
+      "progress": "{n} of {total}",
+      "feedback": {
+        "hit": "Correct",
+        "error": "Wrong side",
+        "miss": "Too slow",
+        "correct_rejection": "Correct",
+        "commission_error": "Not a match"
+      }
+    },
+    "flanker": {
+      "area": "Arrows task",
+      "left": "Left",
+      "right": "Right"
+    },
+    "nback": {
+      "area": "Letter memory task",
+      "match": "Match",
+      "rule": "Press when it matches {load} back"
+    },
+    "coding": {
+      "area": "The symbol to answer",
+      "key": "Which digit goes with which symbol",
+      "left": "{seconds} s left"
+    },
+    "heartbeat": {
+      "ready": "At the tone, start counting your heartbeats silently. Do not touch your pulse. Count only the beats you really feel.",
+      "counting": "Count your heartbeats until the next tone.",
+      "progress": "Round {n} of {total}",
+      "how_many": "How many heartbeats did you count?",
+      "how_sure": "How sure are you?",
+      "guessing": "Guessing",
+      "certain": "Certain"
+    }
+  },
+  "builder": {
+    "back": "Back",
+    "not_found": "This protocol is not in your catalog.",
+    "read_only": "This protocol belongs to someone else. Make a copy to edit it.",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "untitled": "New protocol",
+    "not_saved_yet": "Not saved yet - it is kept as soon as you add something.",
+    "undo": "Undo",
+    "redo": "Redo",
+    "check": "Check",
+    "preview": "Preview",
+    "publish": {
+      "title": "Publish this protocol",
+      "name": "Name",
+      "summary": "One line for the card",
+      "summary_hint": "What it does, in a sentence.",
+      "description": "Description",
+      "tags": "Tags",
+      "cancel": "Cancel",
+      "publish": "Publish",
+      "publish_version": "Publish version {version}",
+      "invalid": "This protocol cannot be published yet:",
+      "failed": "Publishing failed. Try again."
+    },
+    "conflict": "This protocol was saved somewhere else. Reload it to keep editing; your unsaved changes here would overwrite theirs.",
+    "reload": "Reload",
+    "zoom": "Zoom",
+    "group": {
+      "title": "Group",
+      "repetitions": "Repetitions",
+      "repetitions_hint": "How many times the whole table is run.",
+      "order": "Order",
+      "order_hint": "The order the group's content is played in.",
+      "order_fixed": "As arranged",
+      "order_shuffle": "Shuffled",
+      "order_sequential": "In order",
+      "order_random": "Random",
+      "max_run_same": "Longest run of the same condition",
+      "max_run_same_hint": "Leave empty to allow any run.",
+      "advanced": "Advanced",
+      "conditions_hint": "One column per value the blocks read, one row per condition.",
+      "column_name": "Name of column {index}",
+      "add_column": "Add column",
+      "remove_column": "Remove the column {name}",
+      "cell": "{column}, row {row}",
+      "no_rows": "No conditions yet.",
+      "add_row": "Add row",
+      "remove_row": "Remove row {index}",
+      "remove": "Remove"
+    },
+    "ungroup": "Ungroup",
+    "findings": "Findings",
+    "all_good": "No problems found.",
+    "select_a_clip": "Select a block on the timeline to change its settings.",
+    "preview_empty": "There is nothing to preview yet: drag something onto the timeline.",
+    "close": "Close",
+    "timeline": {
+      "title": "Timeline",
+      "empty": "Drag media or an element here, or double-click it.",
+      "insert_at": "Insert at position {position}",
+      "blocks": "{count} blocks",
+      "total": "Total {time}",
+      "group_blocks": "Group · {count} blocks",
+      "errors": "{count} errors",
+      "warnings": "{count} warnings"
+    },
+    "bin": {
+      "title": "Bin",
+      "media": "Media",
+      "elements": "Elements",
+      "search": "Search your media",
+      "no_media": "Nothing to use yet. Upload a video or a sound.",
+      "upload": "Upload",
+      "tasks": "Tasks"
+    },
+    "publish_action": "Publish",
+    "form": {
+      "none": "Not set",
+      "range_from": "From",
+      "range_to": "To",
+      "list_empty": "Nothing here yet.",
+      "row": "Row {index}",
+      "remove": "Remove",
+      "remove_row": "Remove row {index} of {name}",
+      "add_row": "Add",
+      "unsupported_label": "Advanced settings",
+      "unsupported": "This setting has no form yet. It is shown as it is saved and kept as it is.",
+      "add_to": "Add to {name}",
+      "advanced": "Advanced settings ({count})",
+      "nothing_to_set": "Nothing to set: this block works as it is."
+    },
+    "inspector": {
+      "title": "Block",
+      "label": "Name",
+      "kind": "Type",
+      "kind_hint": "The type is chosen when the block is added and cannot be changed here.",
+      "condition": "Condition",
+      "condition_hint": "A word for what this block is in your experiment (calm, scary, control). Blocks with the same condition are compared together in the review and in the exported data. Leave empty if you are not comparing anything.",
+      "pre_fixation_s": "Cross before (s)",
+      "jitter_s": "Random extra (s)",
+      "post_rest_s": "Pause after (s)",
+      "skippable": "The participant may skip this block",
+      "settings": "Settings",
+      "unknown_kind": "Unknown type",
+      "unknown_kind_hint": "This app does not know this block type. Its settings are kept untouched.",
+      "from_column": "From the column {name}",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "around": "Timing around the block, and analysis",
+      "pre_fixation_s_hint": "Shows a fixation cross for this long before the block starts, to settle the eyes.",
+      "jitter_s_hint": "Adds a random time, up to this much, to the cross before the block, so the participant cannot predict the exact start.",
+      "post_rest_s_hint": "An empty screen for this long after the block, to let the signal come back to rest.",
+      "skippable_hint": "Shows a Skip button. The skip is written in the timeline, so you know the block was not completed."
+    },
+    "group_action": "Group",
+    "monitor": {
+      "empty": "Drag a video or an element onto the timeline below. What the participant will see shows up here.",
+      "group": "Group",
+      "play": "Play the protocol",
+      "split": "Split here",
+      "split_hint": "Pause the video where you want the cut, then split: you get two clips over the same video, and can put a questionnaire or a rest between them.",
+      "trimmed": "from {from} to {to}",
+      "the_end": "the end"
+    }
+  }
+}

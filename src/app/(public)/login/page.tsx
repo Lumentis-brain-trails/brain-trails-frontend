@@ -7,14 +7,18 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
 import { type AccountForm, accountSchema } from "@/lib/schemas";
-import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import { AuthPanel } from "@/components/AuthPanel";
+import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 
 const STATUS_MESSAGES: Record<string, string> = {
   account_pending: "Your registration is still awaiting admin review.",
   account_rejected: "Your registration was not approved.",
-  email_not_verified: "Please open the verification link you received first.",
+  account_waitlisted:
+    "Your application is on the waiting list. We will write to you as soon as there is room.",
+  email_not_verified:
+    "Your account is approved but the email is not verified yet. Ask an administrator for the link.",
   invalid_credentials: "Wrong email or password.",
-  rate_limited: "Too many attempts - wait a minute and retry.",
+  rate_limited: "Too many attempts. Wait a minute and retry.",
 };
 
 function LoginForm() {
@@ -27,59 +31,74 @@ function LoginForm() {
     setError(null);
     try {
       await api.login(values.email, values.password);
-      router.push(params.get("from") ?? "/recordings");
+      router.push(params.get("from") ?? "/home");
     } catch (e) {
       if (e instanceof ApiRequestError) {
         if (e.error.code === "account_pending") router.push("/pending");
         else setError(STATUS_MESSAGES[e.error.code] ?? e.error.message);
-      } else setError("Network error - is the API up?");
+      } else setError("Network error. Is the API up?");
     }
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <h1 className="mb-4 text-xl font-semibold">Sign in</h1>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
-        noValidate
-      >
-        {error && <ErrorBanner message={error} />}
-        <Field label="Email" error={form.formState.errors.email?.message}>
-          <Input
-            type="email"
-            autoComplete="email"
-            {...form.register("email")}
-          />
-        </Field>
-        <Field label="Password" error={form.formState.errors.password?.message}>
-          <Input
-            type="password"
-            autoComplete="current-password"
-            {...form.register("password")}
-          />
-        </Field>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={form.formState.isSubmitting}
+    <div className="enter-up flex w-full max-w-[400px] flex-col items-center">
+      <h1 className="font-display text-center text-[clamp(2.4rem,7vw,3.5rem)] leading-[1.05] font-bold tracking-[-0.034em]">
+        Welcome back.
+      </h1>
+      <p className="font-display mt-3 text-center text-[17px] font-light text-ink-2">
+        Your trails are where you left them.
+      </p>
+      <AuthPanel className="mt-9 w-full">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-5"
+          noValidate
         >
-          {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
-        </Button>
-      </form>
-      <p className="mt-4 text-sm text-neutral-500">
-        No account?{" "}
-        <Link className="text-indigo-600 hover:underline" href="/register">
-          Register
+          {error && <ErrorBanner message={error} />}
+          <Field label="Email" error={form.formState.errors.email?.message}>
+            <Input
+              type="email"
+              autoComplete="email"
+              autoFocus
+              {...form.register("email")}
+            />
+          </Field>
+          <Field
+            label="Password"
+            error={form.formState.errors.password?.message}
+          >
+            <Input
+              type="password"
+              autoComplete="current-password"
+              {...form.register("password")}
+            />
+          </Field>
+          <Button
+            type="submit"
+            size="lg"
+            className="mt-2 w-full"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
+          </Button>
+        </form>
+      </AuthPanel>
+      <p className="mt-7 text-center text-[14px] text-ink-2">
+        New here?{" "}
+        <Link
+          className="font-semibold text-ink hover:underline"
+          href="/register"
+        >
+          Create an account
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex flex-1 items-center justify-center px-6 py-12">
       <Suspense>
         <LoginForm />
       </Suspense>
