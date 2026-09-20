@@ -23,7 +23,9 @@ import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import type { Clip } from "@/lib/builder/draft";
 import { formatClock } from "@/lib/builder/draft";
+import { KindCover } from "@/components/builder/KindCover";
 import { cn } from "@/components/ui";
+import { identityOf } from "@/lib/builder/kinds";
 
 /** What a drag carries: a new block from the bin, or a clip being moved. */
 export const DRAG_TYPE = "application/x-brain-trails-clip";
@@ -59,7 +61,7 @@ export function dragPayload(event: React.DragEvent): DragPayload | null {
 }
 
 const PX_PER_SECOND = 2.2;
-const MIN_WIDTH = 72;
+const MIN_WIDTH = 112;
 
 export interface TimelineProps {
   clips: Clip[];
@@ -69,6 +71,8 @@ export interface TimelineProps {
   onSelect: (index: number, additive: boolean) => void;
   onDropAt: (index: number, payload: DragPayload) => void;
   onOpenGroup: (index: number) => void;
+  /** Cover URLs by media id, so a media clip wears its own still. */
+  covers?: Record<string, string | null | undefined>;
 }
 
 export function Timeline({
@@ -79,6 +83,7 @@ export function Timeline({
   onSelect,
   onDropAt,
   onOpenGroup,
+  covers = {},
 }: TimelineProps) {
   const t = useTranslations("builder.timeline");
   const [over, setOver] = useState<number | null>(null);
@@ -173,6 +178,7 @@ export function Timeline({
               zoom={zoom}
               selected={selected.includes(clip.index)}
               issues={issues[clip.index]}
+              cover={coverOf(clip, covers)}
               onSelect={onSelect}
               onOpenGroup={onOpenGroup}
             />
@@ -184,8 +190,18 @@ export function Timeline({
   );
 }
 
+function coverOf(
+  clip: Clip,
+  covers: Record<string, string | null | undefined>
+): string | null {
+  if (clip.node.type !== "block") return null;
+  const mediaId = (clip.node.config as { media_id?: unknown }).media_id;
+  return typeof mediaId === "string" ? (covers[mediaId] ?? null) : null;
+}
+
 function ClipCard({
   clip,
+  cover,
   zoom,
   selected,
   issues,
@@ -193,6 +209,7 @@ function ClipCard({
   onOpenGroup,
 }: {
   clip: Clip;
+  cover: string | null;
   zoom: number;
   selected: boolean;
   issues?: { errors: number; warnings: number };
@@ -201,6 +218,7 @@ function ClipCard({
 }) {
   const t = useTranslations("builder.timeline");
   const isGroup = clip.node.type !== "block";
+  const kind = clip.node.type === "block" ? clip.node.kind : null;
   const width = Math.max(MIN_WIDTH, clip.seconds * PX_PER_SECOND * zoom);
 
   return (
@@ -214,7 +232,11 @@ function ClipCard({
           : "border-hairline bg-surface hover:border-accent/50",
         isGroup && "shadow-[3px_3px_0_0_var(--hairline)]"
       )}
-      style={{ width }}
+      style={{
+        width,
+        borderTopColor: kind ? identityOf(kind).tone : undefined,
+        borderTopWidth: kind ? 3 : undefined,
+      }}
     >
       <button
         type="button"
@@ -226,16 +248,27 @@ function ClipCard({
           onSelect(clip.index, event.shiftKey || event.metaKey)
         }
         onDoubleClick={() => isGroup && onOpenGroup(clip.index)}
-        className="min-w-0 flex-1 cursor-grab text-left"
+        className="flex min-w-0 flex-1 cursor-grab items-start gap-2 text-left"
         aria-pressed={selected}
+        title={clip.label}
       >
-        <span className="block truncate text-[13px] font-medium">
-          {clip.label}
-        </span>
-        <span className="type-caption block truncate text-ink-3">
-          {isGroup
-            ? t("group_blocks", { count: clip.count })
-            : (clip.node as { kind: string }).kind}
+        {kind && (
+          <span className="w-11 shrink-0">
+            <KindCover kind={kind} image={cover} />
+          </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="line-clamp-2 text-[12px] leading-tight font-medium">
+            {clip.label}
+          </span>
+          {/* a block still called after its kind would say the same word twice */}
+          {(!kind || identityOf(kind).label !== clip.label) && (
+            <span className="type-caption block truncate text-ink-3">
+              {kind
+                ? identityOf(kind).label
+                : t("group_blocks", { count: clip.count })}
+            </span>
+          )}
         </span>
       </button>
       <span className="type-caption flex items-center gap-1 tabular-nums text-ink-3">

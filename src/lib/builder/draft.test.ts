@@ -1,4 +1,6 @@
 import { expect, test } from "vitest";
+import { getTaskKind } from "@/lib/protocol/registry";
+import { registerBuiltInKinds } from "@/components/protocol/kinds";
 import type { BlockNode, ProtocolTree } from "@/lib/protocol/tree";
 import {
   ELEMENTS,
@@ -158,4 +160,14 @@ test("the bin's elements and media produce blocks that carry their source", () =
 test("the clock reads minutes, and hours when there are any", () => {
   expect(formatClock(90)).toBe("1:30");
   expect(formatClock(3723)).toBe("1:02:03");
+});
+
+test("every element the bin offers is a block its own kind accepts", () => {
+  registerBuiltInKinds();
+  for (const element of ELEMENTS) {
+    const parsed = getTaskKind(element.kind).configSchema.safeParse(
+      element.config
+    );
+    expect(parsed.success, element.kind).toBe(true);
+  }
 });

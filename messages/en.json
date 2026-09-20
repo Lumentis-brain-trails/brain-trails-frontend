@@ -275,12 +275,12 @@
     "ungroup": "Ungroup",
     "findings": "Findings",
     "all_good": "No problems found.",
-    "select_a_clip": "Select a clip to edit it.",
+    "select_a_clip": "Select a block on the timeline to change its settings.",
     "preview_empty": "There is nothing to preview yet: drag something onto the timeline.",
     "close": "Close",
     "timeline": {
       "title": "Timeline",
-      "empty": "Drag media or an element here.",
+      "empty": "Drag media or an element here, or double-click it.",
       "insert_at": "Insert at position {position}",
       "blocks": "{count} blocks",
       "total": "Total {time}",
@@ -328,6 +328,11 @@
       "duplicate": "Duplicate",
       "delete": "Delete"
     },
-    "group_action": "Group"
+    "group_action": "Group",
+    "monitor": {
+      "empty": "Drag a video or an element onto the timeline below. What the participant will see shows up here.",
+      "group": "Group",
+      "play": "Play the protocol"
+    }
   }
 }
