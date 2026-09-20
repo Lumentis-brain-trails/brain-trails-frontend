@@ -434,6 +434,8 @@ export default function BuilderPage({
           )}
           {selectedNode?.type === "block" && (
             <BlockInspector
+              // a fresh inspector per block: what was unfolded for one stays with it
+              key={selectedNode.id}
               block={selectedNode}
               kindSchemas={KIND_SCHEMAS}
               onChange={(next) =>

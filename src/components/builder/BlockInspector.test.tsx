@@ -48,14 +48,32 @@ function renderInspector(
 describe("BlockInspector", () => {
   afterEach(cleanup);
 
-  test("shows the label, the read-only kind and the kind's own form", () => {
+  test("shows the name, what kind of block it is, and the kind's own form", () => {
     renderInspector();
     expect(screen.getByLabelText("Name")).toHaveValue("Break");
-    expect(screen.getByLabelText(/^Type/)).toHaveValue("rest");
-    expect(screen.getByLabelText(/^Type/)).toHaveAttribute("readonly");
-    // Straight from `schemas/blocks.schema.json`: the rest kind's own settings.
-    expect(screen.getByLabelText("Mode")).toHaveValue("timed");
+    // the kind is said in words with its picture, not as an input nobody can change
+    expect(screen.getByText("Rest")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("rest")).toBeNull();
+    // the rest kind's own settings, under their documented names
+    expect(screen.getByLabelText("The break ends")).toHaveValue("timed");
+    expect(
+      screen.getByRole("option", { name: "After a fixed time" })
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Duration (s)")).toHaveValue(30);
+  });
+
+  test("every setting says what it is for, behind an info button", () => {
+    renderInspector();
+    const info = screen.getByRole("button", { name: "About: The break ends" });
+    expect(info).toHaveAccessibleDescription(/fixed time/);
+  });
+
+  test("timing and analysis stay folded until asked for, or already in use", () => {
+    renderInspector();
+    expect(screen.queryByLabelText(/^Condition/)).toBeNull();
+    cleanup();
+    renderInspector({ ...REST, condition: "calm" });
+    expect(screen.getByLabelText(/^Condition/)).toHaveValue("calm");
   });
 
   test("renaming the block hands back a new node", () => {
@@ -71,10 +89,13 @@ describe("BlockInspector", () => {
 
   test("edits the common fields and drops the ones left empty", () => {
     const seen = renderInspector();
-    fireEvent.change(screen.getByLabelText("Fixation before (s)"), {
+    fireEvent.click(
+      screen.getByRole("button", { name: /Timing around the block/ })
+    );
+    fireEvent.change(screen.getByLabelText("Cross before (s)"), {
       target: { value: "0.5" },
     });
-    fireEvent.change(screen.getByLabelText("Jitter (s)"), {
+    fireEvent.change(screen.getByLabelText("Random extra (s)"), {
       target: { value: "0.2" },
     });
     fireEvent.click(
@@ -90,7 +111,7 @@ describe("BlockInspector", () => {
       condition: "neutral",
     });
 
-    fireEvent.change(screen.getByLabelText("Jitter (s)"), {
+    fireEvent.change(screen.getByLabelText("Random extra (s)"), {
       target: { value: "" },
     });
     fireEvent.click(
