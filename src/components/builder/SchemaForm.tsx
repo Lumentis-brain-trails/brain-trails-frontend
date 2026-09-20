@@ -16,7 +16,8 @@
  */
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
+import { InfoTip } from "@/components/InfoTip";
 import {
   Button,
   Field as FieldShell,
@@ -33,6 +34,17 @@ import {
   type Field,
   type JsonSchema,
 } from "@/lib/builder/fields";
+import { type PresentedField, present } from "@/lib/builder/fieldDocs";
+
+/**
+ * Which kind's words to use, and whether the advanced settings are open. A context
+ * rather than props because rows of a list draw their own fields several levels down.
+ * Without a kind the form is the plain schema form it always was.
+ */
+const Presentation = createContext<{ kind: string | null; advanced: boolean }>({
+  kind: null,
+  advanced: true,
+});
 
 export interface SchemaFormProps {
   /** The kind's config schema (or a row schema, for a list's rows). */
@@ -42,6 +54,11 @@ export interface SchemaFormProps {
   /** Called with the whole new value on every keystroke. */
   onChange: (next: unknown) => void;
   disabled?: boolean;
+  /**
+   * The block kind the schema belongs to: settings get their documented names and info
+   * buttons, and the advanced ones fold behind a switch. Omit for a bare schema form.
+   */
+  kind?: string;
 }
 
 /** Set a path inside the form's value, or the value itself for an empty path. */
@@ -53,26 +70,56 @@ export function SchemaForm({
   value,
   onChange,
   disabled = false,
+  kind,
 }: SchemaFormProps) {
-  const fields = describeFields(schema, value);
+  const t = useTranslations("builder.form");
+  const [open, setOpen] = useState(false);
+  const described = describeFields(schema, value);
+  const fields: PresentedField[] = kind
+    ? present(kind, described)
+    : described.map((field) => ({ ...field, advanced: false }));
   const set: SetAt = (path, next) =>
     onChange(path.length === 0 ? next : setAtPath(value ?? {}, path, next));
   const remove: RemoveAt = (path) =>
     onChange(path.length === 0 ? undefined : removeAtPath(value ?? {}, path));
 
+  const basic = fields.filter((field) => !field.advanced);
+  const advanced = fields.filter((field) => field.advanced);
+  const draw = (field: PresentedField) => (
+    <FieldControl
+      key={field.path.join(".") || "$value"}
+      field={field}
+      value={getAtPath(value, field.path)}
+      set={set}
+      remove={remove}
+      disabled={disabled}
+    />
+  );
+
   return (
-    <div className="space-y-4">
-      {fields.map((field) => (
-        <FieldControl
-          key={field.path.join(".") || "$value"}
-          field={field}
-          value={getAtPath(value, field.path)}
-          set={set}
-          remove={remove}
-          disabled={disabled}
-        />
-      ))}
-    </div>
+    <Presentation.Provider
+      value={{ kind: kind ?? null, advanced: kind ? open : true }}
+    >
+      <div className="space-y-4">
+        {basic.map(draw)}
+        {kind && basic.length === 0 && advanced.length === 0 && (
+          <p className="type-caption text-ink-3">{t("nothing_to_set")}</p>
+        )}
+        {advanced.length > 0 && (
+          <div className="space-y-4">
+            <button
+              type="button"
+              aria-expanded={open}
+              onClick={() => setOpen((current) => !current)}
+              className="type-caption font-medium text-ink-3 hover:text-ink"
+            >
+              {open ? "▾" : "▸"} {t("advanced", { count: advanced.length })}
+            </button>
+            {open && advanced.map(draw)}
+          </div>
+        )}
+      </div>
+    </Presentation.Provider>
   );
 }
 
@@ -121,7 +168,7 @@ function Labelled({
   if (!field.label) return <>{children}</>;
   const label = field.required ? `${field.label} *` : field.label;
   return (
-    <FieldShell label={label} hint={field.description}>
+    <FieldShell label={label} info={field.description}>
       {children}
     </FieldShell>
   );
@@ -195,15 +242,20 @@ function NumberControl({
 
 function BooleanControl({ field, value, set, disabled }: ControlProps) {
   return (
-    <label className="flex items-center gap-2 text-[15px] text-ink">
-      <input
-        type="checkbox"
-        checked={value === true}
-        disabled={disabled}
-        onChange={(event) => set(field.path, event.target.checked)}
-      />
-      <span>{field.label}</span>
-    </label>
+    <div className="flex items-center justify-between gap-2">
+      <label className="flex items-center gap-2 text-[15px] text-ink">
+        <input
+          type="checkbox"
+          checked={value === true}
+          disabled={disabled}
+          onChange={(event) => set(field.path, event.target.checked)}
+        />
+        <span>{field.label}</span>
+      </label>
+      {field.description && (
+        <InfoTip text={field.description} label={field.label} />
+      )}
+    </div>
   );
 }
 
@@ -227,7 +279,7 @@ function EnumControl({ field, value, set, disabled }: ControlProps) {
         )}
         {(field.options ?? []).map((option) => (
           <option key={option} value={option}>
-            {option}
+            {(field as PresentedField).optionLabels?.[option] ?? option}
           </option>
         ))}
       </Select>
@@ -278,12 +330,28 @@ function ListControl({ field, value, set, remove, disabled }: ControlProps) {
   const fixed = field.min !== undefined && field.min === field.max;
   const full = field.max !== undefined && rows.length >= field.max;
   const label = field.required ? `${field.label} *` : field.label;
+  const presentation = useContext(Presentation);
+  /** A row's fields, in the kind's words; its advanced ones show with the form's. */
+  const rowFields = (row: unknown): Field[] => {
+    const described = describeFields(field.itemSchema ?? {}, row);
+    if (!presentation.kind) return described;
+    return present(
+      presentation.kind,
+      described,
+      field.path.filter((segment) => !/^\d+$/.test(segment))
+    ).filter((sub) => presentation.advanced || !sub.advanced || sub.required);
+  };
 
   return (
-    <fieldset className="rounded-[var(--radius-control)] border border-hairline p-3">
+    <fieldset className="relative rounded-[var(--radius-control)] border border-hairline p-3">
       <legend className="px-1 text-[13px] font-medium text-ink-2">
         {label}
       </legend>
+      {field.description && (
+        <span className="absolute -top-5 right-1 bg-surface px-1">
+          <InfoTip text={field.description} label={field.label} />
+        </span>
+      )}
       {rows.length === 0 && (
         <p className="type-caption text-ink-3">{t("list_empty")}</p>
       )}
@@ -312,7 +380,7 @@ function ListControl({ field, value, set, remove, disabled }: ControlProps) {
                 </Button>
               )}
             </div>
-            {describeFields(field.itemSchema ?? {}, row).map((sub) => (
+            {rowFields(row).map((sub) => (
               <FieldControl
                 key={sub.path.join(".") || "$value"}
                 field={{

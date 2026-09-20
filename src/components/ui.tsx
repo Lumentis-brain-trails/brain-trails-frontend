@@ -7,6 +7,7 @@
  * Components stay deliberately small; composition happens in the pages.
  */
 import { type ComponentProps, forwardRef } from "react";
+import { InfoTip } from "@/components/InfoTip";
 
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
@@ -133,18 +134,26 @@ export function Field({
   label,
   error,
   hint,
+  info,
   children,
   className,
 }: {
   label: string;
   error?: string;
   hint?: string;
+  /** A longer explanation, kept behind an info button next to the label. */
+  info?: string;
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <label className={cn("block", className)}>
-      <span className="mb-1.5 block text-[13px] font-medium text-ink-2">
+  const field = (
+    <label className={cn("block", info ? undefined : className)}>
+      <span
+        className={cn(
+          "mb-1.5 block text-[13px] font-medium text-ink-2",
+          info && "pr-6"
+        )}
+      >
         {label}
       </span>
       {children}
@@ -157,6 +166,17 @@ export function Field({
         </span>
       )}
     </label>
+  );
+  if (!info) return field;
+  // The button sits beside the label, not inside it: inside, its text would become
+  // part of the field's accessible name and a click would land on the field.
+  return (
+    <div className={cn("relative", className)}>
+      {field}
+      <span className="absolute top-0 right-0">
+        <InfoTip text={info} label={label} />
+      </span>
+    </div>
   );
 }
 

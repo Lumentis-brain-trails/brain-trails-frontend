@@ -15,9 +15,13 @@
  */
 
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { InfoTip } from "@/components/InfoTip";
+import { KindCover } from "@/components/builder/KindCover";
 import { Button, Field as FieldShell, Input } from "@/components/ui";
 import { SchemaForm } from "@/components/builder/SchemaForm";
 import type { JsonSchema } from "@/lib/builder/fields";
+import { identityOf } from "@/lib/builder/kinds";
 import type { BlockNode } from "@/lib/protocol/tree";
 
 export interface BlockInspectorProps {
@@ -51,6 +55,14 @@ export function BlockInspector({
 }: BlockInspectorProps) {
   const t = useTranslations("builder.inspector");
   const schema = kindSchemas[block.kind];
+  const identity = identityOf(block.kind);
+  // open when the block already uses one of them, so nothing set is ever out of sight
+  const [around, setAround] = useState(
+    () =>
+      block.condition !== undefined ||
+      block.skippable === true ||
+      TIMING.some((key) => block[key] !== undefined)
+  );
 
   /** Replace one optional property; an empty value drops it from the block. */
   const patch = (
@@ -65,6 +77,18 @@ export function BlockInspector({
 
   return (
     <section className="space-y-5" aria-label={t("title")}>
+      <header className="flex items-center gap-3">
+        <span className="w-16 shrink-0">
+          <KindCover kind={block.kind} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[14px] font-semibold">{identity.label}</p>
+          {identity.hint && (
+            <p className="type-caption text-ink-3">{identity.hint}</p>
+          )}
+        </div>
+      </header>
+
       <FieldShell label={t("label")}>
         {isVarRef(block.label) ? (
           <Input
@@ -81,61 +105,12 @@ export function BlockInspector({
         )}
       </FieldShell>
 
-      <FieldShell label={t("kind")} hint={t("kind_hint")}>
-        <Input readOnly value={block.kind} />
-      </FieldShell>
-
-      <FieldShell label={t("condition")} hint={t("condition_hint")}>
-        {isVarRef(block.condition) ? (
-          <Input
-            readOnly
-            value={t("from_column", { name: block.condition.$var })}
-          />
-        ) : (
-          <Input
-            value={block.condition ?? ""}
-            onChange={(event) =>
-              patch("condition", event.target.value || undefined)
-            }
-          />
-        )}
-      </FieldShell>
-
-      <div className="grid grid-cols-3 gap-3">
-        {TIMING.map((key) => (
-          <FieldShell key={key} label={t(key)}>
-            <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={0.1}
-              value={block[key] ?? ""}
-              onChange={(event) => {
-                const raw = event.target.value;
-                if (raw.trim() === "") patch(key, undefined);
-                else if (Number.isFinite(Number(raw))) patch(key, Number(raw));
-              }}
-            />
-          </FieldShell>
-        ))}
-      </div>
-
-      <label className="flex items-center gap-2 text-[15px] text-ink">
-        <input
-          type="checkbox"
-          checked={block.skippable === true}
-          onChange={(event) =>
-            patch("skippable", event.target.checked ? true : undefined)
-          }
-        />
-        <span>{t("skippable")}</span>
-      </label>
-
       <div className="space-y-4 border-t border-hairline pt-5">
         <h3 className="text-[13px] font-medium text-ink-2">{t("settings")}</h3>
         {schema ? (
           <SchemaForm
             schema={schema}
+            kind={block.kind}
             value={block.config}
             onChange={(next) =>
               onChange({
@@ -150,6 +125,70 @@ export function BlockInspector({
               {JSON.stringify(block.config, null, 2)}
             </pre>
           </FieldShell>
+        )}
+      </div>
+
+      <div className="space-y-4 border-t border-hairline pt-5">
+        <button
+          type="button"
+          aria-expanded={around}
+          onClick={() => setAround((current) => !current)}
+          className="text-[13px] font-medium text-ink-2 hover:text-ink"
+        >
+          {around ? "▾" : "▸"} {t("around")}
+        </button>
+        {around && (
+          <div className="space-y-5">
+            <FieldShell label={t("condition")} info={t("condition_hint")}>
+              {isVarRef(block.condition) ? (
+                <Input
+                  readOnly
+                  value={t("from_column", { name: block.condition.$var })}
+                />
+              ) : (
+                <Input
+                  value={block.condition ?? ""}
+                  onChange={(event) =>
+                    patch("condition", event.target.value || undefined)
+                  }
+                />
+              )}
+            </FieldShell>
+
+            <div className="grid grid-cols-3 gap-3">
+              {TIMING.map((key) => (
+                <FieldShell key={key} label={t(key)} info={t(`${key}_hint`)}>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={0.1}
+                    value={block[key] ?? ""}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      if (raw.trim() === "") patch(key, undefined);
+                      else if (Number.isFinite(Number(raw)))
+                        patch(key, Number(raw));
+                    }}
+                  />
+                </FieldShell>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-[15px] text-ink">
+                <input
+                  type="checkbox"
+                  checked={block.skippable === true}
+                  onChange={(event) =>
+                    patch("skippable", event.target.checked ? true : undefined)
+                  }
+                />
+                <span>{t("skippable")}</span>
+              </label>
+              <InfoTip text={t("skippable_hint")} label={t("skippable")} />
+            </div>
+          </div>
         )}
       </div>
 

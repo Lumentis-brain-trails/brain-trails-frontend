@@ -308,7 +308,9 @@
       "add_row": "Add",
       "unsupported_label": "Advanced settings",
       "unsupported": "This setting has no form yet. It is shown as it is saved and kept as it is.",
-      "add_to": "Add to {name}"
+      "add_to": "Add to {name}",
+      "advanced": "Advanced settings ({count})",
+      "nothing_to_set": "Nothing to set: this block works as it is."
     },
     "inspector": {
       "title": "Block",
@@ -316,17 +318,22 @@
       "kind": "Type",
       "kind_hint": "The type is chosen when the block is added and cannot be changed here.",
       "condition": "Condition",
-      "condition_hint": "The name this block's trials get in the exported events.",
-      "pre_fixation_s": "Fixation before (s)",
-      "jitter_s": "Jitter (s)",
-      "post_rest_s": "Rest after (s)",
+      "condition_hint": "A word for what this block is in your experiment (calm, scary, control). Blocks with the same condition are compared together in the review and in the exported data. Leave empty if you are not comparing anything.",
+      "pre_fixation_s": "Cross before (s)",
+      "jitter_s": "Random extra (s)",
+      "post_rest_s": "Pause after (s)",
       "skippable": "The participant may skip this block",
       "settings": "Settings",
       "unknown_kind": "Unknown type",
       "unknown_kind_hint": "This app does not know this block type. Its settings are kept untouched.",
       "from_column": "From the column {name}",
       "duplicate": "Duplicate",
-      "delete": "Delete"
+      "delete": "Delete",
+      "around": "Timing around the block, and analysis",
+      "pre_fixation_s_hint": "Shows a fixation cross for this long before the block starts, to settle the eyes.",
+      "jitter_s_hint": "Adds a random time, up to this much, to the cross before the block, so the participant cannot predict the exact start.",
+      "post_rest_s_hint": "An empty screen for this long after the block, to let the signal come back to rest.",
+      "skippable_hint": "Shows a Skip button. The skip is written in the timeline, so you know the block was not completed."
     },
     "group_action": "Group",
     "monitor": {

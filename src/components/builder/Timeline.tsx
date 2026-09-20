@@ -61,7 +61,7 @@ export function dragPayload(event: React.DragEvent): DragPayload | null {
 }
 
 const PX_PER_SECOND = 2.2;
-const MIN_WIDTH = 112;
+const MIN_WIDTH = 124;
 
 export interface TimelineProps {
   clips: Clip[];
@@ -258,7 +258,7 @@ function ClipCard({
           </span>
         )}
         <span className="min-w-0 flex-1">
-          <span className="line-clamp-2 text-[12px] leading-tight font-medium">
+          <span className="line-clamp-2 text-[12px] leading-tight font-medium break-words">
             {clip.label}
           </span>
           {/* a block still called after its kind would say the same word twice */}
