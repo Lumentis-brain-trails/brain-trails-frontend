@@ -12,7 +12,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { type Resolver, useForm } from "react-hook-form";
+import { type Resolver, useForm, useWatch } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
 import {
   type ProfileForm,
@@ -71,6 +71,20 @@ function toForm(data: ProfileData | undefined): Partial<ProfileForm> {
   };
 }
 
+/** The answers that come from a closed list, in the order `useWatch` returns them. */
+const LIST_FIELDS = [
+  "sex_at_birth",
+  "handedness",
+  "gender",
+  "education_level",
+  "occupation",
+  "meditation_practice",
+  "nicotine_use",
+  "alcohol_use",
+  "vision_correction",
+  "hearing_issues",
+] as const satisfies readonly (keyof ProfileForm)[];
+
 export function ProfileCard({
   data,
   missing,
@@ -102,13 +116,16 @@ export function ProfileCard({
   });
 
   const errors = form.formState.errors;
-  const watch = form.watch;
-  const listProps = (name: keyof ProfileForm & string, label: string) => ({
+  // One subscription for the answers that decide whether an `other` box is shown, rather
+  // than `form.watch`, which re-renders this whole card - all ten menus - on every
+  // keystroke in any field, including the free-text ones at the bottom.
+  const chosen = useWatch({ control: form.control, name: LIST_FIELDS });
+  const listProps = (name: (typeof LIST_FIELDS)[number], label: string) => ({
     label,
     options: lists.data?.[name],
     field: form.register(name),
     otherField: form.register(`${name}_other` as keyof ProfileForm & string),
-    value: watch(name) as string | undefined,
+    value: chosen[LIST_FIELDS.indexOf(name)] as string | undefined,
     error: errors[name]?.message,
   });
 

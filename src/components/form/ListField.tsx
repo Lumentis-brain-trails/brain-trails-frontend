@@ -44,7 +44,12 @@ export function ListField({
   const showOther = hasOther(options) && value === OTHER && otherField;
   return (
     <div className="space-y-2">
-      <Field label={label} error={error} hint={hint} info={info}>
+      <Field
+        label={label}
+        error={error}
+        hint={options ? hint : "Loading the options…"}
+        info={info}
+      >
         <Select {...field} disabled={!options}>
           <option value="">{placeholder}</option>
           {(options ?? []).map((code) => (

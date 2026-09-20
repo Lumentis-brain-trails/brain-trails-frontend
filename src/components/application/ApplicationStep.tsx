@@ -43,8 +43,27 @@ export function ApplicationStep({
 }: Props) {
   const t = useTranslations("application");
   const detected = useMemo(() => detectEnvironment(), []);
-  const countryList = useMemo(() => countries(), []);
-  const languageList = useMemo(() => languages(), []);
+  // Built once per mount and kept as elements, not data: ~250 countries plus the
+  // languages is nearly 300 DOM nodes, and rebuilding them on each render is what makes
+  // a form with this step in it feel heavy to type in.
+  const countryOptions = useMemo(
+    () =>
+      countries().map(({ code, name }) => (
+        <option key={code} value={code}>
+          {name}
+        </option>
+      )),
+    []
+  );
+  const languageOptions = useMemo(
+    () =>
+      languages().map(({ code, name }) => (
+        <option key={code} value={code}>
+          {name}
+        </option>
+      )),
+    []
+  );
   const form = useForm<ApplicationForm>({
     // zod v4 coerce makes the input `unknown`; the cast pins the parsed output type.
     resolver: zodResolver(
@@ -169,21 +188,13 @@ export function ApplicationStep({
         <Field label={t("country")} error={required(errors.country?.message)}>
           <Select {...form.register("country")}>
             <option value="">{t("country_hint")}</option>
-            {countryList.map(({ code, name }) => (
-              <option key={code} value={code}>
-                {name}
-              </option>
-            ))}
+            {countryOptions}
           </Select>
         </Field>
         <Field label={t("language")}>
           <Select {...form.register("language")}>
             <option value="">{t("language_hint")}</option>
-            {languageList.map(({ code, name }) => (
-              <option key={code} value={code}>
-                {name}
-              </option>
-            ))}
+            {languageOptions}
           </Select>
         </Field>
       </section>

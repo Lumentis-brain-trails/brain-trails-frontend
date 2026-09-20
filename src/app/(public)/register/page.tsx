@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { type Resolver, useForm } from "react-hook-form";
+import { type Resolver, useForm, useWatch } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
 import { useAppConfig } from "@/lib/features";
 import { useTaxonomies } from "@/lib/taxonomies";
@@ -109,8 +109,18 @@ export default function RegisterPage() {
       intended_use_other: "",
     },
   });
-  const wantsBeta = betaForm.watch("wants_beta");
-  const use = betaForm.watch("intended_use");
+  // `useWatch` and not `form.watch`: the latter re-renders this whole page - both forms,
+  // every field, every menu - on each keystroke, which is what made the form feel heavy.
+  const wantsBeta = useWatch({ control: betaForm.control, name: "wants_beta" });
+  const use = useWatch({ control: betaForm.control, name: "intended_use" });
+  const sexAtBirth = useWatch({
+    control: basicsForm.control,
+    name: "sex_at_birth",
+  });
+  const handedness = useWatch({
+    control: basicsForm.control,
+    name: "handedness",
+  });
 
   async function submitAll() {
     if (!account || !basics || !beta || !consent) return;
@@ -243,7 +253,7 @@ export default function RegisterPage() {
                   label="Sex at birth"
                   options={lists.data?.sex_at_birth}
                   field={basicsForm.register("sex_at_birth")}
-                  value={basicsForm.watch("sex_at_birth")}
+                  value={sexAtBirth}
                   error={basicsForm.formState.errors.sex_at_birth?.message}
                   placeholder="Select"
                   info="A variable in the analysis, asked as it is recorded at birth. Your gender is yours to describe, on the account page."
@@ -252,7 +262,7 @@ export default function RegisterPage() {
                   label="Handedness"
                   options={lists.data?.handedness}
                   field={basicsForm.register("handedness")}
-                  value={basicsForm.watch("handedness")}
+                  value={handedness}
                   error={basicsForm.formState.errors.handedness?.message}
                   placeholder="Select"
                 />

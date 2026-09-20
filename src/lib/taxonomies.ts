@@ -90,6 +90,10 @@ export function useTaxonomies() {
     queryKey: ["taxonomies"],
     queryFn: () => api.get<Taxonomies>("taxonomies"),
     staleTime: Infinity,
+    // One retry, not the default three. When this fails it is a misconfiguration - a
+    // path the BFF does not allow, say - which no amount of retrying fixes, and the
+    // backoff leaves every menu disabled for seconds while it waits.
+    retry: 1,
   });
 }
 
