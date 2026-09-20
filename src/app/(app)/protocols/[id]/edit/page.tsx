@@ -392,7 +392,7 @@ export default function BuilderPage({
             </label>
             {selected.length > 1 && (
               <Button size="sm" variant="secondary" onClick={group}>
-                {t("group")}
+                {t("group_action")}
               </Button>
             )}
             {selectedNode && selectedNode.type !== "block" && (

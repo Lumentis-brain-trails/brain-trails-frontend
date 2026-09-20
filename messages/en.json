@@ -327,6 +327,7 @@
       "from_column": "From the column {name}",
       "duplicate": "Duplicate",
       "delete": "Delete"
-    }
+    },
+    "group_action": "Group"
   }
 }
