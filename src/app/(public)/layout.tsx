@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CornerRibbons } from "@/components/CornerRibbons";
+import { Logo } from "@/components/Logo";
 
 /**
  * The auth flow stays in the entry screen's room: the same dark ground, the same
@@ -24,8 +25,14 @@ export default function PublicLayout({
       <header className="flex h-16 w-full items-center justify-between px-6 md:px-10">
         <Link
           href="/"
-          className="font-display text-[20px] font-bold tracking-[-0.02em]"
+          className="font-display flex items-center gap-2 text-[20px] font-bold tracking-[-0.02em]"
         >
+          <Logo
+            size={48}
+            ground="#04060b"
+            tile={false}
+            className="-my-2 -ml-1"
+          />
           Braintrails
         </Link>
       </header>

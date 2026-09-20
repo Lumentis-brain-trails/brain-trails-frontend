@@ -22,10 +22,15 @@ where it ends. That reading carries the whole product:
   Energy surfaces and every other chart stay neutral.
 - A ribbon appears inside the app in one place only: the corner of Home's "Start a
   new trail" card (`.ribbon-glow`), because a trail is about to start there.
-- The mark (`Logo`) is the only blue in the product: three ribbons tied into a
-  trefoil knot, each one a trail running into the other two. It keeps its own
-  colours rather than following `currentColor`, and it is the same artwork in the
-  rail, the favicon (`app/icon.svg`) and the iOS app icon.
+- The mark (`Logo`) is the two ribbons folded into a circle: a disc of light,
+  warm on one side and cool on the other, each half fading out into the ground with
+  no rim, split by the one hard edge in the artwork - an S-shaped trail that runs
+  off both ends. The trail is not drawn _on_ the mark: `ground` paints the tile and
+  the cut alike, so the trail is the surface showing through. It is the only
+  coloured object in the chrome, and the same artwork in the rail, the favicon
+  (`app/icon.svg`, `app/favicon.ico`), the iOS app icon (`app/apple-icon.png`) and
+  the brand surfaces. On the dark entry and auth ground it is placed untiled
+  (`tile={false}`, `ground` set to that page's own colour) so the disc floats.
 - Titles (`type-display`, `type-title`, `type-heading`, `type-figure`) use Manrope;
   text you read at length stays on the system face.
 
@@ -120,7 +125,7 @@ panel, Escape/scrim to dismiss, non-dismissible while a mutation runs).
 - Confirmation dialogs only for destructive, irreversible actions (delete
   recording, delete account).
 - Copy is short and specific: "Recordings", "New recording", "Delete everything".
-- No mascots, no decorative illustration beyond the trail itself, the knot mark and
+- No mascots, no decorative illustration beyond the trail itself, the mark and
   the ribbons: full on the entry and auth screens, one still glow on Home's
   new-trail card, nowhere else.
 - Thumbnails of a trail are drawn from its own analysis (`TrailThumb`); a recording

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- A new mark: the entry screen's two ribbons folded into one soft disc of light on
+  black, the warm half and the cool half held apart by an S-shaped trail that runs
+  off both ends. It replaces the trefoil knot, and with it the last blue in the
+  product. It is the icon in the rail, the tab icon and the iOS app icon, and it
+  also sits above the name on the entry screen and beside it in the auth header,
+  untiled so the disc floats on the dark ground.
+
 - Record page: the device card's buttons wrap instead of overflowing. With the
   simulator buttons shown (outside production) the row was wider than the card, which
   clips its content, so "Simulated" was partly hidden and, with wider fonts, could not
