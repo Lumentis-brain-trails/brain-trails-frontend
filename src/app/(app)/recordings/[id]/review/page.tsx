@@ -21,6 +21,7 @@ import { BandLegend, BandStrip } from "@/components/review/BandStrip";
 import { Notes } from "@/components/review/Notes";
 import { ReviewTrail } from "@/components/review/ReviewTrail";
 import { Scrubber } from "@/components/review/Scrubber";
+import { TaskPanel } from "@/components/review/TaskPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   Button,
@@ -346,6 +347,21 @@ export default function ReviewPage({
                 Relative power, averaged over the block. Distance from baseline
                 is measured in the embedding space, so it compares across
                 sessions.
+              </p>
+            </Card>
+          )}
+
+          {blockMetrics.data?.some((block) => block.behaviour) && (
+            <Card className="space-y-4">
+              <h2 className="text-[15px] font-semibold">Task performance</h2>
+              {blockMetrics.data
+                .filter((block) => block.behaviour)
+                .map((block) => (
+                  <TaskPanel key={block.key} block={block} />
+                ))}
+              <p className="type-caption text-ink-3">
+                Read the numbers together: fewer false docks alone can simply
+                mean pressing less. This is not a medical test or diagnosis.
               </p>
             </Card>
           )}

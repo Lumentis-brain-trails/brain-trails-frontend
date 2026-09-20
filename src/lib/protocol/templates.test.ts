@@ -6,6 +6,8 @@ import { bindMedia, mediaIds } from "./media";
 import { resolvePlan } from "./resolve";
 import { parseProtocol } from "./schema";
 import { parseTree } from "./tree";
+import { mulberry32 } from "./rng";
+import { generateGoNoGo, sequenceDurationMs } from "./trials";
 import { SIGNAL_NAVIGATOR } from "./__fixtures__/signalNavigator";
 
 /**
@@ -38,12 +40,13 @@ function run(file: string, seed = 1) {
 }
 
 describe("templates", () => {
-  test("the four official templates are present", () => {
+  test("the five official templates are present", () => {
     expect(FILES).toEqual([
       "emotion-video.json",
       "free-recording.json",
       "resting-baseline.json",
       "signal-navigator.json",
+      "sustained-focus.json",
     ]);
   });
 
@@ -139,5 +142,70 @@ describe("templates", () => {
     expect((arrival.config as { advance: { mode: string } }).advance.mode).toBe(
       "key"
     );
+  });
+
+  /**
+   * Sustained Focus is the measurement-first sibling of Signal Navigator, which stays
+   * pinned to its spec above. Each number below is there for a reason an analysis
+   * depends on, so each is asserted rather than left to the JSON:
+   * - an eyes-closed baseline, or no block has a `baseline_distance` (backend S20);
+   * - practice trials flagged as such, so learning the keys is not scored as lapses;
+   * - one long block with rare no-go trials: pressing becomes the habit (85% go), which
+   *   is what makes withholding costly, and six minutes is long enough for a vigilance
+   *   decrement to show; never two no-go trials in a row;
+   * - at least 30 no-go trials, the floor for a frontal no-go ERP once blinks are
+   *   rejected;
+   * - the same SAM before and after, so a change in arousal has two ends.
+   */
+  test("sustained focus: baselines, flagged practice, one long block with rare no-go", () => {
+    for (let seed = 0; seed < 25; seed++) {
+      const steps = run("sustained-focus.json", seed).steps;
+      expect(steps.map((s) => s.id)).toEqual([
+        "welcome",
+        "eyes_closed",
+        "eyes_open",
+        "mood_before",
+        "rule",
+        "practice",
+        "ready",
+        "focus",
+        "mood_after",
+        "outro",
+      ]);
+    }
+    const steps = run("sustained-focus.json").steps;
+    const config = (id: string) =>
+      steps.find((s) => s.id === id)!.config as Record<string, unknown>;
+    expect(config("eyes_closed")).toMatchObject({
+      eyes: "closed",
+      duration_s: 60,
+    });
+    expect(config("practice")).toMatchObject({ practice: true });
+    expect(config("focus").practice).toBeUndefined();
+    expect(config("mood_before").instrument).toBe("sam");
+    expect(config("mood_after").instrument).toBe("sam");
+
+    const focus = config("focus") as {
+      n: number;
+      goRatio: number;
+      maxRun: number;
+      maxNogoRun: number;
+      travelMs: [number, number];
+      itiMs: [number, number];
+    };
+    for (let seed = 0; seed < 25; seed++) {
+      const trials = generateGoNoGo(focus, mulberry32(seed));
+      const nogo = trials.filter((t) => t.trialType === "nogo");
+      expect(trials).toHaveLength(240);
+      expect(nogo.length).toBeGreaterThanOrEqual(30);
+      expect(nogo.length / trials.length).toBeLessThan(0.2);
+      trials.forEach((t, i) => {
+        if (i > 0 && t.trialType === "nogo")
+          expect(trials[i - 1].trialType).toBe("go");
+      });
+      const minutes = sequenceDurationMs(trials) / 60_000;
+      expect(minutes).toBeGreaterThan(5);
+      expect(minutes).toBeLessThan(7);
+    }
   });
 });
