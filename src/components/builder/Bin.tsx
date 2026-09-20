@@ -17,17 +17,26 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
+import { KindCover } from "@/components/builder/KindCover";
 import { setDragPayload } from "@/components/builder/Timeline";
 import { Button, Icon, Skeleton, cn } from "@/components/ui";
 import { api } from "@/lib/api";
-import { ELEMENTS } from "@/lib/builder/draft";
+import { ELEMENTS, formatClock } from "@/lib/builder/draft";
+import { identityOf } from "@/lib/builder/kinds";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import type { Media } from "@/lib/types";
 
 /** Media kinds a protocol can play as a block. */
 const PLAYABLE = new Set(["video", "audio", "text"]);
 
-export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
+export function Bin({
+  onAdd,
+  onAddElement,
+}: {
+  onAdd: (item: Media) => void;
+  /** Double-click on an element appends it, as it does for media. */
+  onAddElement: (kind: string) => void;
+}) {
   const t = useTranslations("builder.bin");
   const [tab, setTab] = useState<"media" | "elements">("media");
   const [query, setQuery] = useState("");
@@ -54,7 +63,7 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
     );
 
   return (
-    <aside className="flex h-full min-h-0 w-[260px] shrink-0 flex-col gap-3 border-r border-hairline p-3">
+    <aside className="flex h-full min-h-0 w-[280px] shrink-0 flex-col gap-3 border-r border-hairline p-3">
       <div role="tablist" aria-label={t("title")} className="flex gap-1">
         {(["media", "elements"] as const).map((name) => (
           <button
@@ -83,7 +92,7 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
             aria-label={t("search")}
             className="h-8 rounded-[var(--radius-control)] border border-hairline bg-surface px-2 text-[13px]"
           />
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+          <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 gap-2 overflow-y-auto">
             {(mine.isPending || shared.isPending) && (
               <Skeleton className="h-16 w-full" />
             )}
@@ -96,19 +105,23 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
                   setDragPayload(event, { from: "bin-media", value: item.id })
                 }
                 onDoubleClick={() => onAdd(item)}
-                className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-2 text-left hover:border-accent/50"
+                title={item.title}
+                className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-1.5 text-left hover:border-accent/50"
               >
-                <span className="block truncate text-[13px] font-medium">
+                <KindCover kind={item.kind} image={item.cover_url} />
+                <span className="mt-1.5 block truncate px-0.5 text-[12px] font-medium">
                   {item.title}
                 </span>
-                <span className="type-caption text-ink-3">
-                  {item.kind}
-                  {item.duration_s ? ` · ${Math.round(item.duration_s)} s` : ""}
+                <span className="type-caption block px-0.5 text-ink-3">
+                  {identityOf(item.kind).label}
+                  {item.duration_s ? ` · ${formatClock(item.duration_s)}` : ""}
                 </span>
               </button>
             ))}
             {items.length === 0 && !mine.isPending && (
-              <p className="type-caption text-ink-3">{t("no_media")}</p>
+              <p className="type-caption col-span-2 text-ink-3">
+                {t("no_media")}
+              </p>
             )}
           </div>
           <Button
@@ -123,7 +136,7 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
           )}
         </>
       ) : (
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+        <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 gap-2 overflow-y-auto">
           {ELEMENTS.map((element) => (
             <button
               key={element.kind}
@@ -135,12 +148,14 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
                   value: element.kind,
                 })
               }
-              className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-2 text-left hover:border-accent/50"
+              onDoubleClick={() => onAddElement(element.kind)}
+              title={identityOf(element.kind).hint}
+              className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-1.5 text-left hover:border-accent/50"
             >
-              <span className="block text-[13px] font-medium">
+              <KindCover kind={element.kind} />
+              <span className="mt-1.5 block px-0.5 text-[12px] leading-tight font-medium">
                 {element.label}
               </span>
-              <span className="type-caption text-ink-3">{element.kind}</span>
             </button>
           ))}
         </div>

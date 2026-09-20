@@ -23,6 +23,7 @@ import Link from "next/link";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BlockInspector } from "@/components/builder/BlockInspector";
 import { Bin } from "@/components/builder/Bin";
+import { Monitor } from "@/components/builder/Monitor";
 import { GroupInspector } from "@/components/builder/GroupInspector";
 import { PublishDialog } from "@/components/builder/PublishDialog";
 import { type DragPayload, Timeline } from "@/components/builder/Timeline";
@@ -208,6 +209,21 @@ export default function BuilderPage({
     [edit]
   );
 
+  const addElement = useCallback(
+    (kind: string) => {
+      const element = ELEMENTS.find((e) => e.kind === kind);
+      if (!element) return;
+      edit((current) =>
+        insertAt(
+          current,
+          current.root.children.length,
+          blockForElement(current, element)
+        )
+      );
+    },
+    [edit]
+  );
+
   const removeSelected = useCallback(() => {
     edit((current) =>
       [...selected]
@@ -303,6 +319,9 @@ export default function BuilderPage({
       </main>
     );
 
+  const covers = Object.fromEntries(
+    Object.values(mediaById).map((item) => [item.id, item.cover_url])
+  );
   const selectedNode: TreeNode | undefined =
     selected.length === 1 ? tree.root.children[selected[0]] : undefined;
 
@@ -375,57 +394,16 @@ export default function BuilderPage({
       )}
 
       <div className="flex min-h-0 flex-1">
-        <Bin onAdd={addMedia} />
+        <Bin onAdd={addMedia} onAddElement={addElement} />
 
         <section className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-          <div className="flex items-center gap-2">
-            <label className="type-caption flex items-center gap-2 text-ink-3">
-              {t("zoom")}
-              <input
-                type="range"
-                min={0.4}
-                max={3}
-                step={0.2}
-                value={zoom}
-                onChange={(event) => setZoom(Number(event.target.value))}
-              />
-            </label>
-            {selected.length > 1 && (
-              <Button size="sm" variant="secondary" onClick={group}>
-                {t("group_action")}
-              </Button>
-            )}
-            {selectedNode && selectedNode.type !== "block" && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  edit((current) => ungroupAt(current, selected[0]));
-                  setSelected([]);
-                }}
-              >
-                {t("ungroup")}
-              </Button>
-            )}
+          <div className="mx-auto w-full max-w-[720px]">
+            <Monitor
+              clip={clips[selected[0] ?? 0]}
+              media={mediaById}
+              onPlay={() => setPreview(tree)}
+            />
           </div>
-
-          <Timeline
-            clips={clips}
-            selected={selected}
-            zoom={zoom}
-            issues={issues}
-            onSelect={(index, additive) =>
-              setSelected((current) =>
-                additive
-                  ? current.includes(index)
-                    ? current.filter((i) => i !== index)
-                    : [...current, index]
-                  : [index]
-              )
-            }
-            onDropAt={onDropAt}
-            onOpenGroup={(index) => setSelected([index])}
-          />
 
           {report && (
             <Card className="space-y-2">
@@ -476,6 +454,57 @@ export default function BuilderPage({
         </aside>
       </div>
 
+      <section className="shrink-0 border-t border-hairline bg-surface px-4 pt-2 pb-3">
+        <div className="mb-1 flex items-center gap-2">
+          <label className="type-caption flex items-center gap-2 text-ink-3">
+            {t("zoom")}
+            <input
+              type="range"
+              min={0.4}
+              max={3}
+              step={0.2}
+              value={zoom}
+              onChange={(event) => setZoom(Number(event.target.value))}
+            />
+          </label>
+          {selected.length > 1 && (
+            <Button size="sm" variant="secondary" onClick={group}>
+              {t("group_action")}
+            </Button>
+          )}
+          {selectedNode && selectedNode.type !== "block" && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                edit((current) => ungroupAt(current, selected[0]));
+                setSelected([]);
+              }}
+            >
+              {t("ungroup")}
+            </Button>
+          )}
+        </div>
+        <Timeline
+          clips={clips}
+          selected={selected}
+          zoom={zoom}
+          issues={issues}
+          onSelect={(index, additive) =>
+            setSelected((current) =>
+              additive
+                ? current.includes(index)
+                  ? current.filter((i) => i !== index)
+                  : [...current, index]
+                : [index]
+            )
+          }
+          onDropAt={onDropAt}
+          onOpenGroup={(index) => setSelected([index])}
+          covers={covers}
+        />
+      </section>
+
       {publishing && (
         <PublishDialog
           protocol={detail.data}
@@ -517,6 +546,8 @@ function useMediaIndex(): Record<string, BinMedia> {
         kind: item.kind,
         title: item.title,
         duration_s: item.duration_s,
+        cover_url: item.cover_url,
+        preview_url: item.preview_url,
       };
     return index;
   }, [list.data]);

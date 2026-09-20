@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
@@ -116,8 +117,11 @@ async function renderBuilder() {
       </NextIntlClientProvider>
     );
   });
-  await screen.findByText("Rest");
+  await within(await screen.findByTestId("timeline")).findAllByText("Rest"); // the clip's name and its kind
 }
+
+/** The monitor names the selected block too, so the timeline is asked on its own. */
+const onTimeline = () => within(screen.getByTestId("timeline"));
 
 function drop(index: number, payload: unknown) {
   const data = new Map<string, string>();
@@ -134,7 +138,7 @@ test("the draft loads onto the timeline and an element can be dropped in", async
   await act(async () => {
     drop(1, { from: "bin-element", value: "baseline" });
   });
-  expect(screen.getByText("Resting baseline")).toBeTruthy();
+  expect(onTimeline().getByText("Resting baseline")).toBeTruthy();
 });
 
 test("an edit autosaves once, naming the revision it started from", async () => {
@@ -188,11 +192,11 @@ test("undo takes the last edit back", async () => {
   await act(async () => {
     drop(1, { from: "bin-element", value: "baseline" });
   });
-  expect(screen.getByText("Resting baseline")).toBeTruthy();
+  expect(onTimeline().getByText("Resting baseline")).toBeTruthy();
   await act(async () => {
     fireEvent.click(
       screen.getByRole("button", { name: messages.builder.undo })
     );
   });
-  expect(screen.queryByText("Resting baseline")).toBeNull();
+  expect(onTimeline().queryByText("Resting baseline")).toBeNull();
 });

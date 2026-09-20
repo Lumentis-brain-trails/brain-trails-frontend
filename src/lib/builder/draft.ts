@@ -26,6 +26,9 @@ export interface BinMedia {
   kind: string;
   title: string;
   duration_s?: number | null;
+  /** Short-lived links to the item's still and its muted preview clip, when it has them. */
+  cover_url?: string | null;
+  preview_url?: string | null;
 }
 
 export type GroupNode = SequenceNode | LoopNode;
@@ -337,6 +340,39 @@ export const ELEMENTS: {
     kind: "questionnaire",
     label: "How do you feel? (SAM)",
     config: { instrument: "sam" },
+  },
+  {
+    kind: "go-no-go",
+    label: "Signal Navigator",
+    config: {
+      variant: "simple",
+      n: 100,
+      goRatio: 0.72,
+      maxRun: 4,
+      maxNogoRun: 2,
+      travelMs: [800, 1200],
+      itiMs: [300, 500],
+      markers: {
+        trialStart: "gng_trial_start",
+        stimulusOnset: "gng_stimulus_onset",
+        response: "gng_response",
+        outcome: "gng_outcome",
+      },
+    },
+  },
+  {
+    kind: "breathing",
+    label: "Paced breathing",
+    config: {
+      cycles: 6,
+      inhaleMs: 4500,
+      exhaleMs: 4500,
+      markers: {
+        cycleStart: "breath_cycle_start",
+        inhale: "breath_inhale",
+        exhale: "breath_exhale",
+      },
+    },
   },
 ];
 
