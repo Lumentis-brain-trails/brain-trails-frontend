@@ -190,14 +190,26 @@ export function sessionTimeAt(
   return window ? window.tStart + (mediaTime - window.mediaStart) : null;
 }
 
-/** The block on screen at a session time. */
+/**
+ * The block on screen at a session time.
+ *
+ * The lead-in before the first block (the recording starts a moment before the runner
+ * shows anything) reads as that block: "between blocks" is for a real gap, not for the
+ * cursor's resting place at 0:00.
+ */
 export function blockAt(blocks: RunBlock[], tSession: number): RunBlock | null {
+  const first = blocks[0];
+  if (first && tSession < first.tStart && first.tStart <= LEAD_IN_S)
+    return first;
   return (
     blocks.find(
       (b) => tSession >= b.tStart && (b.tEnd === null || tSession <= b.tEnd)
     ) ?? null
   );
 }
+
+/** How late the first block may start and still own the seconds before it. */
+const LEAD_IN_S = 2;
 
 /** Events worth a tick on the timeline: onsets, responses, answers, quality drops. */
 export const TICK_TYPES = new Set([
