@@ -1,8 +1,7 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ApiRequestError, api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { type ProtocolCard as Card } from "@/lib/protocol/catalog";
@@ -14,7 +13,6 @@ import {
 } from "@/lib/types";
 import { ProtocolCard } from "@/components/ProtocolCard";
 import {
-  Button,
   EmptyState,
   ErrorBanner,
   Icon,
@@ -24,21 +22,18 @@ import {
 
 type Row = { key: string; title: string; hint: string; items: Card[] };
 
-/** Start a protocol from nothing and open it in the builder (S19). */
+/**
+ * Open an empty builder (S19).
+ *
+ * Nothing is created here: the builder saves the protocol the first time there is
+ * something on its timeline, so a button pressed by mistake leaves no empty draft in
+ * the catalog.
+ */
 function NewProtocolButton() {
-  const router = useRouter();
-  const workspace = useCurrentWorkspace();
-  const create = useMutation({
-    mutationFn: () =>
-      api.post<Card & { id: string }>(inWorkspace("protocols", workspace), {
-        title: "New protocol",
-      }),
-    onSuccess: (protocol) => router.push(`/protocols/${protocol.id}/edit`),
-  });
   return (
-    <Button onClick={() => create.mutate()} disabled={create.isPending}>
+    <Link href="/protocols/new/edit" className={buttonClass()}>
       <Icon name="plus" /> New protocol
-    </Button>
+    </Link>
   );
 }
 

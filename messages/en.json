@@ -263,6 +263,8 @@
     "read_only": "This protocol belongs to someone else. Make a copy to edit it.",
     "saving": "Saving…",
     "saved": "Saved",
+    "untitled": "New protocol",
+    "not_saved_yet": "Not saved yet - it is kept as soon as you add something.",
     "undo": "Undo",
     "redo": "Redo",
     "check": "Check",
