@@ -4,6 +4,7 @@ on:
   merge_group:
   push:
     branches: [dev, beta, main]
+  workflow_dispatch: # runs the e2e job on demand while it is paused
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -24,7 +25,12 @@ jobs:
   # branch, with the simulated headband. The backend repo is private, so the job needs a
   # read-only token in the `E2E_BACKEND_TOKEN` secret; without it (forks, dependabot,
   # before the secret exists) the job reports that it skipped instead of failing.
+  #
+  # Paused (2026-09-20): the job adds minutes to every small change. It runs only when the
+  # repo variable `E2E_ENABLED` is `true` (`gh variable set E2E_ENABLED --body true`) or
+  # when `ci` is dispatched by hand (`gh workflow run ci --ref <branch>`).
   e2e:
+    if: vars.E2E_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:

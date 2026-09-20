@@ -32,3 +32,9 @@ job needs the repository secret `E2E_BACKEND_TOKEN`: a fine-grained token with
 **read-only Contents** access to `Lumentis-brain-trails/brain-trails-backend` and nothing
 else. Without the secret the job passes with a notice that it skipped. On failure the
 Playwright report, traces and the API and worker logs are uploaded as an artifact.
+
+The job is **paused** (2026-09-20) so that small changes deploy quickly: it is skipped
+unless the repository variable `E2E_ENABLED` is `true`. To run it once on a branch,
+dispatch the workflow by hand: `gh workflow run ci --ref <branch>`. To bring it back on
+every PR and push: `gh variable set E2E_ENABLED --body true`. Until then, run the suite
+locally (`npm run e2e`) before a change that touches a user flow.
