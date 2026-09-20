@@ -21,17 +21,30 @@ import {
   applicationSchema,
   detectEnvironment,
 } from "@/lib/application";
+import { countries, languages } from "@/lib/regions";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 
 interface Props {
   initial: ApplicationForm | null;
-  onBack: () => void;
+  /** Omitted on the account page, where this form is not a step in a wizard. */
+  onBack?: () => void;
   onDone: (values: ApplicationForm) => void;
+  /** The submit button's wording; "continue" while it is a registration step. */
+  submitLabel?: string;
+  busy?: boolean;
 }
 
-export function ApplicationStep({ initial, onBack, onDone }: Props) {
+export function ApplicationStep({
+  initial,
+  onBack,
+  onDone,
+  submitLabel,
+  busy = false,
+}: Props) {
   const t = useTranslations("application");
   const detected = useMemo(() => detectEnvironment(), []);
+  const countryList = useMemo(() => countries(), []);
+  const languageList = useMemo(() => languages(), []);
   const form = useForm<ApplicationForm>({
     // zod v4 coerce makes the input `unknown`; the cast pins the parsed output type.
     resolver: zodResolver(
@@ -153,15 +166,25 @@ export function ApplicationStep({ initial, onBack, onDone }: Props) {
         >
           {detected.web_bluetooth ? t("bluetooth_ok") : t("bluetooth_missing")}
         </p>
-        <Field
-          label={t("country")}
-          hint={t("country_hint")}
-          error={required(errors.country?.message)}
-        >
-          <Input maxLength={2} {...form.register("country")} />
+        <Field label={t("country")} error={required(errors.country?.message)}>
+          <Select {...form.register("country")}>
+            <option value="">{t("country_hint")}</option>
+            {countryList.map(({ code, name }) => (
+              <option key={code} value={code}>
+                {name}
+              </option>
+            ))}
+          </Select>
         </Field>
-        <Field label={t("language")} hint={t("language_hint")}>
-          <Input maxLength={5} {...form.register("language")} />
+        <Field label={t("language")}>
+          <Select {...form.register("language")}>
+            <option value="">{t("language_hint")}</option>
+            {languageList.map(({ code, name }) => (
+              <option key={code} value={code}>
+                {name}
+              </option>
+            ))}
+          </Select>
         </Field>
       </section>
 
@@ -175,10 +198,14 @@ export function ApplicationStep({ initial, onBack, onDone }: Props) {
       </label>
 
       <div className="flex gap-2">
-        <Button type="button" variant="secondary" onClick={onBack}>
-          {t("back")}
+        {onBack && (
+          <Button type="button" variant="secondary" onClick={onBack}>
+            {t("back")}
+          </Button>
+        )}
+        <Button type="submit" disabled={busy}>
+          {submitLabel ?? t("continue")}
         </Button>
-        <Button type="submit">{t("continue")}</Button>
       </div>
     </form>
   );

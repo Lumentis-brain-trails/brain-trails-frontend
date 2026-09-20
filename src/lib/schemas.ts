@@ -1,27 +1,42 @@
 /** Zod schemas mirroring the backend contracts (app/schemas.py). */
 import { z } from "zod";
-import type { ApplicationPayload } from "@/lib/application";
 
+const optional = (max: number) =>
+  z.string().max(max).optional().or(z.literal(""));
+
+/**
+ * The profile, as the account page sends it back (`PUT /auth/me/profile`).
+ *
+ * Registration no longer asks for any of this (V3-0008, amended): the four required
+ * fields are what an EEG recording needs to be interpretable, and the backend asks for
+ * them before a first session rather than at the door. The `_other` companions carry the
+ * long tail of the closed lists; the lists themselves come from `GET /taxonomies`, so
+ * nothing here enumerates their options.
+ */
 export const profileSchema = z.object({
   full_name: z.string().min(2).max(200),
   birth_year: z.coerce.number().int().min(1900).max(2100),
   sex_at_birth: z.string().min(1).max(30),
   handedness: z.enum(["left", "right", "ambidextrous"]),
-  gender: z.string().max(50).optional().or(z.literal("")),
-  education_level: z.string().max(100).optional().or(z.literal("")),
-  occupation: z.string().max(200).optional().or(z.literal("")),
+  gender: optional(50),
+  gender_other: optional(50),
+  education_level: optional(100),
+  education_level_other: optional(100),
+  occupation: optional(200),
+  occupation_other: optional(200),
   native_languages: z.string().optional(), // comma-separated in the form
   musical_training_years: z.coerce.number().int().min(0).max(100).optional(),
-  meditation_practice: z.string().max(100).optional().or(z.literal("")),
+  meditation_practice: optional(100),
   caffeine_cups_per_day: z.coerce.number().int().min(0).max(50).optional(),
-  nicotine_use: z.string().max(100).optional().or(z.literal("")),
-  alcohol_use: z.string().max(100).optional().or(z.literal("")),
+  nicotine_use: optional(100),
+  alcohol_use: optional(100),
   medications: z.string().optional().or(z.literal("")),
   neurological_conditions: z.string().optional().or(z.literal("")),
   psychiatric_conditions: z.string().optional().or(z.literal("")),
   avg_sleep_hours: z.coerce.number().min(0).max(24).optional(),
-  vision_correction: z.string().max(100).optional().or(z.literal("")),
-  hearing_issues: z.string().max(200).optional().or(z.literal("")),
+  vision_correction: optional(100),
+  hearing_issues: optional(200),
+  hearing_issues_other: optional(200),
   notes: z.string().optional().or(z.literal("")),
 });
 
@@ -30,51 +45,79 @@ export const accountSchema = z.object({
   password: z.string().min(10).max(200),
 });
 
+/**
+ * The one question registration still asks beyond the account itself.
+ *
+ * Wanting in is not being in: the admin board still decides, after the account exists.
+ * `intended_use` is asked here because it is what the board sorts on, and because at a
+ * stand it is the only thing worth a person's time.
+ */
+export const betaSchema = z.object({
+  wants_beta: z.boolean(),
+  intended_use: optional(40),
+  intended_use_other: optional(200),
+});
+
 export type ProfileForm = z.output<typeof profileSchema>;
 export type ProfileFormInput = z.input<typeof profileSchema>;
 export type AccountForm = z.output<typeof accountSchema>;
+export type BetaForm = z.output<typeof betaSchema>;
+
+/** An empty string means "not answered", which the API spells `null`. */
+const clean = (v: string | undefined) =>
+  v === "" || v === undefined ? null : v;
 
 /**
- * Convert form values into the backend payload. `application` is sent only when the
- * beta application step was shown (flag `beta_applications`); without it the backend
- * files a private-user application.
+ * Registration: four answers and nothing else (V3-0008, amended).
+ *
+ * The profile and the beta credentials are no longer sent from here - they are written
+ * later from the account page, so a queue at a stand keeps moving.
  */
 export function toRegisterPayload(
   account: AccountForm,
-  profile: ProfileForm,
   consent: boolean,
-  application?: ApplicationPayload
+  beta: BetaForm
 ) {
-  const clean = (v: string | undefined) =>
-    v === "" || v === undefined ? null : v;
   return {
     email: account.email,
     password: account.password,
     consent,
-    ...(application ? { application } : {}),
-    profile: {
-      ...profile,
-      gender: clean(profile.gender),
-      education_level: clean(profile.education_level),
-      occupation: clean(profile.occupation),
-      native_languages: profile.native_languages
-        ? profile.native_languages
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : null,
-      meditation_practice: clean(profile.meditation_practice),
-      nicotine_use: clean(profile.nicotine_use),
-      alcohol_use: clean(profile.alcohol_use),
-      medications: clean(profile.medications),
-      neurological_conditions: clean(profile.neurological_conditions),
-      psychiatric_conditions: clean(profile.psychiatric_conditions),
-      vision_correction: clean(profile.vision_correction),
-      hearing_issues: clean(profile.hearing_issues),
-      notes: clean(profile.notes),
-      musical_training_years: profile.musical_training_years ?? null,
-      caffeine_cups_per_day: profile.caffeine_cups_per_day ?? null,
-      avg_sleep_hours: profile.avg_sleep_hours ?? null,
-    },
+    wants_beta: beta.wants_beta,
+    // Only meaningful alongside the opt-in: asking why someone wants in and then storing
+    // the answer for someone who said no would be noise on the board.
+    intended_use: beta.wants_beta ? clean(beta.intended_use) : null,
+    intended_use_other: beta.wants_beta ? clean(beta.intended_use_other) : null,
+  };
+}
+
+/** The profile as `PUT /auth/me/profile` wants it: blanks become nulls, languages a list. */
+export function toProfilePayload(profile: ProfileForm) {
+  return {
+    ...profile,
+    gender: clean(profile.gender),
+    gender_other: clean(profile.gender_other),
+    education_level: clean(profile.education_level),
+    education_level_other: clean(profile.education_level_other),
+    occupation: clean(profile.occupation),
+    occupation_other: clean(profile.occupation_other),
+    native_languages: profile.native_languages
+      ? profile.native_languages
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : null,
+    meditation_practice: clean(profile.meditation_practice),
+    nicotine_use: clean(profile.nicotine_use),
+    alcohol_use: clean(profile.alcohol_use),
+    medications: clean(profile.medications),
+    neurological_conditions: clean(profile.neurological_conditions),
+    psychiatric_conditions: clean(profile.psychiatric_conditions),
+    vision_correction: clean(profile.vision_correction),
+    hearing_issues: clean(profile.hearing_issues),
+    hearing_issues_other: clean(profile.hearing_issues_other),
+    notes: clean(profile.notes),
+    musical_training_years: profile.musical_training_years ?? null,
+    caffeine_cups_per_day: profile.caffeine_cups_per_day ?? null,
+    avg_sleep_hours: profile.avg_sleep_hours ?? null,
   };
 }

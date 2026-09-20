@@ -1,51 +1,51 @@
 "use client";
 
+/**
+ * Registration: four answers and you are in (V3-0008, amended).
+ *
+ * The profile and the beta credentials used to be asked here, over four steps. They are
+ * not any more: at a stand with a queue behind you, every extra field is someone who
+ * gives up. What is left is the account, one opt-in question, and the consent - and the
+ * profile is asked later, by the backend, right before the first recording, where it is
+ * about to matter and the person is already sitting down.
+ */
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { type Resolver, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
-import { type ApplicationForm, toApplicationPayload } from "@/lib/application";
-import { useFeature } from "@/lib/features";
+import { useAppConfig } from "@/lib/features";
+import { useTaxonomies } from "@/lib/taxonomies";
 import { AuthPanel } from "@/components/AuthPanel";
-import { ApplicationStep } from "@/components/application/ApplicationStep";
+import { ListField } from "@/components/form/ListField";
 import {
   type AccountForm,
-  type ProfileForm,
+  type BetaForm,
   accountSchema,
-  profileSchema,
+  betaSchema,
   toRegisterPayload,
 } from "@/lib/schemas";
-import {
-  Button,
-  ErrorBanner,
-  Field,
-  Input,
-  Select,
-  Textarea,
-  cn,
-} from "@/components/ui";
+import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
 
 const CONSENT_TEXT =
-  "I consent to the processing of my EEG recordings and the profile data above by " +
+  "I consent to the processing of my EEG recordings and the profile data by " +
   "LuMentis for the Brain Trails research prototype, as described in the privacy note. " +
-  "I can request export or deletion of all my data at any time. (Placeholder text - v2026-09-06.)";
+  "I can request export or deletion of all my data at any time.";
 
-type Step = "account" | "application" | "profile" | "consent";
+type Step = "account" | "beta" | "consent";
 
-function Steps({
-  steps,
-  current,
-}: {
-  steps: { key: Step; label: string }[];
-  current: Step;
-}) {
-  const now = steps.findIndex((s) => s.key === current) + 1;
+const STEPS: { key: Step; label: string }[] = [
+  { key: "account", label: "Account" },
+  { key: "beta", label: "Beta" },
+  { key: "consent", label: "Consent" },
+];
+
+function Steps({ current }: { current: Step }) {
+  const now = STEPS.findIndex((s) => s.key === current) + 1;
   return (
     <ol className="flex items-center gap-2" aria-label="Progress">
-      {steps.map(({ key, label }, i) => {
+      {STEPS.map(({ key, label }, i) => {
         const n = i + 1;
         const state = n < now ? "done" : n === now ? "now" : "todo";
         return (
@@ -69,7 +69,7 @@ function Steps({
             >
               {label}
             </span>
-            {i < steps.length - 1 && (
+            {i < STEPS.length - 1 && (
               <span aria-hidden className="mx-1 h-px w-6 bg-hairline-strong" />
             )}
           </li>
@@ -81,18 +81,11 @@ function Steps({
 
 export default function RegisterPage() {
   const router = useRouter();
-  const t = useTranslations("application");
-  const applying = useFeature("beta_applications");
-  const steps: { key: Step; label: string }[] = [
-    { key: "account", label: "Account" },
-    ...(applying ? [{ key: "application" as const, label: t("step") }] : []),
-    { key: "profile", label: "Profile" },
-    { key: "consent", label: "Consent" },
-  ];
+  const config = useAppConfig();
+  const lists = useTaxonomies();
   const [step, setStep] = useState<Step>("account");
   const [account, setAccount] = useState<AccountForm | null>(null);
-  const [application, setApplication] = useState<ApplicationForm | null>(null);
-  const [profile, setProfile] = useState<ProfileForm | null>(null);
+  const [beta, setBeta] = useState<BetaForm | null>(null);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -100,29 +93,29 @@ export default function RegisterPage() {
   const accountForm = useForm<AccountForm>({
     resolver: zodResolver(accountSchema),
   });
-  // zod v4 coerce makes the schema input `unknown`, which react-hook-form cannot
-  // carry as a field type; the cast pins the form to the parsed output type.
-  const profileForm = useForm<ProfileForm>({
-    resolver: zodResolver(profileSchema) as unknown as Resolver<ProfileForm>,
+  const betaForm = useForm<BetaForm>({
+    resolver: zodResolver(betaSchema),
+    defaultValues: {
+      wants_beta: false,
+      intended_use: "",
+      intended_use_other: "",
+    },
   });
+  const wantsBeta = betaForm.watch("wants_beta");
+  const use = betaForm.watch("intended_use");
 
   async function submitAll() {
-    if (!account || !profile || !consent) return;
+    if (!account || !beta || !consent) return;
     setSubmitting(true);
     setError(null);
     try {
-      await api.post(
+      const user = await api.post<{ status: string }>(
         "auth/register",
-        toRegisterPayload(
-          account,
-          profile,
-          consent,
-          applying && application
-            ? toApplicationPayload(application)
-            : undefined
-        )
+        toRegisterPayload(account, consent, beta)
       );
-      router.push("/pending");
+      // Where they go depends on what the account already is: open and waiting for the
+      // email, open outright, or still an application waiting for an admin.
+      router.push(`/pending?status=${user.status}`);
     } catch (e) {
       setError(
         e instanceof ApiRequestError ? e.error.message : "Network error."
@@ -131,19 +124,16 @@ export default function RegisterPage() {
     }
   }
 
-  const perr = profileForm.formState.errors;
-
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="type-title">Create your account.</h1>
           <p className="mt-2 text-ink-2">
-            A few short steps. Every registration is reviewed before the account
-            opens.
+            Three short steps. We ask about you later, when it matters.
           </p>
         </div>
-        <Steps steps={steps} current={step} />
+        <Steps current={step} />
       </div>
       <AuthPanel>
         {error && (
@@ -159,7 +149,7 @@ export default function RegisterPage() {
             className="enter-up max-w-sm space-y-4"
             onSubmit={accountForm.handleSubmit((values) => {
               setAccount(values);
-              setStep(applying ? "application" : "profile");
+              setStep("beta");
             })}
           >
             <Field
@@ -199,152 +189,50 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === "application" && (
-          <ApplicationStep
-            initial={application}
-            onBack={() => setStep("account")}
-            onDone={(values) => {
-              setApplication(values);
-              setStep("profile");
-            }}
-          />
-        )}
-
-        {step === "profile" && (
+        {step === "beta" && (
           <form
-            key="profile"
+            key="beta"
             noValidate
-            className="enter-up space-y-8"
-            onSubmit={profileForm.handleSubmit((values) => {
-              setProfile(values);
+            className="enter-up max-w-lg space-y-6"
+            onSubmit={betaForm.handleSubmit((values) => {
+              setBeta(values);
               setStep("consent");
             })}
           >
-            <section>
-              <h2 className="type-subhead">About you</h2>
-              <p className="type-caption mt-1 mb-4 text-ink-3">
-                Required. This information contextualises your EEG data.
+            <div>
+              <h2 className="type-heading">Would you like to test it early?</h2>
+              <p className="mt-2 text-pretty text-ink-2">
+                Beta testers get new features before everyone else, and we ask
+                them what they think. It is free, and saying no here changes
+                nothing about your account.
               </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Full name" error={perr.full_name?.message}>
-                  <Input autoFocus {...profileForm.register("full_name")} />
-                </Field>
-                <Field label="Birth year" error={perr.birth_year?.message}>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    {...profileForm.register("birth_year")}
-                  />
-                </Field>
-                <Field label="Sex at birth" error={perr.sex_at_birth?.message}>
-                  <Input {...profileForm.register("sex_at_birth")} />
-                </Field>
-                <Field label="Handedness" error={perr.handedness?.message}>
-                  <Select {...profileForm.register("handedness")}>
-                    <option value="">Choose…</option>
-                    <option value="right">Right</option>
-                    <option value="left">Left</option>
-                    <option value="ambidextrous">Ambidextrous</option>
-                  </Select>
-                </Field>
+            </div>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                {...betaForm.register("wants_beta")}
+              />
+              <span>Yes, I would like to be a beta tester.</span>
+            </label>
+            {wantsBeta && (
+              <div className="enter-up">
+                <ListField
+                  label="How do you expect to use it?"
+                  hint="It helps us choose who to invite first. You can change it later."
+                  options={lists.data?.intended_use}
+                  value={use}
+                  field={betaForm.register("intended_use")}
+                  otherField={betaForm.register("intended_use_other")}
+                  placeholder="Not sure yet"
+                />
               </div>
-            </section>
-
-            <section>
-              <h2 className="type-subhead">Background</h2>
-              <p className="type-caption mt-1 mb-4 text-ink-3">
-                Optional. Leave blank what you prefer not to share.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Gender">
-                  <Input {...profileForm.register("gender")} />
-                </Field>
-                <Field label="Education level">
-                  <Input {...profileForm.register("education_level")} />
-                </Field>
-                <Field label="Occupation">
-                  <Input {...profileForm.register("occupation")} />
-                </Field>
-                <Field
-                  label="Native languages"
-                  hint="Comma separated, e.g. it, en"
-                >
-                  <Input {...profileForm.register("native_languages")} />
-                </Field>
-                <Field label="Musical training (years)">
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    {...profileForm.register("musical_training_years")}
-                  />
-                </Field>
-                <Field label="Meditation practice">
-                  <Input
-                    placeholder="none / occasional / daily"
-                    {...profileForm.register("meditation_practice")}
-                  />
-                </Field>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="type-subhead">Habits and health</h2>
-              <p className="type-caption mt-1 mb-4 text-ink-3">
-                Optional. Helps interpret the signal.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Caffeine (cups per day)">
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    {...profileForm.register("caffeine_cups_per_day")}
-                  />
-                </Field>
-                <Field label="Average sleep (hours)">
-                  <Input
-                    type="number"
-                    step="0.5"
-                    inputMode="decimal"
-                    {...profileForm.register("avg_sleep_hours")}
-                  />
-                </Field>
-                <Field label="Nicotine use">
-                  <Input {...profileForm.register("nicotine_use")} />
-                </Field>
-                <Field label="Alcohol use">
-                  <Input {...profileForm.register("alcohol_use")} />
-                </Field>
-                <Field label="Vision correction">
-                  <Input
-                    placeholder="none / glasses / lenses"
-                    {...profileForm.register("vision_correction")}
-                  />
-                </Field>
-                <Field label="Hearing issues">
-                  <Input {...profileForm.register("hearing_issues")} />
-                </Field>
-              </div>
-              <div className="mt-4 space-y-4">
-                <Field label="Medications">
-                  <Input {...profileForm.register("medications")} />
-                </Field>
-                <Field label="Neurological conditions">
-                  <Input {...profileForm.register("neurological_conditions")} />
-                </Field>
-                <Field label="Psychiatric conditions">
-                  <Input {...profileForm.register("psychiatric_conditions")} />
-                </Field>
-                <Field label="Notes">
-                  <Textarea rows={3} {...profileForm.register("notes")} />
-                </Field>
-              </div>
-            </section>
-
+            )}
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStep(applying ? "application" : "account")}
+                onClick={() => setStep("account")}
               >
                 Back
               </Button>
@@ -356,8 +244,20 @@ export default function RegisterPage() {
         {step === "consent" && (
           <div key="consent" className="enter-up max-w-lg space-y-6">
             <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
-              {CONSENT_TEXT}
+              {CONSENT_TEXT}{" "}
+              <Link
+                className="font-semibold text-ink hover:underline"
+                href="/privacy"
+              >
+                Read the privacy note
+              </Link>
+              .
             </p>
+            {config.data?.consent_version && (
+              <p className="text-[13px] text-ink-3">
+                Version {config.data.consent_version}
+              </p>
+            )}
             <label className="flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"
@@ -371,12 +271,12 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStep("profile")}
+                onClick={() => setStep("beta")}
               >
                 Back
               </Button>
               <Button onClick={submitAll} disabled={!consent || submitting}>
-                {submitting ? "Submitting…" : "Submit registration"}
+                {submitting ? "Creating…" : "Create account"}
               </Button>
             </div>
           </div>
