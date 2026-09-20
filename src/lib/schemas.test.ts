@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { accountSchema, profileSchema, toRegisterPayload } from "./schemas";
+import {
+  accountSchema,
+  profileSchema,
+  toProfilePayload,
+  toRegisterPayload,
+} from "./schemas";
 
 const validProfile = {
   full_name: "Ada Lovelace",
@@ -37,15 +42,37 @@ describe("schemas", () => {
     ).toBe(false);
   });
 
-  test("payload conversion: empty strings become null, languages split", () => {
+  test("profile payload: empty strings become null, languages split", () => {
+    const payload = toProfilePayload(
+      profileSchema.parse({ ...validProfile, gender: "", notes: "" })
+    );
+    expect(payload.gender).toBeNull();
+    expect(payload.notes).toBeNull();
+    expect(payload.native_languages).toEqual(["it", "en"]);
+  });
+
+  test("registration carries the account, the consent and the opt-in, nothing else", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
-      profileSchema.parse({ ...validProfile, gender: "", notes: "" }),
-      true
+      true,
+      { wants_beta: true, intended_use: "patients", intended_use_other: "" }
     );
-    expect(payload.profile.gender).toBeNull();
-    expect(payload.profile.notes).toBeNull();
-    expect(payload.profile.native_languages).toEqual(["it", "en"]);
-    expect(payload.consent).toBe(true);
+    expect(payload).toEqual({
+      email: "a@b.it",
+      password: "long-enough-pw",
+      consent: true,
+      wants_beta: true,
+      intended_use: "patients",
+      intended_use_other: null,
+    });
+  });
+
+  test("why someone wants in is dropped when they said no", () => {
+    const payload = toRegisterPayload(
+      { email: "a@b.it", password: "long-enough-pw" },
+      true,
+      { wants_beta: false, intended_use: "patients", intended_use_other: "" }
+    );
+    expect(payload.intended_use).toBeNull();
   });
 });
