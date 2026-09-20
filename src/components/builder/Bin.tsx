@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
-import { DRAG_TYPE } from "@/components/builder/Timeline";
+import { setDragPayload } from "@/components/builder/Timeline";
 import { Button, Icon, Skeleton, cn } from "@/components/ui";
 import { api } from "@/lib/api";
 import { ELEMENTS } from "@/lib/builder/draft";
@@ -92,13 +92,9 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
                 key={item.id}
                 type="button"
                 draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData(
-                    DRAG_TYPE,
-                    JSON.stringify({ from: "bin-media", value: item.id })
-                  );
-                  event.dataTransfer.effectAllowed = "copy";
-                }}
+                onDragStart={(event) =>
+                  setDragPayload(event, { from: "bin-media", value: item.id })
+                }
                 onDoubleClick={() => onAdd(item)}
                 className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-2 text-left hover:border-accent/50"
               >
@@ -133,13 +129,12 @@ export function Bin({ onAdd }: { onAdd: (item: Media) => void }) {
               key={element.kind}
               type="button"
               draggable
-              onDragStart={(event) => {
-                event.dataTransfer.setData(
-                  DRAG_TYPE,
-                  JSON.stringify({ from: "bin-element", value: element.kind })
-                );
-                event.dataTransfer.effectAllowed = "copy";
-              }}
+              onDragStart={(event) =>
+                setDragPayload(event, {
+                  from: "bin-element",
+                  value: element.kind,
+                })
+              }
               className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-2 text-left hover:border-accent/50"
             >
               <span className="block text-[13px] font-medium">
