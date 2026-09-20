@@ -27,12 +27,7 @@ export default function PublicLayout({
           href="/"
           className="font-display flex items-center gap-2 text-[20px] font-bold tracking-[-0.02em]"
         >
-          <Logo
-            size={48}
-            ground="#04060b"
-            tile={false}
-            className="-my-2 -ml-1"
-          />
+          <Logo size={48} className="-my-2 -ml-1" />
           Braintrails
         </Link>
       </header>

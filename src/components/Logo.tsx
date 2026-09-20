@@ -1,41 +1,38 @@
 /**
- * The mark: one soft disc of light on black, split by a trail.
+ * The mark: one soft disc of light, split by a trail.
  *
  * It is the entry screen's two ribbons folded into a circle - the warm one and
- * the cool one, each fading out into the ground - held apart by the only hard
- * edge in the artwork, an S-shaped trail that runs off both ends of the tile.
+ * the cool one, each fading out at its rim - held apart by the only hard edge in
+ * the artwork, an S-shaped trail that runs off both ends.
  * Colour never touches the chrome around it, so this stays the one coloured
  * object in the app (docs/DESIGN.md).
  *
- * `ground` paints both the tile and the trail: the trail is not a stroke drawn
- * *on* the mark, it is the ground showing through the cut between the two halves.
- * On a dark surface pass that surface's colour and `tile={false}`, and the disc
- * floats free with no visible edge - untiled it also gets the whole artwork box
- * rather than the tile's crop, because the crop cuts the glow off square and the
- * tile is what hides that edge.
+ * The mark carries no ground of its own: the two halves fade to transparent at
+ * their rim and the trail between them is punched out of the same mask, so the
+ * surface behind shows through both. That is what makes it the same object on the
+ * white canvas, on the dark one and on the entry screen's near-black, with no
+ * per-appearance artwork and nothing to keep in step with the theme.
  *
  * The gradient ids are fixed rather than generated: every instance defines the
  * same stops, so a second instance on the page resolves to identical artwork and
  * the component stays free of hooks (it renders on the server, with no JS).
  */
+/** The trail: an S through the centre, running off both ends of the artwork. */
+const TRAIL =
+  "M512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952";
+
 export function Logo({
   size = 28,
   className,
-  ground = "#000",
-  tile = true,
 }: {
   size?: number;
   className?: string;
-  /** Tile fill and trail colour: the surface the mark is cut out of. */
-  ground?: string;
-  /** Draw the rounded tile. False lets the disc float on a dark surface. */
-  tile?: boolean;
 }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox={tile ? "168 168 688 688" : "0 0 1024 1024"}
+      viewBox="0 0 1024 1024"
       aria-hidden
       className={className}
     >
@@ -103,16 +100,19 @@ export function Logo({
           height="1024"
         >
           <rect width="1024" height="1024" fill="url(#bt-mark-fade)" />
+          <path
+            d={TRAIL}
+            fill="none"
+            stroke="#000"
+            strokeWidth="48"
+            strokeLinecap="round"
+          />
         </mask>
 
         <filter id="bt-mark-blur" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="64" />
         </filter>
       </defs>
-
-      {tile && (
-        <rect x="168" y="168" width="688" height="688" rx="151" fill={ground} />
-      )}
 
       <g mask="url(#bt-mark-disc)">
         <g clipPath="url(#bt-mark-warm-side)">
@@ -153,14 +153,6 @@ export function Logo({
           />
         </g>
       </g>
-
-      <path
-        d="M512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952"
-        fill="none"
-        stroke={ground}
-        strokeWidth="48"
-        strokeLinecap="round"
-      />
     </svg>
   );
 }

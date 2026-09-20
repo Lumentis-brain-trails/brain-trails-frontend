@@ -2,12 +2,16 @@
 
 ## Unreleased
 
-- A new mark: the entry screen's two ribbons folded into one soft disc of light on
-  black, the warm half and the cool half held apart by an S-shaped trail that runs
-  off both ends. It replaces the trefoil knot, and with it the last blue in the
+- A new mark: the entry screen's two ribbons folded into one soft disc of light,
+  the warm half and the cool half held apart by an S-shaped trail that runs off
+  both ends. It replaces the trefoil knot, and with it the last blue in the
   product. It is the icon in the rail, the tab icon and the iOS app icon, and it
-  also sits above the name on the entry screen and beside it in the auth header,
-  untiled so the disc floats on the dark ground.
+  also sits above the name on the entry screen and beside it in the auth header.
+
+- The mark carries no ground of its own: both halves fade to transparent and the
+  trail between them is a gap, so it takes the colour of the page behind it -
+  white in the light appearance, black in the dark one. The tab icon, which has no
+  page to take, switches its tile on `prefers-color-scheme` instead.
 
 - Record page: the device card's buttons wrap instead of overflowing. With the
   simulator buttons shown (outside production) the row was wider than the card, which

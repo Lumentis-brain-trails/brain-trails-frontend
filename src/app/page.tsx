@@ -16,8 +16,7 @@ export default function Home() {
       <CornerRibbons className="absolute inset-0 -z-10 h-full w-full" />
 
       <div className="grid content-center justify-items-center gap-8 text-center">
-        {/* the mark is cut out of this page's own ground, so it floats untiled */}
-        <Logo size={132} ground="#04060b" tile={false} className="-my-4" />
+        <Logo size={132} className="-my-4" />
         <h1 className="font-display text-[clamp(2.8rem,10vw,5rem)] leading-none font-bold tracking-[-0.035em] text-balance">
           Braintrails
         </h1>

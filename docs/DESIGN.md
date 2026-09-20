@@ -22,15 +22,18 @@ where it ends. That reading carries the whole product:
   Energy surfaces and every other chart stay neutral.
 - A ribbon appears inside the app in one place only: the corner of Home's "Start a
   new trail" card (`.ribbon-glow`), because a trail is about to start there.
-- The mark (`Logo`) is the two ribbons folded into a circle: a disc of light,
-  warm on one side and cool on the other, each half fading out into the ground with
-  no rim, split by the one hard edge in the artwork - an S-shaped trail that runs
-  off both ends. The trail is not drawn _on_ the mark: `ground` paints the tile and
-  the cut alike, so the trail is the surface showing through. It is the only
-  coloured object in the chrome, and the same artwork in the rail, the favicon
-  (`app/icon.svg`, `app/favicon.ico`), the iOS app icon (`app/apple-icon.png`) and
-  the brand surfaces. On the dark entry and auth ground it is placed untiled
-  (`tile={false}`, `ground` set to that page's own colour) so the disc floats.
+- The mark (`Logo`) is the two ribbons folded into a circle: a disc of light, warm
+  on one side and cool on the other, each half fading out at its rim, split by the
+  one hard edge in the artwork - an S-shaped trail that runs off both ends. It is
+  the only coloured object in the chrome.
+- **The mark has no ground of its own.** Both halves fade to transparent and the
+  trail is punched out of the same mask, so the trail is whatever is behind it: the
+  white canvas in the light appearance, the dark one in the other, the entry
+  screen's near-black on the brand surfaces. One artwork, nothing to keep in step
+  with the theme. It takes no colour props for that reason.
+- The tab and app icons cannot inherit a page, so they carry a tile: `app/icon.svg`
+  switches it on `prefers-color-scheme`, which is the same behaviour by other means;
+  `app/favicon.ico` and `app/apple-icon.png` are raster fallbacks and stay black.
 - Titles (`type-display`, `type-title`, `type-heading`, `type-figure`) use Manrope;
   text you read at length stays on the system face.
 
