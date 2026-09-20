@@ -83,14 +83,17 @@ test("a protocol is built on the timeline, published and played", async ({
 
   // the Elements tab holds the blocks that are not media
   await page.getByRole("tab", { name: "Elements" }).click();
+  // dropped on the strip itself, which is the gesture a person makes on an empty
+  // timeline (Alessio, 2026-09-20)
   await page.dragAndDrop(
     'button:has-text("Resting baseline")',
-    '[data-testid="gap-0"]'
+    '[data-testid="timeline"]'
   );
   await expect(page.getByRole("listitem")).toHaveCount(1);
   await page.dragAndDrop(
     'button:has-text("Countdown")',
-    '[data-testid="gap-1"]'
+    '[data-testid="timeline"]',
+    { targetPosition: { x: 400, y: 40 } }
   );
   await expect(page.getByRole("listitem")).toHaveCount(2);
 

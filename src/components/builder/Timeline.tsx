@@ -8,14 +8,19 @@
  * hatched and marked, because guessing a width there would lie. Groups - a shuffled
  * sequence or a loop - are one stacked clip that says how many blocks it expands to.
  *
- * Drag and drop is the browser's own: dragging from the bin inserts at the gap under the
- * pointer, dragging a clip reorders it. That keeps the dependency list short and the
- * drag feedback inside one frame even with 200 clips, which a JS-driven sortable has to
- * work for.
+ * Drag and drop is the browser's own: dragging from the bin inserts where the pointer
+ * is, dragging a clip reorders it. That keeps the dependency list short and the drag
+ * feedback inside one frame even with 200 clips, which a JS-driven sortable has to work
+ * for.
+ *
+ * The whole strip is the drop target, not only the thin gaps between clips: the
+ * insertion point is worked out from the pointer against each clip's midpoint (Alessio,
+ * 2026-09-20: dropping a video on an empty timeline did nothing, because the only target
+ * was a 12-pixel sliver behind the "drag something here" line).
  */
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Clip } from "@/lib/builder/draft";
 import { formatClock } from "@/lib/builder/draft";
 import { cn } from "@/components/ui";
@@ -29,12 +34,27 @@ export interface DragPayload {
   value: string | number;
 }
 
+/** Put a payload on a drag, in both types: Safari only carries `text/plain` reliably. */
+export function setDragPayload(
+  event: React.DragEvent,
+  payload: DragPayload
+): void {
+  const raw = JSON.stringify(payload);
+  event.dataTransfer.setData(DRAG_TYPE, raw);
+  event.dataTransfer.setData("text/plain", raw);
+  // "copyMove", not "copy": the strip accepts both a new block and a clip being moved,
+  // and a browser refuses a drop whose dropEffect the source did not allow.
+  event.dataTransfer.effectAllowed = "copyMove";
+}
+
 export function dragPayload(event: React.DragEvent): DragPayload | null {
+  const raw =
+    event.dataTransfer.getData(DRAG_TYPE) ||
+    event.dataTransfer.getData("text/plain");
   try {
-    const raw = event.dataTransfer.getData(DRAG_TYPE);
     return raw ? (JSON.parse(raw) as DragPayload) : null;
   } catch {
-    return null;
+    return null; // something else was dropped on the timeline
   }
 }
 
@@ -62,20 +82,35 @@ export function Timeline({
 }: TimelineProps) {
   const t = useTranslations("builder.timeline");
   const [over, setOver] = useState<number | null>(null);
+  const strip = useRef<HTMLDivElement>(null);
   const total = clips.reduce((sum, clip) => sum + clip.seconds, 0);
+
+  /** Where a drop at `clientX` would insert: before the first clip whose middle is past it. */
+  const indexAt = (clientX: number): number => {
+    const cards = strip.current?.querySelectorAll("[data-clip-index]") ?? [];
+    for (const card of cards) {
+      const box = card.getBoundingClientRect();
+      if (clientX < box.left + box.width / 2)
+        return Number((card as HTMLElement).dataset.clipIndex);
+    }
+    return clips.length;
+  };
 
   const gap = (index: number) => (
     <div
       key={`gap-${index}`}
       data-testid={`gap-${index}`}
       aria-label={t("insert_at", { position: index + 1 })}
+      // The gap is the precise target between two clips; the strip around it handles
+      // everything else, so this one must not let the drop reach it twice.
       onDragOver={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         setOver(index);
       }}
-      onDragLeave={() => setOver((o) => (o === index ? null : o))}
       onDrop={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         setOver(null);
         const payload = dragPayload(event);
         if (payload) onDropAt(index, payload);
@@ -98,12 +133,37 @@ export function Timeline({
         </span>
       </div>
       <div
-        className="flex min-h-[7.5rem] items-stretch gap-0 overflow-x-auto rounded-[var(--radius-card)] border border-hairline bg-surface-2 p-3"
+        ref={strip}
+        data-testid="timeline"
+        className={cn(
+          "flex min-h-[7.5rem] items-stretch gap-0 overflow-x-auto rounded-[var(--radius-card)] border p-3 transition-colors",
+          over !== null
+            ? "border-accent bg-accent-soft"
+            : "border-hairline bg-surface-2"
+        )}
         role="list"
         aria-label={t("title")}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setOver(indexAt(event.clientX));
+        }}
+        onDragLeave={(event) => {
+          // only when the pointer really left the strip, not on the way over a clip
+          if (!event.currentTarget.contains(event.relatedTarget as Node))
+            setOver(null);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          const index = indexAt(event.clientX);
+          setOver(null);
+          const payload = dragPayload(event);
+          if (payload) onDropAt(index, payload);
+        }}
       >
         {clips.length === 0 && (
-          <p className="type-caption m-auto text-ink-3">{t("empty")}</p>
+          <p className="type-caption pointer-events-none m-auto text-ink-3">
+            {t("empty")}
+          </p>
         )}
         {clips.map((clip) => (
           <div key={clip.index} className="flex items-stretch">
@@ -146,6 +206,7 @@ function ClipCard({
   return (
     <div
       role="listitem"
+      data-clip-index={clip.index}
       className={cn(
         "relative flex shrink-0 flex-col justify-between rounded-[var(--radius-control)] border p-2 text-left",
         selected
@@ -158,13 +219,9 @@ function ClipCard({
       <button
         type="button"
         draggable
-        onDragStart={(event) => {
-          event.dataTransfer.setData(
-            DRAG_TYPE,
-            JSON.stringify({ from: "timeline", value: clip.index })
-          );
-          event.dataTransfer.effectAllowed = "move";
-        }}
+        onDragStart={(event) =>
+          setDragPayload(event, { from: "timeline", value: clip.index })
+        }
         onClick={(event) =>
           onSelect(clip.index, event.shiftKey || event.metaKey)
         }

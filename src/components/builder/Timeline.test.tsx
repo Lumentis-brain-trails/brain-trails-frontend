@@ -32,13 +32,13 @@ const tree: ProtocolTree = {
   },
 };
 
-function setup() {
+function setup(children = tree.root.children) {
   const onDropAt = vi.fn();
   const onSelect = vi.fn();
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <Timeline
-        clips={clipsOf(tree)}
+        clips={clipsOf({ ...tree, root: { ...tree.root, children } })}
         selected={[0]}
         zoom={1}
         issues={{ 1: { errors: 2, warnings: 0 } }}
@@ -95,4 +95,33 @@ test("dragging a clip carries its index, and selecting reports the modifier", ()
 test("a clip with errors shows how many", () => {
   setup();
   expect(screen.getByLabelText("2 errors")).toBeTruthy();
+});
+
+/**
+ * Alessio, 2026-09-20: dropping a video on an empty timeline did nothing, because the
+ * only drop target was the thin gap hidden behind the "drag something here" line.
+ */
+test("the whole strip takes a drop, empty timeline included", () => {
+  const { onDropAt } = setup([]);
+  const strip = screen.getByTestId("timeline");
+  fireEvent.dragOver(strip, { clientX: 10 });
+  fireEvent.drop(strip, {
+    clientX: 10,
+    dataTransfer: transfer({ from: "bin-media", value: "m1" }),
+  });
+  expect(onDropAt).toHaveBeenCalledWith(0, { from: "bin-media", value: "m1" });
+});
+
+test("a drop past the last clip lands at the end", () => {
+  const { onDropAt } = setup();
+  const strip = screen.getByTestId("timeline");
+  // jsdom gives every box zero width at x=0, so a pointer to the right is past them all
+  fireEvent.drop(strip, {
+    clientX: 900,
+    dataTransfer: transfer({ from: "bin-element", value: "rest" }),
+  });
+  expect(onDropAt).toHaveBeenCalledWith(2, {
+    from: "bin-element",
+    value: "rest",
+  });
 });
