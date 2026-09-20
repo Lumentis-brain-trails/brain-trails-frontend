@@ -5,8 +5,9 @@
  *
  * The same steps as /record - choose the headband, connect, wait for four green lights -
  * so a session never starts on a band that is not sitting right. Starting anyway is
- * allowed but explicit. The simulated headbands are offered outside production, which is
- * also how the end-to-end tests run a protocol.
+ * allowed but explicit. The simulated headbands are offered on our own deployments only
+ * (`lib/env.ts`) - never to beta testers - which is also how the end-to-end tests run a
+ * protocol.
  */
 import { useTranslations } from "next-intl";
 import { ContactLights } from "@/components/ContactLights";
