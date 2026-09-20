@@ -3,11 +3,14 @@
 /**
  * Your media (plan V3, S16-S17): what you uploaded, where it stands, and publication.
  *
- * Media are building blocks, not things one browses to play - the catalog is for that.
- * A file is checked by the server after upload (backend `media_probe`): it shows as
- * "Checking" until then and refreshes by itself, and a refused file says why. A ready
- * item can be offered to the community; during the beta an admin reviews every request,
- * and a video or audio file needs the author to confirm they may share it.
+ * Media are building blocks, not things one browses to play - the catalog is for that -
+ * but they are yours, so opening one plays it back and offers to delete it
+ * (`MediaViewer`). A file is checked by the server after upload (backend
+ * `media_probe`): it shows as "Checking" until then and refreshes by itself, and a
+ * refused file says why. A ready item can be offered to the community; during the beta
+ * an admin reviews every request, and a video or audio file needs the author to confirm
+ * they may share it. Where an item stands afterwards is a tag under its video: amber
+ * "In review" while an admin has it, green "In the community" once it is accepted.
  *
  * "Create a protocol" wraps one item in a protocol of baseline - the item - baseline
  * (V3-0004): everything is played through a protocol, so every session has a version, a
@@ -18,6 +21,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MediaCard } from "@/components/MediaCard";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
+import { MediaViewer } from "@/components/MediaViewer";
+import { Sheet } from "@/components/Sheet";
 import {
   Button,
   Card,
@@ -25,6 +30,7 @@ import {
   ErrorBanner,
   Icon,
   Skeleton,
+  cn,
 } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
@@ -45,6 +51,29 @@ const REFUSALS: Record<string, string> = {
 
 const FILE_KINDS = new Set(["video", "audio"]);
 
+/** Where an item stands, as a pastel pill: amber while in review, green once public. */
+function Tag({
+  tone,
+  children,
+}: {
+  tone: "review" | "public" | "muted";
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-semibold",
+        tone === "review" && "bg-warn-soft text-warn",
+        tone === "public" && "bg-ok-soft text-ok",
+        tone === "muted" && "bg-surface-2 text-ink-3"
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** What the server is still doing with the file, or why it refused it. */
 function Standing({ item }: { item: Media }) {
   if (item.status === "processing")
     return <p className="type-caption text-ink-3">Checking the file…</p>;
@@ -54,46 +83,34 @@ function Standing({ item }: { item: Media }) {
         {REFUSALS[String(item.probe.reason)] ?? "The file was refused."}
       </p>
     );
-  if (item.visibility === "public")
-    return <p className="type-caption text-ink-3">In the community</p>;
-  if (item.review_state === "pending")
-    return <p className="type-caption text-ink-3">Waiting for review</p>;
-  if (item.review_state === "refused")
-    return (
-      <p className="type-caption text-ink-3">Not accepted for publication</p>
-    );
   return null;
 }
 
-function Publish({ item }: { item: Media }) {
+/**
+ * The rights step before a publication request: the beta reviews every file, and a
+ * video or sound may only be offered by whoever may redistribute it (the backend
+ * refuses the request without the attestation).
+ */
+function ShareDialog({ item, onClose }: { item: Media; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const [asking, setAsking] = useState(false);
   const [rights, setRights] = useState(false);
   const file = FILE_KINDS.has(item.kind);
   const publish = useMutation({
     mutationFn: () =>
       api.post<Media>(`media/${item.id}/publish`, { rights_attested: rights }),
     onSuccess: () => {
-      setAsking(false);
-      queryClient.invalidateQueries({ queryKey: ["media"] });
+      void queryClient.invalidateQueries({ queryKey: ["media"] });
+      onClose();
     },
   });
-  if (
-    item.status !== "ready" ||
-    item.visibility !== "workspace" ||
-    item.review_state === "pending"
-  )
-    return null;
-  if (!asking)
-    return (
-      <Button size="sm" variant="secondary" onClick={() => setAsking(true)}>
-        Share with the community
-      </Button>
-    );
   return (
-    <div className="space-y-2">
+    <Sheet title="Share with the community" onClose={onClose}>
+      <p className="text-ink-2">
+        “{item.title}” goes to us for a look first. Once accepted, everyone in
+        the community can play it.
+      </p>
       {file && (
-        <label className="flex cursor-pointer items-start gap-2 text-[13px]">
+        <label className="mt-4 flex cursor-pointer items-start gap-2 text-[13px]">
           <input
             type="checkbox"
             checked={rights}
@@ -103,22 +120,46 @@ function Publish({ item }: { item: Media }) {
           I made this file or have the right to share it publicly.
         </label>
       )}
-      <div className="flex gap-2">
+      <div className="mt-5 flex gap-2">
         <Button
-          size="sm"
           onClick={() => publish.mutate()}
           disabled={publish.isPending || (file && !rights)}
         >
           Ask to publish
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setAsking(false)}>
+        <Button variant="ghost" onClick={onClose}>
           Cancel
         </Button>
       </div>
       {publish.error instanceof ApiRequestError && (
-        <ErrorBanner message={publish.error.error.message} />
+        <div className="mt-3">
+          <ErrorBanner message={publish.error.error.message} />
+        </div>
       )}
-    </div>
+    </Sheet>
+  );
+}
+
+/** Under the video: the offer to publish, then the tag it turns into. */
+function Share({ item }: { item: Media }) {
+  const [asking, setAsking] = useState(false);
+  if (item.status !== "ready") return null;
+  if (item.visibility !== "workspace")
+    return <Tag tone="public">In the community</Tag>;
+  if (item.review_state === "pending")
+    return <Tag tone="review">In review</Tag>;
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="secondary" onClick={() => setAsking(true)}>
+          Share with the community
+        </Button>
+        {item.review_state === "refused" && (
+          <Tag tone="muted">Not accepted</Tag>
+        )}
+      </div>
+      {asking && <ShareDialog item={item} onClose={() => setAsking(false)} />}
+    </>
   );
 }
 
@@ -135,14 +176,15 @@ function MakeProtocol({ item }: { item: Media }) {
   if (!WRAPPABLE.has(item.kind) || item.status !== "ready") return null;
   return (
     <div className="space-y-2">
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => create.mutate()}
-        disabled={create.isPending}
-      >
-        Create a protocol
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          onClick={() => create.mutate()}
+          disabled={create.isPending}
+        >
+          Create a protocol
+        </Button>
+      </div>
       {create.error instanceof ApiRequestError && (
         <ErrorBanner message={create.error.error.message} />
       )}
@@ -152,6 +194,7 @@ function MakeProtocol({ item }: { item: Media }) {
 
 export default function MediaPage() {
   const [uploading, setUploading] = useState(false);
+  const [watching, setWatching] = useState<string | null>(null);
   const workspace = useCurrentWorkspace();
   const mine = useQuery({
     queryKey: ["media", "mine", workspace?.id],
@@ -162,13 +205,13 @@ export default function MediaPage() {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="type-title">My media</h1>
           <p className="mt-1 text-ink-2">
-            Videos and sounds you uploaded. A video plays as a protocol from its
-            card.
+            Videos and sounds you uploaded. Open one to watch it back; a video
+            plays as a protocol from its card.
           </p>
         </div>
         <Button onClick={() => setUploading(true)}>
@@ -186,16 +229,30 @@ export default function MediaPage() {
           action={<Button onClick={() => setUploading(true)}>Upload</Button>}
         />
       )}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(228px,1fr))] gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {mine.data?.map((item) => (
-          <Card key={item.id} inset className="space-y-3 p-3">
-            <MediaCard item={item} locked={item.status !== "ready"} />
+          <Card key={item.id} inset className="flex flex-col gap-3 p-3">
+            <MediaCard
+              item={item}
+              locked={item.status !== "ready"}
+              lockedNote={
+                item.status === "failed" ? "Refused" : "Being checked"
+              }
+              onOpen={
+                item.status === "ready" ? () => setWatching(item.id) : undefined
+              }
+            />
             <Standing item={item} />
-            <MakeProtocol item={item} />
-            <Publish item={item} />
+            <div className="mt-auto space-y-2">
+              <Share item={item} />
+              <MakeProtocol item={item} />
+            </div>
           </Card>
         ))}
       </div>
+      {watching && (
+        <MediaViewer id={watching} onClose={() => setWatching(null)} />
+      )}
       {uploading && <MediaUploadDialog onClose={() => setUploading(false)} />}
     </main>
   );
