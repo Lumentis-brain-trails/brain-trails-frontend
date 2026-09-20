@@ -413,6 +413,7 @@ const ICON_PATHS = {
   close: "M4 4l8 8M12 4l-8 8",
   stop: "M4.5 4.5h7v7h-7z",
   flag: "M4 14V2.5M4 3h8l-1.8 3L12 9H4",
+  help: "M5.8 6.1a2.2 2.2 0 114.2.9c-.3.9-1.4 1.2-1.8 2-.1.3-.2.5-.2.8M8 12.3h.01",
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;
