@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
+import { formatDate, formatDuration } from "@/lib/format";
 import type { Recording } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UploadDialog } from "@/components/UploadDialog";
@@ -16,26 +18,13 @@ import {
   Stat,
 } from "@/components/ui";
 
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "–";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m ? `${m} min ${s} s` : `${s} s`;
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export default function RecordingsPage() {
   const [showUpload, setShowUpload] = useState(false);
+  const workspace = useCurrentWorkspace();
   const recordings = useQuery({
-    queryKey: ["recordings"],
-    queryFn: () => api.get<Recording[]>("recordings"),
+    queryKey: ["recordings", workspace?.id],
+    queryFn: () => api.get<Recording[]>(inWorkspace("recordings", workspace)),
+    enabled: workspace !== undefined,
     refetchInterval: (query) =>
       query.state.data?.some(
         (r) => r.status === "uploaded" || r.status === "processing"
@@ -77,7 +66,7 @@ export default function RecordingsPage() {
         </div>
       )}
 
-      {recordings.isLoading && (
+      {recordings.isPending && (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-16" />

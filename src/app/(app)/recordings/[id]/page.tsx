@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
+import { formatDuration } from "@/lib/format";
 import type { Analysis, Recording } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
 import { SignalPreview } from "@/components/SignalPreview";
@@ -19,15 +20,9 @@ import {
   SectionTitle,
   Skeleton,
   Spinner,
+  buttonClass,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "–";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m ? `${m} min ${s} s` : `${s} s`;
-}
 
 export default function RecordingDetailPage({
   params,
@@ -128,6 +123,12 @@ export default function RecordingDetailPage({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href={`/recordings/${id}/review`}
+            className={buttonClass("secondary")}
+          >
+            Review
+          </Link>
           {isLive && (
             <span className="inline-flex items-center gap-2 rounded-full bg-danger-soft px-3 py-1 text-[12px] font-semibold tracking-wide text-danger">
               <span
@@ -159,6 +160,16 @@ export default function RecordingDetailPage({
         </Card>
       )}
 
+      {rec?.status === "empty" && (
+        <div className="mb-6">
+          <ErrorBanner message="No EEG was recorded in this session: it ended before the headband sent any data." />
+        </div>
+      )}
+      {rec?.status === "capturing" && (
+        <div className="mb-6">
+          <ErrorBanner message="This session is still recording, or was closed before it finished. It is closed automatically after three hours." />
+        </div>
+      )}
       {rec?.status === "failed" && (
         <Card className="enter-up mb-6 space-y-4">
           <ErrorBanner message="Processing failed." />
@@ -212,10 +223,13 @@ export default function RecordingDetailPage({
             )}
           </div>
 
-          <aside className="space-y-6">
-            <section>
-              <SectionTitle>Analysis</SectionTitle>
-              <Card inset>
+          <aside className="flex flex-col gap-6">
+            {/* how the trail was computed is for whoever wants it, not the first thing read */}
+            <details className="group order-last">
+              <summary className="type-caption cursor-pointer px-1 font-medium text-ink-3 hover:text-ink">
+                Technical details
+              </summary>
+              <Card inset className="mt-2">
                 {a ? (
                   <>
                     <KeyValue label="Cleaner" value={a.cleaner_name} />
@@ -224,15 +238,27 @@ export default function RecordingDetailPage({
                     <KeyValue label="Step" value={`${a.step_s} s`} />
                     <KeyValue label="Smoothing" value={`${a.smooth_s} s`} />
                     <KeyValue label="Points" value={a.points.length} />
-                    {a.explained_variance.ratio && (
-                      <KeyValue
-                        label="Variance held"
-                        value={`${Math.round(
-                          (a.explained_variance.ratio[0] +
-                            a.explained_variance.ratio[1]) *
-                            100
-                        )}%`}
-                      />
+                    {a.landscape ? (
+                      <>
+                        <KeyValue label="Regions" value={a.landscape.n_nodes} />
+                        {a.landscape.stress != null && (
+                          <KeyValue
+                            label="Layout strain"
+                            value={a.landscape.stress.toFixed(2)}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      a.projector_meta.ratio && (
+                        <KeyValue
+                          label="Variance held"
+                          value={`${Math.round(
+                            (a.projector_meta.ratio[0] +
+                              a.projector_meta.ratio[1]) *
+                              100
+                          )}%`}
+                        />
+                      )
                     )}
                   </>
                 ) : (
@@ -242,12 +268,12 @@ export default function RecordingDetailPage({
                   </div>
                 )}
               </Card>
-              {a?.explained_variance.cleaner_notes?.length ? (
+              {a?.projector_meta.cleaner_notes?.length ? (
                 <p className="type-caption mt-2 px-1 text-ink-3">
-                  {a.explained_variance.cleaner_notes.join(" · ")}
+                  {a.projector_meta.cleaner_notes.join(" · ")}
                 </p>
               ) : null}
-            </section>
+            </details>
 
             {rec?.status === "done" && (
               <section>
@@ -262,6 +288,10 @@ export default function RecordingDetailPage({
                     label="Reprocess without cleaning"
                     onClick={() => reprocess.mutate("identity")}
                     disabled={reprocess.isPending}
+                  />
+                  <ActionRow
+                    label="Open NeuroMetrics"
+                    onClick={() => router.push(`/neurometrics/${id}`)}
                   />
                   <ActionRow
                     label="Download raw file"

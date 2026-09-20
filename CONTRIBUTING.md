@@ -240,8 +240,9 @@ The machine-built `dev` of section 1 stays suspended. What runs today:
 3. Promotion to beta, two steps: **promote** (`target=beta`, `action=open`) opens
    the PR `dev -> beta` (or open it by hand). Then the owner dispatches
    **pr-review** with that PR number: the autonomous reviewer runs only for him and
-   only on PRs targeting `beta`; blocking findings fail the check. Then **promote**
-   (`action=merge`) merges, refusing without a green review; Vercel deploys on push.
+   only on PRs targeting `beta`; blocking findings fail the check. The review is optional (the
+   owner decides case by case). Then **promote** (`action=merge`) merges; Vercel
+   deploys on push.
    `beta -> main`: `promote` (`target=main`, `action=merge`, optional `vX.Y.Z`).
 4. `guard-promotion` rejects hand-made PRs to `beta`/`main` from other branches
    (`hotfix/*` allowed). Rulesets require PRs on `dev`, `beta`, `main`.

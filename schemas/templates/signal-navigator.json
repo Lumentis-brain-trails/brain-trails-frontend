@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": "Objects move across the screen for about five minutes. A reduced-motion mode is available, and you can stop at any time.",
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "arrival",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Cargo will cross your screen.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Press Dock for blue cargo.\nLet debris pass.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "settle",
+        "kind": "baseline",
+        "label": "Settle",
+        "condition": "arrival",
+        "config": {
+          "eyes": "open",
+          "duration_s": 30,
+          "end_tone": false
+        }
+      },
+      {
+        "type": "block",
+        "id": "challenge_a",
+        "kind": "go-no-go",
+        "label": "Dock the cargo",
+        "condition": "challenge_a",
+        "config": {
+          "variant": "simple",
+          "n": 100,
+          "goRatio": 0.72,
+          "maxRun": 4,
+          "maxNogoRun": 2,
+          "travelMs": [800, 1200],
+          "itiMs": [300, 500],
+          "markers": {
+            "trialStart": "challenge_a_trial_start",
+            "stimulusOnset": "challenge_a_stimulus_onset",
+            "response": "challenge_a_response",
+            "outcome": "challenge_a_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "reset",
+        "kind": "breathing",
+        "label": "Pause and plan",
+        "condition": "coping",
+        "config": {
+          "cycles": 3,
+          "inhaleMs": 4500,
+          "exhaleMs": 4500,
+          "markers": {
+            "cycleStart": "breath_cycle_start",
+            "inhale": "breath_inhale",
+            "exhale": "breath_exhale"
+          },
+          "lines": [
+            {
+              "text": "Notice the urge to rush.",
+              "holdMs": 4000
+            },
+            {
+              "text": "For the next route:\nBeacon first, cargo second.",
+              "marker": "rule_instruction_shown",
+              "holdMs": 6000
+            },
+            {
+              "text": "Green beacon + blue cargo\nDock.",
+              "marker": "rule_instruction_shown",
+              "holdMs": 5000
+            },
+            {
+              "text": "Anything else\nHold.",
+              "marker": "rule_instruction_shown",
+              "holdMs": 5000
+            }
+          ]
+        }
+      },
+      {
+        "type": "block",
+        "id": "challenge_b",
+        "kind": "go-no-go",
+        "label": "Wait for the signal",
+        "condition": "challenge_b",
+        "config": {
+          "variant": "cued",
+          "n": 44,
+          "validGoRatio": 0.45,
+          "nogoMix": {
+            "redCargo": 0.4,
+            "greenDebris": 0.3,
+            "redDebris": 0.3
+          },
+          "maxCueRun": 3,
+          "maxOutcomeRun": 3,
+          "cueMs": [300, 400],
+          "cueTargetMs": [800, 1200],
+          "travelMs": [900, 1300],
+          "itiMs": [500, 900],
+          "markers": {
+            "trialStart": "challenge_b_trial_start",
+            "cueOnset": "challenge_b_cue_onset",
+            "stimulusOnset": "challenge_b_target_onset",
+            "response": "challenge_b_response",
+            "outcome": "challenge_b_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "Route complete.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 40000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

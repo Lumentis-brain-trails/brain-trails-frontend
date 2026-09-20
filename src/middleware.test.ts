@@ -20,6 +20,19 @@ describe("middleware", () => {
   });
 
   test("guards only the authenticated areas", () => {
-    expect(config.matcher).toEqual(["/recordings/:path*", "/admin/:path*"]);
+    expect(config.matcher).toEqual([
+      "/home",
+      "/account",
+      "/library",
+      "/library/:path*",
+      "/recordings/:path*",
+      "/neurometrics",
+      "/neurometrics/:path*",
+      "/media",
+      "/media/:path*",
+      "/protocols",
+      "/protocols/:path*",
+      "/admin/:path*",
+    ]);
   });
 });

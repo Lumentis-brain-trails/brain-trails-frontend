@@ -29,26 +29,52 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiRequestError(response.status, error);
   }
+  // 204 No Content (e.g. storing a session's plan) has no body to parse.
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+/** Per-call options for writes. */
+export interface WriteOptions {
+  /**
+   * Optimistic concurrency: the revision the caller last saw. The backend answers 409
+   * `conflict` when the object changed since (e.g. an experiment draft edited in two
+   * tabs, plan V3 decision V3-0004).
+   */
+  ifMatch?: string | number;
+}
+
+function write<T>(
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
+  path: string,
+  body: unknown,
+  options: WriteOptions = {}
+): Promise<T> {
+  return request<T>(`/api/backend/${path}`, {
+    method,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    headers:
+      options.ifMatch === undefined
+        ? undefined
+        : { "If-Match": String(options.ifMatch) },
+  });
 }
 
 export const api = {
   get: <T>(path: string) => request<T>(`/api/backend/${path}`),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(`/api/backend/${path}`, {
-      method: "POST",
-      body: body === undefined ? undefined : JSON.stringify(body),
-    }),
+  post: <T>(path: string, body?: unknown, options?: WriteOptions) =>
+    write<T>("POST", path, body, options),
+  put: <T>(path: string, body?: unknown, options?: WriteOptions) =>
+    write<T>("PUT", path, body, options),
+  patch: <T>(path: string, body?: unknown, options?: WriteOptions) =>
+    write<T>("PATCH", path, body, options),
   login: (email: string, password: string) =>
     request<{ status: string }>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
-  delete: <T>(path: string, body?: unknown) =>
-    request<T>(`/api/backend/${path}`, {
-      method: "DELETE",
-      body: body === undefined ? undefined : JSON.stringify(body),
-    }),
+  delete: <T>(path: string, body?: unknown, options?: WriteOptions) =>
+    write<T>("DELETE", path, body, options),
   logout: () =>
     request<{ status: string }>("/api/auth/logout", { method: "POST" }),
 };

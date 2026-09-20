@@ -65,7 +65,7 @@ function VerifyContent() {
           <p className="mt-4 text-ink-2">Your account is active.</p>
           <Link
             href="/login"
-            className="pressable mt-8 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[17px] font-medium text-on-accent hover:bg-accent-hover"
+            className="pressable mt-8 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[16px] font-semibold text-on-accent hover:bg-accent-hover"
           >
             Sign in
           </Link>

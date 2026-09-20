@@ -24,7 +24,7 @@ export default function PrivacyPage() {
       </div>
       <Link
         href="/"
-        className="mt-10 inline-block text-[14px] font-medium text-accent hover:underline"
+        className="mt-10 inline-block text-[14px] font-semibold text-ink hover:underline"
       >
         Back home
       </Link>

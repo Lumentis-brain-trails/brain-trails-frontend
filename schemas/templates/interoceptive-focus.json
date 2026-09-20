@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": null,
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "First you rest, then you listen for your own heartbeat, four times.",
+              "holdMs": 5000
+            },
+            {
+              "text": "About seven minutes in all. Sit comfortably, hands resting, sound on.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "mood_before",
+        "kind": "questionnaire",
+        "label": "How do you feel?",
+        "condition": "before",
+        "config": {
+          "instrument": "sam",
+          "prompt": "Think of how you feel right now."
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule",
+        "kind": "instructions",
+        "label": "The rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Between two tones, silently count your heartbeats.",
+              "holdMs": 5000
+            },
+            {
+              "text": "Do not touch your wrist or neck. Just feel.\nCount only the beats you really feel. Do not guess.",
+              "holdMs": 7000
+            },
+            {
+              "text": "Then type how many. Feeling few or none is a normal answer.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "counting",
+        "kind": "heartbeat",
+        "label": "Count your heartbeats",
+        "condition": "heartbeat",
+        "config": {
+          "intervals_s": [25, 35, 45, 30],
+          "shuffle": true,
+          "confidence": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "All done.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

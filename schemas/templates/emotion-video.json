@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": "This protocol shows short film clips chosen to evoke emotions, some of them unpleasant. You can stop at any time.",
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "baseline_pre",
+        "kind": "baseline",
+        "label": "Resting baseline",
+        "condition": "baseline",
+        "config": { "eyes": "open", "duration_s": 60 }
+      },
+      {
+        "type": "loop",
+        "id": "clips",
+        "label": "Clips",
+        "conditions": {
+          "columns": ["clip"],
+          "rows": [
+            ["00000000-0000-0000-0000-000000000001"],
+            ["00000000-0000-0000-0000-000000000002"]
+          ]
+        },
+        "order": "random",
+        "repetitions": 1,
+        "template": {
+          "type": "sequence",
+          "order": "fixed",
+          "children": [
+            {
+              "type": "block",
+              "id": "clip_video",
+              "kind": "video",
+              "label": "Clip",
+              "condition": { "$var": "clip" },
+              "post_rest_s": 20,
+              "config": { "media_id": { "$var": "clip" }, "allowPause": false }
+            },
+            {
+              "type": "block",
+              "id": "clip_rating",
+              "kind": "questionnaire",
+              "label": "How did it feel?",
+              "condition": { "$var": "clip" },
+              "config": {
+                "instrument": "sam",
+                "prompt": "Think of how you felt while watching the clip."
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "block",
+        "id": "baseline_post",
+        "kind": "baseline",
+        "label": "Resting baseline",
+        "condition": "baseline",
+        "config": { "eyes": "open", "duration_s": 60 }
+      }
+    ]
+  }
+}
