@@ -45,38 +45,52 @@ jobs:
             beta) echo "SOURCE=dev"  >> "$GITHUB_ENV" ;;
             main) echo "SOURCE=beta" >> "$GITHUB_ENV" ;;
           esac
-      - name: Target must be an ancestor of source (no divergent commits)
+      # A promotion merges with a merge commit the source never gets, so "target is an
+      # ancestor of source" fails on every second promotion. What must hold is that the
+      # merged tree equals the tested source tree (same gate as the backend's promote).
+      - name: Merged tree must equal the source tree (target has no content missing from source)
         run: |
-          if ! git merge-base --is-ancestor "origin/$TARGET" "origin/$SOURCE"; then
-            echo "::error::$TARGET has commits missing from $SOURCE; merge $TARGET back into $SOURCE first"
+          SHA=$(git rev-parse "origin/$SOURCE")
+          if ! MERGED=$(git merge-tree --write-tree "origin/$TARGET" "$SHA"); then
+            echo "::error::merging $SOURCE into $TARGET conflicts; bring $TARGET's changes into $SOURCE first"
             exit 1
           fi
-          if [[ "$(git rev-parse origin/$TARGET)" == "$(git rev-parse origin/$SOURCE)" ]]; then
-            echo "::notice::$TARGET already equals $SOURCE - nothing to promote"
+          if [[ "$(git rev-parse "origin/$TARGET^{tree}")" == "$(git rev-parse "$SHA^{tree}")" ]]; then
+            echo "::notice::$TARGET already has the content of $SOURCE - nothing to promote"
             echo "NOOP=1" >> "$GITHUB_ENV"
+          elif [[ "$MERGED" != "$(git rev-parse "$SHA^{tree}")" ]]; then
+            echo "::error::$TARGET has changes missing from $SOURCE (merged tree differs from the tested one):"
+            git diff --stat "$SHA" "$MERGED"
+            exit 1
           fi
-      - name: Source head must be green (ci, and build-images when it ran)
+      - name: Source tree must be green (ci)
         if: env.NOOP != '1'
         run: |
           SHA=$(git rev-parse "origin/$SOURCE")
           echo "SHA=$SHA" >> "$GITHUB_ENV"
-          check() {  # $1 = workflow name, $2 = required|optional
-            C=$(gh run list --workflow "$1" --branch "$SOURCE" --commit "$SHA" --limit 1 \
-                --json status,conclusion -q '.[0] | select(. != null) | "\(.status)/\(.conclusion)"')
-            echo "$1 on $SHA: ${C:-no run}"
-            if [[ -z "$C" ]]; then
-              [[ "$2" == "required" ]] && { echo "::error::no $1 run for $SHA"; exit 1; } || return 0
-            fi
-            [[ "$C" == "completed/success" ]] || { echo "::error::$1 is not green for $SHA"; exit 1; }
-          }
-          check ci required
+          # A GITHUB_TOKEN promotion merge never gets its own ci run. Its tree equals
+          # the promoted parent's, so follow tree-identical parents to the tested commit.
+          TESTED="$SHA"
+          while [[ -z "$(gh run list --workflow ci --commit "$TESTED" --limit 1 --json databaseId -q '.[0].databaseId // empty')" ]]; do
+            NEXT=""
+            for P in $(git rev-list --parents -n 1 "$TESTED" | cut -d' ' -f2-); do
+              [[ "$(git rev-parse "$P^{tree}")" == "$(git rev-parse "$TESTED^{tree}")" ]] && { NEXT="$P"; break; }
+            done
+            [[ -n "$NEXT" ]] || { echo "::error::no ci run for $SHA nor for a commit with the same tree"; exit 1; }
+            echo "no ci run on $TESTED; its tree equals parent $NEXT"
+            TESTED="$NEXT"
+          done
+          C=$(gh run list --workflow ci --commit "$TESTED" --limit 1 \
+              --json status,conclusion -q '.[0] | "\(.status)/\(.conclusion)"')
+          echo "ci on $TESTED: $C"
+          [[ "$C" == "completed/success" ]] || { echo "::error::ci is not green for $TESTED"; exit 1; }
       - name: Find or open the promotion PR
         if: env.NOOP != '1'
         run: |
           PR=$(gh pr list --base "$TARGET" --head "$SOURCE" --state open --json number -q '.[0].number')
           if [[ -z "$PR" ]]; then
-            BODY=$(printf 'Promotion of `%s` (%s) into `%s`.\n\nCommits:\n%s\n\nCI on the source head is green; the target is an ancestor of the source, so the merged tree equals the tested one.\n' \
-              "$SOURCE" "${SHA:0:7}" "$TARGET" "$(git log --oneline "origin/$TARGET..origin/$SOURCE" | sed 's/^/- /')")
+            BODY=$(printf 'Promotion of `%s` (%s) into `%s`.\n\nCommits:\n%s\n\nCI on the source tree is green; the promote gate checked that the merged tree equals the tested source tree.\n' \
+              "$SOURCE" "${SHA:0:7}" "$TARGET" "$(git log --oneline --no-merges "origin/$TARGET..origin/$SOURCE" | sed 's/^/- /')")
             if ! PR=$(gh pr create --base "$TARGET" --head "$SOURCE" \
                  --title "promote: $SOURCE -> $TARGET (${SHA:0:7})" --body "$BODY" | grep -oE '[0-9]+$'); then
               echo "::error::could not open the PR (org forbids Actions from creating PRs). Open it by hand: gh pr create --base $TARGET --head $SOURCE"
