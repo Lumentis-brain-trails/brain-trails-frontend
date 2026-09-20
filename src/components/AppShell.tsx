@@ -126,7 +126,7 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
         href="/home"
         className="pressable relative mb-4 flex h-10 w-10 items-center justify-center rounded-xl text-ink"
       >
-        <Logo size={28} />
+        <Logo size={38} />
         <span className="reveal type-heading absolute left-12 text-[18px] whitespace-nowrap">
           Braintrails
         </span>

@@ -1,51 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="168 168 688 688">
   <defs>
-    <clipPath id="bt-warm-side"><path d="M512 0 L512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952 L512 1024 L0 1024 L0 0 Z"/></clipPath>
-    <clipPath id="bt-cool-side"><path d="M512 0 L512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952 L512 1024 L1024 1024 L1024 0 Z"/></clipPath>
-    <radialGradient id="bt-warm" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="440">
-      <stop offset="0" stop-color="#f9ba4a"/>
-      <stop offset=".4" stop-color="#f6c862"/>
-      <stop offset=".5" stop-color="#d9dc9c"/>
-      <stop offset=".6" stop-color="#7fe0d6"/>
+    <clipPath id="bt-mark-warm-side"><path d="M512 0 L512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952 L512 1024 L0 1024 L0 0 Z"/></clipPath>
+    <clipPath id="bt-mark-cool-side"><path d="M512 0 L512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952 L512 1024 L1024 1024 L1024 0 Z"/></clipPath>
+    <radialGradient id="bt-mark-warm" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="440">
+      <stop offset="0" stop-color="#f9ba4a"/><stop offset=".4" stop-color="#f6c862"/>
+      <stop offset=".5" stop-color="#d9dc9c"/><stop offset=".6" stop-color="#7fe0d6"/>
       <stop offset="1" stop-color="#4fd0ee"/>
     </radialGradient>
-    <radialGradient id="bt-cool" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="440">
-      <stop offset="0" stop-color="#ff9cce"/>
-      <stop offset=".4" stop-color="#ee94d8"/>
-      <stop offset=".5" stop-color="#c88ae6"/>
-      <stop offset=".6" stop-color="#a082ee"/>
+    <radialGradient id="bt-mark-cool" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="440">
+      <stop offset="0" stop-color="#ff9cce"/><stop offset=".4" stop-color="#ee94d8"/>
+      <stop offset=".5" stop-color="#c88ae6"/><stop offset=".6" stop-color="#a082ee"/>
       <stop offset="1" stop-color="#6a70f0"/>
     </radialGradient>
-    <radialGradient id="bt-fade" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="440">
-      <stop offset="0" stop-color="#fff"/>
-      <stop offset=".26" stop-color="#fff" stop-opacity=".97"/>
-      <stop offset=".4" stop-color="#fff" stop-opacity=".88"/>
-      <stop offset=".52" stop-color="#fff" stop-opacity=".72"/>
-      <stop offset=".64" stop-color="#fff" stop-opacity=".52"/>
-      <stop offset=".75" stop-color="#fff" stop-opacity=".32"/>
-      <stop offset=".85" stop-color="#fff" stop-opacity=".16"/>
-      <stop offset=".93" stop-color="#fff" stop-opacity=".06"/>
+    <radialGradient id="bt-mark-fade" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="440">
+      <stop offset="0" stop-color="#fff"/><stop offset=".26" stop-color="#fff" stop-opacity=".97"/>
+      <stop offset=".4" stop-color="#fff" stop-opacity=".88"/><stop offset=".52" stop-color="#fff" stop-opacity=".72"/>
+      <stop offset=".64" stop-color="#fff" stop-opacity=".52"/><stop offset=".75" stop-color="#fff" stop-opacity=".32"/>
+      <stop offset=".85" stop-color="#fff" stop-opacity=".16"/><stop offset=".93" stop-color="#fff" stop-opacity=".06"/>
       <stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
-    <mask id="bt-disc" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
-      <rect width="1024" height="1024" fill="url(#bt-fade)"/>
+    <mask id="bt-mark-disc" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="url(#bt-mark-fade)"/>
+      <path d="M512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952" fill="none" stroke="#000" stroke-width="48" stroke-linecap="round"/>
     </mask>
-    <filter id="bt-blur" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="64"/>
-    </filter>
+    <filter id="bt-mark-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="64"/></filter>
   </defs>
-  <rect x="168" y="168" width="688" height="688" rx="151" fill="#000"/>
-  <g mask="url(#bt-disc)">
-    <g clip-path="url(#bt-warm-side)">
-      <rect width="1024" height="1024" fill="url(#bt-warm)"/>
-      <circle cx="500" cy="352" r="120" fill="#ffd27a" filter="url(#bt-blur)"/>
-      <circle cx="330" cy="560" r="90" fill="#f4de80" opacity=".8" filter="url(#bt-blur)"/>
+  <style>
+    .ground { fill: #07090e }
+    @media (prefers-color-scheme: light) { .ground { fill: #fbfbfd } }
+  </style>
+  <rect x="168" y="168" width="688" height="688" rx="151" class="ground" fill="#07090e"/>
+  <g mask="url(#bt-mark-disc)">
+    <g clip-path="url(#bt-mark-warm-side)">
+      <rect width="1024" height="1024" fill="url(#bt-mark-warm)"/>
+      <circle cx="500" cy="352" r="120" fill="#ffd27a" filter="url(#bt-mark-blur)"/>
+      <circle cx="330" cy="560" r="90" fill="#f4de80" opacity=".8" filter="url(#bt-mark-blur)"/>
     </g>
-    <g clip-path="url(#bt-cool-side)">
-      <rect width="1024" height="1024" fill="url(#bt-cool)"/>
-      <circle cx="524" cy="672" r="120" fill="#ffb4da" filter="url(#bt-blur)"/>
-      <circle cx="694" cy="464" r="90" fill="#e28ee2" opacity=".8" filter="url(#bt-blur)"/>
+    <g clip-path="url(#bt-mark-cool-side)">
+      <rect width="1024" height="1024" fill="url(#bt-mark-cool)"/>
+      <circle cx="524" cy="672" r="120" fill="#ffb4da" filter="url(#bt-mark-blur)"/>
+      <circle cx="694" cy="464" r="90" fill="#e28ee2" opacity=".8" filter="url(#bt-mark-blur)"/>
     </g>
   </g>
-  <path d="M512 72 C512 150 560 190 640 262 C744 356 700 470 512 512 C324 554 280 668 384 762 C464 834 512 874 512 952" fill="none" stroke="#000" stroke-width="48" stroke-linecap="round"/>
+
 </svg>
