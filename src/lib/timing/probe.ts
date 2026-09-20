@@ -8,6 +8,7 @@
  * health summary a session reports at finish (sprint S16). It never reads a clock on
  * behalf of a marker: it only observes.
  */
+import { devToolsAllowed } from "@/lib/env";
 
 /** A frame this many times the expected interval counts as dropped. */
 const DROPPED_FACTOR = 1.5;
@@ -96,5 +97,7 @@ export function probeOverlayEnabled(
   appEnv: string | undefined,
   search: string
 ): boolean {
-  return appEnv !== "prod" && new URLSearchParams(search).get("probe") === "1";
+  return (
+    devToolsAllowed(appEnv) && new URLSearchParams(search).get("probe") === "1"
+  );
 }

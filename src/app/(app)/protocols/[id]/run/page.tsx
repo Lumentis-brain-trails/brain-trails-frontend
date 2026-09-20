@@ -57,6 +57,7 @@ import { useMuse } from "@/lib/muse/useMuse";
 import { type ClockAnchor, eegAnchor } from "@/lib/protocol/clock";
 import { type Marker, toWireEvent } from "@/lib/protocol/marker";
 import type { PhaseSummary } from "@/lib/protocol/metrics";
+import { devToolsAllowed } from "@/lib/env";
 import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
 import {
   type StimulusSessionStart,
@@ -68,7 +69,8 @@ import {
 import { type MarkerSink, createSessionSink } from "@/lib/protocol/sink";
 import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
 
-const SIMULATOR_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== "prod";
+// Never for testers: a simulated session looks real and is not (`lib/env.ts`).
+const SIMULATOR_ALLOWED = devToolsAllowed(process.env.NEXT_PUBLIC_APP_ENV);
 
 /** How long Start waits for the headband's first samples before giving up. */
 const SYNC_TIMEOUT_MS = 15_000;
