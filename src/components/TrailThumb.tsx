@@ -71,7 +71,10 @@ export function TrailThumb({ recording }: { recording: Recording }) {
     y,
     mass: data.landscape?.masses[i] ?? 0,
   }));
-  const map = fitToBox([...trail, ...nodes], W, H, PAD);
+  // Framed on the path, not on the cover: a drawn position is a weighted mean of
+  // region centres, so the trail always sits well inside the layout and framing
+  // both together shrinks it to a knot in the middle of the card.
+  const map = fitToBox(trail, W, H, PAD);
   const maxMass = Math.max(1, ...nodes.map((n) => n.mass));
   const pts = trail.map((p, i) => ({
     ...map(p),

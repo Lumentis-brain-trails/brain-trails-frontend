@@ -40,13 +40,11 @@ export function ReviewTrail({
   const { points } = analysis;
 
   const { mapped, map } = useMemo(() => {
-    const nodes = (analysis.landscape?.positions ?? []).map(([x, y], i) => ({
-      x,
-      y,
-      mass: analysis.landscape?.masses[i] ?? 0,
-    }));
+    // Framed on the path, not on the cover (see TrailPlot): the layout spreads far
+    // wider than any trail drawn on it, and framing both spends the picture on
+    // landscape the session never reached. Regions outside the frame are clipped.
     const map = fitToBox(
-      [...points.map((p) => ({ x: p.pc1, y: p.pc2 })), ...nodes],
+      points.map((p) => ({ x: p.pc1, y: p.pc2 })),
       W,
       H,
       PAD
@@ -59,7 +57,7 @@ export function ReviewTrail({
       })),
       map,
     };
-  }, [analysis.landscape, points]);
+  }, [points]);
 
   // The block's own stretch of the ribbon, in the same time fractions the ribbon is
   // drawn with. No window inside the block leaves an empty range, which dims all of
