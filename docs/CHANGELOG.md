@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- The trail picture is readable again. It is framed on the path instead of on the
+  whole Ball Mapper layout, which is three times wider than any trail drawn on it -
+  the trail used to occupy under a third of the picture, and the bulk of its windows
+  under a tenth. A long session is now summarised in time rather than drawn window by
+  window: each sample is the mean of the windows it stands for, so a 40-minute
+  recording is a path you can follow instead of a ball of yarn, and no window is
+  dropped. The ground keeps only the regions the path passed through and carries one
+  opacity for the whole of it, so regions union instead of stacking into grey fog.
+  The same framing fix applies to the review trail and the list thumbnails.
+
 - A new mark: the entry screen's two ribbons folded into one soft disc of light,
   the warm half and the cool half held apart by an S-shaped trail that runs off
   both ends. It replaces the trefoil knot, and with it the last blue in the

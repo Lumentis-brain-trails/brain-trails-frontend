@@ -3,29 +3,47 @@
 import { useMemo } from "react";
 import { useChartTheme } from "@/lib/theme";
 import { fitToBox } from "@/lib/thumb";
+import { trailSamples, visitedRegions } from "@/lib/trailDraw";
 import type { Analysis } from "@/lib/types";
 import { TrailRibbon } from "./TrailRibbon";
 
 const W = 720;
 const H = 440;
-const PAD = 34;
+const PAD = 28;
 /** Stroke width of the ribbon, in viewBox units. */
 const WIDTH = 6;
-/** How far a region's blur reaches, in multiples of the cover's radius. */
-const REACH = 2.2;
-/** Ink a single region can lay down; they stack, so basins darken. */
-const REGION_INK = 0.28;
+/** About this many samples make a path you can still follow with your eye. */
+const SAMPLES = 70;
+/** How far a region's blur reaches, in multiples of the cover's kernel width. */
+const REACH = 1.5;
+/** How close to the path a region must come to be part of the ground. */
+const VISITED = 0.8;
+/** Ink the whole ground may lay down. One value for the group: regions union. */
+const GROUND_INK = 0.18;
+/** Above this many samples the per-window dots stop being readable. */
+const DOTS_UP_TO = 200;
 const GRADIENT_ID = "trail-region";
 
 /**
- * The trail, drawn on the terrain it moved over.
+ * The trail, drawn on the ground it moved over.
  *
- * The ground is the session's own energy landscape: one soft blob per region of
- * the Ball Mapper cover, wide as the cover's own radius and as dark as the time
- * spent there. Where the session settled, blobs overlap and the ground darkens
- * into a basin; a pale corridor between two of them is a crossing. That is the
- * same sum of Gaussians `lib/landscape.ts` integrates for the contour on the
- * NeuroMetrics page, drawn declaratively instead of sampled onto a grid.
+ * Three decisions make this picture legible, and all three are about drawing, never
+ * about what was measured:
+ *
+ * - **It is framed on the path**, not on the cover. A drawn position is a weighted
+ *   mean of region centres, so the trail always sits well inside the layout; framing
+ *   both together spent two thirds of the picture on empty landscape.
+ * - **A long session is summarised in time** (`trailSamples`): one sample per run of
+ *   windows rather than one per window. Every window still pulls on the sample that
+ *   covers it.
+ * - **The ground is only where the session went** (`visitedRegions`), and the whole
+ *   of it carries a single opacity, so overlapping regions union instead of
+ *   compounding. They used to stack without a ceiling and a busy cover turned into
+ *   grey fog that said nothing.
+ *
+ * A region is wide as the time spent in it and the ground darkens where they meet:
+ * that is the same sum of Gaussians `lib/landscape.ts` integrates for the contour on
+ * the NeuroMetrics page, drawn declaratively instead of sampled onto a grid.
  *
  * There used to be a second view of the same data - the field raised into a 3D
  * terrain you walked with a camera. It was a beautiful demo and a poor instrument:
@@ -48,26 +66,32 @@ export function TrailPlot({
   const theme = useChartTheme();
   const landscape = analysis.landscape;
 
-  const { points, regions, reach } = useMemo(() => {
-    const nodes = (landscape?.positions ?? []).map(([x, y], i) => ({
-      x,
-      y,
-      mass: landscape?.masses[i] ?? 0,
-    }));
-    const trail = analysis.points.map((p) => ({ x: p.pc1, y: p.pc2 }));
-    const map = fitToBox([...trail, ...nodes], W, H, PAD);
+  const { points, regions, reach, dots } = useMemo(() => {
+    const samples = trailSamples(analysis.points, SAMPLES);
+    const sigma = landscape?.sigma ?? 0;
+    const nodes = visitedRegions(
+      (landscape?.positions ?? []).map(([x, y], i) => ({
+        x,
+        y,
+        mass: landscape?.masses[i] ?? 0,
+      })),
+      samples,
+      sigma * REACH * VISITED
+    );
+    const map = fitToBox(samples, W, H, PAD);
     // fitToBox scales both axes alike, so one unit of the layout is this many
-    // viewBox units - which is what turns the cover's radius into a blur radius.
+    // viewBox units - which is what turns the kernel width into a blur radius.
     const unit = map({ x: 1, y: 0 }).x - map({ x: 0, y: 0 }).x;
     const heaviest = Math.max(1, ...nodes.map((n) => n.mass));
     return {
-      points: analysis.points.map((p, i) => ({
-        ...map({ x: p.pc1, y: p.pc2 }),
-        u: i / Math.max(1, analysis.points.length - 1),
-        t: p.t_start,
+      points: samples.map((s, i) => ({
+        ...map(s),
+        u: i / Math.max(1, samples.length - 1),
+        t: s.t,
       })),
       regions: nodes.map((n) => ({ ...map(n), weight: n.mass / heaviest })),
-      reach: (landscape?.sigma ?? 0) * unit * REACH,
+      reach: sigma * unit * REACH,
+      dots: samples.length <= DOTS_UP_TO,
     };
   }, [analysis.points, landscape]);
 
@@ -93,23 +117,25 @@ export function TrailPlot({
           <stop offset="100%" stopColor={theme.ink} stopOpacity={0} />
         </radialGradient>
       </defs>
-      {reach > 0 &&
-        regions.map((region, i) => (
-          <circle
-            key={i}
-            cx={region.x}
-            cy={region.y}
-            r={reach}
-            fill={`url(#${GRADIENT_ID})`}
-            opacity={REGION_INK * (0.35 + 0.65 * region.weight)}
-          />
-        ))}
+      {reach > 0 && (
+        <g opacity={GROUND_INK}>
+          {regions.map((region, i) => (
+            <circle
+              key={i}
+              cx={region.x}
+              cy={region.y}
+              r={reach * (0.5 + 0.9 * Math.sqrt(region.weight))}
+              fill={`url(#${GRADIENT_ID})`}
+            />
+          ))}
+        </g>
+      )}
       <TrailRibbon
         points={points}
         stops={theme.trail}
         width={WIDTH}
         casing="var(--surface)"
-        showWindows
+        showWindows={dots}
         windowFill="var(--surface)"
       />
       {points.map((p, i) => (

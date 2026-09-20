@@ -53,9 +53,25 @@ in a list - it is the same object, built from `lib/trailPath.ts`:
   path turning into beads. Thumbnails leave them off: at that size they are noise.
 - **The ends are marked.** An open ring in `--trail-a` where it starts, a filled dot
   with a soft halo in `--trail-d` where it ends.
-- **The ground is the session's own landscape**, and stays neutral: one soft blob
-  per region of the Ball Mapper cover, as wide as the cover's radius and as dark as
-  the time spent there, so overlapping blobs darken into a basin. One flat picture,
+- **The picture is framed on the path**, never on the cover. A drawn position is a
+  weighted mean of region centres, so a trail always sits well inside the layout it
+  was drawn on; framing both together spent two thirds of the picture on landscape
+  the session never reached and left the trail a knot in the middle. Regions that
+  fall outside the frame are clipped, which is the right reading: you see the part
+  of the landscape you were in.
+- **A long session is summarised in time**, not sub-sampled (`lib/trailDraw.ts`,
+  `trailSamples`). One window per second is thousands of ordered points crossing the
+  same middle again and again - a ball of yarn at any zoom - so each drawn sample is
+  the mean of the windows it stands for, about 70 samples in all. Every window still
+  pulls on the sample that covers it, so an excursion bends the path instead of
+  vanishing with the windows a decimation would have skipped. A recording short
+  enough to draw whole is drawn whole, and keeps its per-window dots.
+- **The ground is the session's own landscape**, and stays neutral: one soft blob per
+  region of the Ball Mapper cover, as wide as the time spent there. Only the regions
+  the path actually passed through are drawn (`visitedRegions`), and the whole ground
+  carries a single opacity, so overlapping regions union into a basin instead of
+  compounding. They used to stack with no ceiling, one blob per region of the entire
+  cover, and a busy session turned into grey fog that said nothing. One flat picture,
   no camera: the 3D terrain that used to sit behind a toggle read as topography the
   arbitrary units do not support, and hid half the trail behind a ridge.
 
