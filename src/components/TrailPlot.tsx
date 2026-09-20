@@ -1,32 +1,42 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useChartTheme } from "@/lib/theme";
+import { fitToBox } from "@/lib/thumb";
 import type { Analysis } from "@/lib/types";
-import { densityField, energyField } from "@/lib/landscape";
-import { trailColorscale, useChartTheme } from "@/lib/theme";
-import { Segmented } from "./ui";
+import { TrailRibbon } from "./TrailRibbon";
 
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
-const TerrainScene = dynamic(
-  () => import("./TerrainScene").then((m) => m.TerrainScene),
-  { ssr: false }
-);
+const W = 720;
+const H = 440;
+const PAD = 34;
+/** Stroke width of the ribbon, in viewBox units. */
+const WIDTH = 6;
+/** How far a region's blur reaches, in multiples of the cover's radius. */
+const REACH = 2.2;
+/** Ink a single region can lay down; they stack, so basins darken. */
+const REGION_INK = 0.28;
+const GRADIENT_ID = "trail-region";
 
 /**
  * The trail, drawn on the terrain it moved over.
  *
- * With a landscape projection the background is the session's own energy surface -
- * the negative log of where it spent its time - so a basin is a state it settled
- * into and a ridge is a crossing between two. The axes of an MDS layout carry no
- * meaning of their own, so they are unlabelled; with the older PCA projection they
- * are the components and carry the explained variance instead.
+ * The ground is the session's own energy landscape: one soft blob per region of
+ * the Ball Mapper cover, wide as the cover's own radius and as dark as the time
+ * spent there. Where the session settled, blobs overlap and the ground darkens
+ * into a basin; a pale corridor between two of them is a crossing. That is the
+ * same sum of Gaussians `lib/landscape.ts` integrates for the contour on the
+ * NeuroMetrics page, drawn declaratively instead of sampled onto a grid.
  *
- * A landscape projection can be viewed flat (the original 2D contour) or raised
- * into a 3D terrain (`TerrainScene`) - literally the same energy field, just
- * walked in with a camera instead of read off a heatmap.
+ * There used to be a second view of the same data - the field raised into a 3D
+ * terrain you walked with a camera. It was a beautiful demo and a poor instrument:
+ * height is `-log` of a relative density in arbitrary units, so the mountains
+ * invited a reading the numbers do not support, and half of the trail was hidden
+ * behind a ridge at any one camera angle. One flat picture, read at a glance, says
+ * what there is to say.
  *
- * Exploratory, not diagnostic: energy is in arbitrary units.
+ * Exploratory, not diagnostic: the ground is a relative density, in arbitrary
+ * units, and the axes of an MDS layout carry no meaning of their own, which is why
+ * they are not drawn.
  */
 export function TrailPlot({
   analysis,
@@ -36,213 +46,77 @@ export function TrailPlot({
   height?: number;
 }) {
   const theme = useChartTheme();
-  const terrain = analysis.landscape;
-  const [view, setView] = useState<"flat" | "terrain">("terrain");
-  const field = useMemo(() => {
-    if (!terrain || terrain.positions.length === 0) return null;
-    const nodes = terrain.positions.map(([x, y], i) => ({
+  const landscape = analysis.landscape;
+
+  const { points, regions, reach } = useMemo(() => {
+    const nodes = (landscape?.positions ?? []).map(([x, y], i) => ({
       x,
       y,
-      mass: terrain.masses[i] ?? 0,
+      mass: landscape?.masses[i] ?? 0,
     }));
-    return energyField(densityField(nodes, terrain.sigma));
-  }, [terrain]);
-
-  const xs = analysis.points.map((p) => p.pc1);
-  const ys = analysis.points.map((p) => p.pc2);
-  const ts = analysis.points.map((p) => p.t_start);
-
-  if (terrain && field && view === "terrain") {
-    return (
-      <div>
-        <TerrainScene
-          field={field}
-          trail={analysis.points.map((p) => ({
-            x: p.pc1,
-            y: p.pc2,
-            t: p.t_start,
-          }))}
-          theme={theme}
-          height={height}
-        />
-        <div className="mt-2 flex justify-end">
-          <Segmented
-            label="View"
-            value={view}
-            onChange={setView}
-            options={[
-              { value: "terrain" as const, label: "Terrain" },
-              { value: "flat" as const, label: "Flat" },
-            ]}
-          />
-        </div>
-      </div>
-    );
-  }
-  const [ev1, ev2] = analysis.projector_meta.ratio ?? [null, null];
-  const last = analysis.points.length - 1;
-  const axis = {
-    gridcolor: theme.hairline,
-    zerolinecolor: theme.hairline,
-    linecolor: "rgba(0,0,0,0)",
-    tickfont: { color: theme.ink3, size: 11 },
-    title: { font: { color: theme.ink3, size: 12 } },
-  };
+    const trail = analysis.points.map((p) => ({ x: p.pc1, y: p.pc2 }));
+    const map = fitToBox([...trail, ...nodes], W, H, PAD);
+    // fitToBox scales both axes alike, so one unit of the layout is this many
+    // viewBox units - which is what turns the cover's radius into a blur radius.
+    const unit = map({ x: 1, y: 0 }).x - map({ x: 0, y: 0 }).x;
+    const heaviest = Math.max(1, ...nodes.map((n) => n.mass));
+    return {
+      points: analysis.points.map((p, i) => ({
+        ...map({ x: p.pc1, y: p.pc2 }),
+        u: i / Math.max(1, analysis.points.length - 1),
+        t: p.t_start,
+      })),
+      regions: nodes.map((n) => ({ ...map(n), weight: n.mass / heaviest })),
+      reach: (landscape?.sigma ?? 0) * unit * REACH,
+    };
+  }, [analysis.points, landscape]);
 
   return (
-    <div>
-      {terrain && field && (
-        <div className="mb-2 flex justify-end">
-          <Segmented
-            label="View"
-            value={view}
-            onChange={setView}
-            options={[
-              { value: "terrain" as const, label: "Terrain" },
-              { value: "flat" as const, label: "Flat" },
-            ]}
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      style={{ height }}
+      className="w-full"
+      role="img"
+      aria-label="Trail of the recording, from the first window to the last, on the session's energy landscape"
+    >
+      <defs>
+        <radialGradient id={GRADIENT_ID}>
+          {/* A Gaussian sampled out to REACH sigmas, with its tail subtracted so
+              the blob fades to nothing at the rim instead of ending on a step. */}
+          <stop offset="0%" stopColor={theme.ink} stopOpacity={1} />
+          <stop offset="20%" stopColor={theme.ink} stopOpacity={0.9} />
+          <stop offset="35%" stopColor={theme.ink} stopOpacity={0.718} />
+          <stop offset="50%" stopColor={theme.ink} stopOpacity={0.502} />
+          <stop offset="65%" stopColor={theme.ink} stopOpacity={0.298} />
+          <stop offset="80%" stopColor={theme.ink} stopOpacity={0.135} />
+          <stop offset="90%" stopColor={theme.ink} stopOpacity={0.057} />
+          <stop offset="100%" stopColor={theme.ink} stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      {reach > 0 &&
+        regions.map((region, i) => (
+          <circle
+            key={i}
+            cx={region.x}
+            cy={region.y}
+            r={reach}
+            fill={`url(#${GRADIENT_ID})`}
+            opacity={REGION_INK * (0.35 + 0.65 * region.weight)}
           />
-        </div>
-      )}
-      <Plot
-        data={[
-          ...(field
-            ? [
-                {
-                  x: field.xs,
-                  y: field.ys,
-                  z: field.z,
-                  type: "contour" as const,
-                  colorscale: [
-                    [0, theme.terrain.fill],
-                    [0.5, theme.hairline],
-                    [1, "rgba(0,0,0,0)"],
-                  ] as [number, string][],
-                  opacity: 0.35,
-                  contours: { coloring: "fill" as const },
-                  line: { width: 0 },
-                  showscale: false,
-                  hoverinfo: "skip" as const,
-                  showlegend: false,
-                  name: "Energy",
-                },
-              ]
-            : []),
-          {
-            x: xs,
-            y: ys,
-            mode: "lines",
-            type: "scatter",
-            line: { color: theme.hairline, width: 1.5, shape: "spline" },
-            hoverinfo: "skip",
-            showlegend: false,
-          },
-          {
-            x: xs,
-            y: ys,
-            mode: "markers",
-            type: "scatter",
-            marker: {
-              color: ts,
-              colorscale: trailColorscale(theme),
-              size: 7,
-              line: { width: 0 },
-              colorbar: {
-                title: {
-                  text: "seconds",
-                  font: { color: theme.ink3, size: 11 },
-                },
-                thickness: 6,
-                len: 0.6,
-                outlinewidth: 0,
-                tickfont: { color: theme.ink3, size: 10 },
-              },
-            },
-            text: ts.map((t) => `${t.toFixed(0)} s`),
-            hoverinfo: "text",
-            hoverlabel: {
-              bgcolor: theme.ink,
-              bordercolor: theme.ink,
-              font: { color: theme.canvas },
-            },
-            showlegend: false,
-          },
-          {
-            x: [xs[0]],
-            y: [ys[0]],
-            mode: "markers",
-            type: "scatter",
-            name: "Start",
-            marker: { symbol: "circle", size: 12, color: theme.trailStart },
-            hoverinfo: "name",
-          },
-          {
-            x: [xs[last]],
-            y: [ys[last]],
-            mode: "markers",
-            type: "scatter",
-            name: "End",
-            marker: { symbol: "circle", size: 12, color: theme.trailEnd },
-            hoverinfo: "name",
-          },
-        ]}
-        layout={{
-          autosize: true,
-          height,
-          margin: { l: 48, r: 16, t: 8, b: 44 },
-          xaxis: terrain
-            ? {
-                ...axis,
-                showticklabels: false,
-                title: { ...axis.title, text: "" },
-              }
-            : {
-                ...axis,
-                title: {
-                  ...axis.title,
-                  text:
-                    ev1 != null ? `PC1 · ${(ev1 * 100).toFixed(0)}%` : "PC1",
-                },
-              },
-          yaxis: terrain
-            ? {
-                ...axis,
-                showticklabels: false,
-                title: { ...axis.title, text: "" },
-              }
-            : {
-                ...axis,
-                title: {
-                  ...axis.title,
-                  text:
-                    ev2 != null ? `PC2 · ${(ev2 * 100).toFixed(0)}%` : "PC2",
-                },
-              },
-          paper_bgcolor: "rgba(0,0,0,0)",
-          modebar: {
-            bgcolor: "rgba(0,0,0,0)",
-            color: theme.ink3,
-            activecolor: theme.ink,
-          },
-          plot_bgcolor: "rgba(0,0,0,0)",
-          font: { family: "-apple-system, BlinkMacSystemFont, system-ui" },
-          legend: {
-            orientation: "h",
-            x: 0,
-            y: 1.08,
-            font: { color: theme.ink3, size: 11 },
-          },
-          transition: { duration: 240, easing: "cubic-in-out" },
-        }}
-        config={{
-          displaylogo: false,
-          responsive: true,
-          modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d"],
-          toImageButtonOptions: { filename: "brain-trail" },
-        }}
-        style={{ width: "100%" }}
-        useResizeHandler
+        ))}
+      <TrailRibbon
+        points={points}
+        stops={theme.trail}
+        width={WIDTH}
+        casing="var(--surface)"
+        showWindows
+        windowFill="var(--surface)"
       />
-    </div>
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={9} fill="transparent">
+          <title>{`${Math.round(p.t)} s`}</title>
+        </circle>
+      ))}
+    </svg>
   );
 }
