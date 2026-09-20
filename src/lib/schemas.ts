@@ -46,6 +46,23 @@ export const accountSchema = z.object({
 });
 
 /**
+ * The four answers registration does ask for.
+ *
+ * Not a compromise between "everything" and "nothing": these are exactly the fields an
+ * EEG recording cannot be interpreted without, which is why the backend refuses a
+ * session until they exist (422 `profile_required`). Asking them at the door costs four
+ * short fields and saves the person being stopped later with the headband already on.
+ * Everything else - coffee, sleep, medications, the beta credentials - stays on the
+ * account page, where nobody is waiting behind you.
+ */
+export const basicsSchema = profileSchema.pick({
+  full_name: true,
+  birth_year: true,
+  sex_at_birth: true,
+  handedness: true,
+});
+
+/**
  * The one question registration still asks beyond the account itself.
  *
  * Wanting in is not being in: the admin board still decides, after the account exists.
@@ -61,6 +78,7 @@ export const betaSchema = z.object({
 export type ProfileForm = z.output<typeof profileSchema>;
 export type ProfileFormInput = z.input<typeof profileSchema>;
 export type AccountForm = z.output<typeof accountSchema>;
+export type BasicsForm = z.output<typeof basicsSchema>;
 export type BetaForm = z.output<typeof betaSchema>;
 
 /** An empty string means "not answered", which the API spells `null`. */
@@ -68,20 +86,22 @@ const clean = (v: string | undefined) =>
   v === "" || v === undefined ? null : v;
 
 /**
- * Registration: four answers and nothing else (V3-0008, amended).
+ * Registration: the account, who you are in four fields, the opt-in, the consent.
  *
- * The profile and the beta credentials are no longer sent from here - they are written
- * later from the account page, so a queue at a stand keeps moving.
+ * The rest of the profile and all of the beta credentials are written later from the
+ * account page, so a queue at a stand keeps moving.
  */
 export function toRegisterPayload(
   account: AccountForm,
   consent: boolean,
-  beta: BetaForm
+  beta: BetaForm,
+  basics: BasicsForm
 ) {
   return {
     email: account.email,
     password: account.password,
     consent,
+    profile: basics,
     wants_beta: beta.wants_beta,
     // Only meaningful alongside the opt-in: asking why someone wants in and then storing
     // the answer for someone who said no would be noise on the board.
