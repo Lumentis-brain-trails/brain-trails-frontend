@@ -42,11 +42,24 @@ export const videoConfigSchema = z
       .default([]),
     endOn: z.enum(["ended", "duration"]).default("ended"),
     durationMs: z.number().int().positive().optional(),
+    /**
+     * Play only a stretch of the file, in media seconds. This is what splitting a clip
+     * on the builder's timeline writes: two blocks over one file, each with its part.
+     */
+    start_s: z.number().min(0).optional(),
+    end_s: z.number().positive().optional(),
+  })
+  .refine((c) => c.end_s === undefined || c.end_s > (c.start_s ?? 0), {
+    message: "The video must stop after it starts.",
+    path: ["end_s"],
   })
   .refine(hasMediaRef, { message: MEDIA_REF_MESSAGE, path: ["src"] })
   .meta(MEDIA_REF_JSON);
 
 export type VideoConfig = z.infer<typeof videoConfigSchema>;
+
+/** How far before a trimmed start a frame may be and still count as the clip's first. */
+const SEEK_SLACK_S = 0.1;
 
 interface VideoFrameMetadata {
   presentationTime: number;
@@ -71,6 +84,7 @@ function VideoRenderer({
   const doneRef = useRef(false);
   const onsetRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const startS = config.start_s ?? 0;
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
@@ -121,7 +135,13 @@ function VideoRenderer({
       );
     };
     if (typeof video.requestVideoFrameCallback === "function") {
-      const handle = video.requestVideoFrameCallback((_now, metadata) => {
+      let handle = 0;
+      const onFrame = (_now: number, metadata: VideoFrameMetadata) => {
+        // a trimmed clip may present a frame from before its start while it seeks there
+        if (metadata.mediaTime < startS - SEEK_SLACK_S) {
+          handle = video.requestVideoFrameCallback!(onFrame);
+          return;
+        }
         const gap =
           metadata.expectedDisplayTime === undefined
             ? FRAME_MS
@@ -132,7 +152,8 @@ function VideoRenderer({
           media_time_ms: metadata.mediaTime * 1000,
           ...timingMeta("rvfc", Math.min(gap, FRAME_MS)),
         });
-      });
+      };
+      handle = video.requestVideoFrameCallback(onFrame);
       return () => video.cancelVideoFrameCallback?.(handle);
     }
     const onPlaying = () =>
@@ -142,7 +163,7 @@ function VideoRenderer({
       });
     video.addEventListener("playing", onPlaying);
     return () => video.removeEventListener("playing", onPlaying);
-  }, [config.media_id, emit]);
+  }, [config.media_id, emit, startS]);
 
   // Cue markers, at frame precision where the browser offers it.
   useEffect(() => {
@@ -202,7 +223,11 @@ function VideoRenderer({
 
     const onPlay = transport("play");
     const onPause = transport("pause");
-    const onSeek = transport("seek");
+    const seek = transport("seek");
+    // the jump to a trimmed clip's start is the player's doing, not a seek to report
+    const onSeek = () => {
+      if (onsetRef.current) seek();
+    };
     const onStall = transport("stall");
     const onEnded = () => {
       emit({
@@ -230,6 +255,31 @@ function VideoRenderer({
     };
   }, [config.endOn, emit, finish]);
 
+  // A trimmed clip ends where its stretch ends, at frame precision where there is one.
+  useEffect(() => {
+    const video = videoRef.current;
+    const endS = config.end_s;
+    if (!video || endS === undefined || config.endOn !== "ended") return;
+    const check = (mediaTimeS: number) => {
+      if (mediaTimeS < endS) return false;
+      video.pause();
+      finish();
+      return true;
+    };
+    if (typeof video.requestVideoFrameCallback === "function") {
+      let handle = 0;
+      const onFrame = (_now: number, metadata: VideoFrameMetadata) => {
+        if (!check(metadata.mediaTime))
+          handle = video.requestVideoFrameCallback!(onFrame);
+      };
+      handle = video.requestVideoFrameCallback(onFrame);
+      return () => video.cancelVideoFrameCallback?.(handle);
+    }
+    const onTimeUpdate = () => check(video.currentTime);
+    video.addEventListener("timeupdate", onTimeUpdate);
+    return () => video.removeEventListener("timeupdate", onTimeUpdate);
+  }, [config.end_s, config.endOn, finish]);
+
   // A fixed-duration step ends on its own clock, whatever the video does.
   useEffect(() => {
     if (config.endOn !== "duration" || !config.durationMs) return;
@@ -244,7 +294,14 @@ function VideoRenderer({
       ) : (
         <video
           ref={videoRef}
-          src={config.src ?? undefined}
+          // a media fragment: the browser opens the file at the stretch's first frame
+          src={
+            config.src
+              ? startS > 0
+                ? `${config.src}#t=${startS}`
+                : config.src
+              : undefined
+          }
           poster={config.poster}
           autoPlay
           playsInline

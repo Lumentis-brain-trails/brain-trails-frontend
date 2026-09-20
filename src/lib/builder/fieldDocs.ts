@@ -93,10 +93,20 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
       label: "The block ends",
       help: "When the video finishes, or after a fixed time even if the video is longer.",
       options: { ended: "When the video ends", duration: "After a fixed time" },
+      advanced: true,
     },
     durationMs: {
       label: "Fixed time (ms)",
       help: "Only used when the block ends after a fixed time.",
+      advanced: true,
+    },
+    start_s: {
+      label: "Start at (s)",
+      help: "Play from this second of the video instead of its beginning. Splitting a clip on the timeline fills this in.",
+    },
+    end_s: {
+      label: "Stop at (s)",
+      help: "Stop at this second of the video instead of its end.",
     },
     cues: {
       label: "Moments to mark",

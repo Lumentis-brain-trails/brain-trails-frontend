@@ -50,6 +50,7 @@ import {
   moveClip,
   removeAt,
   replaceAt,
+  splitAt,
   ungroupAt,
 } from "@/lib/builder/draft";
 import { useHistory } from "@/lib/builder/history";
@@ -402,6 +403,11 @@ export default function BuilderPage({
               clip={clips[selected[0] ?? 0]}
               media={mediaById}
               onPlay={() => setPreview(tree)}
+              onSplit={(atS) =>
+                edit((current) =>
+                  splitAt(current, selected[0] ?? 0, atS, mediaById)
+                )
+              }
             />
           </div>
 

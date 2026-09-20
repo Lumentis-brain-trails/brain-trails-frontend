@@ -8,9 +8,13 @@
  * kind shows its cover frame, which stays still - the game itself only runs in Preview,
  * where it has the whole screen and its real timing.
  */
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useRef } from "react";
 import { KindCover } from "@/components/builder/KindCover";
 import { Button } from "@/components/ui";
+import { api } from "@/lib/api";
+import type { Media } from "@/lib/types";
 import { type BinMedia, type Clip, formatClock } from "@/lib/builder/draft";
 import { identityOf } from "@/lib/builder/kinds";
 
@@ -36,14 +40,34 @@ export function Monitor({
   clip,
   media,
   onPlay,
+  onSplit,
 }: {
   /** The clip to show: the selected one, or the first when nothing is selected. */
   clip: Clip | undefined;
   media: Record<string, BinMedia>;
   /** Run the whole protocol full screen, without a headband. */
   onPlay: () => void;
+  /** Cut the shown video in two at this media second. */
+  onSplit?: (atS: number) => void;
 }) {
   const t = useTranslations("builder.monitor");
+  const player = useRef<HTMLVideoElement>(null);
+  const shownConfig = (
+    clip?.node.type === "block" ? clip.node.config : {}
+  ) as Record<string, unknown>;
+  const videoId =
+    clip?.node.type === "block" &&
+    clip.node.kind === "video" &&
+    typeof shownConfig.media_id === "string"
+      ? shownConfig.media_id
+      : null;
+  // The list links stills only; the file itself is one request, made for the clip shown.
+  const file = useQuery({
+    queryKey: ["media", videoId, "file"],
+    queryFn: () => api.get<Media>(`media/${videoId}`),
+    enabled: videoId !== null,
+    staleTime: 10 * 60_000,
+  });
   if (!clip)
     return (
       <div className="flex aspect-video w-full items-center justify-center rounded-[var(--radius-card)] bg-[#080b14] p-6 text-center">
@@ -58,18 +82,21 @@ export function Monitor({
   const item =
     typeof config.media_id === "string" ? media[config.media_id] : undefined;
   const words = isBlock ? wordsOf(kind, config) : null;
+  const start = typeof config.start_s === "number" ? config.start_s : 0;
+  const end = typeof config.end_s === "number" ? config.end_s : undefined;
+  const trimmed = start > 0 || end !== undefined;
   const identity = identityOf(kind);
 
   return (
     <div className="flex flex-col gap-2">
       <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-[#080b14]">
-        {item?.preview_url ? (
+        {videoId && file.data?.url ? (
           <video
-            key={item.preview_url}
-            src={item.preview_url}
-            poster={item.cover_url ?? undefined}
-            muted
-            loop
+            ref={player}
+            // the clip's own stretch: the browser opens and stops the file at its ends
+            key={`${file.data.url}#${start}-${end ?? ""}`}
+            src={`${file.data.url}#t=${start}${end !== undefined ? `,${end}` : ""}`}
+            poster={item?.cover_url ?? undefined}
             controls
             playsInline
             className="aspect-video w-full"
@@ -99,9 +126,28 @@ export function Monitor({
           <p className="type-caption truncate text-ink-3">
             {isBlock ? identity.label : t("group")} · {clip.variable ? "~" : ""}
             {formatClock(clip.seconds)}
-            {isBlock && identity.hint ? ` · ${identity.hint}` : ""}
+            {trimmed
+              ? ` · ${t("trimmed", {
+                  from: formatClock(start),
+                  to: end !== undefined ? formatClock(end) : t("the_end"),
+                })}`
+              : isBlock && identity.hint
+                ? ` · ${identity.hint}`
+                : ""}
           </p>
         </div>
+        {videoId && onSplit && (
+          <Button
+            size="sm"
+            variant="secondary"
+            title={t("split_hint")}
+            onClick={() => {
+              if (player.current) onSplit(player.current.currentTime);
+            }}
+          >
+            {t("split")}
+          </Button>
+        )}
         <Button size="sm" variant="secondary" onClick={onPlay}>
           {t("play")}
         </Button>

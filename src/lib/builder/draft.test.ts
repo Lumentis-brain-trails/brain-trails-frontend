@@ -18,6 +18,7 @@ import {
   removeAt,
   replaceAt,
   setGroupRepeat,
+  splitAt,
   totalSeconds,
   ungroupAt,
 } from "./draft";
@@ -170,4 +171,32 @@ test("every element the bin offers is a block its own kind accepts", () => {
     );
     expect(parsed.success, element.kind).toBe(true);
   }
+});
+
+test("splitting a video gives two clips over one file, and the lengths add up", () => {
+  const media = {
+    m1: { id: "m1", kind: "video", title: "Sea", duration_s: 60 },
+  };
+  const video = {
+    type: "block",
+    id: "sea",
+    kind: "video",
+    label: "Sea",
+    config: { media_id: "m1" },
+  } as BlockNode;
+  const cut = splitAt(tree(video), 0, 20, media);
+  const [first, second] = cut.root.children as BlockNode[];
+  expect(first.config).toMatchObject({ media_id: "m1", end_s: 20 });
+  expect(second.config).toMatchObject({ media_id: "m1", start_s: 20 });
+  expect(second.id).not.toBe(first.id);
+  expect(clipSeconds(first, media) + clipSeconds(second, media)).toBe(60);
+  // cutting the second part again keeps it inside its own stretch
+  const again = splitAt(cut, 1, 45, media);
+  expect((again.root.children[1] as BlockNode).config).toMatchObject({
+    start_s: 20,
+    end_s: 45,
+  });
+  // a cut outside the clip, or on something that is not a clip, changes nothing
+  expect(splitAt(cut, 0, 30, media)).toBe(cut);
+  expect(splitAt(tree(block("a")), 0, 5)).toEqual(tree(block("a")));
 });
