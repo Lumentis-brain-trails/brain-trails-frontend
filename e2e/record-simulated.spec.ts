@@ -96,12 +96,12 @@ test("a protocol is built on the timeline, published and played", async ({
 
   // the draft autosaves, then Publish freezes it as version 1
   await expect(page.getByText("Saved")).toBeVisible({ timeout: 15_000 });
+  // the inspector has fields of its own, so the dialog's are addressed inside it
   await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await page.getByLabel("Name").fill("E2E built protocol");
-  await page
-    .getByRole("button", { name: "Publish", exact: true })
-    .last()
-    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill("E2E built protocol");
+  await dialog.getByRole("button", { name: /^Publish/ }).click();
+  await expect(dialog).toBeHidden({ timeout: 15_000 });
 
   await page.goto("/protocols");
   await expect(
