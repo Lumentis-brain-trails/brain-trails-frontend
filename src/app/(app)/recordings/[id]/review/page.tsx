@@ -184,40 +184,42 @@ export default function ReviewPage({
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <section className="space-y-4">
-          <div className="overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-black">
-            {currentMedia?.url ? (
-              <video
-                ref={video}
-                src={currentMedia.url}
-                poster={currentMedia.poster_url ?? undefined}
-                controls
-                className="aspect-video w-full"
-                onPlay={() => {
-                  following.current = true;
-                }}
-                onPause={() => {
-                  following.current = false;
-                }}
-                onTimeUpdate={(event) => {
-                  if (!following.current || !at) return;
-                  const back = sessionTimeAt(
-                    windows,
-                    at.blockId,
-                    event.currentTarget.currentTime
-                  );
-                  if (back !== null) setT(back);
-                }}
-              />
-            ) : (
-              <div className="flex aspect-video items-center justify-center text-ink-3">
-                <p className="type-caption">
-                  {currentBlock
-                    ? `${currentBlock.label} — nothing on screen to replay`
-                    : "No video at this moment"}
-                </p>
-              </div>
-            )}
-          </div>
+          {windows.length > 0 && (
+            <div className="overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-black">
+              {currentMedia?.url ? (
+                <video
+                  ref={video}
+                  src={currentMedia.url}
+                  poster={currentMedia.poster_url ?? undefined}
+                  controls
+                  className="aspect-video w-full"
+                  onPlay={() => {
+                    following.current = true;
+                  }}
+                  onPause={() => {
+                    following.current = false;
+                  }}
+                  onTimeUpdate={(event) => {
+                    if (!following.current || !at) return;
+                    const back = sessionTimeAt(
+                      windows,
+                      at.blockId,
+                      event.currentTarget.currentTime
+                    );
+                    if (back !== null) setT(back);
+                  }}
+                />
+              ) : (
+                <div className="flex aspect-video items-center justify-center text-ink-3">
+                  <p className="type-caption">
+                    {currentBlock
+                      ? `${currentBlock.label} — nothing on screen to replay`
+                      : "No video at this moment"}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <Scrubber
             duration={duration}
@@ -288,10 +290,14 @@ export default function ReviewPage({
                   <thead className="text-ink-3">
                     <tr>
                       <th className="text-left font-medium">Block</th>
-                      <th className="text-right font-medium">Alpha</th>
-                      <th className="text-right font-medium">Theta/beta</th>
-                      <th className="text-right font-medium">Asym.</th>
-                      <th className="text-right font-medium">From baseline</th>
+                      <th className="pl-3 text-right font-medium">Alpha</th>
+                      <th className="pl-3 text-right font-medium">
+                        Theta/beta
+                      </th>
+                      <th className="pl-3 text-right font-medium">Asym.</th>
+                      <th className="pl-3 text-right font-medium">
+                        From baseline
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -310,16 +316,16 @@ export default function ReviewPage({
                             </span>
                           ) : null}
                         </td>
-                        <td className="text-right tabular-nums">
+                        <td className="pl-3 text-right tabular-nums">
                           {fmt(block.bands?.alpha)}
                         </td>
-                        <td className="text-right tabular-nums">
+                        <td className="pl-3 text-right tabular-nums">
                           {fmt(block.ratios?.theta_beta)}
                         </td>
-                        <td className="text-right tabular-nums">
+                        <td className="pl-3 text-right tabular-nums">
                           {fmt(block.asymmetry)}
                         </td>
-                        <td className="text-right tabular-nums">
+                        <td className="pl-3 text-right tabular-nums">
                           {fmt(block.baseline_distance)}
                         </td>
                       </tr>

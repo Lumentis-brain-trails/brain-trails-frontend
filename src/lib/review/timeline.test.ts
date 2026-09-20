@@ -85,6 +85,8 @@ test("the block on screen at a moment, and the ticks worth drawing", () => {
   expect(blockAt(blocks, 30)?.blockId).toBe("base");
   expect(blockAt(blocks, 80)?.blockId).toBe("clip");
   expect(blockAt(blocks, 61.2)).toBeNull();
+  // the second before the first block belongs to it, not to a gap
+  expect(blockAt(blocks, 0)?.blockId).toBe("base");
   expect(ticks(timeline).map((tick) => tick.type)).toEqual([
     "stimulus_onset",
     "pause",

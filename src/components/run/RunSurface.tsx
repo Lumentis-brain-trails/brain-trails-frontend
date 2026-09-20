@@ -9,6 +9,9 @@
  * the first real test (2026-09-19), and a run must not depend on it. The wake lock is
  * held while mounted and taken again when the tab comes back, because the browser drops
  * it whenever the page is hidden.
+ *
+ * Both controls sit at the bottom edge: the top corners belong to the runner's own
+ * header (the block's name on the left, Stop on the right), which they used to cover.
  */
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect } from "react";
@@ -70,12 +73,12 @@ export function RunSurface({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={() => void enterFullscreen()}
-        className="fixed top-4 left-4 z-50 rounded-full bg-surface-2/90 px-3 py-1.5 text-[12px] font-medium text-ink"
+        className="fixed right-4 bottom-4 z-50 rounded-full bg-surface-2/90 px-3 py-1.5 text-[12px] font-medium text-ink"
       >
         {t("fullscreen")}
       </button>
       <div
-        className="pointer-events-none fixed top-4 right-4 z-50 flex items-center gap-2 rounded-full bg-surface-2/90 px-3 py-1.5 text-[12px] font-medium text-ink"
+        className="pointer-events-none fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-surface-2/90 px-3 py-1.5 text-[12px] font-medium text-ink"
         role="status"
         aria-label={t("recording")}
       >

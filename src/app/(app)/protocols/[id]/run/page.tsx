@@ -319,8 +319,11 @@ export default function RunProtocolPage({
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <h1 className="type-title mb-1">{protocol.data.title}</h1>
+        {/* a one-block protocol named after its block would say its title twice */}
         <p className="mb-6 text-ink-2">
-          {protocol.data.outline.map((s) => s.label).join(" → ")}
+          {protocol.data.outline.length > 1
+            ? protocol.data.outline.map((s) => s.label).join(" → ")
+            : protocol.data.summary}
         </p>
         {error && (
           <div className="mb-6">

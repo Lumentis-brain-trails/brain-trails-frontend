@@ -223,10 +223,13 @@ export default function RecordingDetailPage({
             )}
           </div>
 
-          <aside className="space-y-6">
-            <section>
-              <SectionTitle>Analysis</SectionTitle>
-              <Card inset>
+          <aside className="flex flex-col gap-6">
+            {/* how the trail was computed is for whoever wants it, not the first thing read */}
+            <details className="group order-last">
+              <summary className="type-caption cursor-pointer px-1 font-medium text-ink-3 hover:text-ink">
+                Technical details
+              </summary>
+              <Card inset className="mt-2">
                 {a ? (
                   <>
                     <KeyValue label="Cleaner" value={a.cleaner_name} />
@@ -270,7 +273,7 @@ export default function RecordingDetailPage({
                   {a.projector_meta.cleaner_notes.join(" · ")}
                 </p>
               ) : null}
-            </section>
+            </details>
 
             {rec?.status === "done" && (
               <section>
