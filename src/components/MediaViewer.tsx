@@ -11,6 +11,9 @@
  * archived instead, so past sessions keep replaying what they showed (backend
  * `DELETE /media/{id}`). The usage call tells the reader which of the two will happen
  * before they confirm, rather than surprising them with the result.
+ *
+ * Sharing is reversible here too: what was offered to the community can be taken back,
+ * and a request still waiting can be cancelled (`POST /media/{id}/unpublish`).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -113,7 +116,23 @@ export function MediaViewer({
     },
   });
 
+  const withdraw = useMutation({
+    mutationFn: () => api.post<Media>(`media/${id}/unpublish`, {}),
+    onSuccess: (updated) => {
+      toast(
+        "success",
+        updated.review_state === "none" && updated.visibility === "workspace"
+          ? "Taken back: it is yours alone again."
+          : "Done."
+      );
+      void queryClient.invalidateQueries({ queryKey: ["media"] });
+    },
+  });
+
   const played = usage.data ? usage.data.protocols.length : 0;
+  const waiting = item.data?.review_state === "pending";
+  const shared =
+    item.data !== undefined && item.data.visibility !== "workspace";
 
   return (
     <Sheet
@@ -170,13 +189,31 @@ export function MediaViewer({
               </div>
             </div>
           ) : (
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+              {(shared || waiting) && (
+                <Button
+                  variant="ghost"
+                  onClick={() => withdraw.mutate()}
+                  disabled={withdraw.isPending}
+                >
+                  {waiting ? "Cancel the request" : "Take it back"}
+                </Button>
+              )}
               <Button variant="ghost" onClick={() => setConfirming(true)}>
                 Delete
               </Button>
             </div>
           )}
+          {shared && (
+            <p className="type-caption text-ink-3">
+              Taking it back keeps it out of the community; protocols you
+              already shared go on playing it.
+            </p>
+          )}
           {remove.error && <ErrorBanner message={errorText(remove.error)} />}
+          {withdraw.error && (
+            <ErrorBanner message={errorText(withdraw.error)} />
+          )}
         </div>
       )}
     </Sheet>

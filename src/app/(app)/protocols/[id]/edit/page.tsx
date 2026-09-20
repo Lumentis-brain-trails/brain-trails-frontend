@@ -9,6 +9,10 @@
  * tree (`lib/builder/draft.ts`) and the page owns three things only: what is selected,
  * the history, and the save.
  *
+ * A protocol starts here, not in the catalog: `/protocols/new/edit` opens an unsaved
+ * builder and the row is created by the first autosave, once something is on the
+ * timeline. Opening the builder and walking away leaves nothing behind.
+ *
  * Saving is optimistic-concurrency: the draft carries a revision, every `PUT` names the
  * one it started from, and a 409 means someone else saved in between - the page then
  * stops autosaving and offers a reload rather than overwriting their work.
@@ -64,8 +68,12 @@ import {
   type TreeNode,
 } from "@/lib/protocol/tree";
 import type { Media } from "@/lib/types";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 
 const AUTOSAVE_MS = 1500;
+
+/** The id `/protocols/[id]/edit` carries while the protocol has never been saved. */
+const UNSAVED = "new";
 
 const EMPTY_TREE: ProtocolTree = {
   schema: 1,
@@ -84,6 +92,16 @@ function clipOfPath(path: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
+/**
+ * Whether a draft is worth a row of its own: something has been put on the timeline.
+ *
+ * An empty builder is not a protocol. Until this holds, nothing is sent to the server,
+ * so opening the builder and changing one's mind leaves no draft behind.
+ */
+function hasContent(tree: ProtocolTree): boolean {
+  return tree.root.children.length > 0;
+}
+
 export default function BuilderPage({
   params,
 }: {
@@ -92,10 +110,18 @@ export default function BuilderPage({
   const { id } = use(params);
   const t = useTranslations("builder");
   const queryClient = useQueryClient();
+  const workspace = useCurrentWorkspace();
+
+  // The id the server knows, or null while the protocol exists only in this page.
+  const [savedId, setSavedId] = useState<string | null>(
+    id === UNSAVED ? null : id
+  );
+  const unsaved = savedId === null;
 
   const detail = useQuery({
-    queryKey: ["protocol", id],
-    queryFn: () => api.get<ProtocolDetail>(`protocols/${id}`),
+    queryKey: ["protocol", savedId],
+    queryFn: () => api.get<ProtocolDetail>(`protocols/${savedId}`),
+    enabled: savedId !== null,
   });
 
   const history = useHistory<ProtocolTree>(EMPTY_TREE);
@@ -124,11 +150,14 @@ export default function BuilderPage({
   const mediaById = useMediaIndex();
   const clips = useMemo(() => clipsOf(tree, mediaById), [mediaById, tree]);
 
+  // What the last request carried, so a save is never repeated for an unchanged tree.
+  const sentRef = useRef<ProtocolTree | null>(null);
+
   const save = useMutation({
     mutationFn: async (draft: ProtocolTree) => {
       if (rev === null) throw new Error("no revision");
       const out = await api.put<{ draft_rev: number }>(
-        `protocols/${id}/draft`,
+        `protocols/${savedId}/draft`,
         { draft },
         { ifMatch: rev }
       );
@@ -142,30 +171,71 @@ export default function BuilderPage({
     },
     onError: (error) => {
       setSaving("idle");
+      sentRef.current = null; // a failed save is retried by the next edit
       if (error instanceof ApiRequestError && error.status === 409)
         setConflict(true);
     },
   });
 
-  // Autosave: one request per burst of edits, and none while a conflict is open.
+  // The first save of a protocol that has never been saved: it is born here.
+  const create = useMutation({
+    mutationFn: (draft: ProtocolTree) =>
+      api.post<ProtocolDetail>(inWorkspace("protocols", workspace), {
+        title: t("untitled"),
+        draft,
+      }),
+    onMutate: () => setSaving("saving"),
+    onSuccess: (protocol) => {
+      // The tree in hand is the one just saved: nothing to load from the server.
+      loadedFor.current = protocol.id;
+      queryClient.setQueryData(["protocol", protocol.id], protocol);
+      setSavedId(protocol.id);
+      setRev(protocol.draft_rev ?? 1);
+      setSaving("saved");
+      // The URL follows the protocol without remounting the builder: reloading the
+      // page, or sharing the link, opens the draft that now exists.
+      window.history.replaceState(null, "", `/protocols/${protocol.id}/edit`);
+      void queryClient.invalidateQueries({ queryKey: ["protocols"] });
+    },
+    onError: () => {
+      setSaving("idle");
+      sentRef.current = null;
+    },
+  });
+
+  // Autosave: one request per burst of edits, and none while a conflict is open. An
+  // unsaved protocol waits for content: an empty timeline is nothing to keep.
   const saveRef = useRef(save);
+  const createRef = useRef(create);
   useEffect(() => {
     saveRef.current = save;
+    createRef.current = create;
   });
   const dirtyRef = useRef(false);
   useEffect(() => {
-    if (rev === null || conflict || loadedFor.current === null) return;
+    if (conflict) return;
+    if (!unsaved && (rev === null || loadedFor.current === null)) return;
     if (!dirtyRef.current) {
       dirtyRef.current = true;
-      return; // the first tree is what the server already has
+      return; // the first tree is what the server already has, or nothing at all
     }
-    const timer = setTimeout(() => saveRef.current.mutate(tree), AUTOSAVE_MS);
+    const timer = setTimeout(() => {
+      if (sentRef.current === tree) return;
+      if (unsaved) {
+        if (!hasContent(tree)) return;
+        sentRef.current = tree;
+        createRef.current.mutate(tree);
+        return;
+      }
+      sentRef.current = tree;
+      saveRef.current.mutate(tree);
+    }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [conflict, rev, tree]);
+  }, [conflict, rev, tree, unsaved]);
 
   const check = useMutation({
     mutationFn: () =>
-      api.post<ValidationResult>(`protocols/${id}/validate`, {}),
+      api.post<ValidationResult>(`protocols/${savedId}/validate`, {}),
     onSuccess: setReport,
   });
 
@@ -295,13 +365,13 @@ export default function BuilderPage({
     return byClip;
   }, [report]);
 
-  if (detail.isPending)
+  if (!unsaved && detail.isPending)
     return (
       <main className="p-6">
         <Skeleton className="h-64 w-full" />
       </main>
     );
-  if (detail.isError || !detail.data)
+  if (!unsaved && (detail.isError || !detail.data))
     return (
       <main className="mx-auto max-w-xl p-6">
         <ErrorBanner message={t("not_found")} />
@@ -310,11 +380,14 @@ export default function BuilderPage({
         </Link>
       </main>
     );
-  if (!detail.data.mine)
+  if (detail.data && !detail.data.mine)
     return (
       <main className="mx-auto max-w-xl p-6">
         <ErrorBanner message={t("read_only")} />
-        <Link href={`/protocols/${id}`} className={buttonClass("secondary")}>
+        <Link
+          href={`/protocols/${savedId}`}
+          className={buttonClass("secondary")}
+        >
           {t("back")}
         </Link>
       </main>
@@ -330,18 +403,22 @@ export default function BuilderPage({
     <main className="flex h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-3 border-b border-hairline px-4 py-3">
         <Link
-          href={`/protocols/${id}`}
+          href={unsaved ? "/protocols" : `/protocols/${savedId}`}
           className="type-caption inline-flex items-center gap-1 font-medium text-accent"
         >
           <Icon name="back" className="h-3.5 w-3.5" /> {t("back")}
         </Link>
-        <h1 className="type-subhead truncate">{detail.data.title}</h1>
+        <h1 className="type-subhead truncate">
+          {detail.data?.title ?? t("untitled")}
+        </h1>
         <span className="type-caption text-ink-3" role="status">
           {saving === "saving"
             ? t("saving")
             : saving === "saved"
               ? t("saved")
-              : ""}
+              : unsaved
+                ? t("not_saved_yet")
+                : ""}
         </span>
         <div className="ml-auto flex items-center gap-2">
           <Button
@@ -360,7 +437,12 @@ export default function BuilderPage({
           >
             {t("redo")}
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => check.mutate()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => check.mutate()}
+            disabled={unsaved}
+          >
             {t("check")}
           </Button>
           <Button
@@ -370,7 +452,11 @@ export default function BuilderPage({
           >
             {t("preview")}
           </Button>
-          <Button size="sm" onClick={() => setPublishing(true)}>
+          <Button
+            size="sm"
+            onClick={() => setPublishing(true)}
+            disabled={unsaved}
+          >
             {t("publish_action")}
           </Button>
         </div>
@@ -513,7 +599,7 @@ export default function BuilderPage({
         />
       </section>
 
-      {publishing && (
+      {publishing && detail.data && (
         <PublishDialog
           protocol={detail.data}
           onClose={() => setPublishing(false)}

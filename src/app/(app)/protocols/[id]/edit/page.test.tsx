@@ -200,3 +200,62 @@ test("undo takes the last edit back", async () => {
   });
   expect(onTimeline().queryByText("Resting baseline")).toBeNull();
 });
+
+/** The builder with nothing saved yet: `/protocols/new/edit`. */
+async function renderNewBuilder() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  await act(async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={client}>
+          <Suspense fallback="loading">
+            <BuilderPage params={Promise.resolve({ id: "new" })} />
+          </Suspense>
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    );
+  });
+}
+
+test("a new protocol is kept only once something is on its timeline", async () => {
+  const created = { ...protocol, id: "p2", draft_rev: 1 };
+  post.mockResolvedValue(created);
+  get.mockImplementation((path: string) =>
+    Promise.resolve(path === "protocols/p2" ? created : [])
+  );
+  await renderNewBuilder();
+  expect(get).not.toHaveBeenCalledWith("protocols/new");
+
+  await act(async () => {
+    vi.advanceTimersByTime(2000);
+  });
+  expect(post).not.toHaveBeenCalled(); // an empty builder is not a protocol
+
+  await act(async () => {
+    drop(0, { from: "bin-element", value: "baseline" });
+  });
+  await act(async () => {
+    vi.advanceTimersByTime(1600);
+  });
+  await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+  const [path, body] = post.mock.calls[0];
+  expect(path).toBe("protocols");
+  expect(
+    (body as { draft: { root: { children: unknown[] } } }).draft.root.children
+  ).toHaveLength(1);
+  // the URL follows the protocol that now exists, without reloading the builder
+  expect(window.location.pathname).toBe("/protocols/p2/edit");
+
+  // and the draft carries on with PUTs from the revision the creation returned
+  await act(async () => {
+    drop(0, { from: "bin-element", value: "countdown" });
+  });
+  await act(async () => {
+    vi.advanceTimersByTime(1600);
+  });
+  await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
+  expect(put.mock.calls[0][0]).toBe("protocols/p2/draft");
+  expect(put.mock.calls[0][2]).toEqual({ ifMatch: 1 });
+});
