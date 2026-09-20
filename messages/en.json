@@ -221,6 +221,40 @@
       "correct": "Correct",
       "incorrect": "Not quite",
       "next": "Next"
+    },
+    "choice": {
+      "progress": "{n} of {total}",
+      "feedback": {
+        "hit": "Correct",
+        "error": "Wrong side",
+        "miss": "Too slow",
+        "correct_rejection": "Correct",
+        "commission_error": "Not a match"
+      }
+    },
+    "flanker": {
+      "area": "Arrows task",
+      "left": "Left",
+      "right": "Right"
+    },
+    "nback": {
+      "area": "Letter memory task",
+      "match": "Match",
+      "rule": "Press when it matches {load} back"
+    },
+    "coding": {
+      "area": "The symbol to answer",
+      "key": "Which digit goes with which symbol",
+      "left": "{seconds} s left"
+    },
+    "heartbeat": {
+      "ready": "At the tone, start counting your heartbeats silently. Do not touch your pulse. Count only the beats you really feel.",
+      "counting": "Count your heartbeats until the next tone.",
+      "progress": "Round {n} of {total}",
+      "how_many": "How many heartbeats did you count?",
+      "how_sure": "How sure are you?",
+      "guessing": "Guessing",
+      "certain": "Certain"
     }
   },
   "builder": {
@@ -294,7 +328,8 @@
       "elements": "Elements",
       "search": "Search your media",
       "no_media": "Nothing to use yet. Upload a video or a sound.",
-      "upload": "Upload"
+      "upload": "Upload",
+      "tasks": "Tasks"
     },
     "publish_action": "Publish",
     "form": {

@@ -70,7 +70,7 @@ export function Monitor({
   });
   if (!clip)
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-[var(--radius-card)] bg-[#080b14] p-6 text-center">
+      <div className="flex aspect-video w-full items-center justify-center rounded-[var(--radius-card)] bg-black p-6 text-center">
         <p className="type-caption text-white/60">{t("empty")}</p>
       </div>
     );
@@ -89,7 +89,7 @@ export function Monitor({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-[#080b14]">
+      <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-black">
         {videoId && file.data?.url ? (
           <video
             ref={player}

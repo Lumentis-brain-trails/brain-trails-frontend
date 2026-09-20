@@ -6,8 +6,10 @@
  * Tab *Media* is the library seen from inside the builder - yours first, then what the
  * community and the official catalog offer - with a search box and an upload that stays
  * in place, because leaving the builder to add a clip is how an edit gets lost. Tab
- * *Elements* holds the blocks that are not media: instructions, fixation, baseline,
- * rest, countdown, a questionnaire.
+ * *Elements* holds the blocks that ask nothing of the participant (instructions,
+ * fixation, baseline, rest, countdown) or only how they feel (a questionnaire); tab
+ * *Tasks* holds the ones that record what the participant does - the games. It is the
+ * line the backend draws too: a task block is one whose trials it scores.
  *
  * Nothing here mutates the draft: an item is dragged, and the timeline decides where it
  * lands (`DragPayload`).
@@ -38,7 +40,7 @@ export function Bin({
   onAddElement: (kind: string) => void;
 }) {
   const t = useTranslations("builder.bin");
-  const [tab, setTab] = useState<"media" | "elements">("media");
+  const [tab, setTab] = useState<"media" | "elements" | "tasks">("media");
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
   const workspace = useCurrentWorkspace();
@@ -65,7 +67,7 @@ export function Bin({
   return (
     <aside className="flex h-full min-h-0 w-[280px] shrink-0 flex-col gap-3 border-r border-hairline p-3">
       <div role="tablist" aria-label={t("title")} className="flex gap-1">
-        {(["media", "elements"] as const).map((name) => (
+        {(["media", "elements", "tasks"] as const).map((name) => (
           <button
             key={name}
             role="tab"
@@ -137,19 +139,22 @@ export function Bin({
         </>
       ) : (
         <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 gap-2 overflow-y-auto">
-          {ELEMENTS.map((element) => (
+          {ELEMENTS.filter(
+            (element) =>
+              element.group === (tab === "tasks" ? "task" : "element")
+          ).map((element) => (
             <button
-              key={element.kind}
+              key={element.id}
               type="button"
               draggable
               onDragStart={(event) =>
                 setDragPayload(event, {
                   from: "bin-element",
-                  value: element.kind,
+                  value: element.id,
                 })
               }
-              onDoubleClick={() => onAddElement(element.kind)}
-              title={identityOf(element.kind).hint}
+              onDoubleClick={() => onAddElement(element.id)}
+              title={element.hint ?? identityOf(element.kind).hint}
               className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-1.5 text-left hover:border-accent/50"
             >
               <KindCover kind={element.kind} />

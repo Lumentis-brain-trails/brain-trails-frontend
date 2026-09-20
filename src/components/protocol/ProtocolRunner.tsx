@@ -406,7 +406,7 @@ function Shell({
   return (
     <div
       data-theme="dark"
-      className="relative flex h-dvh flex-col bg-[#080b14] text-ink"
+      className="relative flex h-dvh flex-col bg-black text-ink"
     >
       <div className="flex items-center justify-between px-6 py-3">
         <span className="text-[14px] text-ink-2">{label ?? ""}</span>

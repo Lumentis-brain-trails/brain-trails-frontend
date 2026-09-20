@@ -45,6 +45,9 @@ function block(overrides: Partial<TaskBlock> = {}): TaskBlock {
         median_rt_ms: 380 + i * 10,
       })),
       nogo_types: {},
+      conditions: {},
+      cues: {},
+      effects: {},
       flags: [],
     },
     erp: {
@@ -111,7 +114,7 @@ test("a waveform is drawn only when the backend sent one", () => {
       .getByRole("img", { name: /Around the press/ })
       .querySelectorAll("polyline")
   ).toHaveLength(1);
-  expect(screen.getByText(/False dock: 4 epochs \(needs 6\)/)).toBeTruthy();
+  expect(screen.getByText(/Error: 4 epochs \(needs 6\)/)).toBeTruthy();
   expect(screen.queryByText(/ERN \(/)).toBeNull();
 });
 
@@ -137,4 +140,109 @@ test("a block without behaviour renders nothing; one without EEG still shows the
   render(<TaskPanel block={block({ erp: null, prestimulus: null })} />);
   expect(screen.getByText("97%")).toBeTruthy();
   expect(screen.queryByRole("img")).toBeNull();
+});
+
+test("a task with no withhold trials shows wrong keys, its conditions and its contrasts", () => {
+  const b = block();
+  Object.assign(b.behaviour!, {
+    n: 192,
+    n_go: 192,
+    n_nogo: 0,
+    commission_rate: null,
+    d_prime: null,
+    criterion: null,
+    error_rate: 0.06,
+    omission_rate: 0.01,
+    throughput_per_min: 31.4,
+    conditions: {
+      congruent: { n: 96, accuracy: 0.99, error_rate: 0.01, median_rt_ms: 430 },
+      incongruent: {
+        n: 96,
+        accuracy: 0.89,
+        error_rate: 0.11,
+        median_rt_ms: 512,
+      },
+    },
+    cues: {
+      none: { n: 48, accuracy: 0.94, error_rate: 0.06, median_rt_ms: 500 },
+      spatial: { n: 48, accuracy: 0.95, error_rate: 0.05, median_rt_ms: 420 },
+    },
+    effects: { congruency_ms: 82.4, alerting_ms: 48, orienting_ms: null },
+  });
+  b.erp!.stimulus.conditions = {
+    incongruent: { n: 80, n_rejected: 5, wave_uv: times.map(() => -1) },
+    congruent: { n: 90, n_rejected: 5, wave_uv: times.map(() => 0) },
+  };
+  render(<TaskPanel block={b} />);
+  expect(screen.getByText(/· 192 trials/)).toBeTruthy();
+  expect(screen.queryByText(/no-go/)).toBeNull();
+  expect(screen.getByText("Wrong key")).toBeTruthy();
+  expect(screen.queryByText("Sensitivity (d′)")).toBeNull();
+  expect(screen.getByText("31.4")).toBeTruthy();
+  expect(screen.getByText("Conflict cost").nextSibling?.textContent).toBe(
+    "+82 ms"
+  );
+  expect(screen.getByText("Orienting").nextSibling?.textContent).toBe("—");
+  expect(
+    screen.getByRole("row", { name: /Arrows disagree 96 89% 512 ms/ })
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("row", { name: /Cue at the place 48 95% 420 ms/ })
+  ).toBeTruthy();
+  expect(screen.getByText(/Arrows disagree: 80 epochs/)).toBeTruthy();
+});
+
+test("a task with one condition has no contrast to shade", () => {
+  const b = block();
+  b.erp!.stimulus = {
+    times_ms: times,
+    conditions: {
+      go_hit: { n: 40, n_rejected: 0, wave_uv: times.map(() => 0) },
+    },
+  };
+  render(<TaskPanel block={b} />);
+  expect(screen.queryByText(/N2 \(/)).toBeNull();
+});
+
+test("heartbeat counting: counted against happened, and honesty when nothing could be counted", () => {
+  const counting: TaskBlock = {
+    key: "counting#0",
+    block_id: "counting",
+    label: "Count your heartbeats",
+    interoception: {
+      intervals: [
+        {
+          interval_index: 0,
+          duration_s: 25,
+          reported: 24,
+          actual: 30,
+          accuracy: 0.8,
+          confidence: 6,
+        },
+        {
+          interval_index: 1,
+          duration_s: 35,
+          reported: 40,
+          actual: null,
+          accuracy: null,
+          confidence: 4,
+        },
+      ],
+      accuracy: 0.8,
+      confidence: 5,
+      n_scored: 1,
+    },
+  };
+  render(<TaskPanel block={counting} />);
+  expect(screen.getByText(/· 2 rounds/)).toBeTruthy();
+  expect(screen.getByRole("row", { name: "25 s 24 30 80%" })).toBeTruthy();
+  expect(screen.getByRole("row", { name: "35 s 40 — —" })).toBeTruthy();
+  expect(screen.getByText("5.0 / 10")).toBeTruthy();
+  expect(screen.getByText(/not as a trait/)).toBeTruthy();
+  cleanup();
+
+  counting.interoception!.n_scored = 0;
+  counting.interoception!.accuracy = null;
+  render(<TaskPanel block={counting} />);
+  expect(screen.getByText(/no pulse sensor/)).toBeTruthy();
 });

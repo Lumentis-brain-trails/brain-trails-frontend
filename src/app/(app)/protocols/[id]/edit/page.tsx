@@ -182,7 +182,7 @@ export default function BuilderPage({
           return moveClip(current, from, from < index ? index - 1 : index);
         }
         if (payload.from === "bin-element") {
-          const element = ELEMENTS.find((e) => e.kind === payload.value);
+          const element = ELEMENTS.find((e) => e.id === payload.value);
           return element
             ? insertAt(current, index, blockForElement(current, element))
             : current;
@@ -212,7 +212,7 @@ export default function BuilderPage({
 
   const addElement = useCallback(
     (kind: string) => {
-      const element = ELEMENTS.find((e) => e.kind === kind);
+      const element = ELEMENTS.find((e) => e.id === kind);
       if (!element) return;
       edit((current) =>
         insertAt(

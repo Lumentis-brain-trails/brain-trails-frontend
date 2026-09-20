@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": null,
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "First you rest, then a memory game with letters, easy and then harder.",
+              "holdMs": 5000
+            },
+            {
+              "text": "About nine minutes in all.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule_1",
+        "kind": "instructions",
+        "label": "The easy rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Letters appear one at a time.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Press Match (or the space bar) when a letter\nis the SAME AS THE ONE JUST BEFORE it.",
+              "holdMs": 6000
+            },
+            {
+              "text": "Otherwise do nothing. A short practice first.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Practise"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "practice",
+        "kind": "n-back",
+        "label": "Practice",
+        "condition": "practice",
+        "config": {
+          "n": 15,
+          "load": 1,
+          "lureRatio": 0,
+          "practice": true,
+          "markers": {
+            "trialStart": "practice_trial_start",
+            "stimulusOnset": "practice_stimulus_onset",
+            "response": "practice_response",
+            "outcome": "practice_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "one_back",
+        "kind": "n-back",
+        "label": "One back",
+        "condition": "load_1",
+        "config": {
+          "n": 45,
+          "load": 1,
+          "markers": {
+            "trialStart": "nback_trial_start",
+            "stimulusOnset": "nback_stimulus_onset",
+            "response": "nback_response",
+            "outcome": "nback_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule_2",
+        "kind": "instructions",
+        "label": "The harder rule",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Now press Match when a letter is the same\nas the one TWO BEFORE it.",
+              "holdMs": 6000
+            },
+            {
+              "text": "B ... K ... B  is a match.\nB ... B is not. It is meant to be hard.",
+              "holdMs": 7000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "two_back",
+        "kind": "n-back",
+        "label": "Two back",
+        "condition": "load_2",
+        "config": {
+          "n": 60,
+          "load": 2,
+          "markers": {
+            "trialStart": "nback_trial_start",
+            "stimulusOnset": "nback_stimulus_onset",
+            "response": "nback_response",
+            "outcome": "nback_outcome"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "effort",
+        "kind": "questionnaire",
+        "label": "How hard was it?",
+        "condition": "after",
+        "config": {
+          "instrument": "nasa_tlx",
+          "prompt": "Think of the last round, two back."
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "All done.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

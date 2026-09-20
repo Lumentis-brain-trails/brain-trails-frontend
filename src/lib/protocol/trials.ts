@@ -68,7 +68,7 @@ export interface CuedOptions {
   itiMs: Range;
 }
 
-interface RunLimit<T> {
+export interface RunLimit<T> {
   key: (t: T) => string;
   /** Cap per key value; a key absent from the map falls back to `fallback`. */
   caps: Record<string, number>;
@@ -119,7 +119,7 @@ function weightedPick<T>(
  * `rng` is seeded and consumed in order. Exhausting the attempts means the parameters are
  * infeasible, which is an error worth raising rather than a sequence worth degrading.
  */
-function buildSequence<T extends string>(
+export function buildSequence<T extends string>(
   counts: Readonly<Record<T, number>>,
   limits: readonly RunLimit<T>[],
   rng: Rng,

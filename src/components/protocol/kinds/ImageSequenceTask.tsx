@@ -121,7 +121,7 @@ function ImageSequenceRenderer({
   const item = visible === null ? null : planned[visible];
 
   return (
-    <div className="flex h-full items-center justify-center bg-[#080b14]">
+    <div className="flex h-full items-center justify-center bg-black">
       {!ready && <p className="text-[14px] text-ink-2">Loading&hellip;</p>}
       {ready && item && (
         // eslint-disable-next-line @next/next/no-img-element

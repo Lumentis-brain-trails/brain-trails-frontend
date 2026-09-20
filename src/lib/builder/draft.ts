@@ -60,6 +60,53 @@ function num(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+const TRIAL_KINDS = new Set(["go-no-go", "flanker", "n-back", "heartbeat"]);
+
+/** Mean of a `[min, max]` setting in seconds, or `fallback` when it is not one. */
+function meanMs(value: unknown, fallback: number): number {
+  return Array.isArray(value) && value.length === 2
+    ? (num(value[0], fallback) + num(value[1], fallback)) / 2000
+    : fallback / 1000;
+}
+
+/**
+ * How long a block of trials lasts, from its own numbers (the backend's
+ * `block_seconds` does the same sum): a fixed guess made Sustained Focus's six minutes
+ * look like two on the timeline.
+ */
+function trialBlockSeconds(
+  kind: string,
+  config: Record<string, unknown>
+): number {
+  const n = num(config.n, 0);
+  if (kind === "go-no-go") {
+    const cue =
+      config.variant === "cued"
+        ? meanMs(config.cueMs, 350) + meanMs(config.cueTargetMs, 1000)
+        : 0;
+    return (
+      n * (cue + meanMs(config.travelMs, 1000) + meanMs(config.itiMs, 400))
+    );
+  }
+  if (kind === "flanker") {
+    const cues = Array.isArray(config.cues) && config.cues.length > 0;
+    const cue = cues
+      ? (num(config.cueMs, 100) + num(config.cueTargetMs, 400)) / 1000
+      : 0;
+    // a row is answered in about 0.6 s; the window only bounds the slow ones
+    return n * (cue + 0.6 + meanMs(config.itiMs, 800));
+  }
+  if (kind === "n-back")
+    return (n * (num(config.stimulusMs, 500) + num(config.isiMs, 2000))) / 1000;
+  const intervals = Array.isArray(config.intervals_s)
+    ? (config.intervals_s as unknown[])
+    : [25, 35, 45];
+  return intervals.reduce<number>(
+    (total, s) => total + num(s, 30) + num(config.ready_s, 4) + 12,
+    0
+  );
+}
+
 /** Roughly how long one block lasts, lead-in and tail included. */
 export function clipSeconds(
   node: TreeNode,
@@ -88,7 +135,8 @@ export function clipSeconds(
           num(config.exhaleMs, 0))) /
         1000 +
       15;
-  else if (node.kind === "go-no-go") seconds = 120;
+  else if (TRIAL_KINDS.has(node.kind))
+    seconds = trialBlockSeconds(node.kind, config);
   else if (SELF_PACED.has(node.kind)) seconds = 20;
   return (
     seconds +
@@ -311,13 +359,31 @@ export function setGroupRepeat(
 }
 
 /** The structural blocks the bin offers, with a config that already validates. */
-export const ELEMENTS: {
+/**
+ * One thing the bin offers. Several items may share a kind (the arrows task alone and
+ * with cues; the game with and without its beacon), so an item is found by `id`.
+ * `group` decides its tab: a task records what the participant does, an element never
+ * asks for anything - the same line the backend draws around the blocks it scores.
+ */
+export interface PaletteItem {
+  id: string;
   kind: string;
   label: string;
+  /** Shown under the label when the kind's own hint would not tell two items apart. */
+  hint?: string;
+  group: "element" | "task";
   config: Record<string, unknown>;
-}[] = [
+}
+
+export function paletteItem(id: string): PaletteItem | undefined {
+  return ELEMENTS.find((item) => item.id === id);
+}
+
+export const ELEMENTS: PaletteItem[] = [
   {
+    id: "instructions",
     kind: "instructions",
+    group: "element",
     label: "Instructions",
     config: {
       lines: [
@@ -326,25 +392,45 @@ export const ELEMENTS: {
       advance: { mode: "key", label: "Continue" },
     },
   },
-  { kind: "fixation", label: "Fixation cross", config: { duration_s: 1 } },
   {
+    id: "fixation",
+    kind: "fixation",
+    group: "element",
+    label: "Fixation cross",
+    config: { duration_s: 1 },
+  },
+  {
+    id: "baseline",
     kind: "baseline",
+    group: "element",
     label: "Resting baseline",
     config: { eyes: "open", duration_s: 60, end_tone: true },
   },
   {
+    id: "rest",
     kind: "rest",
+    group: "element",
     label: "Rest",
     config: { mode: "timed", duration_s: 30 },
   },
-  { kind: "countdown", label: "Countdown", config: { from: 3 } },
   {
+    id: "countdown",
+    kind: "countdown",
+    group: "element",
+    label: "Countdown",
+    config: { from: 3 },
+  },
+  {
+    id: "questionnaire",
     kind: "questionnaire",
+    group: "element",
     label: "How do you feel? (SAM)",
     config: { instrument: "sam" },
   },
   {
+    id: "go-no-go",
     kind: "go-no-go",
+    group: "task",
     label: "Signal Navigator",
     config: {
       variant: "simple",
@@ -363,7 +449,9 @@ export const ELEMENTS: {
     },
   },
   {
+    id: "breathing",
     kind: "breathing",
+    group: "task",
     label: "Paced breathing",
     config: {
       cycles: 6,
@@ -375,6 +463,72 @@ export const ELEMENTS: {
         exhale: "breath_exhale",
       },
     },
+  },
+  {
+    id: "go-no-go-cued",
+    kind: "go-no-go",
+    group: "task",
+    label: "Signal Navigator, with beacon",
+    hint: "A green or red beacon comes first and changes the rule.",
+    config: {
+      variant: "cued",
+      n: 44,
+      validGoRatio: 0.45,
+      nogoMix: { redCargo: 0.4, greenDebris: 0.3, redDebris: 0.3 },
+      maxCueRun: 3,
+      maxOutcomeRun: 3,
+      cueMs: [300, 400],
+      cueTargetMs: [800, 1200],
+      travelMs: [900, 1300],
+      itiMs: [500, 900],
+      markers: {
+        trialStart: "gng_trial_start",
+        cueOnset: "gng_cue_onset",
+        stimulusOnset: "gng_target_onset",
+        response: "gng_response",
+        outcome: "gng_outcome",
+      },
+    },
+  },
+  {
+    id: "flanker",
+    kind: "flanker",
+    group: "task",
+    label: "Arrows (flanker)",
+    config: { n: 96, congruentRatio: 0.5, cues: [] },
+  },
+  {
+    id: "flanker-ant",
+    kind: "flanker",
+    group: "task",
+    label: "Attention networks",
+    hint: "The arrows task with warning and location cues: alerting, orienting, conflict.",
+    config: {
+      n: 96,
+      congruentRatio: 0.5,
+      cues: ["none", "center", "double", "spatial"],
+    },
+  },
+  {
+    id: "n-back",
+    kind: "n-back",
+    group: "task",
+    label: "Letter memory (2-back)",
+    config: { n: 60, load: 2 },
+  },
+  {
+    id: "coding",
+    kind: "coding",
+    group: "task",
+    label: "Symbol coding",
+    config: { duration_s: 90, pairs: 9 },
+  },
+  {
+    id: "heartbeat",
+    kind: "heartbeat",
+    group: "task",
+    label: "Heartbeat counting",
+    config: { intervals_s: [25, 35, 45] },
   },
 ];
 
@@ -428,7 +582,7 @@ export function blockForMedia(tree: ProtocolTree, item: BinMedia): BlockNode {
 /** A block for one of the structural elements. */
 export function blockForElement(
   tree: ProtocolTree,
-  element: (typeof ELEMENTS)[number]
+  element: PaletteItem
 ): BlockNode {
   return {
     type: "block",

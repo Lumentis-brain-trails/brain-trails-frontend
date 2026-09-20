@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": null,
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "First you rest, then you breathe with a circle for five minutes.",
+              "holdMs": 5000
+            },
+            {
+              "text": "About nine minutes in all.",
+              "holdMs": 3000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed",
+        "kind": "baseline",
+        "label": "Eyes closed",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "mood_before",
+        "kind": "questionnaire",
+        "label": "How do you feel?",
+        "condition": "before",
+        "config": {
+          "instrument": "sam",
+          "prompt": "Think of how you feel right now."
+        }
+      },
+      {
+        "type": "block",
+        "id": "rule",
+        "kind": "instructions",
+        "label": "The pace",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Breathe in as the circle grows,\nout as it shrinks.",
+              "holdMs": 5000
+            },
+            {
+              "text": "Out is longer than in. Let it be easy:\nif you feel light-headed, breathe normally.",
+              "holdMs": 6000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Begin"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "paced",
+        "kind": "breathing",
+        "label": "Breathe with the circle",
+        "condition": "paced",
+        "config": {
+          "cycles": 30,
+          "inhaleMs": 4000,
+          "exhaleMs": 6000,
+          "markers": {
+            "cycleStart": "breath_cycle_start",
+            "inhale": "breath_inhale",
+            "exhale": "breath_exhale"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "eyes_closed_after",
+        "kind": "baseline",
+        "label": "Eyes closed, again",
+        "condition": "baseline",
+        "config": {
+          "eyes": "closed",
+          "duration_s": 60,
+          "end_tone": true
+        }
+      },
+      {
+        "type": "block",
+        "id": "mood_after",
+        "kind": "questionnaire",
+        "label": "And now?",
+        "condition": "after",
+        "config": {
+          "instrument": "sam",
+          "prompt": "Think of how you feel now."
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Return",
+        "condition": "outro",
+        "config": {
+          "lines": [
+            {
+              "text": "All done.",
+              "holdMs": 4000
+            },
+            {
+              "text": "Rest for a moment.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "timed",
+            "ms": 30000
+          },
+          "footnote": "This is not a medical test or diagnosis."
+        }
+      }
+    ]
+  }
+}

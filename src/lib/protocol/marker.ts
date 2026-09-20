@@ -17,7 +17,12 @@ export type MarkerKind =
   | "response"
   | "outcome";
 
-export type Outcome = "hit" | "miss" | "correct_rejection" | "commission_error";
+/**
+ * `error` is a press of the wrong key in a choice task (`choice.ts`); the Go/No-Go, with
+ * its single key, never produces it.
+ */
+export type Outcome =
+  "hit" | "miss" | "correct_rejection" | "commission_error" | "error";
 
 /** Everything the spec names per event, plus what the runner adds for provenance. */
 export interface MarkerMeta {

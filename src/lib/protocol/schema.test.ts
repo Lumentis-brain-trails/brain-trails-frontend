@@ -18,11 +18,15 @@ describe("registry", () => {
       "audio",
       "baseline",
       "breathing",
+      "coding",
       "countdown",
       "fixation",
+      "flanker",
       "go-no-go",
+      "heartbeat",
       "image-sequence",
       "instructions",
+      "n-back",
       "prompt",
       "questionnaire",
       "quiz",
@@ -124,7 +128,7 @@ describe("parseProtocol", () => {
     if (!result.ok) {
       expect(result.error).toMatch(/unknown kind "teleport"/);
       expect(result.error).toMatch(
-        /breathing, countdown, fixation, go-no-go, image-sequence, instructions/
+        /breathing, coding, countdown, fixation, flanker, go-no-go, heartbeat/
       );
     }
   });
