@@ -320,7 +320,7 @@ export default function RegisterPage() {
               {CONSENT_TEXT}{" "}
               <Link
                 className="font-semibold text-ink hover:underline"
-                href="/privacy"
+                href="/privacy?in=tab"
                 target="_blank"
                 rel="noreferrer"
               >
