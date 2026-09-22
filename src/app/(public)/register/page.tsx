@@ -321,8 +321,11 @@ export default function RegisterPage() {
               <Link
                 className="font-semibold text-ink hover:underline"
                 href="/privacy"
+                target="_blank"
+                rel="noreferrer"
               >
                 Read the privacy note
+                <span className="sr-only"> (opens in a new tab)</span>
               </Link>
               .
             </p>

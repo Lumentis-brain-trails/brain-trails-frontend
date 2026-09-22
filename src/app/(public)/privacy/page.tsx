@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/BackLink";
 
 export const metadata = { title: "Privacy" };
 
@@ -22,12 +22,7 @@ export default function PrivacyPage() {
           by a reviewed privacy policy before any public launch.
         </p>
       </div>
-      <Link
-        href="/"
-        className="mt-10 inline-block text-[14px] font-semibold text-ink hover:underline"
-      >
-        Back home
-      </Link>
+      <BackLink className="mt-10 inline-block text-[14px] font-semibold text-ink hover:underline" />
     </main>
   );
 }
