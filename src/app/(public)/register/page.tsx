@@ -31,9 +31,10 @@ import {
 import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
 
 const CONSENT_TEXT =
-  "I consent to the processing of my EEG recordings and the profile data by " +
-  "LuMentis for the Brain Trails research prototype, as described in the privacy note. " +
-  "I can request export or deletion of all my data at any time.";
+  "I agree that LuMentis may process my EEG recordings, the answers I give during a " +
+  "session and my profile for the Brain Trails research prototype, as described in the " +
+  "privacy note. Brain signals and health answers are sensitive data: I am giving this " +
+  "permission freely, and I can take it back at any time by deleting my account.";
 
 type Step = "account" | "you" | "consent";
 
