@@ -9,8 +9,19 @@ import { useEffect, useRef } from "react";
  *
  * Painted on a canvas rather than with CSS gradients because the shape follows a
  * curve and the colour runs along it; a stack of blurred radial gradients cannot
- * do that without stair-stepped edges. Drawn small and upscaled, with a canvas
- * blur on top, so the edges stay soft at any viewport size.
+ * do that without stair-stepped edges. The ribbon is stamped as a chain of discs
+ * at a fraction of the viewport resolution and softened afterwards, so the edges
+ * stay soft at any viewport size.
+ *
+ * The softening is a CSS `filter` on the canvas element, deliberately not
+ * `CanvasRenderingContext2D.filter`: WebKit still ships that one disabled, so on
+ * every iPhone and iPad the blur silently did nothing and the bare low-resolution
+ * discs showed through as hard-edged blobs. A CSS blur runs on the composited
+ * layer at device resolution and behaves the same in every engine.
+ *
+ * A CSS blur fades out at the element's own edges, which would dim the ribbons
+ * exactly where they run off the viewport. The canvas is therefore grown by
+ * `BLEED` on every side and the wrapper clips that margin away.
  *
  * Decorative only (`aria-hidden`): it carries no information. Animation stops
  * when the tab is hidden and never starts under `prefers-reduced-motion`, which
@@ -43,10 +54,12 @@ type Ribbon = {
   phase: number;
 };
 
-/** Render size divisor; the softness comes from BLUR_LOW, not from the upscale. */
-const SCALE = 3;
-/** Blur radius in low-resolution pixels (roughly three times that on screen). */
-const BLUR_LOW = 5;
+/** Render size divisor; the softness comes from BLUR, not from the upscale. */
+const SCALE = 2;
+/** Standard deviation of the softening blur, in CSS pixels. */
+const BLUR = 15;
+/** Margin the canvas is grown by so the blur's edge fade falls outside the frame. */
+const BLEED = BLUR * 3;
 /** Samples along each ribbon's curve. */
 const STEPS = 56;
 
@@ -234,35 +247,33 @@ export function CornerRibbons({
   className?: string;
   retreat?: number;
 }) {
+  const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const frameEl = frameRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     // jsdom has no 2D context; the page still renders, just without the artwork
-    if (!canvas || !ctx) return;
-
-    const low = document.createElement("canvas");
-    const lctx = low.getContext("2d");
-    if (!lctx) return;
+    if (!frameEl || !canvas || !ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const canBlur = "filter" in lctx;
+    /** The visible box, in CSS pixels: what the ribbon geometry is measured against. */
     let width = 0;
     let height = 0;
+    /** The backing store, in render pixels: the visible box plus the bleed, over SCALE. */
     let lowWidth = 0;
     let lowHeight = 0;
+    const lowBleed = BLEED / SCALE;
 
     const resize = () => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = frameEl.getBoundingClientRect();
       width = Math.max(1, Math.round(rect.width));
       height = Math.max(1, Math.round(rect.height));
-      canvas.width = width;
-      canvas.height = height;
-      lowWidth = Math.max(1, Math.round(width / SCALE));
-      lowHeight = Math.max(1, Math.round(height / SCALE));
-      low.width = lowWidth;
-      low.height = lowHeight;
+      lowWidth = Math.max(1, Math.round((width + 2 * BLEED) / SCALE));
+      lowHeight = Math.max(1, Math.round((height + 2 * BLEED) / SCALE));
+      canvas.width = lowWidth;
+      canvas.height = lowHeight;
     };
 
     // Settle from the entry-screen position into `retreat` over the story duration.
@@ -274,16 +285,20 @@ export function CornerRibbons({
     };
 
     const frame = (time: number) => {
-      lctx.filter = "none";
-      lctx.clearRect(0, 0, lowWidth, lowHeight);
-      if (canBlur) lctx.filter = `blur(${BLUR_LOW}px)`;
+      ctx.clearRect(0, 0, lowWidth, lowHeight);
+      ctx.save();
+      // draw in the visible box's own coordinates; the bleed is pure margin
+      ctx.translate(lowBleed, lowBleed);
       for (const ribbon of RIBBONS)
-        drawRibbon(lctx, ribbon, time, lowWidth, lowHeight, retreatAt(time));
-      lctx.filter = "none";
-      ctx.clearRect(0, 0, width, height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(low, 0, 0, lowWidth, lowHeight, 0, 0, width, height);
+        drawRibbon(
+          ctx,
+          ribbon,
+          time,
+          width / SCALE,
+          height / SCALE,
+          retreatAt(time)
+        );
+      ctx.restore();
     };
 
     let raf = 0;
@@ -334,5 +349,25 @@ export function CornerRibbons({
     };
   }, [retreat]);
 
-  return <canvas ref={canvasRef} aria-hidden className={className} />;
+  // the wrapper is the visible box and clips the canvas's bleed; `className`
+  // supplies its position, so it must place the wrapper, not the canvas
+  return (
+    <div
+      ref={frameRef}
+      aria-hidden
+      className={`overflow-hidden ${className ?? ""}`}
+    >
+      <canvas
+        ref={canvasRef}
+        className="absolute"
+        style={{
+          top: -BLEED,
+          left: -BLEED,
+          width: `calc(100% + ${2 * BLEED}px)`,
+          height: `calc(100% + ${2 * BLEED}px)`,
+          filter: `blur(${BLUR}px)`,
+        }}
+      />
+    </div>
+  );
 }
