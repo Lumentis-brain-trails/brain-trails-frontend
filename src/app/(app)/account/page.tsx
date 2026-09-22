@@ -7,6 +7,11 @@ import { ApiRequestError, api } from "@/lib/api";
 import type { UserInfo } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
 import {
+  type ProfileData,
+  ProfileCard,
+} from "@/components/account/ProfileCard";
+import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
+import {
   Button,
   Card,
   ErrorBanner,
@@ -19,10 +24,6 @@ import {
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 
-type ProfileData = Record<string, string | number | string[] | null>;
-
-const HIDDEN = new Set(["consent_version", "consent_at"]);
-
 export default function AccountPage() {
   const router = useRouter();
   const toast = useToast();
@@ -34,9 +35,18 @@ export default function AccountPage() {
     queryKey: ["me"],
     queryFn: () => api.get<UserInfo>("auth/me"),
   });
+  // 404 is the normal state of a fresh account now, not an error: registration stopped
+  // asking for the profile (V3-0008, amended). `retry: false` keeps it from looking like
+  // a flaky request, and `missing` is what the card explains.
   const profile = useQuery({
     queryKey: ["me-profile"],
     queryFn: () => api.get<ProfileData>("auth/me/profile"),
+    retry: false,
+  });
+  const application = useQuery({
+    queryKey: ["me-application"],
+    queryFn: () => api.get<ApplicationData>("auth/me/application"),
+    retry: false,
   });
 
   const erase = useMutation({
@@ -51,10 +61,6 @@ export default function AccountPage() {
         e instanceof ApiRequestError ? e.error.message : "Request failed."
       ),
   });
-
-  const entries = Object.entries(profile.data ?? {}).filter(
-    ([k, v]) => !HIDDEN.has(k) && v !== null && v !== ""
-  );
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -90,36 +96,29 @@ export default function AccountPage() {
         </section>
 
         <section>
-          <SectionTitle>Profile</SectionTitle>
-          <Card inset>
-            {profile.isLoading && (
+          {profile.isLoading ? (
+            <Card inset>
               <div className="space-y-2 p-5">
                 <Skeleton className="h-4 w-2/3" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
-            )}
-            {!profile.isLoading && entries.length === 0 && (
-              <p className="px-5 py-4 text-ink-3">
-                {profile.isError
-                  ? "Profile not available."
-                  : "No profile details on file."}
-              </p>
-            )}
-            {entries.map(([k, v]) => (
-              <KeyValue
-                key={k}
-                label={k.replaceAll("_", " ")}
-                value={Array.isArray(v) ? v.join(", ") : String(v)}
-              />
-            ))}
-          </Card>
-          <p className="type-caption mt-2 px-1 text-ink-3">
-            Consent {String(profile.data?.consent_version ?? "")} accepted on{" "}
-            {profile.data?.consent_at
-              ? new Date(String(profile.data.consent_at)).toLocaleDateString()
-              : "–"}
-            . To change profile data, contact the administrator.
-          </p>
+            </Card>
+          ) : (
+            <ProfileCard data={profile.data} missing={!profile.data} />
+          )}
+          {profile.data?.consent_version && (
+            <p className="type-caption mt-2 px-1 text-ink-3">
+              Consent {String(profile.data.consent_version)} accepted on{" "}
+              {profile.data.consent_at
+                ? new Date(String(profile.data.consent_at)).toLocaleDateString()
+                : "–"}
+              .
+            </p>
+          )}
+        </section>
+
+        <section>
+          {!application.isLoading && <BetaCard data={application.data} />}
         </section>
 
         <section>
