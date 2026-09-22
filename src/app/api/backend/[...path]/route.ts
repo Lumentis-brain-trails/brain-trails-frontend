@@ -18,6 +18,7 @@ const ALLOWED_PREFIXES = [
   "protocols",
   "annotations",
   "config",
+  "taxonomies",
   "workspaces",
 ];
 /** Request headers the backend reads besides auth and content type. */

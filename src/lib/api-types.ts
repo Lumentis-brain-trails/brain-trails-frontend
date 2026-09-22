@@ -323,6 +323,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/me/application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Application
+         * @description Return the caller's own beta answers and where the board got to (404 without one).
+         */
+        get: operations["my_application_auth_me_application_get"];
+        /**
+         * Put My Application
+         * @description Write the caller's own beta answers, creating the row if registration made none.
+         *
+         *     Only the answer columns move. The decision, who made it, when, the private note and
+         *     the cohort belong to the board: editing an institution here must not reopen a
+         *     question an admin has already answered.
+         */
+        put: operations["put_my_application_auth_me_application_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me/export": {
         parameters: {
             query?: never;
@@ -358,7 +386,16 @@ export interface paths {
          * @description Return the caller's profile columns plus consent metadata (404 without a profile).
          */
         get: operations["my_profile_auth_me_profile_get"];
-        put?: never;
+        /**
+         * Put My Profile
+         * @description Write the caller's profile, creating it on the first call (V3-0008, amended).
+         *
+         *     Registration no longer asks for any of this, so a fresh account has no profile row at
+         *     all and `GET` answers 404 until this runs. Replaces the whole profile rather than
+         *     patching it: the account page owns the form, and an answer removed there has to
+         *     disappear here too.
+         */
+        put: operations["put_my_profile_auth_me_profile_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -377,13 +414,20 @@ export interface paths {
         put?: never;
         /**
          * Register
-         * @description Create a `pending` account with its profile and its beta application (V3-0008).
+         * @description Open an account, or file an application for one (V3-0008, amended 2026-09-20).
          *
-         *     Registration is an application: the admin board decides who joins, and when. With
-         *     `beta_gate_accounts` off the account is accepted and activated at once. Requires
-         *     explicit consent (422 `consent_required`); the email is lower-cased and must be
-         *     unique (409 `email_taken`); a profile's credentials are checked (422). Rate-limited
-         *     per client address.
+         *     With `beta_gate_accounts` on this is the closed beta's front door: the account stays
+         *     `pending` until the admin board decides. With the gate off registration is
+         *     self-service - the account opens against a verified address instead of a person's
+         *     judgement, and `wants_beta` records that they would like to be testers, which the
+         *     board still answers later.
+         *
+         *     Only four answers are needed; `profile` and `application` are accepted when a client
+         *     has them and are otherwise given from the account page. Requires explicit consent
+         *     (422 `consent_required`), and self-service registration additionally requires a
+         *     published consent text (503 `consent_unavailable`) - no one should agree to a
+         *     placeholder. The email is lower-cased and must be unique (409 `email_taken`).
+         *     Rate-limited per client address.
          */
         post: operations["register_auth_register_post"];
         delete?: never;
@@ -546,7 +590,8 @@ export interface paths {
          *     Whoever builds in its workspace may delete it; an admin may also take down an item
          *     everyone can see (the official catalog), which is audited. An item a published
          *     protocol version plays cannot go (sessions must replay what they showed): it is
-         *     `archived`, leaves the library and keeps playing inside those protocols.
+         *     `archived`, leaves the library and keeps playing inside those protocols - and leaves
+         *     the community shelf with it, since deleting is also a withdrawal.
          */
         delete: operations["delete_media_media__media_id__delete"];
         options?: never;
@@ -593,6 +638,35 @@ export interface paths {
          *     public or official answers 409.
          */
         post: operations["publish_media_media__media_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{media_id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unpublish Media
+         * @description Take an item back from the community, or cancel a request still waiting.
+         *
+         *     The author changes their mind: the item returns to its workspace shelf, the grant to
+         *     everyone is withdrawn and the review state is cleared, so it can be offered again
+         *     later. A pending request simply disappears from the admin queue. 409 `invalid_state`
+         *     for an item that is neither published nor waiting.
+         *
+         *     A published protocol version that plays the item keeps doing so: that lending is a
+         *     separate grant (`media:M#viewer@protocol:P#can_run`, V3-0003), and the sessions that
+         *     ran it must stay replayable. Withdrawing the protocol is a separate gesture.
+         */
+        post: operations["unpublish_media_media__media_id__unpublish_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1221,7 +1295,9 @@ export interface paths {
          *     a replay must reuse, and links to its media that last the whole run
          *     (`est_duration_s` + 30 min; `/media-urls` renews them).
          *     404 when the protocol is not visible (or archived), 403 when it is locked or the
-         *     caller may not record in the workspace, 409 when it was never published.
+         *     caller may not record in the workspace, 409 when it was never published, 422
+         *     `profile_required` when the caller has not filled their profile yet: the run is about
+         *     to produce EEG, and EEG without handedness and year of birth is not interpretable.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -1350,6 +1426,31 @@ export interface paths {
          *     closed session 409 `session_closed`.
          */
         post: operations["store_plan_sessions__session_id__plan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/taxonomies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Taxonomies
+         * @description The closed answer lists the profile and application forms offer (unauthenticated).
+         *
+         *     One source of truth for both halves: the frontend builds its menus from this, the API
+         *     validates against the same tuples, so an option can never exist on one side only. The
+         *     order is the order to show. Public because the registration form needs it before
+         *     anyone has an account, and it reads no database (decision 0014).
+         */
+        get: operations["taxonomies_taxonomies_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1571,6 +1672,10 @@ export interface components {
             headband?: ("muse-2" | "muse-s-athena" | "other" | "none") | null;
             /** Institution */
             institution?: string | null;
+            /** Intended Use */
+            intended_use?: string | null;
+            /** Intended Use Other */
+            intended_use_other?: string | null;
             /** Invited By */
             invited_by: string | null;
             /** Language */
@@ -1587,6 +1692,63 @@ export interface components {
             role_title?: string | null;
             /** Supervisor */
             supervisor?: string | null;
+            /**
+             * Wants Beta
+             * @default false
+             */
+            wants_beta: boolean;
+            /** Web Bluetooth */
+            web_bluetooth?: boolean | null;
+        };
+        /**
+         * ApplicationUpdateIn
+         * @description The beta answers as the account page sends them back: every answer, plus the opt-in.
+         *
+         *     `PUT` semantics over the answer columns only. The decision columns are the board's
+         *     and are never touched from here, so someone editing their own institution cannot
+         *     quietly un-reject themselves.
+         */
+        ApplicationUpdateIn: {
+            /** Browser */
+            browser?: string | null;
+            /**
+             * Contact Ok
+             * @default false
+             */
+            contact_ok: boolean;
+            /** Country */
+            country?: string | null;
+            /** Device */
+            device?: string | null;
+            /** Expected Subjects */
+            expected_subjects?: number | null;
+            /** Headband */
+            headband?: ("muse-2" | "muse-s-athena" | "other" | "none") | null;
+            /** Institution */
+            institution?: string | null;
+            /** Intended Use */
+            intended_use?: string | null;
+            /** Intended Use Other */
+            intended_use_other?: string | null;
+            /** Language */
+            language?: string | null;
+            /** Organisation */
+            organisation?: string | null;
+            /** Purpose */
+            purpose?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /** @default private */
+            requested_profile: components["schemas"]["BetaProfile"];
+            /** Role Title */
+            role_title?: string | null;
+            /** Supervisor */
+            supervisor?: string | null;
+            /**
+             * Wants Beta
+             * @default false
+             */
+            wants_beta: boolean;
             /** Web Bluetooth */
             web_bluetooth?: boolean | null;
         };
@@ -1752,7 +1914,7 @@ export interface components {
         BoardRow: {
             application: components["schemas"]["ApplicationOut"];
             cohort: components["schemas"]["CohortRef"] | null;
-            profile: components["schemas"]["ProfileIn"] | null;
+            profile: components["schemas"]["ProfileOut"] | null;
             user: components["schemas"]["UserOut"];
         };
         /** Body_upload_recordings_post */
@@ -1906,6 +2068,8 @@ export interface components {
          * @description What the frontend needs to know about this deployment before anything else.
          */
         ConfigOut: {
+            /** Consent Version */
+            consent_version: string;
             /** Env */
             env: string;
             /** Features */
@@ -2674,7 +2838,13 @@ export interface components {
         };
         /**
          * ProfileIn
-         * @description Demographic/brain metadata collected at registration; mirrors the Profile model.
+         * @description The demographic and brain metadata behind a recording; replaces the whole profile.
+         *
+         *     Answered from the account page rather than at registration (V3-0008, amended): the
+         *     four fields at the top are what an EEG recording needs to be interpretable at all -
+         *     handedness above all - so they are required here and required before a first session,
+         *     while the rest is offered and never demanded. `PUT` semantics: what is absent is
+         *     cleared, so the account page sends the whole form back.
          */
         ProfileIn: {
             /** Alcohol Use */
@@ -2687,14 +2857,20 @@ export interface components {
             caffeine_cups_per_day?: number | null;
             /** Education Level */
             education_level?: string | null;
+            /** Education Level Other */
+            education_level_other?: string | null;
             /** Full Name */
             full_name: string;
             /** Gender */
             gender?: string | null;
+            /** Gender Other */
+            gender_other?: string | null;
             /** Handedness */
             handedness: string;
             /** Hearing Issues */
             hearing_issues?: string | null;
+            /** Hearing Issues Other */
+            hearing_issues_other?: string | null;
             /** Medications */
             medications?: string | null;
             /** Meditation Practice */
@@ -2711,6 +2887,66 @@ export interface components {
             notes?: string | null;
             /** Occupation */
             occupation?: string | null;
+            /** Occupation Other */
+            occupation_other?: string | null;
+            /** Psychiatric Conditions */
+            psychiatric_conditions?: string | null;
+            /** Sex At Birth */
+            sex_at_birth: string;
+            /** Vision Correction */
+            vision_correction?: string | null;
+        };
+        /**
+         * ProfileOut
+         * @description A stored profile on its way out: the same fields, read without re-judging them.
+         *
+         *     A row written before a list existed - or before one was tightened - must still be
+         *     readable on the admin board and on the account page. Validation belongs on the way
+         *     in, where the person can still fix the answer.
+         */
+        ProfileOut: {
+            /** Alcohol Use */
+            alcohol_use?: string | null;
+            /** Avg Sleep Hours */
+            avg_sleep_hours?: number | null;
+            /** Birth Year */
+            birth_year: number;
+            /** Caffeine Cups Per Day */
+            caffeine_cups_per_day?: number | null;
+            /** Education Level */
+            education_level?: string | null;
+            /** Education Level Other */
+            education_level_other?: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Gender */
+            gender?: string | null;
+            /** Gender Other */
+            gender_other?: string | null;
+            /** Handedness */
+            handedness: string;
+            /** Hearing Issues */
+            hearing_issues?: string | null;
+            /** Hearing Issues Other */
+            hearing_issues_other?: string | null;
+            /** Medications */
+            medications?: string | null;
+            /** Meditation Practice */
+            meditation_practice?: string | null;
+            /** Musical Training Years */
+            musical_training_years?: number | null;
+            /** Native Languages */
+            native_languages?: string[] | null;
+            /** Neurological Conditions */
+            neurological_conditions?: string | null;
+            /** Nicotine Use */
+            nicotine_use?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Occupation */
+            occupation?: string | null;
+            /** Occupation Other */
+            occupation_other?: string | null;
             /** Psychiatric Conditions */
             psychiatric_conditions?: string | null;
             /** Sex At Birth */
@@ -2944,8 +3180,14 @@ export interface components {
          * RegisterIn
          * @description Registration payload; `consent` must be true and passwords are 10..200 characters.
          *
-         *     `application` is optional so a client that predates the beta form still registers,
-         *     as a private-user application with no other answers.
+         *     Four answers open an account (V3-0008, amended): the address, a password, consent,
+         *     and whether they want to be beta testers. `profile` and `application` stayed, both
+         *     optional, so a client that fills everything in one screen still can - the account
+         *     page is where the rest is normally answered, at leisure.
+         *
+         *     `wants_beta` is an intention, not an admission: the admin board still decides who is
+         *     let in and when. `intended_use` is the one question worth asking at the door, because
+         *     it is what the board sorts on.
          */
         RegisterIn: {
             application?: components["schemas"]["ApplicationIn"] | null;
@@ -2956,9 +3198,18 @@ export interface components {
              * Format: email
              */
             email: string;
+            /** Intended Use */
+            intended_use?: string | null;
+            /** Intended Use Other */
+            intended_use_other?: string | null;
             /** Password */
             password: string;
-            profile: components["schemas"]["ProfileIn"];
+            profile?: components["schemas"]["ProfileIn"] | null;
+            /**
+             * Wants Beta
+             * @default false
+             */
+            wants_beta: boolean;
         };
         /**
          * ReprocessIn
@@ -3916,6 +4167,59 @@ export interface operations {
             };
         };
     };
+    my_application_auth_me_application_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+        };
+    };
+    put_my_application_auth_me_application_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicationUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_me_auth_me_export_get: {
         parameters: {
             query?: never;
@@ -3956,6 +4260,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    put_my_profile_auth_me_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4282,6 +4619,37 @@ export interface operations {
                 "application/json": components["schemas"]["PublishIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unpublish_media_media__media_id__unpublish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -5581,6 +5949,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    taxonomies_taxonomies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string[];
+                    };
                 };
             };
         };
