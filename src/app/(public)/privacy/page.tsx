@@ -1,8 +1,20 @@
-import Link from "next/link";
+import { BackLink } from "@/components/BackLink";
+import { CloseTabButton } from "@/components/CloseTabButton";
 
 export const metadata = { title: "Privacy" };
 
-export default function PrivacyPage() {
+const EXIT_CLASS =
+  "mt-10 inline-block text-[14px] font-semibold text-ink hover:underline";
+
+/**
+ * `?in=tab` is set by the links that open the note in a tab of its own, today the
+ * sign-up consent step. It decides the exit control and nothing else: a tab that
+ * was opened to show this one page is closed, not navigated back out of.
+ */
+export default async function PrivacyPage({
+  searchParams,
+}: PageProps<"/privacy">) {
+  const inOwnTab = (await searchParams).in === "tab";
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-16">
       <p className="type-eyebrow text-ink-3">Privacy note · placeholder</p>
@@ -22,12 +34,11 @@ export default function PrivacyPage() {
           by a reviewed privacy policy before any public launch.
         </p>
       </div>
-      <Link
-        href="/"
-        className="mt-10 inline-block text-[14px] font-semibold text-ink hover:underline"
-      >
-        Back home
-      </Link>
+      {inOwnTab ? (
+        <CloseTabButton className={EXIT_CLASS} />
+      ) : (
+        <BackLink className={EXIT_CLASS} />
+      )}
     </main>
   );
 }
