@@ -5,6 +5,14 @@ const optional = (max: number) =>
   z.string().max(max).optional().or(z.literal(""));
 
 /**
+ * The age floor for an account (V3-0011), mirroring `MIN_AGE_YEARS` in app/schemas.py.
+ *
+ * Only a year is collected, so the check is coarse at the boundary. Sharpening it would
+ * mean asking for a birthdate, which is more personal data to guard the wrong way round.
+ */
+export const MIN_AGE_YEARS = 18;
+
+/**
  * The profile, as the account page sends it back (`PUT /auth/me/profile`).
  *
  * Registration no longer asks for any of this (V3-0008, amended): the four required
@@ -16,7 +24,7 @@ const optional = (max: number) =>
 export const profileSchema = z.object({
   full_name: z.string().min(2).max(200),
   birth_year: z.coerce.number().int().min(1900).max(2100),
-  sex_at_birth: z.string().min(1).max(30),
+  sex_at_birth: z.string().max(30).optional().or(z.literal("")),
   handedness: z.enum(["left", "right", "ambidextrous"]),
   gender: optional(50),
   gender_other: optional(50),
@@ -55,12 +63,17 @@ export const accountSchema = z.object({
  * Everything else - coffee, sleep, medications, the beta credentials - stays on the
  * account page, where nobody is waiting behind you.
  */
-export const basicsSchema = profileSchema.pick({
-  full_name: true,
-  birth_year: true,
-  sex_at_birth: true,
-  handedness: true,
-});
+export const basicsSchema = profileSchema
+  .pick({
+    full_name: true,
+    birth_year: true,
+    sex_at_birth: true,
+    handedness: true,
+  })
+  .refine((v) => new Date().getFullYear() - v.birth_year >= MIN_AGE_YEARS, {
+    path: ["birth_year"],
+    message: `Brain Trails is for people aged ${MIN_AGE_YEARS} and over.`,
+  });
 
 /**
  * The one question registration still asks beyond the account itself.
@@ -93,15 +106,20 @@ const clean = (v: string | undefined) =>
  */
 export function toRegisterPayload(
   account: AccountForm,
-  consent: boolean,
+  consent: { core: boolean; research: boolean },
   beta: BetaForm,
   basics: BasicsForm
 ) {
   return {
     email: account.email,
     password: account.password,
-    consent,
-    profile: basics,
+    // `consent` is the required one and keeps the name the API has always used for it;
+    // `research_consent` is the separate optional question (V3-0011).
+    consent: consent.core,
+    research_consent: consent.research,
+    // "" is the select's "prefer not to answer"; the API spells an unanswered field null,
+    // and null there means nobody asked - which is not the same as declining to say.
+    profile: { ...basics, sex_at_birth: clean(basics.sex_at_birth) },
     wants_beta: beta.wants_beta,
     // Only meaningful alongside the opt-in: asking why someone wants in and then storing
     // the answer for someone who said no would be noise on the board.
@@ -114,6 +132,7 @@ export function toRegisterPayload(
 export function toProfilePayload(profile: ProfileForm) {
   return {
     ...profile,
+    sex_at_birth: clean(profile.sex_at_birth),
     gender: clean(profile.gender),
     gender_other: clean(profile.gender_other),
     education_level: clean(profile.education_level),

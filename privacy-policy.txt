@@ -1,0 +1,304 @@
+Lumentis Privacy Policy
+
+Effective date: Sept 22, 2026
+
+Last updated: Sept 22, 2026
+
+Lumentis Analytics Inc. ("Lumentis," "we," "us," or "our") provides digital neuroscience assessment tools that enable users to complete exercises using compatible electroencephalography ("EEG") headbands, including Muse EEG headbands, and receive analyses, visualizations, metrics, and reports based on EEG recordings and assessment performance (collectively, the "Services").
+
+This Privacy Policy explains how Lumentis collects, uses, discloses, stores, protects, retains, and deletes personal information when you use our website, web application, EEG-based assessments, reports, and related Services.
+1. Important information about the Services
+
+The Services are provided for informational and wellness purposes. Unless Lumentis expressly states otherwise in writing, the Services are not medical devices and are not intended to diagnose, treat, cure, prevent, or monitor a disease or medical condition. The Services do not provide medical advice.
+
+Do not make medical decisions based solely on the Services. Consult a qualified health-care professional with questions about symptoms, diagnosis, treatment, or other medical decisions.
+2. Who we are and how to contact us
+
+Lumentis Analytics Inc. is responsible for the personal information it processes through the Services.
+
+Lumentis Analytics Inc.
+Attn: Privacy Officer
+329 Howe Street, Unit 272
+Vancouver, British Columbia V6C 3N2
+Canada
+Email: privacy@lumentis.ca
+
+For users in jurisdictions where a data controller is a relevant legal concept, Lumentis is generally the controller of personal information processed through the Services. If Lumentis appoints a Data Protection Officer or an EU/UK representative, we will publish the relevant contact details in this Privacy Policy or otherwise make them available to affected users.
+3. Information we collect
+
+We collect information that you provide, information created when you use the Services, and limited technical information necessary to operate and secure the Services.
+3.1 Account and contact information
+
+We may collect:
+
+    Name, if you choose to provide it
+
+    Email address
+
+    Account credentials and authentication information
+
+    Account identifier and participant identifier
+
+    Language, country, time zone, and account preferences
+
+    Communications, questions, feedback, and support requests you send to us
+    
+    Your habits and history that helps us deliver more tailored treatment, such as medications taken or sex at birth
+    
+    Information about your state during EEG collection that helps us deliver more tailored treatment, such as stress level or current mood
+
+3.2 EEG and assessment information
+
+When you use a compatible EEG headband or complete an assessment, we may collect and process:
+
+    Raw EEG recordings captured during assessment sessions
+
+    Signal-quality, device-session, and technical information needed to assess recording quality and integrity
+
+    Exercise responses, task interactions, timing, and performance information
+
+    Derived EEG features, metrics, scores, classifications, statistical outputs, and algorithmic outputs
+
+    Session history, timestamps, duration, and report content
+
+    Reports, visualizations, and results generated through the Services
+    
+    Your responses to surveys during collection, such as anxiety levels
+
+EEG recordings and EEG-derived information may be sensitive personal information. Depending on applicable law and the processing context, they may be treated as health-related information, biometric information, or special-category personal data.
+3.3 Device, usage, and technical information
+
+We may automatically collect:
+
+    Browser type, operating system, device type, application version, and language settings
+
+    IP address and approximate location inferred from IP address
+
+    Log data, diagnostic information, technical performance data, and security events
+
+    Information about use of the Services, such as feature usage and session activity
+
+    Cookies, local storage, session tokens, and similar technologies needed for authentication, security, preferences, and core functionality
+
+4. How we use information
+
+We use personal information only for purposes that are reasonably necessary and proportionate to provide, secure, maintain, and improve the Services, comply with legal obligations, and protect our rights and users.
+4.1 Providing the Services
+
+We use information to:
+
+    Create, administer, and secure your Lumentis account
+
+    Connect with and operate compatible EEG headbands
+
+    Receive, store, validate, and process raw EEG recordings
+
+    Generate derived EEG features, metrics, analyses, visualizations, and reports
+
+    Display your session history and reports to you
+
+    Provide customer and technical support
+
+4.2 Security, reliability, and quality
+
+We use information to:
+
+    Authenticate users and protect accounts
+
+    Prevent unauthorized access, fraud, abuse, and security incidents
+
+    Assess signal quality, device performance, and data integrity
+
+    Identify, investigate, and resolve technical errors, defects, and system failures
+
+    Maintain, test, and improve the reliability, security, and performance of the Services
+
+    Comply with legal obligations and enforce our terms
+
+4.3 Core Service validation and improvement
+
+Lumentis may use pseudonymized EEG recordings, derived EEG features, assessment responses, and related technical information to evaluate, validate, and improve the accuracy, reliability, safety, fairness, and performance of the Lumentis features and metrics that are used to provide the current Services.
+
+This processing is limited to operating, maintaining, validating, and improving the current Lumentis Services and closely related user-facing features. Where reasonably practicable, Lumentis uses pseudonymized data for these activities and separates direct account identifiers from EEG and analytical data.
+
+Lumentis does not sell EEG data, health-related information, or personal information. Lumentis does not use such information for third-party cross-context behavioural advertising.
+4.4 Optional broader scientific research and development
+
+With your separate, optional consent, Lumentis may retain and use your pseudonymized or de-identified EEG recordings, derived features, assessment responses, and related information for broader scientific research and research-and-development activities that go beyond the operation and improvement of the current Lumentis Services.
+
+These activities may include research intended to advance knowledge and tools in mental health, neurology, psychiatry, neuroscience, cognitive science, and related fields; the development, training, validation, and evaluation of future analytical methods, models, and products; quality and safety research; and statistical analysis.
+
+Participation in optional research is voluntary. Your choice not to participate will not affect your ability to use the core Lumentis Services, assessments, or reports.
+
+Where research consent is withdrawn, Lumentis will stop future research uses of personal information that remains identifiable or reasonably linkable to you, subject to applicable legal and operational limitations. Withdrawal does not reverse research processing already completed and cannot remove information that has been irreversibly anonymized and can no longer reasonably be linked to you.
+4.5 Communications
+
+We may send account, security, transactional, technical-support, and other service-related communications necessary to provide the Services.
+
+Where permitted by law and with consent where required, we may also send product updates, surveys, and marketing communications. You can opt out of marketing communications at any time. Opting out of marketing communications does not prevent us from sending necessary service-related communications.
+5. Consent and legal bases
+
+By creating an account and using the Services, you acknowledge this Privacy Policy. Before collecting EEG recordings or other sensitive information, Lumentis will seek consent where required by applicable law and present relevant information about the processing at or before collection.
+
+Where the EU General Data Protection Regulation ("GDPR") or similar laws apply, Lumentis processes personal data only where it has a valid legal basis. Depending on the activity, this may include:
+
+    Your consent, including explicit consent for sensitive or special-category data where required
+
+    Performance of a contract with you, including providing requested assessments, reports, and account functionality
+
+    Legitimate interests in operating, securing, maintaining, and appropriately improving the Services, where these interests are not overridden by your rights and interests
+
+    Compliance with legal obligations
+
+    Protection of vital interests in limited circumstances permitted by law
+
+You may withdraw consent at any time by contacting privacy@lumentis.ca or using available account controls. Withdrawal does not affect processing already completed before withdrawal. If processing is necessary to provide an EEG assessment or report, withdrawal may mean that Lumentis cannot provide or continue to provide that feature.
+
+6. Pseudonymization, de-identification, and anonymization
+
+Lumentis uses pseudonymization as an important privacy safeguard.
+
+In normal operations, EEG recordings, derived EEG features, assessment information, and reports may be associated with a randomly generated participant or account identifier rather than directly labelled with your name or email address. Direct account information and EEG/analytical data are logically separated where reasonably practicable.
+
+Pseudonymized data remains personal information if Lumentis can reasonably reconnect it to you, for example through an account system, participant-ID mapping, administrative process, or other information under Lumentis’s control.
+
+Lumentis may create de-identified or aggregated datasets for research, quality assurance, statistical analysis, and product development. Before treating information as de-identified or anonymous, we will apply measures designed to reduce the risk that information could reasonably be linked back to an individual.
+
+We will not describe information as anonymous unless it has been processed so that an individual is not reasonably identifiable, directly or indirectly, using reasonably available information, data, or technology.
+7. Storage location and international access
+
+Lumentis Analytics Inc. is incorporated in Canada. Lumentis currently stores and processes Service data primarily in Frankfurt, Germany.
+
+This may include account data, pseudonymized participant records, raw EEG recordings, derived EEG features, assessment information, reports, logs, and backups.
+
+Authorized Lumentis personnel may access pseudonymized Service data from Canada and Italy where necessary to operate, maintain, secure, and improve the Services. Lumentis restricts access based on role, operational need, and applicable access controls.
+
+For users in the European Economic Area ("EEA"), United Kingdom, or Switzerland, personal information may be accessed from Canada or Italy. Where applicable law requires safeguards for an international transfer or remote access, Lumentis will implement appropriate measures, which may include data-processing agreements, the European Commission’s Standard Contractual Clauses, transfer assessments, and supplementary technical, organizational, or contractual safeguards.
+8. Security
+
+Lumentis uses reasonable administrative, organizational, and technical measures designed to protect personal information against unauthorized access, loss, misuse, alteration, disclosure, or destruction.
+
+Current safeguards include:
+
+    Storage and processing infrastructure located primarily in Frankfurt, Germany
+
+    Server-side encryption for Amazon S3 objects using SSE-S3
+
+    Encryption at rest for Neon/PostgreSQL databases using AES-256 encryption
+
+    Encryption in transit using TLS 1.2 and/or TLS 1.3
+
+    Logical separation of direct account data from pseudonymized EEG and analytical data where reasonably practicable
+
+    Role-based access controls and least-privilege principles
+
+    Authentication, logging, monitoring, and security-review procedures
+
+    Restricted access to raw EEG recordings and other sensitive information
+
+No system is completely secure. We cannot guarantee absolute security, but we will investigate suspected incidents and provide notifications where required by applicable law.
+9. Retention and deletion
+
+Lumentis retains personal information only for as long as reasonably necessary for the purposes described in this Privacy Policy, including providing the Services, maintaining security, resolving disputes, meeting legal obligations, and protecting our rights.
+
+Our current approach includes:
+Information category	Retention approach
+Active account information	Retained while your account is active, unless deletion is requested or retention is otherwise required or permitted by law
+Raw EEG recordings	Retained in active operational storage for approximately 30 to 60 days and then moved to lower-cost archival or cold storage, unless deleted or otherwise required or permitted by law
+Derived EEG features and reports	Retained while needed to provide session history, reports, and related Services, unless deleted or otherwise required or permitted by law
+Optional-research data	Retained and used only in accordance with the optional research consent, withdrawal instructions, and applicable law
+Security logs and backups	Retained for limited periods based on security, operational, legal, and backup-recovery requirements
+
+You may request deletion of your account and associated personal information by contacting privacy@lumentis.ca.
+
+Following a verified deletion request, Lumentis will delete or de-identify personal information that we are no longer required or permitted to retain. Certain information may be retained where necessary for legal, security, fraud-prevention, accounting, dispute-resolution, backup-recovery, or other permitted purposes. Secure backups may persist for a limited period before being overwritten or deleted in the ordinary backup cycle.
+
+Deletion requests do not apply to information that has been irreversibly anonymized and can no longer reasonably be linked to you.
+10. How we disclose information
+
+Lumentis does not sell your personal information, raw EEG recordings, derived EEG features, reports, or health-related information.
+
+We do not disclose personal information to third parties for cross-context behavioural advertising.
+
+We may disclose information only as follows:
+
+    To hosting, cloud-storage, database, security, authentication, communications, customer-support, payment, analytics, and other service providers that process information on our behalf under contractual confidentiality and data-protection obligations
+
+    To professional advisers, including lawyers, accountants, auditors, insurers, and similar advisers, where necessary
+
+    Where required or permitted by law, legal process, court order, regulatory request, or governmental authority
+
+    To protect the rights, safety, security, property, and integrity of Lumentis, our users, and others
+
+    In connection with a merger, acquisition, financing, restructuring, sale of assets, or similar business transaction, subject to applicable privacy-law requirements
+
+    With your direction or express consent, for example when you request an export or sharing of a report
+
+11. Your privacy rights
+
+Depending on your location and applicable law, you may have rights to:
+
+    Request access to personal information we hold about you
+
+    Request correction of inaccurate or incomplete personal information
+
+    Request deletion of personal information
+
+    Receive a portable copy of certain personal information
+
+    Withdraw consent where processing is based on consent
+
+    Request restriction of, or object to, certain processing
+
+    Object to direct marketing
+
+    Ask for information about our use or disclosure of your personal information
+
+    Complain to a privacy or data-protection regulator
+
+To exercise a privacy right, contact privacy@lumentis.ca. We may need to verify your identity before responding.
+
+If you are in the EEA, UK, or Switzerland, you may also have the right to lodge a complaint with the competent data-protection authority in your place of residence, workplace, or the location of the alleged infringement.
+
+Canadian users may contact the Office of the Privacy Commissioner of Canada or the Office of the Information and Privacy Commissioner for British Columbia.
+12. Cookies and similar technologies
+
+Lumentis uses cookies, local storage, session tokens, and similar technologies for necessary purposes such as:
+
+    Authentication and secure session management
+
+    Account preferences
+
+    Security, fraud prevention, and abuse detection
+
+    Technical performance and error monitoring
+
+    Necessary Service functionality
+
+A browser-stored identifier or session token does not make EEG data anonymous. If Lumentis can use an identifier to retrieve, connect, or otherwise relate data to an account or individual, the associated data remains personal information.
+
+You may be able to manage some cookies through your browser settings. Disabling necessary cookies may affect the functionality of the Services.
+13. Children and young users
+
+The Services are not designed for children under the age at which they may legally consent to the processing of their personal information in their jurisdiction.
+
+If Lumentis makes the Services available to minors, Lumentis will provide age-appropriate information, obtain parental or guardian consent where required, and implement appropriate safeguards.
+
+14. Third-party services
+
+The Services may link to or use third-party services, including compatible EEG-device services, payment providers, and infrastructure providers. Their privacy practices are governed by their own policies. We encourage you to review third-party privacy notices before providing information to them.
+
+15. Changes to this Privacy Policy
+
+We may update this Privacy Policy to reflect changes in the Services, our data practices, legal requirements, or technology. If we make material changes, we will provide notice through the Services, by email, or by another appropriate method. The date at the top of this Privacy Policy indicates when it was last updated.
+
+16. Contact us
+
+For questions, privacy requests, complaints, or concerns, contact:
+
+Lumentis Analytics Inc.
+Attn: Privacy Officer
+329 Howe Street, Unit 272
+Vancouver, British Columbia V6C 3N2
+Canada
+Email: privacy@lumentis.ca
