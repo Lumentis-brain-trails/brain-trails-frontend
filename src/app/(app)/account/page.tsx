@@ -12,6 +12,10 @@ import {
 } from "@/components/account/ProfileCard";
 import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
 import {
+  type ConsentData,
+  PrivacyCard,
+} from "@/components/account/PrivacyCard";
+import {
   Button,
   Card,
   ErrorBanner,
@@ -46,6 +50,11 @@ export default function AccountPage() {
   const application = useQuery({
     queryKey: ["me-application"],
     queryFn: () => api.get<ApplicationData>("auth/me/application"),
+    retry: false,
+  });
+  const consent = useQuery({
+    queryKey: ["me-consent"],
+    queryFn: () => api.get<ConsentData>("auth/me/consent"),
     retry: false,
   });
 
@@ -106,15 +115,10 @@ export default function AccountPage() {
           ) : (
             <ProfileCard data={profile.data} missing={!profile.data} />
           )}
-          {profile.data?.consent_version && (
-            <p className="type-caption mt-2 px-1 text-ink-3">
-              Consent {String(profile.data.consent_version)} accepted on{" "}
-              {profile.data.consent_at
-                ? new Date(String(profile.data.consent_at)).toLocaleDateString()
-                : "–"}
-              .
-            </p>
-          )}
+        </section>
+
+        <section>
+          {!consent.isLoading && <PrivacyCard data={consent.data} />}
         </section>
 
         <section>
