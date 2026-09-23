@@ -7,3 +7,6 @@ assets
 /ios
 src/lib/api-types.ts
 schemas/*.schema.json
+
+# Source documents kept exactly as they were written, not reflowed by a formatter
+lumentis-privacy-implementation-protocols.md
