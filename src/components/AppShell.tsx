@@ -9,6 +9,8 @@ import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
 import { Logo } from "@/components/Logo";
 import { cn, Icon, type IconName } from "@/components/ui";
+import { type ConsentData } from "@/components/account/PrivacyCard";
+import { PolicyUpdateGate } from "@/components/PolicyUpdateGate";
 
 type Section = { href: string; label: string; icon: IconName };
 
@@ -43,6 +45,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
 
+  // Whether this account still agrees to the note as published (V3-0011). Deliberately
+  // fails open: while this is loading, or if the call fails, the app renders as usual.
+  // A gate that closes on a network blip locks people out of their own data, which is a
+  // worse privacy outcome than asking them again one session later.
+  const consent = useQuery({
+    queryKey: ["me-consent"],
+    queryFn: () => api.get<ConsentData>("auth/me/consent"),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const stale =
+    consent.data !== undefined &&
+    consent.data.core_version !== consent.data.current_version;
+
   // Following a link inside the drawer closes it: the state resets when the path
   // it was opened on is no longer the current one.
   if (open && openedAt !== pathname) setOpen(false);
@@ -53,6 +69,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  if (stale && consent.data) return <PolicyUpdateGate consent={consent.data} />;
 
   return (
     <>

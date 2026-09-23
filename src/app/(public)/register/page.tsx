@@ -30,10 +30,23 @@ import {
 } from "@/lib/schemas";
 import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
 
-const CONSENT_TEXT =
-  "I consent to the processing of my EEG recordings and the profile data by " +
-  "LuMentis for the Brain Trails research prototype, as described in the privacy note. " +
-  "I can request export or deletion of all my data at any time.";
+/**
+ * The two consents, worded as the privacy note words them (V3-0011). The first is what
+ * the service needs to run at all and blocks the button; the second is a separate
+ * question about research beyond that, and refusing it costs nothing.
+ */
+const CORE_CONSENT_TEXT =
+  "Lumentis will collect and process my EEG recordings, exercise responses and related " +
+  "technical information to provide my results, metrics, visualizations and reports; to " +
+  "maintain and secure the service; to assess signal quality and troubleshoot; and to " +
+  "evaluate and improve the accuracy and reliability of the features provided through it. " +
+  "Recordings are held under a pseudonymous identifier and stored in Frankfurt, Germany.";
+
+const RESEARCH_CONSENT_TEXT =
+  "Lumentis may also keep and use my pseudonymised recordings, derived features and " +
+  "responses for broader scientific research beyond running and improving this service - " +
+  "including work on mental health, neurology and cognitive science, and developing and " +
+  "validating future methods and models.";
 
 type Step = "account" | "you" | "consent";
 
@@ -89,7 +102,8 @@ export default function RegisterPage() {
   const [account, setAccount] = useState<AccountForm | null>(null);
   const [basics, setBasics] = useState<BasicsForm | null>(null);
   const [beta, setBeta] = useState<BetaForm | null>(null);
-  const [consent, setConsent] = useState(false);
+  const [coreConsent, setCoreConsent] = useState(false);
+  const [researchConsent, setResearchConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -123,13 +137,18 @@ export default function RegisterPage() {
   });
 
   async function submitAll() {
-    if (!account || !basics || !beta || !consent) return;
+    if (!account || !basics || !beta || !coreConsent) return;
     setSubmitting(true);
     setError(null);
     try {
       const user = await api.post<{ status: string }>(
         "auth/register",
-        toRegisterPayload(account, consent, beta, basics)
+        toRegisterPayload(
+          account,
+          { core: coreConsent, research: researchConsent },
+          beta,
+          basics
+        )
       );
       // Where they go depends on what the account already is: open and waiting for the
       // email, open outright, or still an application waiting for an admin.
@@ -317,7 +336,7 @@ export default function RegisterPage() {
         {step === "consent" && (
           <div key="consent" className="enter-up max-w-lg space-y-6">
             <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
-              {CONSENT_TEXT}{" "}
+              {CORE_CONSENT_TEXT}{" "}
               <Link
                 className="font-semibold text-ink hover:underline"
                 href="/privacy?in=tab"
@@ -337,12 +356,36 @@ export default function RegisterPage() {
             <label className="flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
+                checked={coreConsent}
+                onChange={(e) => setCoreConsent(e.target.checked)}
                 className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
               />
-              <span>I have read the note and I consent.</span>
+              <span>I have read the privacy note and I consent.</span>
             </label>
+
+            <section className="space-y-4 border-t border-hairline pt-6">
+              <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
+                {RESEARCH_CONSENT_TEXT}
+              </p>
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={researchConsent}
+                  onChange={(e) => setResearchConsent(e.target.checked)}
+                  className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                />
+                <span>
+                  <span className="block">
+                    I agree to contribute my data to broader research.
+                  </span>
+                  <span className="type-caption text-ink-3">
+                    Optional, and separate from the consent above. Saying no
+                    changes nothing about your account or your results, and you
+                    can change your mind on the account page at any time.
+                  </span>
+                </span>
+              </label>
+            </section>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -351,7 +394,7 @@ export default function RegisterPage() {
               >
                 Back
               </Button>
-              <Button onClick={submitAll} disabled={!consent || submitting}>
+              <Button onClick={submitAll} disabled={!coreConsent || submitting}>
                 {submitting ? "Creating…" : "Create account"}
               </Button>
             </div>
