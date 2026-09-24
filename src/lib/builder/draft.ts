@@ -62,6 +62,12 @@ function num(value: unknown, fallback: number): number {
 
 const TRIAL_KINDS = new Set(["go-no-go", "flanker", "n-back", "heartbeat"]);
 
+/**
+ * A guess at how long a self-paced n-back letter is kept before Continue; the backend's
+ * `_n_back_seconds` guesses the same. The clip is marked variable anyway.
+ */
+const SELF_PACED_LETTER_S = 2;
+
 /** Mean of a `[min, max]` setting in seconds, or `fallback` when it is not one. */
 function meanMs(value: unknown, fallback: number): number {
   return Array.isArray(value) && value.length === 2
@@ -96,6 +102,8 @@ function trialBlockSeconds(
     // a row is answered in about 0.6 s; the window only bounds the slow ones
     return n * (cue + 0.6 + meanMs(config.itiMs, 800));
   }
+  if (kind === "n-back" && config.pace === "self")
+    return n * (SELF_PACED_LETTER_S + num(config.gapMs, 500) / 1000);
   if (kind === "n-back")
     return (n * (num(config.stimulusMs, 500) + num(config.isiMs, 2000))) / 1000;
   const intervals = Array.isArray(config.intervals_s)
@@ -180,7 +188,9 @@ export function clips(
     variable:
       node.type !== "block"
         ? true
-        : SELF_PACED.has(node.kind) || isSelfPacedRest(node),
+        : SELF_PACED.has(node.kind) ||
+          isSelfPacedRest(node) ||
+          isSelfPacedNBack(node),
   }));
 }
 
@@ -188,6 +198,13 @@ function isSelfPacedRest(node: BlockNode): boolean {
   return (
     node.kind === "rest" &&
     (node.config as { mode?: unknown }).mode === "self_paced"
+  );
+}
+
+function isSelfPacedNBack(node: BlockNode): boolean {
+  return (
+    node.kind === "n-back" &&
+    (node.config as { pace?: unknown }).pace === "self"
   );
 }
 
@@ -515,6 +532,14 @@ export const ELEMENTS: PaletteItem[] = [
     group: "task",
     label: "Letter memory (2-back)",
     config: { n: 60, load: 2 },
+  },
+  {
+    id: "n-back-self-paced",
+    kind: "n-back",
+    group: "task",
+    label: "Self-paced n-back",
+    hint: "The same letters, but each one stays until the participant presses Continue.",
+    config: { pace: "self", n: 40, load: 2 },
   },
   {
     id: "coding",

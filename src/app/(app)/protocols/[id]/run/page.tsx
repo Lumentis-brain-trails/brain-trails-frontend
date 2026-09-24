@@ -57,6 +57,7 @@ import { useMuse } from "@/lib/muse/useMuse";
 import { type ClockAnchor, eegAnchor } from "@/lib/protocol/clock";
 import { type Marker, toWireEvent } from "@/lib/protocol/marker";
 import type { PhaseSummary } from "@/lib/protocol/metrics";
+import { resultTitles } from "@/lib/protocol/results";
 import { devToolsAllowed } from "@/lib/env";
 import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
 import {
@@ -369,6 +370,7 @@ export default function RunProtocolPage({
     );
 
   const done = outcome?.aborted === false;
+  const titles = resultTitles(results, plan);
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="type-title mb-4">{done ? t("complete") : t("stopped")}</h1>
@@ -402,9 +404,7 @@ export default function RunProtocolPage({
         if (summary.hitRate === undefined) return null;
         return (
           <Card key={result.stepId} className="mb-4">
-            <h2 className="type-subhead mb-3 capitalize">
-              {result.stepId.replace(/_/g, " ")}
-            </h2>
+            <h2 className="type-subhead mb-3">{titles[result.stepId]}</h2>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-3">
               <Stat label="Hits" value={pct(summary.hitRate)} />
               <Stat label="Misses" value={pct(summary.omissionRate)} />
