@@ -14,6 +14,35 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * A 401 `unauthorized` from the BFF means the session is gone, not that the call was
+ * wrong: the `bt_token` cookie outlived its 115 minutes (the backend then answers
+ * "missing bearer token") or the JWT no longer verifies. Other 401s, such as
+ * `invalid_credentials` for a wrong password, are the caller's to show.
+ */
+function isSessionLost(path: string, status: number, error: ApiError): boolean {
+  return (
+    status === 401 &&
+    error.code === "unauthorized" &&
+    path.startsWith("/api/backend/")
+  );
+}
+
+/**
+ * Send the visitor to sign in again and back here afterwards, as the middleware does on
+ * navigation. A page left open past the cookie's lifetime never navigates, so without
+ * this every call (the builder's autosave included) fails with the raw backend message.
+ */
+function redirectToLogin(): void {
+  if (typeof window === "undefined") return;
+  const { pathname, search } = window.location;
+  if (pathname === "/login") return;
+  const login = new URLSearchParams({ from: pathname + search });
+  // A full load on purpose: no router out here, and the cache of the lost session goes.
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+  window.location.assign(`/login?${login}`);
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
@@ -27,6 +56,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       /* non-JSON error body */
     }
+    if (isSessionLost(path, response.status, error)) redirectToLogin();
     throw new ApiRequestError(response.status, error);
   }
   // 204 No Content (e.g. storing a session's plan) has no body to parse.
