@@ -16,13 +16,21 @@
  * clock would pin one of them to a time it does not have. The chosen rows are
  * remembered in this browser (`lib/compare/rows.ts`).
  *
- * The trails rest on the person's brain landscape - one map of all their recordings
- * (backend V3-0013) - when it already holds this recording; both columns then share
- * one camera, so turning one turns the other. Until it does, the session's own terrain
- * stands in, and the page says so.
+ * The trails rest on a 3D terrain: the person's brain landscape - one map of all their
+ * recordings, grown session by session (backend V3-0016, V3-0017) - when it already holds
+ * this recording, and the session's own terrain until then (the page says which). Both
+ * columns share one camera, so turning one turns the other. Without WebGL the trail is
+ * drawn flat.
+ *
+ * Each column can be narrowed (`FocusControls`): a stretch of its block and, for a task
+ * block, the kinds of trial to keep. Every number in the column is then the backend's
+ * recomputation for that focus (`useSelection`); the average person stays whole-block.
  */
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { AddRowMenu } from "@/components/compare/AddRowMenu";
+import { FocusControls } from "@/components/compare/FocusControls";
+import { useSelection } from "@/components/compare/useSelection";
 import { BlockFrame, type FrameVideo } from "@/components/compare/BlockFrame";
 import { BlockLandscape } from "@/components/compare/BlockLandscape";
 import {
@@ -36,26 +44,30 @@ import {
   NormMark,
 } from "@/components/compare/MetricCell";
 import { Select } from "@/components/ui";
-import { formatClock } from "@/lib/builder/draft";
 import {
-  groupSlot,
-  labelGroups,
-  legend,
-  markerOf,
-  parseLabel,
-} from "@/lib/compare/labels";
+  type BrainLandscape,
+  sessionTerrain,
+  supportsWebGL,
+} from "@/lib/brainLandscape";
+import { formatClock } from "@/lib/builder/draft";
+import { labelGroups } from "@/lib/compare/labels";
 import {
   type BlockMetrics,
-  ROW_GROUPS,
   ROWS,
   type RowId,
   readRows,
   rowSpec,
   writeRows,
 } from "@/lib/compare/rows";
-import type { BrainLandscape } from "@/lib/brainLandscape";
+import {
+  type Focus,
+  WHOLE_BLOCK,
+  focusRange,
+  focusedBlock,
+  isNarrowed,
+  keptWindows,
+} from "@/lib/compare/selection";
 import type { WireEvent } from "@/lib/protocol/marker";
-import { useChartTheme } from "@/lib/theme";
 import type { Analysis } from "@/lib/types";
 
 /** Rows above the reader's own: the block, its trail, what was on screen. */
@@ -80,6 +92,7 @@ export function defaultPair(blocks: readonly BlockMetrics[]): [string, string] {
 }
 
 export function CompareView({
+  recordingId,
   analysis,
   blocks,
   events,
@@ -88,6 +101,8 @@ export function CompareView({
   videoAt,
   landscape = null,
 }: {
+  /** The recording the blocks belong to: what the selections are asked of. */
+  recordingId: string;
   analysis: Analysis;
   blocks: readonly BlockMetrics[];
   events: readonly WireEvent[];
@@ -105,14 +120,47 @@ export function CompareView({
   const [moments, setMoments] = useState<Record<string, number>>({});
   const [rows, setRows] = useState<RowId[]>(() => readRows());
   const [camera, setCamera] = useState<Camera>(DEFAULT_CAMERA);
+  const [focus, setFocus] = useState<[Focus, Focus]>([
+    WHOLE_BLOCK,
+    WHOLE_BLOCK,
+  ]);
+  // the server cannot know; hydration takes its answer, then the browser's
+  const webgl = useSyncExternalStore(
+    noSubscription,
+    supportsWebGL,
+    () => false
+  );
   const onLandscape = Boolean(landscape?.trail);
-  const groups = useMemo(
-    () => labelGroups(blocks.map((b) => b.labels)),
-    [blocks]
+  // the person's map when it holds this recording, else the session's own terrain
+  const terrain = useMemo(
+    () => (onLandscape ? landscape : sessionTerrain(analysis)),
+    [analysis, landscape, onLandscape]
   );
 
   const byKey = (key: string) => blocks.find((b) => b.key === key) ?? blocks[0];
-  const columns = pair.map(byKey);
+  const rowsOf = pair.map(byKey);
+  const selections = [
+    useSelection(recordingId, rowsOf[0]?.key, focus[0]),
+    useSelection(recordingId, rowsOf[1]?.key, focus[1]),
+  ];
+  // labels: the selection's (computed for every recording), else the stored row's
+  const sideLabels = [
+    selections[0].data?.window_labels ?? rowsOf[0]?.labels ?? null,
+    selections[1].data?.window_labels ?? rowsOf[1]?.labels ?? null,
+  ];
+  const [leftLabels, rightLabels] = sideLabels;
+  const labelsOf = (side: number): readonly (string | null)[] | null =>
+    sideLabels[side];
+  const groups = labelGroups([
+    ...blocks.map((b) => b.labels),
+    leftLabels,
+    rightLabels,
+  ]);
+  const columns = rowsOf.map((row, side) =>
+    focusedBlock(row, focus[side], selections[side].data)
+  );
+  const setSideFocus = (side: number, next: Focus) =>
+    setFocus((f) => (side === 0 ? [next, f[1]] : [f[0], next]));
 
   const updateRows = (next: RowId[]) => {
     setRows(next);
@@ -128,6 +176,9 @@ export function CompareView({
           : landscape?.pending
             ? tr("landscapePending")
             : tr("onSessionTerrain")}
+        {onLandscape && landscape?.change === "redrawn"
+          ? ` ${tr("redrawn")}`
+          : ""}
       </p>
       <div
         className="grid grid-cols-2 gap-3 sm:gap-5"
@@ -136,18 +187,24 @@ export function CompareView({
         }}
       >
         {columns.map((block, side) => {
+          const row = rowsOf[side];
           const other = columns[1 - side] ?? null;
-          const t = moments[`${side}:${block.key}`] ?? block.t_start_s;
+          const selection = selections[side];
+          const [from, to] = focusRange(row, focus[side]);
+          const moment = moments[`${side}:${row.key}`] ?? from;
+          const t = Math.min(to, Math.max(from, moment));
           const setT = (next: number) =>
             setMoments((m) => ({
               ...m,
-              [`${side}:${block.key}`]: Math.min(
-                block.t_end_s,
-                Math.max(block.t_start_s, next)
-              ),
+              [`${side}:${row.key}`]: Math.min(to, Math.max(from, next)),
             }));
-          const step = steps[block.block_id] ?? {};
-          const title = block.label ?? block.block_id;
+          const step = steps[row.block_id] ?? {};
+          const title = row.label ?? row.block_id;
+          const labels = labelsOf(side);
+          const windowT = blockWindows(analysis.points, row).map(
+            (p) => p.t_start
+          );
+          const kept = keptWindows(windowT, labels, row, focus[side]);
           return (
             <section
               key={side}
@@ -155,25 +212,44 @@ export function CompareView({
               className="grid min-w-0 grid-rows-subgrid gap-y-3 rounded-[var(--radius-card)] border border-hairline bg-surface p-3 shadow-(--shadow-card) sm:p-5"
               style={{ gridRow: "1 / -1" }}
             >
-              <BlockPicker
-                blocks={blocks}
-                value={block.key}
-                label={tr(side === 0 ? "left" : "right")}
-                onChange={(key) =>
-                  setPair((p) => (side === 0 ? [key, p[1]] : [p[0], key]))
-                }
-              />
+              <div className="min-w-0 space-y-3">
+                <BlockPicker
+                  blocks={blocks}
+                  value={row.key}
+                  label={tr(side === 0 ? "left" : "right")}
+                  onChange={(key) => {
+                    setPair((p) => (side === 0 ? [key, p[1]] : [p[0], key]));
+                    setSideFocus(side, WHOLE_BLOCK);
+                  }}
+                />
+                <FocusControls
+                  block={row}
+                  focus={focus[side]}
+                  onChange={(next) => setSideFocus(side, next)}
+                  windowT={windowT}
+                  windowLabels={labels}
+                  groups={groups}
+                  step={analysis.step_s || 1}
+                  title={title}
+                />
+                {selection.data && (
+                  <p className="type-caption text-ink-3">
+                    {tr(`regions.${selection.data.regions ?? "session"}`)}
+                  </p>
+                )}
+              </div>
 
               <div className="min-w-0 space-y-2">
                 <h3 className="type-caption font-medium text-ink-3">
                   {tr("trail")}
                 </h3>
-                {landscape && onLandscape ? (
+                {terrain && webgl ? (
                   <BlockLandscape
-                    landscape={landscape}
-                    block={block}
-                    labels={block.labels}
+                    landscape={terrain}
+                    block={row}
+                    labels={labels}
                     groups={groups}
+                    kept={kept}
                     t={t}
                     camera={camera}
                     onCamera={setCamera}
@@ -182,9 +258,10 @@ export function CompareView({
                 ) : (
                   <BlockTrail
                     analysis={analysis}
-                    block={block}
-                    labels={block.labels}
+                    block={row}
+                    labels={labels}
                     groups={groups}
+                    kept={kept}
                     t={t}
                     onSeek={setT}
                     title={tr("trailAria", { block: title })}
@@ -195,15 +272,15 @@ export function CompareView({
                     <span>{tr("cursor")}</span>
                     <span className="tabular-nums">
                       {tr("cursorValue", {
-                        at: formatClock(t - block.t_start_s),
-                        total: formatClock(block.t_end_s - block.t_start_s),
+                        at: formatClock(t - row.t_start_s),
+                        total: formatClock(row.t_end_s - row.t_start_s),
                       })}
                     </span>
                   </span>
                   <input
                     type="range"
-                    min={block.t_start_s}
-                    max={block.t_end_s}
+                    min={from}
+                    max={to}
                     step={analysis.step_s || 1}
                     value={t}
                     onChange={(e) => setT(Number(e.target.value))}
@@ -211,11 +288,9 @@ export function CompareView({
                     aria-label={`${tr("cursor")} · ${title}`}
                   />
                 </label>
-                <TrailLegend
-                  labels={block.labels ?? null}
-                  groups={groups}
-                  empty={blockWindows(analysis.points, block).length === 0}
-                />
+                {!labels && windowT.length > 0 && (
+                  <p className="type-caption text-ink-3">{tr("byTime")}</p>
+                )}
               </div>
 
               <div className="min-w-0 space-y-2">
@@ -223,11 +298,11 @@ export function CompareView({
                   {tr("onScreen")}
                 </h3>
                 <BlockFrame
-                  kind={step.kind ?? block.kind}
+                  kind={step.kind ?? row.kind}
                   label={title}
                   config={step.config ?? null}
                   events={events}
-                  block={block}
+                  block={row}
                   t={t}
                   video={videoAt(t)}
                 />
@@ -240,6 +315,8 @@ export function CompareView({
                   block={block}
                   other={other}
                   series={bands?.[id] ?? null}
+                  narrowed={isNarrowed(row, focus[side])}
+                  pending={selection.isFetching}
                   t={t}
                   onRemove={() => updateRows(rows.filter((r) => r !== id))}
                 />
@@ -249,36 +326,10 @@ export function CompareView({
         })}
       </div>
 
-      {available.length > 0 && (
-        <div className="flex justify-center">
-          <label className="w-full max-w-xs">
-            <span className="sr-only">{tr("addRow")}</span>
-            <Select
-              value=""
-              aria-label={tr("addRow")}
-              onChange={(e) => {
-                const id = e.target.value as RowId;
-                if (id) updateRows([...rows, id]);
-              }}
-            >
-              <option value="">{`+ ${tr("addRow")}`}</option>
-              {ROW_GROUPS.map((group) => {
-                const options = available.filter((r) => r.group === group);
-                if (options.length === 0) return null;
-                return (
-                  <optgroup key={group} label={tr(`groups.${group}`)}>
-                    {options.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {tr(`rows.${r.id}.name`)}
-                      </option>
-                    ))}
-                  </optgroup>
-                );
-              })}
-            </Select>
-          </label>
-        </div>
-      )}
+      <AddRowMenu
+        available={available}
+        onAdd={(id) => updateRows([...rows, id])}
+      />
 
       <BarKey />
       <p className="type-caption text-center text-ink-3">{tr("disclaimer")}</p>
@@ -328,69 +379,6 @@ function BlockPicker({
   );
 }
 
-/** What the trail's colours and markers mean in this block, with how many windows each. */
-function TrailLegend({
-  labels,
-  groups,
-  empty,
-}: {
-  labels: readonly (string | null)[] | null;
-  groups: readonly string[];
-  empty: boolean;
-}) {
-  const tr = useTranslations("compare");
-  const theme = useChartTheme();
-  if (empty) return null;
-  if (!labels) return <p className="type-caption text-ink-3">{tr("byTime")}</p>;
-  const entries = legend(labels, groups);
-  const named = (label: string) => {
-    const key = `labels.${label}`;
-    if (tr.has(key as never)) return tr(key as never);
-    const { group, act } = parseLabel(label);
-    return act ? `${group} · ${tr(`labels.${act}`)}` : group;
-  };
-  return (
-    <ul className="type-caption flex flex-wrap gap-x-3 gap-y-1 text-ink-2">
-      {entries.map((entry) => {
-        const slot = groupSlot(groups, entry.group);
-        const colour = slot === null ? theme.ink3 : theme.labels[slot];
-        const marker = markerOf(entry.act);
-        return (
-          <li key={entry.label} className="flex items-center gap-1.5">
-            <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden>
-              {marker === "ring" ? (
-                <circle
-                  cx={6}
-                  cy={6}
-                  r={4}
-                  fill="none"
-                  stroke={colour}
-                  strokeWidth={2}
-                />
-              ) : marker === "diamond" ? (
-                <rect
-                  x={2.5}
-                  y={2.5}
-                  width={7}
-                  height={7}
-                  transform="rotate(45 6 6)"
-                  fill={colour}
-                />
-              ) : (
-                <circle cx={6} cy={6} r={4.5} fill={colour} />
-              )}
-            </svg>
-            <span>
-              {named(entry.label)}{" "}
-              <span className="tabular-nums text-ink-3">{entry.count}</span>
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 /** How to read a row's bar, said once for every row. */
 function BarKey() {
   const tr = useTranslations("compare");
@@ -424,4 +412,9 @@ function BarKey() {
       </li>
     </ul>
   );
+}
+
+/** WebGL support does not change while a page is open: nothing to subscribe to. */
+function noSubscription(): () => void {
+  return () => {};
 }

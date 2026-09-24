@@ -14,9 +14,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
-import { Card, EmptyState, Skeleton, Spinner } from "@/components/ui";
+import {
+  Card,
+  EmptyState,
+  ErrorBanner,
+  Skeleton,
+  Spinner,
+} from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
-import type { BrainLandscape } from "@/lib/brainLandscape";
+import { type BrainLandscape, landscapeProblem } from "@/lib/brainLandscape";
 
 /** How often to look again while the map is being built. */
 const POLL_MS = 5000;
@@ -27,17 +33,18 @@ export default function BrainLandscapePage() {
     queryKey: ["my-landscape"],
     queryFn: () => api.get<BrainLandscape>("landscape"),
     retry: false,
+    // look again only while waiting can help: a map being built or rebuilt. A server
+    // without landscapes, or a real error, would only be asked the same question again.
     refetchInterval: (query) =>
-      query.state.status === "error" || query.state.data?.pending
+      query.state.data?.pending ||
+      landscapeProblem(problemOf(query.state.error)) === "building"
         ? POLL_MS
         : false,
   });
 
-  // 409 is "not built yet": asking queued the first build when there is anything to
-  // build from, so the page keeps looking. Anything else is a real error.
-  const notReady =
-    landscape.error instanceof ApiRequestError &&
-    landscape.error.error.code === "not_ready";
+  const problem = landscape.data
+    ? null
+    : landscapeProblem(problemOf(landscape.error));
   const data = landscape.data;
 
   return (
@@ -67,7 +74,18 @@ export default function BrainLandscapePage() {
 
       {landscape.isLoading && <Skeleton className="h-[560px]" />}
 
-      {notReady && <EmptyState title={t("title")} text={t("notReady")} />}
+      {problem === "building" && (
+        <EmptyState title={t("title")} text={t("notReady")} />
+      )}
+      {problem === "unavailable" && (
+        <EmptyState title={t("title")} text={t("unavailable")} />
+      )}
+      {problem === "error" && <ErrorBanner message={t("failed")} />}
+      {data?.change === "redrawn" && (
+        <p className="mb-3 rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-[14px] text-ink-2">
+          {t("redrawn")}
+        </p>
+      )}
 
       {data && (
         <Card className="p-2 sm:p-4">
@@ -78,4 +96,13 @@ export default function BrainLandscapePage() {
       <p className="type-caption mt-4 text-ink-3">{t("disclaimer")}</p>
     </main>
   );
+}
+
+/** The status and code of a failed request, whatever threw it. */
+function problemOf(error: unknown) {
+  return error instanceof ApiRequestError
+    ? { status: error.status, error: { code: error.error.code } }
+    : error
+      ? { status: 0 }
+      : null;
 }

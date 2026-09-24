@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import {
   type Camera,
   LandscapeSurface,
+  type SurfaceTrail,
 } from "@/components/compare/LandscapeSurface";
 import { useLabelNamer } from "@/components/compare/useLabelNamer";
 import { formatClock } from "@/lib/builder/draft";
@@ -32,6 +33,7 @@ export function BlockLandscape({
   block,
   labels,
   groups,
+  kept = null,
   t,
   camera,
   onCamera,
@@ -41,6 +43,8 @@ export function BlockLandscape({
   block: { t_start_s: number; t_end_s: number };
   labels: readonly (string | null)[] | null | undefined;
   groups: readonly string[];
+  /** One flag per window of the block: whether the column's focus keeps it. */
+  kept?: readonly boolean[] | null;
   /** Session seconds of this column's cursor. */
   t: number;
   camera: Camera;
@@ -78,8 +82,27 @@ export function BlockLandscape({
         return label ? `${clock} · ${namer.label(label)}` : clock;
       }),
     };
-    return { context: { x: trail.x, y: trail.y }, lit };
-  }, [block, groups, labels, namer, theme, trail]);
+    // one trace per run of kept windows, so no line crosses a gap the focus left
+    const runs: SurfaceTrail[] = [];
+    let run: number[] = [];
+    const flush = () => {
+      if (run.length > 0)
+        runs.push({
+          x: run.map((k) => lit.x[k]),
+          y: run.map((k) => lit.y[k]),
+          colors: run.map((k) => lit.colors[k]),
+          symbols: run.map((k) => lit.symbols[k]),
+          text: run.map((k) => lit.text[k]),
+        });
+      run = [];
+    };
+    rows.forEach((_, k) => {
+      if (!kept || kept[k]) run.push(k);
+      else flush();
+    });
+    flush();
+    return { context: { x: trail.x, y: trail.y }, lit, runs };
+  }, [block, groups, kept, labels, namer, theme, trail]);
 
   if (!drawn) return null;
   // the window under the slider: the last one starting at or before it
@@ -93,7 +116,7 @@ export function BlockLandscape({
   return (
     <LandscapeSurface
       landscape={landscape}
-      trails={[{ ...drawn.context, colors: [], faint: true }, drawn.lit]}
+      trails={[{ ...drawn.context, colors: [], faint: true }, ...drawn.runs]}
       cursor={cursor}
       height={300}
       camera={camera}

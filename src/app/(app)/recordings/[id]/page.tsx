@@ -315,6 +315,7 @@ export default function RecordingDetailPage({
 
       {comparing && (
         <CompareView
+          recordingId={id}
           analysis={a}
           blocks={rows}
           events={events}
