@@ -4,7 +4,7 @@
  * A person's brain landscape in 3D, with trails resting on it (backend V3-0013).
  *
  * Height is where the person's windows landed, blurred at the map's own fixed scale:
- * peaks are where they spent the most time. Hovering the ground says what was happening
+ * peaks are where they spent the most time, shaded from one side so the relief reads. Hovering the ground says what was happening
  * there, from every recording that went there. A trail is drawn **on** the surface - each
  * window lifted to the ground's height at its place - so it rides over the peaks it
  * visited instead of floating above a flat drawing.
@@ -20,20 +20,22 @@ import { useLabelNamer } from "@/components/compare/useLabelNamer";
 import {
   type BrainLandscape,
   axes,
+  framedTrail,
   heightAt,
   hoverMatrix,
+  onMap,
 } from "@/lib/brainLandscape";
 import { useChartTheme } from "@/lib/theme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 /**
- * The scene box: low (height a third of the width) so ridges hide little, and as large as
+ * The scene box: low (height two fifths of the width) so ridges hide little, and as large as
  * the plot can hold - which on a phone, where a comparison column is a few hundred pixels
  * wide, is much less.
  */
-const ASPECT = { x: 1.9, y: 1.9, z: 0.6 };
-const ASPECT_NARROW = { x: 0.85, y: 0.85, z: 0.27 };
+const ASPECT = { x: 1.9, y: 1.9, z: 0.75 };
+const ASPECT_NARROW = { x: 0.85, y: 0.85, z: 0.34 };
 const NARROW = "(max-width: 640px)";
 /** A narrow scene is small; a tall plot around it would only add empty space. */
 const NARROW_MAX_HEIGHT = 220;
@@ -51,6 +53,20 @@ function useNarrow(): boolean {
     () => false
   );
 }
+/**
+ * Low ambient light and a strong light from one side, low over the ground, so every slope
+ * facing away falls into shade and the relief reads at a glance; a little gloss on the
+ * slopes facing it. The surface is opaque: a translucent one washes the shading out.
+ */
+const LIGHTING = {
+  ambient: 0.3,
+  diffuse: 1,
+  specular: 0.15,
+  roughness: 0.55,
+  fresnel: 0.1,
+};
+const LIGHT = { x: -1e4, y: 1e4, z: 2.5e3 };
+const CONTOUR_STEP = 0.05;
 /** How far above the ground a trail rides, in landscape heights. */
 const LIFT = 0.025;
 
@@ -124,18 +140,18 @@ export function LandscapeSurface({
           }
         : { hoverinfo: "skip" as const }),
       showscale: false,
-      opacity: 0.96,
       colorscale: theme.landscape.map(([at, colour]) => [at, colour]) as [
         number,
         string,
       ][],
-      // contour lines every tenth of the peak: the landscape read as a topographic map
+      // contour lines every twentieth of the peak: the landscape read as a topographic
+      // map, fine enough that two close hills keep their own rings
       contours: {
         z: {
           show: true,
-          start: 0.1,
+          start: CONTOUR_STEP,
           end: 1,
-          size: 0.1,
+          size: CONTOUR_STEP,
           color: theme.contour,
           width: 1,
           highlight: false,
@@ -143,41 +159,46 @@ export function LandscapeSurface({
         x: { highlight: false },
         y: { highlight: false },
       } as never,
-      lighting: {
-        ambient: 0.85,
-        diffuse: 0.35,
-        specular: 0.05,
-        roughness: 0.9,
-      },
+      lighting: LIGHTING,
+      lightposition: LIGHT,
     } as Data,
     // Optional keys are left out, never set to undefined: Plotly's data cleaning reads
     // `"line" in trace.marker` and throws on a marker that is present but undefined.
-    ...trails.map((trail): Data => ({
-      type: "scatter3d",
-      mode: trail.faint ? "lines" : "lines+markers",
-      x: [...trail.x],
-      y: [...trail.y],
-      z: trail.x.map((x, i) => lift(x, trail.y[i])),
-      line: {
-        color: trail.faint ? theme.ink3 : theme.ink,
-        width: trail.faint ? 2 : 3,
-      },
-      opacity: trail.faint ? 0.45 : 1,
-      ...(trail.text
-        ? { text: [...trail.text], hovertemplate: "%{text}<extra></extra>" }
-        : { hoverinfo: "skip" as const }),
-      ...(trail.faint
-        ? {}
-        : {
-            marker: {
-              size: 4,
-              color: [...trail.colors],
-              symbol: trail.symbols ? ([...trail.symbols] as never) : "circle",
-              line: { color: theme.canvas, width: 0.5 },
-            },
-          }),
-    })),
-    ...(cursor
+    ...trails.map((trail): Data => {
+      const { x, y } = framedTrail(landscape, trail.x, trail.y);
+      return {
+        type: "scatter3d",
+        mode: trail.faint ? "lines" : "lines+markers",
+        x,
+        y,
+        z: x.map((xi, i) => {
+          const yi = y[i];
+          return xi === null || yi === null ? null : lift(xi, yi);
+        }),
+        connectgaps: false,
+        line: {
+          color: trail.faint ? theme.ink3 : theme.ink,
+          width: trail.faint ? 2 : 3,
+        },
+        opacity: trail.faint ? 0.45 : 1,
+        ...(trail.text
+          ? { text: [...trail.text], hovertemplate: "%{text}<extra></extra>" }
+          : { hoverinfo: "skip" as const }),
+        ...(trail.faint
+          ? {}
+          : {
+              marker: {
+                size: 4,
+                color: [...trail.colors],
+                symbol: trail.symbols
+                  ? ([...trail.symbols] as never)
+                  : "circle",
+                line: { color: theme.canvas, width: 0.5 },
+              },
+            }),
+      } as Data;
+    }),
+    ...(cursor && onMap(landscape, cursor.x, cursor.y)
       ? [
           {
             type: "scatter3d",
@@ -198,6 +219,9 @@ export function LandscapeSurface({
   ];
 
   const hidden = { visible: false, showspikes: false } as const;
+  // the scene is the map's frame, not every point's: the backend frames 90% of the
+  // windows, and a trail's outliers fall outside it rather than zooming the map out
+  const [x0, x1, y0, y1] = landscape.bounds;
   const layout: Partial<Layout> = {
     height: plotHeight,
     margin: { l: 0, r: 0, t: 0, b: 0 },
@@ -212,8 +236,8 @@ export function LandscapeSurface({
     // kept between renders otherwise
     uirevision: JSON.stringify(camera),
     scene: {
-      xaxis: hidden,
-      yaxis: hidden,
+      xaxis: { ...hidden, range: [x0, x1], autorange: false },
+      yaxis: { ...hidden, range: [y0, y1], autorange: false },
       zaxis: hidden,
       aspectmode: "manual",
       aspectratio: narrow ? ASPECT_NARROW : ASPECT,

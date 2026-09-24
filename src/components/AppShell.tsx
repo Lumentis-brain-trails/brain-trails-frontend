@@ -2,9 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { api } from "@/lib/api";
+import {
+  type LandscapeStatus,
+  isRedrawn,
+  readSeenEpoch,
+  subscribeSeenEpoch,
+} from "@/lib/landscapeStatus";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
 import { Logo } from "@/components/Logo";
@@ -114,9 +121,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Whether the Brain Landscape was redrawn since this browser last showed it. Asked once
+ * per page load and kept for a while, never polled: the status is a database read, and
+ * the dev and prod databases must be left to sleep (backend decision 0014).
+ */
+function useLandscapeRedrawn(): boolean {
+  const status = useQuery({
+    queryKey: ["landscape-status"],
+    queryFn: () => api.get<LandscapeStatus>("landscape/status"),
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const seen = useSyncExternalStore(
+    subscribeSeenEpoch,
+    readSeenEpoch,
+    () => null
+  );
+  return isRedrawn(status.data, seen);
+}
+
 function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("landscape");
+  const redrawn = useLandscapeRedrawn();
   const me = useQuery({
     queryKey: ["me"],
     queryFn: () => api.get<UserInfo>("auth/me"),
@@ -156,6 +186,9 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
             key={s.href}
             section={s}
             current={isCurrentSection(pathname, s.href)}
+            mark={
+              s.href === "/landscape" && redrawn ? t("sidebarRedrawn") : null
+            }
           />
         ))}
       </nav>
@@ -212,14 +245,18 @@ const LABEL =
 function RailLink({
   section,
   current,
+  mark = null,
 }: {
   section: Section;
   current: boolean;
+  /** Something new behind the link: a dot on the icon, the words after the label. */
+  mark?: string | null;
 }) {
   return (
     <Link
       href={section.href}
       aria-current={current ? "page" : undefined}
+      aria-label={mark ? `${section.label} · ${mark}` : undefined}
       className={cn(
         ITEM,
         current
@@ -228,6 +265,12 @@ function RailLink({
       )}
     >
       <Icon name={section.icon} className="h-5 w-5" />
+      {mark && (
+        <span
+          aria-hidden
+          className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-canvas"
+        />
+      )}
       <span
         className={cn(
           LABEL,
@@ -235,6 +278,14 @@ function RailLink({
         )}
       >
         {section.label}
+        {mark && (
+          <span
+            aria-hidden
+            className="ml-2 text-[12px] font-normal text-accent"
+          >
+            {mark}
+          </span>
+        )}
       </span>
     </Link>
   );

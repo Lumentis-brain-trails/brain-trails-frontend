@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   type BrainLandscape,
   axes,
+  framedTrail,
   heightAt,
   hoverMatrix,
   landscapeProblem,
@@ -43,6 +44,15 @@ const landscape = {
 describe("axes", () => {
   test("spread evenly over the bounds", () => {
     expect(axes(landscape)).toEqual({ xs: [0, 1, 2], ys: [0, 1] });
+  });
+});
+
+describe("framedTrail", () => {
+  test("blanks the windows off the map, index for index", () => {
+    expect(framedTrail(landscape, [0.5, 3, 2, -1], [0.5, 0.5, 1, 0])).toEqual({
+      x: [0.5, null, 2, null],
+      y: [0.5, null, 1, null],
+    });
   });
 });
 
