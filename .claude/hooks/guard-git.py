@@ -9,7 +9,8 @@ server-side (the API answers 403). This hook enforces working method 0013 (v2) w
 work actually happens: in Claude Code sessions. It reads the tool call from stdin and, for
 a Bash command, blocks (exit 2, reason on stderr, which Claude sees) when:
 
-- the command merges a pull request into `beta` or `main` - only the owner does, by hand;
+- the command merges a pull request into `beta` or `main` of a code repository - only the
+  owner does, by hand (the wiki's `main` is not an environment: its PRs merge on green);
 - the command merges any other pull request whose checks are not all green, or cannot be
   read;
 - the command merges through `gh api .../pulls/N/merge`, which would skip both checks;
@@ -34,6 +35,8 @@ import sys
 PROTECTED = ("dev", "beta", "main")
 OWNER_MERGES = ("beta", "main")
 """Bases only the owner merges into, by hand (decision 0013, v2)."""
+CODE_REPOS = ("brain-trails-backend", "brain-trails-frontend")
+"""Where `beta` and `main` are environments. A PR whose repository cannot be read counts."""
 GREEN = {"SUCCESS", "SKIPPED", "NEUTRAL"}
 GIT_VALUE_OPTIONS = {"-c", "-C", "--git-dir", "--work-tree", "--namespace"}
 
@@ -216,11 +219,25 @@ def git_subcommand(words: list[str]) -> str | None:
     return words[i] if i < len(words) else None
 
 
+def repo_name(pr: dict[str, object]) -> str | None:
+    """The repository of `pr` from its URL (`https://github.com/<org>/<repo>/pull/<n>`)."""
+    url = pr.get("url")
+    if not isinstance(url, str):
+        return None
+    parts = url.split("/")
+    return parts[4].lower() if len(parts) > 4 else None
+
+
 def merge_verdict(pr: dict[str, object]) -> str | None:
-    """Why a merge of `pr` must not happen, or None when it may."""
+    """Why a merge of `pr` must not happen, or None when it may.
+
+    The owner-only rule binds the code repositories, where `beta` and `main` deploy; an
+    unreadable repository is treated as one of them. The green-CI rule binds everywhere.
+    """
     number = pr.get("number")
     base = pr.get("baseRefName")
-    if base in OWNER_MERGES:
+    repo = repo_name(pr)
+    if base in OWNER_MERGES and (repo is None or repo in CODE_REPOS):
         return (
             f"PR #{number} goes into `{base}`: only the owner merges into beta and main, by "
             "hand (decision 0013, v2). Leave it open; `integrate` puts it in dev."
@@ -244,7 +261,7 @@ def merge_verdict(pr: dict[str, object]) -> str | None:
 def check_merge(words: list[str], env: dict[str, str]) -> None:
     """Allow `gh pr merge` only outside beta and main, and only on an all-green CI."""
     target, repo = parse_merge(words)
-    cmd = ["gh", "pr", "view", "--json", "number,statusCheckRollup,baseRefName"]
+    cmd = ["gh", "pr", "view", "--json", "number,statusCheckRollup,baseRefName,url"]
     if target:
         cmd.insert(3, target)
     if repo:
