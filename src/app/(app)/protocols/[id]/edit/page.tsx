@@ -63,6 +63,17 @@ import type { ProtocolDetail, ValidationResult } from "@/lib/protocol/catalog";
 import { bindMedia, mediaIds } from "@/lib/protocol/media";
 import { usePreviewMedia } from "@/lib/protocol/previewMedia";
 import { resolvePlan } from "@/lib/protocol/resolve";
+import { SoundInspector } from "@/components/builder/SoundInspector";
+import { SoundLane } from "@/components/builder/SoundLane";
+import {
+  addCue,
+  moveCueStart,
+  nextCueId,
+  removeCue,
+  setCueStop,
+  updateCue,
+} from "@/lib/builder/soundtrack";
+import { TREE_SCHEMA_VERSION } from "@/lib/protocol/tree";
 import { createMemorySink } from "@/lib/protocol/sink";
 import {
   parseTree,
@@ -78,7 +89,7 @@ const AUTOSAVE_MS = 1500;
 const UNSAVED = "new";
 
 const EMPTY_TREE: ProtocolTree = {
-  schema: 1,
+  schema: TREE_SCHEMA_VERSION,
   manifest: {
     content_warning: null,
     requires_consent: false,
@@ -86,7 +97,22 @@ const EMPTY_TREE: ProtocolTree = {
     min_quality: 0.6,
   },
   root: { type: "sequence", order: "fixed", children: [] },
+  soundtrack: [],
 };
+
+/** Every block under a node, with the label a person would recognise it by. */
+function blocksIn(node: TreeNode): { id: string; label: string }[] {
+  if (node.type === "block")
+    return [
+      {
+        id: node.id,
+        label:
+          typeof node.label === "string" && node.label ? node.label : node.id,
+      },
+    ];
+  if (node.type === "sequence") return node.children.flatMap(blocksIn);
+  return blocksIn(node.template);
+}
 
 /** The clip a validation issue belongs to: its path starts `root/<index>`. */
 function clipOfPath(path: string): number | null {
@@ -129,6 +155,8 @@ export default function BuilderPage({
   const history = useHistory<ProtocolTree>(EMPTY_TREE);
   const [rev, setRev] = useState<number | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
+  /** The sound selected on the lane; a block and a sound are never selected together. */
+  const [selectedCue, setSelectedCue] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [conflict, setConflict] = useState(false);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
@@ -248,6 +276,9 @@ export default function BuilderPage({
 
   const onDropAt = useCallback(
     (index: number, payload: DragPayload) => {
+      // A sound's bar or its stop handle was let go over the clips: it belongs to the
+      // lane, and moving it is the lane's job, not a new block's.
+      if (payload.from === "lane-cue" || payload.from === "lane-stop") return;
       edit((current) => {
         if (payload.from === "timeline") {
           const from = Number(payload.value);
@@ -400,6 +431,10 @@ export default function BuilderPage({
   );
   const selectedNode: TreeNode | undefined =
     selected.length === 1 ? tree.root.children[selected[0]] : undefined;
+  const selectedSound = selectedCue
+    ? (tree.soundtrack ?? []).find((cue) => cue.id === selectedCue)
+    : undefined;
+  const blockChoices = tree.root.children.flatMap(blocksIn);
 
   return (
     <main className="flex h-dvh flex-col">
@@ -523,7 +558,36 @@ export default function BuilderPage({
         </section>
 
         <aside className="w-[320px] shrink-0 overflow-y-auto border-l border-hairline p-3">
-          {!selectedNode && (
+          {selectedSound && (
+            <SoundInspector
+              key={selectedSound.id}
+              cue={selectedSound}
+              blocks={blockChoices}
+              media={mediaById[selectedSound.media_id]}
+              onChange={(patch) =>
+                edit((current) => updateCue(current, selectedSound.id, patch))
+              }
+              onStop={(where) =>
+                edit((current) =>
+                  where.startsWith("block:")
+                    ? updateCue(current, selectedSound.id, {
+                        stop: { block: where.slice("block:".length) },
+                      })
+                    : setCueStop(
+                        current,
+                        clipsOf(current, mediaById),
+                        selectedSound.id,
+                        where as "clip_end" | "protocol_end"
+                      )
+                )
+              }
+              onDelete={() => {
+                edit((current) => removeCue(current, selectedSound.id));
+                setSelectedCue(null);
+              }}
+            />
+          )}
+          {!selectedNode && !selectedSound && (
             <p className="type-caption text-ink-3">{t("select_a_clip")}</p>
           )}
           {selectedNode?.type === "block" && (
@@ -586,15 +650,65 @@ export default function BuilderPage({
           selected={selected}
           zoom={zoom}
           issues={issues}
-          onSelect={(index, additive) =>
+          lane={
+            <SoundLane
+              clips={clips}
+              zoom={zoom}
+              soundtrack={tree.soundtrack ?? []}
+              media={mediaById}
+              selected={selectedCue}
+              onSelect={(id) => {
+                setSelected([]);
+                setSelectedCue(id);
+              }}
+              onAdd={(mediaId, clipIndex) => {
+                // `edit` applies on the next render, so the new sound's id is worked out
+                // from the tree as it stands - the same rule `addCue` uses.
+                const id = nextCueId(tree.soundtrack ?? []);
+                edit(
+                  (current) =>
+                    addCue(
+                      current,
+                      clipsOf(current, mediaById),
+                      mediaId,
+                      clipIndex
+                    ).tree
+                );
+                setSelected([]);
+                setSelectedCue(id);
+              }}
+              onMoveStart={(id, clipIndex) =>
+                edit((current) =>
+                  moveCueStart(
+                    current,
+                    clipsOf(current, mediaById),
+                    id,
+                    clipIndex
+                  )
+                )
+              }
+              onSetStop={(id, clipIndex) =>
+                edit((current) =>
+                  setCueStop(
+                    current,
+                    clipsOf(current, mediaById),
+                    id,
+                    clipIndex
+                  )
+                )
+              }
+            />
+          }
+          onSelect={(index, additive) => {
+            setSelectedCue(null);
             setSelected((current) =>
               additive
                 ? current.includes(index)
                   ? current.filter((i) => i !== index)
                   : [...current, index]
                 : [index]
-            )
-          }
+            );
+          }}
           onDropAt={onDropAt}
           onOpenGroup={(index) => setSelected([index])}
           covers={covers}

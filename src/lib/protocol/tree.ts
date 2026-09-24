@@ -14,7 +14,11 @@
 import { z } from "zod";
 
 /** The current tree format; bumped only with a migration of stored versions. */
-export const TREE_SCHEMA_VERSION = 1;
+/**
+ * The version the builder writes. 2 adds the soundtrack (backend V3-0014); a tree that
+ * declares 1 is still read exactly as before, and is a valid 2 as it stands.
+ */
+export const TREE_SCHEMA_VERSION = 2;
 
 /**
  * Node ids are stable handles: they name steps and appear in every marker and in
@@ -126,18 +130,50 @@ export const manifestSchema = z.strictObject({
 
 export type ProtocolManifest = z.infer<typeof manifestSchema>;
 
+/**
+ * One sound on the soundtrack: the lane that plays over the blocks instead of taking a
+ * turn (backend V3-0014). Anchored to blocks, not to a clock time, because blocks do not
+ * have fixed lengths - "at 30 seconds" would land somewhere different on every run.
+ */
+export const cueSchema = z.strictObject({
+  id: z.string().min(1).max(60),
+  label: z.string().max(200).optional(),
+  media_id: z.string().min(1),
+  /** No block: the start of the protocol. A repeated block anchors on its first run. */
+  start: z
+    .strictObject({
+      block: z.string().min(1).max(60).optional(),
+      offset_s: z.number().min(0).max(3600).default(0),
+    })
+    .default({ offset_s: 0 }),
+  stop: z
+    .union([
+      z.enum(["clip_end", "protocol_end"]),
+      z.strictObject({ block: z.string().min(1).max(60) }),
+    ])
+    .default("clip_end"),
+  loop: z.boolean().default(false),
+  volume: z.number().min(0).max(1).default(0.6),
+  fade_s: z.number().min(0).max(10).default(1),
+});
+
+export type Cue = z.infer<typeof cueSchema>;
+
 export const protocolTreeSchema = z.strictObject({
-  schema: z.literal(TREE_SCHEMA_VERSION),
+  schema: z.union([z.literal(1), z.literal(2)]),
   manifest: manifestSchema,
   get root() {
     return sequenceNodeSchema;
   },
+  soundtrack: z.array(cueSchema).max(20).default([]),
 });
 
 export interface ProtocolTree {
-  schema: 1;
+  schema: 1 | 2;
   manifest: ProtocolManifest;
   root: SequenceNode;
+  /** Sounds over the blocks; empty for every tree written before schema 2. */
+  soundtrack: Cue[];
 }
 
 /** Every node in document order, with the loop (if any) that encloses it. */
