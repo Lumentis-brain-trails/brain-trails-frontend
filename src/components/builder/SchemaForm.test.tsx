@@ -89,6 +89,41 @@ describe("SchemaForm", () => {
     expect(screen.getByLabelText("Title *")).toHaveValue("Rest");
   });
 
+  test("a discriminator select reshapes its parent for the branch chosen", () => {
+    const union: JsonSchema = {
+      type: "object",
+      properties: {
+        advance: {
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                mode: { const: "timed" },
+                ms: { type: "integer", default: 4000 },
+              },
+              required: ["mode", "ms"],
+            },
+            {
+              type: "object",
+              properties: {
+                mode: { const: "key" },
+                label: { type: "string", default: "Continue" },
+              },
+              required: ["mode"],
+            },
+          ],
+        },
+      },
+    };
+    const seen = renderForm(union, { advance: { mode: "key", label: "Go" } });
+    fireEvent.change(screen.getByLabelText("Advance.Mode"), {
+      target: { value: "timed" },
+    });
+    expect(seen.value).toEqual({ advance: { mode: "timed", ms: 4000 } });
+    expect(screen.getByLabelText("Advance.Duration (ms)")).toHaveValue(4000);
+    expect(screen.queryByLabelText("Advance.Label")).toBeNull();
+  });
+
   test("clearing an optional text field drops the property", () => {
     const seen = renderForm(SCHEMA, { title: "a", body: "text" });
     fireEvent.change(screen.getByLabelText("Body"), { target: { value: "" } });

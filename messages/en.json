@@ -403,7 +403,12 @@
       "fade": "Fade in and out (seconds)",
       "remove": "Remove sound",
       "note": "Sounds play over the blocks instead of taking a turn. For a sound that must be time-locked to the EEG, use an audio block instead."
-    }
+    },
+    "fix_before_preview": "Fix these before previewing:",
+    "fix_before_publish": "Fix these before publishing:",
+    "finding_block": "Block {n}: {label}",
+    "finding_row": "row {n}",
+    "finding_protocol": "Protocol"
   },
   "beta": {
     "apply": "Apply for beta testing",

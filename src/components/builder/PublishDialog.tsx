@@ -7,24 +7,33 @@
  * a version - fixing a typo in a description must not make a new version of what
  * participants see - so they are saved with `PATCH` first and the publish follows.
  * Publishing validates on the server; its errors land back here rather than in a toast,
- * because they are about the protocol, not about the click.
+ * because they are about the protocol, not about the click - each names its block and
+ * its setting, and "Show me" closes the sheet on that block.
  */
 
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Sheet } from "@/components/Sheet";
+import { FindingsList } from "@/components/builder/Findings";
 import { Button, ErrorBanner } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
+import type { Finding } from "@/lib/builder/findings";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
 import { MEDIA_TAGS, MEDIA_TAG_LABELS, type MediaTag } from "@/lib/types";
 
 export function PublishDialog({
   protocol,
+  labels = [],
+  onLocate,
   onClose,
   onPublished,
 }: {
   protocol: ProtocolDetail;
+  /** The clips' names, by timeline index, for the findings. */
+  labels?: string[];
+  /** Select the clip a finding is about (the caller closes the sheet). */
+  onLocate?: (clip: number) => void;
   onClose: () => void;
   onPublished: (next: ProtocolDetail) => void;
 }) {
@@ -51,13 +60,10 @@ export function PublishDialog({
     onSuccess: onPublished,
   });
 
-  const issues =
+  const issues: Finding[] =
     publish.error instanceof ApiRequestError
-      ? ((
-          publish.error.error as {
-            details?: { errors?: { message: string }[] };
-          }
-        ).details?.errors ?? [])
+      ? ((publish.error.error as { details?: { errors?: Finding[] } }).details
+          ?.errors ?? [])
       : [];
 
   return (
@@ -118,11 +124,7 @@ export function PublishDialog({
                     : t("failed")
               }
             />
-            <ul className="space-y-1 text-[14px] text-danger">
-              {issues.map((issue, index) => (
-                <li key={index}>{issue.message}</li>
-              ))}
-            </ul>
+            <FindingsList errors={issues} labels={labels} onLocate={onLocate} />
           </div>
         )}
 
