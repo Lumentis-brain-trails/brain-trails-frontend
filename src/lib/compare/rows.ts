@@ -167,8 +167,24 @@ export const ROWS: readonly RowSpec[] = [
 
 export const ROW_GROUPS: readonly RowGroup[] = ["spectral", "dynamics", "task"];
 
-/** What a first visit shows under the trail and the frame. */
-export const DEFAULT_ROWS: readonly RowId[] = ["alpha", "entropy", "accuracy"];
+/**
+ * What a first visit shows under the trail and the frame: every row. Rows that do not
+ * apply to the two blocks on screen (task scores for two blocks without trials) stay in
+ * the list but are not drawn (`applies`).
+ */
+export const DEFAULT_ROWS: readonly RowId[] = ROWS.map((r) => r.id);
+
+/**
+ * Whether a row has anything to say about these blocks: task scores need at least one
+ * block with trials; band power and neurometrics apply to every block.
+ */
+export function applies(
+  spec: RowSpec,
+  blocks: readonly (BlockMetrics | null | undefined)[]
+): boolean {
+  if (spec.group !== "task") return true;
+  return blocks.some((b) => Boolean(b?.behaviour));
+}
 
 export function rowSpec(id: RowId): RowSpec {
   const spec = ROWS.find((r) => r.id === id);
@@ -261,7 +277,9 @@ export function direction(
 }
 
 /** Storage key of the rows a reader chose; a convenience, never state that matters. */
-export const ROWS_STORAGE_KEY = "bt-compare-rows";
+export const ROWS_STORAGE_KEY = "bt-compare-rows-v2";
+/* v2: the default became every row; a choice saved against the old three-row default
+   would have hidden the new one from everyone who had ever touched their rows. */
 
 /** The reader's rows from a previous visit, or the defaults. */
 export function readRows(): RowId[] {

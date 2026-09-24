@@ -238,7 +238,8 @@ describe("CompareView", () => {
     expect(
       column("Right block").getByText("Average person: 78% (12 people)")
     ).toBeInTheDocument();
-    expect(column("Left block").getByText("Not a task")).toBeInTheDocument();
+    // every task row of the baseline says so: five task rows, five "not a task"
+    expect(column("Left block").getAllByText("Not a task")).toHaveLength(5);
   });
 
   test("the higher block on a row is blue, the lower yellow, equal ones neither", () => {
@@ -256,7 +257,9 @@ describe("CompareView", () => {
       "data-direction",
       "lower"
     );
-    expect(column("Left block").getByText(/higher/)).toBeInTheDocument();
+    expect(
+      within(cell("Left block", "Alpha") as HTMLElement).getByText(/higher/)
+    ).toBeInTheDocument();
     // both blocks read 1.20 bits: the same to the reader
     expect(cell("Left block", "Entropy")).toHaveAttribute(
       "data-direction",
@@ -275,6 +278,27 @@ describe("CompareView", () => {
     expect(column("Right block").getByText("Trial 1 of 1")).toBeInTheDocument();
   });
 
+  test("every row that applies is there by default", () => {
+    renderView();
+    for (const name of [
+      "Alpha",
+      "Beta",
+      "Theta",
+      "Delta",
+      "Entropy",
+      "Recurrence",
+      "Modularity",
+      "Diameter",
+      "Stretching",
+      "Right actions",
+      "Reaction time",
+      "Reaction spread",
+      "Targets caught",
+      "False alarms",
+    ])
+      expect(screen.getAllByRole("heading", { name })).toHaveLength(2);
+  });
+
   test("rows are removed from either column and added back, and remembered", () => {
     renderView();
     fireEvent.click(
@@ -284,12 +308,45 @@ describe("CompareView", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Add a row" }));
     const menu = screen.getByRole("dialog", { name: "Add a row" });
     // each measure is offered with what it means, not only its name
-    expect(within(menu).getByText(/rises with drowsiness/)).toBeInTheDocument();
-    fireEvent.click(within(menu).getByRole("button", { name: /^Theta/ }));
-    expect(screen.getAllByRole("heading", { name: "Theta" })).toHaveLength(2);
-    expect(
-      JSON.parse(window.localStorage.getItem(ROWS_STORAGE_KEY) ?? "[]")
-    ).toEqual(["entropy", "accuracy", "theta"]);
+    expect(within(menu).getByText(/eyes closed and drops/)).toBeInTheDocument();
+    fireEvent.click(within(menu).getByRole("button", { name: /^Alpha/ }));
+    expect(screen.getAllByRole("heading", { name: "Alpha" })).toHaveLength(2);
+    const saved = JSON.parse(
+      window.localStorage.getItem(ROWS_STORAGE_KEY) ?? "[]"
+    );
+    expect(saved.at(-1)).toBe("alpha");
+    expect(saved).toHaveLength(14);
+  });
+
+  test("two blocks without trials show no task rows", () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <CompareView
+            recordingId="rec-1"
+            analysis={analysis}
+            blocks={[
+              settle,
+              {
+                ...settle,
+                key: "settle#1",
+                t_start_s: 30,
+                t_end_s: 60,
+              } as BlockMetrics,
+            ]}
+            events={events}
+            steps={{}}
+            bands={null}
+            videoAt={() => null}
+          />
+        </NextIntlClientProvider>
+      </QueryClientProvider>
+    );
+    expect(screen.queryByRole("heading", { name: "Right actions" })).toBeNull();
+    expect(screen.getAllByRole("heading", { name: "Alpha" })).toHaveLength(2);
   });
 
   test("each column asks for its block's numbers", async () => {
