@@ -67,6 +67,27 @@ test("a media block is as long as its media, and a self-paced one is marked vari
   expect(clips(free)[0].variable).toBe(true);
 });
 
+test("a self-paced n-back is sized from a guess per letter and marked variable", () => {
+  const fixed = block("fixed", "n-back", { n: 60, load: 2 });
+  const self = block("self", "n-back", {
+    pace: "self",
+    n: 40,
+    load: 2,
+    gapMs: 500,
+  });
+  expect(clipSeconds(fixed)).toBe(60 * 2.5);
+  expect(clipSeconds(self)).toBe(40 * 2.5);
+  const [a, b] = clips(tree(fixed, self));
+  expect(a.variable).toBe(false);
+  expect(b.variable).toBe(true);
+  // the palette offers it, and its config is a valid n-back
+  const item = ELEMENTS.find((e) => e.id === "n-back-self-paced")!;
+  expect(item.kind).toBe("n-back");
+  registerBuiltInKinds();
+  const parsed = getTaskKind("n-back").configSchema.parse(item.config);
+  expect(parsed).toMatchObject({ pace: "self", gapMs: 500 });
+});
+
 test("lead-in and tail count towards a clip's width", () => {
   const padded: BlockNode = {
     ...block("x"),

@@ -240,7 +240,10 @@
     "nback": {
       "area": "Letter memory task",
       "match": "Match",
-      "rule": "Press when it matches {load} back"
+      "rule": "Press when it matches {load} back",
+      "ruleSelfPaced": "Press Match when it matches {load} back, then Continue",
+      "marked": "Marked as a match",
+      "continue": "Continue"
     },
     "coding": {
       "area": "The symbol to answer",

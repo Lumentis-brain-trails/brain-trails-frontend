@@ -225,6 +225,92 @@ describe("choice engine", () => {
   });
 });
 
+describe("self-paced (advanceKey)", () => {
+  const SELF: ChoiceConfig = {
+    phase: "test",
+    labels: LABELS,
+    keys: ["press"],
+    advanceKey: "continue",
+  };
+  const letter = (id: number, match: boolean) =>
+    trial(id, {
+      condition: match ? "match" : "nonmatch",
+      stimulus: { letter: "K" },
+      correctResponse: match ? "press" : null,
+      stimulusMs: 0,
+      windowMs: 0,
+      itiMs: 500,
+    });
+
+  test("the letter stays, however long, until the participant moves on", () => {
+    const { state, scenes, events } = run(
+      createChoiceEngine([letter(0, false), letter(1, false)], SELF),
+      9000
+    );
+    expect(state.phase).toBe("stimulus");
+    expect(state.trialIndex).toBe(0);
+    expect(scenes.at(-1)!.stimulus).toEqual({ letter: "K" });
+    expect(events.map((e) => e.label)).toEqual(["t_start", "t_stim"]);
+    expect(choiceDurationMs(state.trials, undefined, "continue")).toBe(
+      Infinity
+    );
+  });
+
+  test("Match before Continue is the answer; Continue ends the letter", () => {
+    const { state, events, scenes } = run(
+      createChoiceEngine([letter(0, true), letter(1, false)], SELF),
+      6000,
+      [
+        { key: "press", atMs: 1200 },
+        { key: "continue", atMs: 2000 },
+        { key: "continue", atMs: 3000 },
+      ]
+    );
+    expect(state.phase).toBe("done");
+    expect(state.outcomes.map((o) => o.outcome)).toEqual([
+      "hit",
+      "correct_rejection",
+    ]);
+    const [first, second] = state.outcomes;
+    expect(first.rtMs).toBeCloseTo(1200, -1);
+    expect(first.advanceMs).toBeCloseTo(2000, -1);
+    // the next letter comes after the blank (on the next frame), and waits in turn
+    expect(Math.abs(second.advanceMs! - (3000 - 2500))).toBeLessThan(17);
+    const outcomes = events.filter((e) => e.label === "t_out");
+    expect(outcomes[0].meta).toMatchObject({ outcome: "hit" });
+    expect(outcomes[0].atMs).toBeCloseTo(2000, -1);
+    expect(outcomes[0].meta.advance_ms).toBeCloseTo(2000, -1);
+    // Continue is not an answer: it never appears as a response marker
+    expect(
+      events.filter((e) => e.label === "t_resp").map((e) => e.meta.response)
+    ).toEqual(["press"]);
+    // the pressed Match shows while its letter is up
+    expect(scenes.some((scene) => scene.response === "press")).toBe(true);
+  });
+
+  test("no Match before Continue on a match is a miss", () => {
+    const { state } = run(createChoiceEngine([letter(0, true)], SELF), 2000, [
+      { key: "continue", atMs: 700 },
+    ]);
+    expect(state.outcomes[0].outcome).toBe("miss");
+    expect(state.outcomes[0].rtMs).toBeNull();
+  });
+
+  test("Continue between letters does nothing", () => {
+    const { state } = run(
+      createChoiceEngine([letter(0, false), letter(1, false)], SELF),
+      4000,
+      [
+        { key: "continue", atMs: 1000 },
+        { key: "continue", atMs: 1200 },
+      ]
+    );
+    // the second press fell in the blank: the second letter is still waiting
+    expect(state.outcomes).toHaveLength(1);
+    expect(state.phase).toBe("stimulus");
+  });
+});
+
 describe("summarizeChoice", () => {
   test("rates over scored trials, medians over hits, one row per condition", () => {
     const base = { invalid: false, practice: false, response: "left" };
