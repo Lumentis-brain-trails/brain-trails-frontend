@@ -3,6 +3,12 @@
 /**
  * A video, emitting the transport events decision V2-0002 names: play, pause, seek, ended.
  *
+ * It never leaves the participant stuck. Playback is started explicitly rather than
+ * through `autoplay`, which fails silently: when the browser refuses to start a video
+ * with sound (Safari, an iOS web view) the step says so (`autoplay_blocked`) and offers a
+ * Play button, whose tap is the gesture the browser wants. A file that cannot be played
+ * marks `video_error` and offers Continue, instead of an error with no way forward.
+ *
  * Frame-accurate onsets use `requestVideoFrameCallback`, whose `presentationTime` is on the
  * same time origin as `performance.now()`. Where it is unavailable the fallback is
  * `timeupdate`, which fires about four times a second - fine for "roughly where were they
@@ -18,8 +24,10 @@ import {
   hasMediaRef,
   mediaRefShape,
 } from "@/lib/protocol/blocks";
+import { Button } from "@/components/ui";
 import { FRAME_MS, UI_UNCERTAINTY_MS, timingMeta } from "@/lib/protocol/marker";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
+import { useLatest } from "./shared";
 
 /**
  * `src` or a library `media_id` (bound to `src` by `bindMedia` before the run); a
@@ -83,32 +91,75 @@ function VideoRenderer({
   const firedRef = useRef(new Set<number>());
   const doneRef = useRef(false);
   const onsetRef = useRef(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<number | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const blockedRef = useRef(false);
   const startS = config.start_s ?? 0;
+  // Through refs, so `finish` - and every timer and listener built on it - keeps its
+  // identity whatever the runner passes.
+  const emitRef = useLatest(emit);
+  const onCompleteRef = useLatest(onComplete);
 
-  const finish = useCallback(() => {
-    if (doneRef.current) return;
-    doneRef.current = true;
-    const video = videoRef.current;
-    if (onsetRef.current)
-      emit({
-        label: "stimulus_offset",
-        kind: "stimulus",
-        meta: {
-          media_time_ms: video ? video.currentTime * 1000 : null,
-          ...timingMeta("ui", UI_UNCERTAINTY_MS),
+  const finish = useCallback(
+    (extra: Record<string, unknown> = {}) => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      const video = videoRef.current;
+      if (onsetRef.current)
+        emitRef.current({
+          label: "stimulus_offset",
+          kind: "stimulus",
+          meta: {
+            media_time_ms: video ? video.currentTime * 1000 : null,
+            ...timingMeta("ui", UI_UNCERTAINTY_MS),
+          },
+        });
+      onCompleteRef.current({
+        stepId,
+        taskKind: "video",
+        summary: {
+          watched_s: video ? video.currentTime : 0,
+          duration_s:
+            video && Number.isFinite(video.duration) ? video.duration : null,
+          ...extra,
         },
       });
-    onComplete({
-      stepId,
-      taskKind: "video",
-      summary: {
-        watched_s: video ? video.currentTime : 0,
-        duration_s:
-          video && Number.isFinite(video.duration) ? video.duration : null,
-      },
-    });
-  }, [emit, onComplete, stepId]);
+    },
+    [emitRef, onCompleteRef, stepId]
+  );
+
+  /** Start playback; a refusal to autoplay turns into a Play button, not a still frame. */
+  const play = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    let attempt: Promise<void> | undefined;
+    try {
+      attempt = video.play();
+    } catch {
+      return; // no media support at all: the `error` event says the rest
+    }
+    attempt
+      ?.then(() => {
+        blockedRef.current = false;
+        setBlocked(false);
+      })
+      .catch((reason: unknown) => {
+        if ((reason as { name?: string } | null)?.name !== "NotAllowedError")
+          return; // an interrupted load (AbortError) retries on its own
+        if (!blockedRef.current)
+          emitRef.current({
+            label: "autoplay_blocked",
+            kind: "system",
+            meta: { media_time_ms: video.currentTime * 1000 },
+          });
+        blockedRef.current = true;
+        setBlocked(true);
+      });
+  }, [emitRef]);
+
+  useEffect(() => {
+    play();
+  }, [play]);
 
   /*
    * Stimulus onset: the first presented frame. `requestVideoFrameCallback` reports that
@@ -237,7 +288,18 @@ function VideoRenderer({
       });
       if (config.endOn === "ended") finish();
     };
-    const onError = () => setError("This video could not be played.");
+    const onError = () => {
+      const code = video.error?.code ?? null;
+      emit({
+        label: "video_error",
+        kind: "system",
+        meta: {
+          media_error_code: code,
+          media_time_ms: video.currentTime * 1000,
+        },
+      });
+      setError(code ?? 0);
+    };
 
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
@@ -283,31 +345,51 @@ function VideoRenderer({
   // A fixed-duration step ends on its own clock, whatever the video does.
   useEffect(() => {
     if (config.endOn !== "duration" || !config.durationMs) return;
-    const timer = setTimeout(finish, config.durationMs);
+    const timer = setTimeout(() => finish(), config.durationMs);
     return () => clearTimeout(timer);
   }, [config.durationMs, config.endOn, finish]);
 
   return (
-    <div className="flex h-full items-center justify-center bg-black">
-      {error ? (
-        <p className="px-6 text-center text-sm text-red-400">{error}</p>
+    <div className="relative flex h-full items-center justify-center bg-black">
+      {error !== null ? (
+        <div className="flex flex-col items-center gap-4 px-6 text-center">
+          <p className="text-sm text-red-400">
+            This video could not be played.
+          </p>
+          <Button
+            onClick={() =>
+              finish({ error: "media", media_error_code: error || null })
+            }
+          >
+            Continue
+          </Button>
+        </div>
       ) : (
-        <video
-          ref={videoRef}
-          // a media fragment: the browser opens the file at the stretch's first frame
-          src={
-            config.src
-              ? startS > 0
-                ? `${config.src}#t=${startS}`
-                : config.src
-              : undefined
-          }
-          poster={config.poster}
-          autoPlay
-          playsInline
-          controls={config.allowPause}
-          className="max-h-full max-w-full"
-        />
+        <>
+          <video
+            ref={videoRef}
+            // a media fragment: the browser opens the file at the stretch's first frame
+            src={
+              config.src
+                ? startS > 0
+                  ? `${config.src}#t=${startS}`
+                  : config.src
+                : undefined
+            }
+            poster={config.poster}
+            playsInline
+            // a refused autoplay needs a way to start, whatever the step allows
+            controls={config.allowPause || blocked}
+            className="max-h-full max-w-full"
+          />
+          {blocked && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Button onClick={play} aria-label="Play the video">
+                Play
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -31,6 +31,7 @@ import {
   getAtPath,
   removeAtPath,
   setAtPath,
+  switchVariant,
   type Field,
   type JsonSchema,
 } from "@/lib/builder/fields";
@@ -64,6 +65,8 @@ export interface SchemaFormProps {
 /** Set a path inside the form's value, or the value itself for an empty path. */
 type SetAt = (path: string[], next: unknown) => void;
 type RemoveAt = (path: string[]) => void;
+/** Pick a union branch by its discriminator at `path`; the parent is reshaped. */
+type PickAt = (path: string[], next: string) => void;
 
 export function SchemaForm({
   schema,
@@ -82,6 +85,8 @@ export function SchemaForm({
     onChange(path.length === 0 ? next : setAtPath(value ?? {}, path, next));
   const remove: RemoveAt = (path) =>
     onChange(path.length === 0 ? undefined : removeAtPath(value ?? {}, path));
+  const pick: PickAt = (path, next) =>
+    onChange(switchVariant(schema, value ?? {}, path, next));
 
   const basic = fields.filter((field) => !field.advanced);
   const advanced = fields.filter((field) => field.advanced);
@@ -92,6 +97,7 @@ export function SchemaForm({
       value={getAtPath(value, field.path)}
       set={set}
       remove={remove}
+      pick={pick}
       disabled={disabled}
     />
   );
@@ -128,6 +134,7 @@ interface ControlProps {
   value: unknown;
   set: SetAt;
   remove: RemoveAt;
+  pick: PickAt;
   disabled: boolean;
 }
 
@@ -259,7 +266,7 @@ function BooleanControl({ field, value, set, disabled }: ControlProps) {
   );
 }
 
-function EnumControl({ field, value, set, disabled }: ControlProps) {
+function EnumControl({ field, value, set, pick, disabled }: ControlProps) {
   const t = useTranslations("builder.form");
   const current = value === undefined || value === null ? "" : String(value);
   return (
@@ -267,12 +274,12 @@ function EnumControl({ field, value, set, disabled }: ControlProps) {
       <Select
         value={current}
         disabled={disabled}
-        onChange={(event) =>
-          set(
-            field.path,
-            event.target.value === "" ? undefined : event.target.value
-          )
-        }
+        onChange={(event) => {
+          const next = event.target.value;
+          if (next === "") set(field.path, undefined);
+          else if (field.discriminator) pick(field.path, next);
+          else set(field.path, next);
+        }}
       >
         {(!field.required || current === "") && (
           <option value="">{t("none")}</option>
@@ -324,7 +331,14 @@ function RangeControl(props: ControlProps) {
  * A list whose length is fixed by the schema (a pair of anchors, say) gets no add or
  * remove buttons - the length is part of the contract, not the author's choice.
  */
-function ListControl({ field, value, set, remove, disabled }: ControlProps) {
+function ListControl({
+  field,
+  value,
+  set,
+  remove,
+  pick,
+  disabled,
+}: ControlProps) {
   const t = useTranslations("builder.form");
   const rows = Array.isArray(value) ? value : [];
   const fixed = field.min !== undefined && field.min === field.max;
@@ -390,6 +404,7 @@ function ListControl({ field, value, set, remove, disabled }: ControlProps) {
                 value={getAtPath(row, sub.path)}
                 set={set}
                 remove={remove}
+                pick={pick}
                 disabled={disabled}
               />
             ))}

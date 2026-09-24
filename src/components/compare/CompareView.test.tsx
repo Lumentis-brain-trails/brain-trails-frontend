@@ -3,8 +3,10 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import messages from "../../../messages/en.json";
@@ -13,6 +15,35 @@ import { ROWS_STORAGE_KEY } from "@/lib/compare/rows";
 import type { WireEvent } from "@/lib/protocol/marker";
 import type { Analysis } from "@/lib/types";
 import { CompareView, defaultPair } from "./CompareView";
+
+/**
+ * The selection endpoint, faked: the stored row's numbers, except that leaving a label
+ * out halves alpha and makes every remaining trial right - enough to see a column follow
+ * its focus.
+ */
+const get = vi.fn(async (path: string) => {
+  const query = new URLSearchParams(path.split("?")[1]);
+  const key = query.get("block");
+  const row = [settle, dock].find((b) => b.key === key)!;
+  const filtered = query.getAll("labels").length > 0;
+  return {
+    block_key: key,
+    t_start_s: Number(query.get("start") ?? row.t_start_s),
+    t_end_s: Number(query.get("end") ?? row.t_end_s),
+    window_t: [],
+    window_labels: row.labels ?? null,
+    n_windows: row.n_windows,
+    bands: filtered
+      ? { ...row.bands, alpha: (row.bands.alpha ?? 0) / 2 }
+      : row.bands,
+    dynamics: row.dynamics,
+    behaviour: row.behaviour
+      ? { ...row.behaviour, accuracy: filtered ? 1 : row.behaviour.accuracy }
+      : null,
+    regions: "session",
+  };
+});
+vi.mock("@/lib/api", () => ({ api: { get: (path: string) => get(path) } }));
 
 const analysis: Analysis = {
   id: "a",
@@ -121,17 +152,23 @@ const events: WireEvent[] = [
 ];
 
 function renderView() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <CompareView
-        analysis={analysis}
-        blocks={[settle, dock]}
-        events={events}
-        steps={{ settle: { kind: "baseline", config: { eyes: "closed" } } }}
-        bands={null}
-        videoAt={() => null}
-      />
-    </NextIntlClientProvider>
+    <QueryClientProvider client={client}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CompareView
+          recordingId="rec-1"
+          analysis={analysis}
+          blocks={[settle, dock]}
+          events={events}
+          steps={{ settle: { kind: "baseline", config: { eyes: "closed" } } }}
+          bands={null}
+          videoAt={() => null}
+        />
+      </NextIntlClientProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -140,6 +177,7 @@ function column(name: "Left block" | "Right block") {
 }
 
 beforeEach(() => {
+  get.mockClear();
   window.localStorage.clear();
   // jsdom has no canvas; the task frame paints nothing and must not crash
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
@@ -243,13 +281,47 @@ describe("CompareView", () => {
       column("Left block").getByRole("button", { name: "Remove Alpha" })
     );
     expect(screen.queryByRole("heading", { name: "Alpha" })).toBeNull();
-    fireEvent.change(screen.getByRole("combobox", { name: "Add a row" }), {
-      target: { value: "theta" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add a row" }));
+    const menu = screen.getByRole("dialog", { name: "Add a row" });
+    // each measure is offered with what it means, not only its name
+    expect(within(menu).getByText(/rises with drowsiness/)).toBeInTheDocument();
+    fireEvent.click(within(menu).getByRole("button", { name: /^Theta/ }));
     expect(screen.getAllByRole("heading", { name: "Theta" })).toHaveLength(2);
     expect(
       JSON.parse(window.localStorage.getItem(ROWS_STORAGE_KEY) ?? "[]")
     ).toEqual(["entropy", "accuracy", "theta"]);
+  });
+
+  test("each column asks for its block's numbers", async () => {
+    renderView();
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+    expect(get.mock.calls.map(([path]) => path).sort()).toEqual([
+      "recordings/rec-1/selection?block=dock%230",
+      "recordings/rec-1/selection?block=settle%230",
+    ]);
+  });
+
+  test("leaving a kind of trial out recomputes the column and drops the average", async () => {
+    renderView();
+    const right = column("Right block");
+    await waitFor(() =>
+      expect(
+        right.getByText("Average person: 78% (12 people)")
+      ).toBeInTheDocument()
+    );
+    fireEvent.click(right.getByRole("button", { name: /Debris skipped/ }));
+    await waitFor(() =>
+      expect(get).toHaveBeenCalledWith(
+        "recordings/rec-1/selection?block=dock%230&labels=cargo_pressed"
+      )
+    );
+    // the fake makes every remaining trial right and halves alpha
+    await waitFor(() => expect(right.getByText("100%")).toBeInTheDocument());
+    expect(right.getByText("13%")).toBeInTheDocument();
+    // an average over whole blocks says nothing about one kind of trial
+    expect(right.queryByText(/Average person: 78%/)).toBeNull();
+    fireEvent.click(right.getByRole("button", { name: "Whole block again" }));
+    await waitFor(() => expect(right.getByText("82%")).toBeInTheDocument());
   });
 
   test("switching a column's block changes only that column", () => {

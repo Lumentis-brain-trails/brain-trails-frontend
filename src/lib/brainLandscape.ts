@@ -77,3 +77,22 @@ export function hoverMatrix(
   }
   return text;
 }
+
+/** Why there is no landscape to draw: still being built, not on this server, or broken. */
+export type LandscapeProblem = "building" | "unavailable" | "error";
+
+/**
+ * Read a failed landscape request: 409 `not_ready` is a map still being built (asking
+ * queued it, so it is worth asking again), 404 a server that has no landscapes at all
+ * (an older backend), anything else an error. A page must say which - a blank one says
+ * nothing.
+ */
+export function landscapeProblem(
+  error: { status?: number; error?: { code?: string } } | null | undefined
+): LandscapeProblem | null {
+  if (!error) return null;
+  if (error.status === 409 || error.error?.code === "not_ready")
+    return "building";
+  if (error.status === 404) return "unavailable";
+  return "error";
+}

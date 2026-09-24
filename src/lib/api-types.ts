@@ -302,6 +302,10 @@ export interface paths {
         /**
          * Protocol Review Queue
          * @description Protocols waiting for a community decision, oldest first (admin only).
+         *
+         *     Each comes with its description and the outline of the version being shared: the
+         *     reviewer cannot open someone else's workspace protocol, so the queue is the only place
+         *     they see what they are approving.
          */
         get: operations["protocol_review_queue_admin_review_protocols_get"];
         put?: never;
@@ -365,10 +369,47 @@ export interface paths {
         /**
          * Users Overview
          * @description Per-user input statistics: recordings each account started as operator.
+         *
+         *     `beta` is whether the account is in the beta programme, so the list can show who is
+         *     in and offer the door to the rest without a detour through the board.
          */
         get: operations["users_overview_admin_users_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{user_id}/beta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join Beta
+         * @description Put an account in the beta programme and tell its owner by mail (admin only).
+         *
+         *     The direct door: the same acceptance the board gives, reached from the account rather
+         *     than from an application, for the common case since registration opened - a person
+         *     who already signed up, and whom an admin now wants in. It marks the application
+         *     accepted (creating the row when registration left none, with default answers, as the
+         *     account page does), places the account in `cohort_id` when given, audits the decision
+         *     as `admin.user.beta`, and mails the person.
+         *
+         *     The mail is required, not best effort: a provider failure answers 502 `mail_failed`
+         *     and rolls everything back, so nobody is in the beta without knowing it. An account
+         *     not yet verified gets its verification link instead (returned only in manual-mailer
+         *     mode, on the board's reissue route), and one behind the closed gate is opened as the
+         *     board would open it. 404 for an unknown account or cohort; 409 `invalid_state` when
+         *     the account is already in.
+         */
+        post: operations["join_beta_admin_users__user_id__beta_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1488,6 +1529,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings/{recording_id}/selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Selection
+         * @description Every metric of one block, for a stretch of it and some of its trial labels.
+         *
+         *     `block` is the block row's `key`; `start`/`end` bound the selection in seconds on the
+         *     recording's clock (the block's own bounds when absent); repeat `labels` to keep only
+         *     the windows and trials with those labels. Computed on request from the stored
+         *     features, embeddings and timeline, so it also serves recordings analysed before
+         *     labels and dynamics were stored. 404 without that block, 409 without an analysis
+         *     that has features and embeddings.
+         */
+        get: operations["get_selection_recordings__recording_id__selection_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/recordings/{recording_id}/signal": {
         parameters: {
             query?: never;
@@ -2093,6 +2161,16 @@ export interface components {
             throughput_per_min?: number | null;
         };
         /**
+         * BetaIn
+         * @description Put an account in the beta programme: the cohort it lands in, and a private note.
+         */
+        BetaIn: {
+            /** Cohort Id */
+            cohort_id?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /**
          * BetaProfile
          * @description What an applicant asks to be in the closed beta (V3-0008).
          * @enum {string}
@@ -2267,6 +2345,13 @@ export interface components {
                     number
                 ][]
             ][];
+            /** Change */
+            change?: string | null;
+            /**
+             * Epoch
+             * @default 1
+             */
+            epoch: number;
             grid: components["schemas"]["BrainLandscapeGridOut"];
             /** N Recordings */
             n_recordings: number;
@@ -3789,6 +3874,44 @@ export interface components {
          */
         ReviewState: "none" | "pending" | "approved" | "refused";
         /**
+         * SelectionOut
+         * @description A block's metrics recomputed for part of it (`pipeline.features.selection`).
+         *
+         *     `t_start_s`/`t_end_s` are the selection actually used (clipped to the block);
+         *     `window_t` and `window_labels` describe every window of the block, so a page can
+         *     colour and count all of it while the numbers describe the selection. `bands` are
+         *     relative powers; `dynamics` are counted in the person's global regions when their
+         *     brain landscape holds the recording (`regions: "person"`, comparable across
+         *     recordings) and in the recording's own otherwise (`"session"`); `behaviour` covers
+         *     the trials whose onset falls in the selection and whose label was kept.
+         */
+        SelectionOut: {
+            /** Bands */
+            bands: {
+                [key: string]: number | null;
+            };
+            behaviour?: components["schemas"]["BehaviourOut"] | null;
+            /** Block Key */
+            block_key: string;
+            dynamics?: components["schemas"]["DynamicsOut"] | null;
+            /** N Windows */
+            n_windows: number;
+            /**
+             * Regions
+             * @default session
+             * @enum {string}
+             */
+            regions: "person" | "session";
+            /** T End S */
+            t_end_s: number;
+            /** T Start S */
+            t_start_s: number;
+            /** Window Labels */
+            window_labels: (string | null)[] | null;
+            /** Window T */
+            window_t: number[];
+        };
+        /**
          * SessionOut
          * @description A session as the app sees it; `events_url` is a short-lived link when finished.
          *
@@ -4075,8 +4198,17 @@ export interface components {
         /**
          * UserOut
          * @description Public view of an account (no password hash).
+         *
+         *     `beta` says whether the account is in the beta programme - an accepted application,
+         *     whichever door let it in - so the account page can say so and the admin's user list
+         *     can show who is in without opening the board.
          */
         UserOut: {
+            /**
+             * Beta
+             * @default false
+             */
+            beta: boolean;
             /**
              * Created At
              * Format: date-time
@@ -4663,7 +4795,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtocolCard"][];
+                    "application/json": components["schemas"]["ProtocolDetail"][];
                 };
             };
         };
@@ -4743,6 +4875,41 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+        };
+    };
+    join_beta_admin_users__user_id__beta_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BetaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -6497,6 +6664,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_selection_recordings__recording_id__selection_get: {
+        parameters: {
+            query: {
+                block: string;
+                start?: number | null;
+                end?: number | null;
+                labels?: string[] | null;
+            };
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelectionOut"];
                 };
             };
             /** @description Validation Error */

@@ -4,6 +4,7 @@ import {
   trailBands,
   trailCurve,
   type CurvePoint,
+  smoothPath,
 } from "./trailPath";
 
 /** `count` windows on a circle: curvature everywhere, no repeated point. */
@@ -122,5 +123,31 @@ describe("polylinePath", () => {
         { x: 3, y: 4.567, u: 1 },
       ])
     ).toBe("M1.23 2.00L3.00 4.57");
+  });
+});
+
+describe("smoothPath", () => {
+  test("takes the zigzag off a straight course", () => {
+    const zigzag = Array.from({ length: 20 }, (_, i) => ({
+      x: i,
+      y: i % 2 === 0 ? 1 : -1,
+      t: i,
+    }));
+    const smooth = smoothPath(zigzag);
+    const swing = (ps: { y: number }[]) =>
+      Math.max(...ps.slice(5, 15).map((p) => Math.abs(p.y)));
+    expect(swing(smooth)).toBeLessThan(0.3 * swing(zigzag));
+    // the course and everything else a point carries are kept
+    expect(smooth[10].x).toBeCloseTo(10);
+    expect(smooth[3].t).toBe(3);
+  });
+
+  test("leaves short trails and a zero width alone", () => {
+    const two = [
+      { x: 0, y: 0 },
+      { x: 1, y: 1 },
+    ];
+    expect(smoothPath(two)).toEqual(two);
+    expect(smoothPath(two.concat({ x: 2, y: 0 }), 0)).toHaveLength(3);
   });
 });

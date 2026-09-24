@@ -111,6 +111,12 @@ export interface ChartTheme {
    * those lines opaque, and a translucent white hairline comes out as bright white.
    */
   contour: string;
+  /**
+   * The Brain Landscape's height ramp, low ground to peak: the trail's own hues in
+   * order of height, from a near-page blue through cyan and violet to pink, so the peaks
+   * (where a person spent the most time) are the most saturated thing on the map.
+   */
+  landscape: readonly [number, string][];
 }
 
 const LIGHT_TRAIL = ["#e8a02a", "#1bafc4", "#7c5ce6", "#e2569c"] as const;
@@ -130,6 +136,13 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     ribbon: ["#1f9d6b", "#c98a12", "#dd6a2a", "#c8203a"],
     labels: ["#2a78d6", "#eb6834", "#1baf7a"],
     contour: "#d2d2d7",
+    landscape: [
+      [0, "#f3f7fc"],
+      [0.18, "#cfe9f3"],
+      [0.42, "#1bafc4"],
+      [0.7, "#7c5ce6"],
+      [1, "#e2569c"],
+    ],
   },
   dark: {
     canvas: "#07090e",
@@ -144,6 +157,13 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     ribbon: ["#84f6cd", "#fbe59c", "#ffa06a", "#ff4f66"],
     labels: ["#3987e5", "#d95926", "#199e70"],
     contour: "#3a404e",
+    landscape: [
+      [0, "#10131a"],
+      [0.18, "#173848"],
+      [0.42, "#2f9fb3"],
+      [0.7, "#8a6cf0"],
+      [1, "#ff9cce"],
+    ],
   },
 };
 

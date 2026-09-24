@@ -23,13 +23,18 @@ export const promptConfigSchema = z.object({
       })
     )
     .min(1),
+  // Every branch's own fields carry a default: the builder seeds them when the author
+  // switches mode, so a timed advance never starts with an empty duration.
   advance: z.discriminatedUnion("mode", [
-    z.object({ mode: z.literal("timed"), ms: z.number().int().positive() }),
+    z.object({
+      mode: z.literal("timed"),
+      ms: z.number().int().positive().default(4000),
+    }),
     z.object({ mode: z.literal("key"), label: z.string().default("Continue") }),
     z.object({
       mode: z.literal("either"),
-      minMs: z.number().int().min(0),
-      maxMs: z.number().int().positive(),
+      minMs: z.number().int().min(0).default(1000),
+      maxMs: z.number().int().positive().default(10000),
       label: z.string().default("Continue"),
     }),
   ]),

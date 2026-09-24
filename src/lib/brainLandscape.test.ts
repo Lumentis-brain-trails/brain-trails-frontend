@@ -4,6 +4,7 @@ import {
   axes,
   heightAt,
   hoverMatrix,
+  landscapeProblem,
 } from "./brainLandscape";
 
 const landscape = {
@@ -72,5 +73,18 @@ describe("hoverMatrix", () => {
     expect(text[0][2]).toBe("Dock the cargo · Cargo hit 62%<br>Settle 30%");
     expect(text[0][1]).toBe("Settle 100%");
     expect(text[1][0]).toBe("");
+  });
+});
+
+describe("landscapeProblem", () => {
+  test("tells a map being built from a server without maps from a failure", () => {
+    expect(landscapeProblem(null)).toBeNull();
+    expect(
+      landscapeProblem({ status: 409, error: { code: "not_ready" } })
+    ).toBe("building");
+    expect(
+      landscapeProblem({ status: 404, error: { code: "http_error" } })
+    ).toBe("unavailable");
+    expect(landscapeProblem({ status: 500 })).toBe("error");
   });
 });

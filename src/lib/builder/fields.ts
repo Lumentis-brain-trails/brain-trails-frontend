@@ -53,6 +53,11 @@ export interface Field {
    * fields (a row is an object, or a single primitive whose field has an empty path).
    */
   itemSchema?: JsonSchema;
+  /**
+   * For `enum`: the field is the constant a union of objects is keyed on (`mode`,
+   * `variant`); changing it changes the shape of its parent, see `switchVariant`.
+   */
+  discriminator?: boolean;
 }
 
 /** zod exports `Number.MAX_SAFE_INTEGER` as the bound of an unbounded integer. */
@@ -352,7 +357,12 @@ function describeLeaf(
       : {}),
   };
   if (options && options.length > 0)
-    return { ...base, kind: "enum", options: [...options] };
+    return {
+      ...base,
+      kind: "enum",
+      options: [...options],
+      discriminator: true,
+    };
   if (Array.isArray(schema.enum) && schema.enum.every(isPrimitive))
     return { ...base, kind: "enum", options: schema.enum.map(String) };
   if (isPrimitive(schema.const))
@@ -558,4 +568,95 @@ export function blankValue(schema: JsonSchema | undefined): unknown {
     default:
       return {};
   }
+}
+
+/** The schema at `path` inside `schema`, following unions by the value and arrays by index. */
+function schemaAt(
+  schema: JsonSchema,
+  root: JsonSchema,
+  value: unknown,
+  path: string[]
+): JsonSchema | undefined {
+  let current = deref(schema, root);
+  let cursor = value;
+  for (const segment of path) {
+    let next: unknown;
+    if (isSchema(current.properties)) next = current.properties[segment];
+    else {
+      const branch = pickBranch(objectBranches(current, root), cursor);
+      if (branch)
+        next = (branch.properties as Record<string, unknown>)[segment];
+    }
+    if (next === undefined && current.type === "array")
+      next = isSchema(current.items)
+        ? current.items
+        : Array.isArray(current.prefixItems)
+          ? current.prefixItems[Number(segment)]
+          : undefined;
+    if (!isSchema(next)) return undefined;
+    current = deref(next, root);
+    cursor = isSchema(cursor)
+      ? cursor[segment]
+      : Array.isArray(cursor)
+        ? cursor[Number(segment)]
+        : undefined;
+  }
+  return current;
+}
+
+/** A schema default as a fresh value, so two rows never share one object. */
+function copyOf(value: unknown): unknown {
+  return value !== null && typeof value === "object"
+    ? (JSON.parse(JSON.stringify(value)) as unknown)
+    : value;
+}
+
+/**
+ * The config after the author picks another branch of a union at `path`.
+ *
+ * Switching `advance.mode` from "key" to "timed" must neither leave "key"'s `label`
+ * behind nor start "timed" with an empty, required `ms` (Andrea's draft, 2026-09-24:
+ * two blocks failed on exactly that). The parent object is rebuilt for the new branch:
+ * the discriminator set, the properties the new branch declares kept when present and
+ * otherwise filled from their defaults, the old branch's own properties dropped.
+ * Properties no branch declares are kept: they are the author's and the schema does not
+ * speak for them. A path that leads to no union falls back to a plain set.
+ */
+export function switchVariant(
+  schema: JsonSchema,
+  value: unknown,
+  path: string[],
+  next: string
+): unknown {
+  const name = path[path.length - 1];
+  if (name === undefined) return value;
+  const parentPath = path.slice(0, -1);
+  const parent = schemaAt(schema, schema, value, parentPath);
+  const branches = parent ? objectBranches(parent, schema) : [];
+  const target = branches.find((branch) => {
+    const property = (branch.properties as Record<string, unknown>)[name];
+    return isSchema(property) && String(property.const) === next;
+  });
+  if (!target) return setAtPath(value ?? {}, path, next);
+
+  const current = getAtPath(value, parentPath);
+  const record = isSchema(current) ? current : {};
+  const declared = new Set(
+    branches.flatMap((branch) => Object.keys(branch.properties as object))
+  );
+  const rebuilt: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(
+    target.properties as Record<string, unknown>
+  )) {
+    const property = deref(isSchema(raw) ? raw : {}, schema);
+    if (key === name) rebuilt[key] = property.const;
+    else if (record[key] !== undefined) rebuilt[key] = record[key];
+    else if (property.default !== undefined)
+      rebuilt[key] = copyOf(property.default);
+  }
+  for (const [key, kept] of Object.entries(record))
+    if (!declared.has(key)) rebuilt[key] = kept;
+  return parentPath.length === 0
+    ? rebuilt
+    : setAtPath(value ?? {}, parentPath, rebuilt);
 }
