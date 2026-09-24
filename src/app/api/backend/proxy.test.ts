@@ -128,6 +128,15 @@ describe("BFF proxy", () => {
     );
   });
 
+  test("allows the caller's own brain landscape", async () => {
+    const req = new NextRequest("http://localhost/api/backend/landscape");
+    const res = await GET(req, ctx(["landscape"]));
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(
+      "http://localhost:8000/landscape"
+    );
+  });
+
   // Left off the allow-list once, and every closed-list menu in the app rendered
   // disabled with no way to tell why: the registration form needs these before anyone
   // has an account, so they cannot ride on an authenticated path.
@@ -137,6 +146,17 @@ describe("BFF proxy", () => {
     expect(res.status).toBe(200);
     expect(String(fetchSpy.mock.calls[0][0])).toBe(
       "http://localhost:8000/taxonomies"
+    );
+  });
+
+  // Left off too, and the fair's "try the headband" tick never appeared: the form reads
+  // this before anyone has an account, and a 403 reads as "stand closed".
+  test("allows the public fair state", async () => {
+    const req = new NextRequest("http://localhost/api/backend/fair");
+    const res = await GET(req, ctx(["fair"]));
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(
+      "http://localhost:8000/fair"
     );
   });
 });

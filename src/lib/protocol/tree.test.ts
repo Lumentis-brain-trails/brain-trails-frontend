@@ -74,7 +74,9 @@ describe("parseTree", () => {
     expect(safeParseTree(tree([block("Bad Id")])).ok).toBe(false);
     expect(safeParseTree(tree([block("a", { extra: 1 })])).ok).toBe(false);
     expect(safeParseTree(tree([])).ok).toBe(false);
-    expect(safeParseTree({ ...tree([block("a")]), schema: 2 }).ok).toBe(false);
+    // 1 and 2 are both read (2 adds the soundtrack); anything else is not a tree we know.
+    expect(safeParseTree({ ...tree([block("a")]), schema: 3 }).ok).toBe(false);
+    expect(safeParseTree({ ...tree([block("a")]), schema: 2 }).ok).toBe(true);
     expect(safeParseTree(null).ok).toBe(false);
   });
 

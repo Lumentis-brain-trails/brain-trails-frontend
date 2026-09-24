@@ -30,6 +30,7 @@ const tree: ProtocolTree = {
     order: "fixed",
     children: [block("first", 60), block("second", 30)],
   },
+  soundtrack: [],
 };
 
 function setup(children = tree.root.children) {

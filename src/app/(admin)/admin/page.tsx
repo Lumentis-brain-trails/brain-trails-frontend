@@ -85,6 +85,12 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/fair" className={buttonClass("secondary")}>
+            The stand
+          </Link>
+          <Link href="/admin/protocols" className={buttonClass("secondary")}>
+            Catalog locks
+          </Link>
           <Link href="/admin/review" className={buttonClass("secondary")}>
             Publication review
           </Link>

@@ -1,4 +1,9 @@
-# Environment branches only move forward along dev -> beta -> main (or a hotfix/*).
+# Which branches may open a pull request into beta and main (decision 0013, v2).
+#
+# beta: any feature branch - that is where work lands now, one pull request at a time,
+#       merged by the owner. Never dev (it is beta plus every open pull request, rebuilt by
+#       `integrate`: merging it would take them all in at once) and never main.
+# main: only beta, or a hotfix/*. Promotions are merged with a merge commit.
 name: guard-promotion
 on:
   pull_request:
@@ -9,15 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check the source branch
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
         run: |
-          BASE="${{ github.base_ref }}"; HEAD="${{ github.head_ref }}"
           case "$BASE" in
-            beta) ALLOWED="dev" ;;
-            main) ALLOWED="beta" ;;
+            beta)
+              if [[ "$HEAD" == "dev" || "$HEAD" == "main" ]]; then
+                echo "::error::'$HEAD' may not be merged into beta: open the pull request from your feature branch."
+                exit 1
+              fi ;;
+            main)
+              if [[ "$HEAD" != "beta" && "$HEAD" != hotfix/* ]]; then
+                echo "::error::Pull requests into main come from 'beta' or 'hotfix/*' (got '$HEAD')."
+                exit 1
+              fi ;;
           esac
-          if [[ "$HEAD" == "$ALLOWED" || "$HEAD" == hotfix/* ]]; then
-            echo "ok: $HEAD -> $BASE"
-          else
-            echo "::error::PRs to $BASE must come from '$ALLOWED' or 'hotfix/*' (got '$HEAD'). Use the promote workflow. See CONTRIBUTING.md."
-            exit 1
-          fi
+          echo "ok: $HEAD -> $BASE"

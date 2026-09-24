@@ -79,6 +79,35 @@ describe("api client", () => {
     expect(spy.mock.calls[1][1].headers["If-Match"]).toBeUndefined();
   });
 
+  test("a lost session sends the visitor to login and back", async () => {
+    const assign = vi.fn();
+    vi.stubGlobal("location", {
+      pathname: "/protocols/p1/edit",
+      search: "?tab=media",
+      assign,
+    });
+    mockFetch(401, {
+      error: { code: "unauthorized", message: "missing bearer token" },
+    });
+    await expect(api.post("media/uploads", {})).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(assign).toHaveBeenCalledWith(
+      "/login?from=%2Fprotocols%2Fp1%2Fedit%3Ftab%3Dmedia"
+    );
+  });
+
+  test("a wrong password is the caller's error, not a lost session", async () => {
+    const assign = vi.fn();
+    vi.stubGlobal("location", { pathname: "/account", search: "", assign });
+    mockFetch(401, {
+      error: { code: "invalid_credentials", message: "wrong password" },
+    });
+    await expect(api.delete("auth/me", { password: "x" })).rejects.toThrow();
+    await expect(api.login("a@b.it", "pw-long-enough")).rejects.toThrow();
+    expect(assign).not.toHaveBeenCalled();
+  });
+
   test("login and logout hit the auth routes", async () => {
     const spy = mockFetch(200, { status: "ok" });
     await api.login("a@b.it", "pw-long-enough");

@@ -19,7 +19,11 @@ const ALLOWED_PREFIXES = [
   "annotations",
   "config",
   "taxonomies",
+  // public: whether the stand is open, asked by the registration form (backend V3-0013)
+  "fair",
   "workspaces",
+  // the caller's own brain landscape (backend V3-0016); a recording's is under recordings/
+  "landscape",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];

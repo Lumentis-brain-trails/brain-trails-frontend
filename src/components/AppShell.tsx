@@ -20,7 +20,7 @@ const MAIN: Section[] = [
   { href: "/protocols", label: "Protocols", icon: "protocol" },
   { href: "/media", label: "My media", icon: "library" },
   { href: "/recordings", label: "Recordings", icon: "recordings" },
-  { href: "/neurometrics", label: "NeuroMetrics", icon: "graph" },
+  { href: "/landscape", label: "Brain Landscape", icon: "graph" },
 ];
 
 /**
