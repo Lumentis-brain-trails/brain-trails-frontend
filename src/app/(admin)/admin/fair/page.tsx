@@ -36,6 +36,8 @@ interface FairRow {
   state: "waiting" | "called" | "done" | "declined";
   signed_up_at: string;
   called_at: string | null;
+  /** Asked after the demo, never at the door: the stand's conversion. */
+  wants_beta: boolean;
 }
 
 const LABEL: Record<FairRow["state"], string> = {
@@ -44,6 +46,17 @@ const LABEL: Record<FairRow["state"], string> = {
   done: "done",
   declined: "not any more",
 };
+
+/** Blue, as Andrea asked: someone who has asked to be a beta tester. */
+function BetaDot() {
+  return (
+    <span
+      title="Asked to be a beta tester"
+      aria-label="Asked to be a beta tester"
+      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#0a84ff]"
+    />
+  );
+}
 
 function since(iso: string): string {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -112,6 +125,8 @@ export default function AdminFairPage() {
   const closed = rows.filter(
     (r) => r.state === "done" || r.state === "declined"
   );
+  const tried = rows.filter((r) => r.state === "done");
+  const converted = tried.filter((r) => r.wants_beta).length;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -171,6 +186,13 @@ export default function AdminFairPage() {
         <Stat label="Done" value={String(mode.data?.done ?? "–")} />
         <Stat label="Not any more" value={String(mode.data?.declined ?? "–")} />
       </div>
+      {tried.length > 0 && (
+        <p className="-mt-4 mb-8 flex items-center gap-2 text-[14px] text-ink-2">
+          <BetaDot />
+          {converted} of {tried.length} who tried the headband asked to be beta
+          testers ({Math.round((converted / tried.length) * 100)}%).
+        </p>
+      )}
 
       <SectionTitle>In the queue</SectionTitle>
       <Card inset>
@@ -199,6 +221,7 @@ export default function AdminFairPage() {
                   <span className="truncate font-medium">
                     {row.full_name ?? row.email}
                   </span>
+                  {row.wants_beta && <BetaDot />}
                   {row.state === "called" && (
                     <span className="rounded-full bg-ok-soft px-2 py-0.5 text-[12px] text-ok">
                       {LABEL.called}
@@ -249,8 +272,9 @@ export default function AdminFairPage() {
                 key={row.user_id}
                 className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-3 last:border-b-0"
               >
-                <span className="min-w-0 truncate text-ink-2">
-                  {row.full_name ?? row.email}
+                <span className="flex min-w-0 items-center gap-2 text-ink-2">
+                  <span className="truncate">{row.full_name ?? row.email}</span>
+                  {row.wants_beta && <BetaDot />}
                 </span>
                 <span className="type-caption shrink-0 text-ink-3">
                   {LABEL[row.state]}
