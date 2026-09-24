@@ -539,6 +539,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Landscape
+         * @description The caller's brain landscape, without any recording's trail.
+         *
+         *     409 `not_ready` while there is none yet. Asking is also what builds the first one for
+         *     an account that recorded before landscapes existed: a rebuild is queued when there
+         *     is something to build from and none is waiting - which is why the 409 is returned,
+         *     not raised, so the queued job commits with the request.
+         */
+        get: operations["my_landscape_landscape_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media": {
         parameters: {
             query?: never;
@@ -1089,6 +1114,8 @@ export interface paths {
          * @description Remove the recording, its analyses, its session and every stored artifact.
          *
          *     Everything the recording owns sits under one prefix (V3-0009), timeline included.
+         *     Its windows also sit on its person's brain landscape, which lives elsewhere, so a
+         *     rebuild is queued: the next map is built without them (V3-0013).
          *     404 unless visible, 403 without `can_delete`, 409 while a job is active.
          */
         delete: operations["delete_recording_recordings__recording_id__delete"];
@@ -1216,6 +1243,32 @@ export interface paths {
          *     (one produced before S20, or a run whose feature stage failed).
          */
         get: operations["get_features_recordings__recording_id__features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_id}/landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Landscape
+         * @description The brain landscape of this recording's person, with this recording's trail on it.
+         *
+         *     The map is the subject's, built from all of their recordings (V3-0013); whoever may
+         *     view the recording sees it, as they see the recording's own terrain. 409 `not_ready`
+         *     while no map exists. When the map predates this recording, `trail` is null and a
+         *     rebuild is queued, so the page can draw the recording's own terrain meanwhile and
+         *     come back. The 409 is returned rather than raised so a job queued with it commits.
+         */
+        get: operations["get_landscape_recordings__recording_id__landscape_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1997,6 +2050,80 @@ export interface components {
             task_label?: string | null;
             /** Title */
             title: string;
+        };
+        /**
+         * BrainLandscapeCategoryOut
+         * @description One thing that can have been happening in a window: its block, its trial label.
+         */
+        BrainLandscapeCategoryOut: {
+            /** Label */
+            label: string | null;
+            /** Task */
+            task: string;
+        };
+        /**
+         * BrainLandscapeGridOut
+         * @description The landscape's height on a regular grid: `z[row][column]`, peaking at 1.
+         */
+        BrainLandscapeGridOut: {
+            /** Nx */
+            nx: number;
+            /** Ny */
+            ny: number;
+            /** Z */
+            z: number[][];
+        };
+        /**
+         * BrainLandscapeOut
+         * @description A person's brain landscape (V3-0013).
+         *
+         *     `bounds` is `[x0, x1, y0, y1]`: the grid spans it evenly. `cells` says what happened
+         *     around each visible grid point, as `[column, row, [[category, share], ...]]` with
+         *     `category` an index into `categories`. `trail` is the asked-for recording's windows on
+         *     the map, null when the map was built before that recording; `pending` says a rebuild
+         *     is queued or running, so a page can come back for it.
+         */
+        BrainLandscapeOut: {
+            /** Bounds */
+            bounds: number[];
+            /**
+             * Built At
+             * Format: date-time
+             */
+            built_at: string;
+            /** Categories */
+            categories: components["schemas"]["BrainLandscapeCategoryOut"][];
+            /** Cells */
+            cells: [
+                number,
+                number,
+                [
+                    number,
+                    number
+                ][]
+            ][];
+            grid: components["schemas"]["BrainLandscapeGridOut"];
+            /** N Recordings */
+            n_recordings: number;
+            /** N Windows */
+            n_windows: number;
+            /** Pending */
+            pending: boolean;
+            trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * BrainLandscapeTrailOut
+         * @description One recording's windows placed on the landscape: start time and position.
+         */
+        BrainLandscapeTrailOut: {
+            /** T */
+            t: number[];
+            /** X */
+            x: number[];
+            /** Y */
+            y: number[];
         };
         /**
          * CaptureForms
@@ -4606,6 +4733,26 @@ export interface operations {
             };
         };
     };
+    my_landscape_landscape_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeOut"];
+                };
+            };
+        };
+    };
     list_media_media_get: {
         parameters: {
             query?: {
@@ -5745,6 +5892,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeaturesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_landscape_recordings__recording_id__landscape_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeOut"];
                 };
             };
             /** @description Validation Error */

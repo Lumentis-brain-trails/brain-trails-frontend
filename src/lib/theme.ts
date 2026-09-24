@@ -106,6 +106,11 @@ export interface ChartTheme {
    * trail's time ramp so a label is never read as "early" or "late".
    */
   labels: readonly [string, string, string];
+  /**
+   * Contour lines on a 3D landscape. Solid, not the translucent `hairline`: WebGL draws
+   * those lines opaque, and a translucent white hairline comes out as bright white.
+   */
+  contour: string;
 }
 
 const LIGHT_TRAIL = ["#e8a02a", "#1bafc4", "#7c5ce6", "#e2569c"] as const;
@@ -124,6 +129,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     channels: [...LIGHT_TRAIL],
     ribbon: ["#1f9d6b", "#c98a12", "#dd6a2a", "#c8203a"],
     labels: ["#2a78d6", "#eb6834", "#1baf7a"],
+    contour: "#d2d2d7",
   },
   dark: {
     canvas: "#07090e",
@@ -137,6 +143,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     channels: [...DARK_TRAIL],
     ribbon: ["#84f6cd", "#fbe59c", "#ffa06a", "#ff4f66"],
     labels: ["#3987e5", "#d95926", "#199e70"],
+    contour: "#3a404e",
   },
 };
 

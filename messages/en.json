@@ -399,6 +399,9 @@
     "blockMeta": "{duration} · {windows} s of signal",
     "trail": "Brain trail",
     "trailAria": "The trail of {block}, on the session's terrain",
+    "onLandscape": "Trails on your brain landscape, built from {n, plural, one {# recording} other {# recordings}}. Turn either landscape to turn both.",
+    "landscapePending": "Your brain landscape is being updated to include this recording. Meanwhile the trails sit on this session's own terrain.",
+    "onSessionTerrain": "Trails on this session's own terrain.",
     "frame": {
       "taskAria": "The task as it looked at this moment of {block}",
       "trial": "Trial {n} of {total}",
@@ -520,5 +523,14 @@
       "higher": "higher",
       "lower": "lower"
     }
+  },
+  "landscape": {
+    "title": "Brain Landscape",
+    "intro": "Every recording you have made, on one map. Peaks are where your brain spent the most time; hover anywhere to see what you were doing there.",
+    "meta": "{n, plural, one {# recording} other {# recordings}} · {windows} seconds of signal · updated {date}",
+    "aria": "Your brain landscape: every recording on one map, height is where you spent the most time",
+    "updating": "Updating with your latest recording…",
+    "notReady": "Your landscape appears once your first recording has been analysed.",
+    "disclaimer": "Exploratory, not diagnostic. The map moves each time you record: places on it compare within one version, not across versions."
   }
 }

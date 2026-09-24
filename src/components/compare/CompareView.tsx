@@ -15,10 +15,20 @@
  * Each column keeps its own moment: the two blocks have their own lengths, and a shared
  * clock would pin one of them to a time it does not have. The chosen rows are
  * remembered in this browser (`lib/compare/rows.ts`).
+ *
+ * The trails rest on the person's brain landscape - one map of all their recordings
+ * (backend V3-0013) - when it already holds this recording; both columns then share
+ * one camera, so turning one turns the other. Until it does, the session's own terrain
+ * stands in, and the page says so.
  */
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { BlockFrame, type FrameVideo } from "@/components/compare/BlockFrame";
+import { BlockLandscape } from "@/components/compare/BlockLandscape";
+import {
+  type Camera,
+  DEFAULT_CAMERA,
+} from "@/components/compare/LandscapeSurface";
 import { BlockTrail, blockWindows } from "@/components/compare/BlockTrail";
 import {
   type BandSeries,
@@ -43,6 +53,7 @@ import {
   rowSpec,
   writeRows,
 } from "@/lib/compare/rows";
+import type { BrainLandscape } from "@/lib/brainLandscape";
 import type { WireEvent } from "@/lib/protocol/marker";
 import { useChartTheme } from "@/lib/theme";
 import type { Analysis } from "@/lib/types";
@@ -75,6 +86,7 @@ export function CompareView({
   steps,
   bands,
   videoAt,
+  landscape = null,
 }: {
   analysis: Analysis;
   blocks: readonly BlockMetrics[];
@@ -85,11 +97,15 @@ export function CompareView({
   bands: Readonly<Record<string, BandSeries>> | null;
   /** The video on screen at a session time, if any. */
   videoAt: (t: number) => FrameVideo | null;
+  /** The person's brain landscape, with this recording's trail on it when it has one. */
+  landscape?: BrainLandscape | null;
 }) {
   const tr = useTranslations("compare");
   const [pair, setPair] = useState(() => defaultPair(blocks));
   const [moments, setMoments] = useState<Record<string, number>>({});
   const [rows, setRows] = useState<RowId[]>(() => readRows());
+  const [camera, setCamera] = useState<Camera>(DEFAULT_CAMERA);
+  const onLandscape = Boolean(landscape?.trail);
   const groups = useMemo(
     () => labelGroups(blocks.map((b) => b.labels)),
     [blocks]
@@ -106,6 +122,13 @@ export function CompareView({
 
   return (
     <div className="space-y-4">
+      <p className="type-caption text-center text-ink-3">
+        {onLandscape && landscape
+          ? tr("onLandscape", { n: landscape.n_recordings })
+          : landscape?.pending
+            ? tr("landscapePending")
+            : tr("onSessionTerrain")}
+      </p>
       <div
         className="grid grid-cols-2 gap-3 sm:gap-5"
         style={{
@@ -145,15 +168,28 @@ export function CompareView({
                 <h3 className="type-caption font-medium text-ink-3">
                   {tr("trail")}
                 </h3>
-                <BlockTrail
-                  analysis={analysis}
-                  block={block}
-                  labels={block.labels}
-                  groups={groups}
-                  t={t}
-                  onSeek={setT}
-                  title={tr("trailAria", { block: title })}
-                />
+                {landscape && onLandscape ? (
+                  <BlockLandscape
+                    landscape={landscape}
+                    block={block}
+                    labels={block.labels}
+                    groups={groups}
+                    t={t}
+                    camera={camera}
+                    onCamera={setCamera}
+                    title={tr("trailAria", { block: title })}
+                  />
+                ) : (
+                  <BlockTrail
+                    analysis={analysis}
+                    block={block}
+                    labels={block.labels}
+                    groups={groups}
+                    t={t}
+                    onSeek={setT}
+                    title={tr("trailAria", { block: title })}
+                  />
+                )}
                 <label className="block">
                   <span className="type-caption flex justify-between text-ink-3">
                     <span>{tr("cursor")}</span>
