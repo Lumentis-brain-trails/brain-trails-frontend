@@ -381,6 +381,28 @@
       "split_hint": "Pause the video where you want the cut, then split: you get two clips over the same video, and can put a questionnaire or a rest between them.",
       "trimmed": "from {from} to {to}",
       "the_end": "the end"
+    },
+    "soundtrack": {
+      "title": "Sound",
+      "empty": "Drag a sound here to play it over the blocks — background music, a spoken instruction.",
+      "only_audio": "Only sounds go on this lane.",
+      "drag_stop": "Drag to the block it should stop at",
+      "inspector_title": "Sound",
+      "label": "Name",
+      "starts": "Starts",
+      "starts_protocol": "When the protocol starts",
+      "starts_block": "When “{label}” starts",
+      "delay": "Delay (seconds)",
+      "stops": "Stops",
+      "stops_clip": "When the sound ends",
+      "stops_protocol": "When the protocol ends",
+      "stops_block": "When “{label}” ends",
+      "loop": "Loop",
+      "loop_needs_stop": "A looping sound needs somewhere to stop: the end of the protocol or of a block.",
+      "volume": "Volume",
+      "fade": "Fade in and out (seconds)",
+      "remove": "Remove sound",
+      "note": "Sounds play over the blocks instead of taking a turn. For a sound that must be time-locked to the EEG, use an audio block instead."
     }
   },
   "beta": {
