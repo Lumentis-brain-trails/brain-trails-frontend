@@ -178,8 +178,24 @@ export function ProtocolRunner({
     [protocol.id, protocol.version, reducedMotion]
   );
 
+  // Nothing is recorded once the run has closed: a block still mounted behind the ending
+  // must not add trials after `run_aborted` or `session_end`.
+  const closedRef = useRef(false);
+
+  /*
+   * The stop prompt does not pause the block under it: a trial keeps running behind the
+   * scrim and would be scored as a miss. The runner brackets the prompt on the timeline
+   * and marks `invalid` every trial it overlapped - the one on screen when it opened and
+   * any that marked while it was open - so analysis leaves them out, as it does a trial
+   * that straddled a hidden tab.
+   */
+  const promptOpenRef = useRef(false);
+  const lastTrialRef = useRef<number | null>(null);
+  const overlappedRef = useRef(new Set<number>());
+
   const emitRun = useCallback(
     (draft: MarkerDraft, atHostMs?: number) => {
+      if (closedRef.current) return;
       sink.push(stamp(draft, atHostMs));
     },
     [sink, stamp]
@@ -187,7 +203,21 @@ export function ProtocolRunner({
 
   const emitForStep = useCallback(
     (draft: MarkerDraft, atHostMs?: number) => {
-      if (!step) return;
+      if (!step || closedRef.current) return;
+      const trial = draft.meta?.trial_id;
+      if (typeof trial === "number") {
+        lastTrialRef.current = trial;
+        if (promptOpenRef.current) overlappedRef.current.add(trial);
+        if (draft.kind === "outcome" && overlappedRef.current.has(trial))
+          draft = {
+            ...draft,
+            meta: {
+              ...draft.meta,
+              invalid: true,
+              invalid_reason: "exit_prompt",
+            },
+          };
+      }
       const onsetError = draft.meta?.onset_error_ms;
       if (typeof onsetError === "number") pageProbe.onset(onsetError);
       // A stimulus that did not say how its onset was observed was a timer or a
@@ -203,9 +233,13 @@ export function ProtocolRunner({
     [protocol, sink, stamp, step]
   );
 
-  // session_start, then each step's own start marker as it mounts.
+  // session_start, then each step's own start marker as it mounts - once each: closing
+  // the stop prompt returns to `running` and must not start the run or the step again.
+  const sessionStartedRef = useRef(false);
+  const startedStepRef = useRef<number | null>(null);
   useLayoutEffect(() => {
-    if (screen !== "running" || stepIndex !== 0) return;
+    if (screen !== "running" || sessionStartedRef.current) return;
+    sessionStartedRef.current = true;
     if (protocol.startMarker) {
       emitRun({
         label: protocol.startMarker,
@@ -227,7 +261,12 @@ export function ProtocolRunner({
    */
   const blockStartRef = useRef<number | null>(null);
   useLayoutEffect(() => {
-    if (screen !== "running" || !step) return;
+    if (screen !== "running" || !step || startedStepRef.current === stepIndex)
+      return;
+    startedStepRef.current = stepIndex;
+    // trial ids restart with each block
+    lastTrialRef.current = null;
+    overlappedRef.current.clear();
     if (step.block && blockStartRef.current === null) {
       const now = performance.now();
       blockStartRef.current = now;
@@ -244,7 +283,7 @@ export function ProtocolRunner({
    * engine independently invalidates any trial whose onset landed outside its plan.
    */
   useEffect(() => {
-    if (screen !== "running") return;
+    if (screen === "warning") return;
     const onVisibility = () => {
       const now = performance.now();
       if (document.hidden) {
@@ -288,6 +327,7 @@ export function ProtocolRunner({
     stopSounds();
     if (protocol.endMarker)
       emitRun({ label: protocol.endMarker, kind: "system" });
+    closedRef.current = true;
     void sink
       .flush()
       .finally(() => onFinishRef.current(resultsRef.current, sink.all()));
@@ -333,8 +373,24 @@ export function ProtocolRunner({
         reason: "user",
       },
     });
+    closedRef.current = true;
     void sink.flush().finally(() => onExitRef.current("user"));
   }, [emitRun, onExitRef, sink, stopSounds, step, stepIndex]);
+
+  // The prompt's edges, on the run's timeline. An abort leaves it open: the run closes
+  // with `run_aborted`, not a dismissal.
+  useLayoutEffect(() => {
+    const open = screen === "confirm-exit";
+    if (open === promptOpenRef.current) return;
+    promptOpenRef.current = open;
+    if (open && lastTrialRef.current !== null)
+      overlappedRef.current.add(lastTrialRef.current);
+    emitRun({
+      label: open ? "exit_prompt_shown" : "exit_prompt_dismissed",
+      kind: "system",
+      meta: step ? { step_id: step.id } : {},
+    });
+  }, [emitRun, screen, step]);
 
   // Escape opens the confirmation rather than stopping: a stray key must not end an
   // eight-minute session, but the way out must always be one keystroke away.
@@ -342,7 +398,10 @@ export function ProtocolRunner({
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      setScreen((s) => (s === "confirm-exit" ? "running" : "confirm-exit"));
+      // not from the notice: the run has not begun, there is nothing to stop yet
+      setScreen((s) =>
+        s === "confirm-exit" ? "running" : s === "running" ? "confirm-exit" : s
+      );
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
