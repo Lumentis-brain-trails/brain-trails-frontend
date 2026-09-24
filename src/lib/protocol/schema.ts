@@ -39,6 +39,24 @@ const stepSchema = z.object({
     .optional(),
 });
 
+/** A planned soundtrack cue (`PlannedCue`), after `bindMedia` has given it its `src`. */
+const cueSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().optional(),
+  media_id: z.string().min(1),
+  src: z.string().optional(),
+  startStep: z.number().int().min(0).nullable(),
+  offsetS: z.number().min(0),
+  stop: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("clip_end") }),
+    z.object({ kind: z.literal("protocol_end") }),
+    z.object({ kind: z.literal("step"), step: z.number().int().min(0) }),
+  ]),
+  loop: z.boolean(),
+  volume: z.number().min(0).max(1),
+  fadeS: z.number().min(0),
+});
+
 const baseSchema = z.object({
   id: z.string().min(1),
   version: z.number().int().positive(),
@@ -47,6 +65,9 @@ const baseSchema = z.object({
   startMarker: z.string().max(50).optional(),
   endMarker: z.string().max(50).optional(),
   steps: z.array(stepSchema).min(1),
+  // Declared, not left to pass through: `z.object` drops keys it does not know, and a
+  // soundtrack dropped here left every real run silent while the preview played it.
+  soundtrack: z.array(cueSchema).optional(),
 });
 
 /**

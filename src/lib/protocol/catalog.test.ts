@@ -82,6 +82,46 @@ test("a started session becomes a plan with its media bound", () => {
   });
 });
 
+test("the soundtrack survives into the plan, with its sound bound", () => {
+  const base = session();
+  const resolved = planFor(
+    session({
+      media: {
+        ...base.media,
+        "22222222-2222-4222-8222-222222222222": {
+          url: "https://example.com/music.mp3",
+          kind: "audio",
+          poster_url: null,
+          duration_s: 90,
+        },
+      },
+      definition: {
+        ...base.definition,
+        schema: 2,
+        soundtrack: [
+          {
+            id: "music",
+            media_id: "22222222-2222-4222-8222-222222222222",
+            stop: "protocol_end",
+            loop: true,
+          },
+        ],
+      },
+    })
+  );
+  expect(resolved.ok).toBe(true);
+  if (!resolved.ok) return;
+  expect(resolved.protocol.soundtrack).toEqual([
+    expect.objectContaining({
+      id: "music",
+      src: "https://example.com/music.mp3",
+      startStep: null,
+      stop: { kind: "protocol_end" },
+      loop: true,
+    }),
+  ]);
+});
+
 test("a media link missing from the session is an error, not a broken run", () => {
   const resolved = planFor(session({ media: {} }));
   expect(resolved.ok).toBe(false);
