@@ -17,6 +17,7 @@ import { useState } from "react";
 import { type Resolver, useForm, useWatch } from "react-hook-form";
 import { ApiRequestError, api } from "@/lib/api";
 import { useAppConfig } from "@/lib/features";
+import { useFairOpen } from "@/lib/fair";
 import { useTaxonomies } from "@/lib/taxonomies";
 import { AuthPanel } from "@/components/AuthPanel";
 import { ListField } from "@/components/form/ListField";
@@ -104,6 +105,8 @@ export default function RegisterPage() {
   const [coreConsent, setCoreConsent] = useState(false);
   const [researchConsent, setResearchConsent] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
+  const [wantsDeviceTest, setWantsDeviceTest] = useState(false);
+  const fairOpen = useFairOpen();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -136,7 +139,8 @@ export default function RegisterPage() {
         toRegisterPayload(
           account,
           { core: coreConsent, research: researchConsent, newsletter },
-          basics
+          basics,
+          fairOpen && wantsDeviceTest
         )
       );
       // Where they go depends on what the account already is: open and waiting for the
@@ -275,6 +279,28 @@ export default function RegisterPage() {
                 />
               </div>
             </section>
+
+            {fairOpen && (
+              <section className="enter-up space-y-4 border-t border-hairline pt-6">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                    checked={wantsDeviceTest}
+                    onChange={(e) => setWantsDeviceTest(e.target.checked)}
+                  />
+                  <span>
+                    <span className="block">
+                      I would like to try the headband at the stand.
+                    </span>
+                    <span className="type-caption text-ink-3">
+                      You do not have to wait here. We email you when your turn
+                      is about five minutes away, so go and see the rest.
+                    </span>
+                  </span>
+                </label>
+              </section>
+            )}
 
             <div className="flex gap-2">
               <Button
