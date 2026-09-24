@@ -42,6 +42,7 @@ import {
   type BlockMetrics,
   ROWS,
   type RowId,
+  applies,
   readRows,
   rowSpec,
   writeRows,
@@ -136,14 +137,18 @@ export function CompareView({
     setRows(next);
     writeRows(next);
   };
-  const available = ROWS.filter((r) => !rows.includes(r.id));
+  // every chosen row that applies to the two blocks on screen, in the reader's order
+  const shown = rows.filter((id) => applies(rowSpec(id), columns));
+  const available = ROWS.filter(
+    (r) => !rows.includes(r.id) && applies(r, columns)
+  );
 
   return (
     <div className="space-y-4">
       <div
         className="grid grid-cols-2 gap-3 sm:gap-5"
         style={{
-          gridTemplateRows: `repeat(${FIXED_ROWS + rows.length}, auto)`,
+          gridTemplateRows: `repeat(${FIXED_ROWS + shown.length}, auto)`,
         }}
       >
         {columns.map((block, side) => {
@@ -254,7 +259,7 @@ export function CompareView({
                 />
               </div>
 
-              {rows.map((id) => (
+              {shown.map((id) => (
                 <MetricCell
                   key={id}
                   spec={rowSpec(id)}

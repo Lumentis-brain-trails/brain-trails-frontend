@@ -4,6 +4,7 @@ import {
   DEFAULT_ROWS,
   ROWS,
   ROWS_STORAGE_KEY,
+  applies,
   direction,
   formatValue,
   missingReason,
@@ -181,5 +182,18 @@ describe("direction", () => {
   test("no comparison without both values", () => {
     expect(direction("percent", null, 0.3)).toBeNull();
     expect(direction("percent", 0.3, null)).toBeNull();
+  });
+});
+
+describe("applies", () => {
+  test("task rows need a block with trials; the rest apply everywhere", () => {
+    const task = { ...block(), behaviour: { accuracy: 0.8 } } as BlockMetrics;
+    expect(applies(rowSpec("accuracy"), [block(), block()])).toBe(false);
+    expect(applies(rowSpec("accuracy"), [block(), task])).toBe(true);
+    expect(applies(rowSpec("alpha"), [block(), block()])).toBe(true);
+  });
+
+  test("the default is every row", () => {
+    expect(DEFAULT_ROWS).toEqual(ROWS.map((r) => r.id));
   });
 });
