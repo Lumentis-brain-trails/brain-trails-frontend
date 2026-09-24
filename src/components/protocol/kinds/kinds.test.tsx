@@ -381,3 +381,44 @@ describe("S18 kinds", () => {
     expect(schema.safeParse({}).success).toBe(false);
   });
 });
+
+describe("breathing", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  test("moves on to breathe out while the host re-renders with new callbacks", async () => {
+    // A new `emit`/`onComplete` every second (a streaming headband) used to restart the
+    // exercise from zero: the participant stayed on "Breathe in" for good.
+    const { Renderer, configSchema } = getTaskKind("breathing");
+    const config = configSchema.parse({
+      cycles: 2,
+      inhaleMs: 1500,
+      exhaleMs: 1500,
+    });
+    const labels: string[] = [];
+    const results: TaskResult[] = [];
+    const view = () => (
+      <Renderer
+        config={config as never}
+        stepId="s1"
+        phase="s1"
+        seed={1}
+        emit={(draft) => labels.push(draft.label)}
+        onComplete={(r) => results.push(r)}
+        reducedMotion={false}
+      />
+    );
+    const { rerender } = render(view());
+    for (let i = 0; i < 10; i++) {
+      await advance(700);
+      rerender(view());
+    }
+
+    expect(screen.queryByText("Breathe out")).not.toBeNull();
+    expect(labels.filter((l) => l === "breath_exhale")).toHaveLength(2);
+    expect(results).toHaveLength(1);
+  });
+});

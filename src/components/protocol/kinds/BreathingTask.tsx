@@ -20,6 +20,7 @@ import {
   planBreathing,
 } from "@/lib/protocol/breathing";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
+import { useLatest } from "./shared";
 
 const PHASE_WORD: Record<BreathingSegment["phase"], string> = {
   inhale: "Breathe in",
@@ -39,6 +40,10 @@ function BreathingRenderer({
   const totalMs = useMemo(() => breathingDurationMs(config), [config]);
   const [index, setIndex] = useState(-1);
   const doneRef = useRef(false);
+  // Through refs: a new callback identity must not reschedule the whole exercise from
+  // zero, which left the participant on "Breathe in" for good.
+  const emitRef = useLatest(emit);
+  const onCompleteRef = useLatest(onComplete);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -48,14 +53,14 @@ function BreathingRenderer({
         setTimeout(() => {
           setIndex(i);
           if (segment.cycleStart) {
-            emit({
+            emitRef.current({
               label: config.markers.cycleStart,
               kind: "stimulus",
               meta: { cycle: segment.cycle },
             });
           }
           if (segment.marker) {
-            emit({
+            emitRef.current({
               label: segment.marker,
               kind: segment.phase === "rule" ? "instruction" : "stimulus",
               meta: { cycle: segment.cycle, phase_name: segment.phase },
@@ -69,7 +74,7 @@ function BreathingRenderer({
       setTimeout(() => {
         if (doneRef.current) return;
         doneRef.current = true;
-        onComplete({
+        onCompleteRef.current({
           stepId,
           taskKind: "breathing",
           summary: { cycles: config.cycles, duration_ms: totalMs },
@@ -78,7 +83,7 @@ function BreathingRenderer({
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [config, emit, onComplete, segments, stepId, totalMs]);
+  }, [config, emitRef, onCompleteRef, segments, stepId, totalMs]);
 
   const current = index >= 0 ? segments[index] : null;
   const isRule = current?.phase === "rule";
