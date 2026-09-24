@@ -32,6 +32,7 @@ import {
 } from "@/lib/protocol/marker";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { hash32 } from "@/lib/protocol/rng";
+import { useLatest } from "./kinds/shared";
 import { useSoundtrack } from "./useSoundtrack";
 import type { MarkerSink } from "@/lib/protocol/sink";
 import { pageProbe } from "@/lib/timing/probe";
@@ -40,6 +41,9 @@ import {
   type TaskResult,
   protocolMeta,
 } from "@/lib/protocol/types";
+
+/** One empty soundtrack for every plan without one, so `stopAll` keeps its identity. */
+const NO_CUES: NonNullable<ProtocolDefinition["soundtrack"]> = [];
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -113,6 +117,16 @@ export function ProtocolRunner({
   const osReducedMotion = useOsReducedMotion();
   const [motionOverride, setMotionOverride] = useState<boolean | null>(null);
   const reducedMotion = motionOverride ?? osReducedMotion;
+
+  /*
+   * The host's callbacks are read through refs. The run page re-renders every second
+   * while a headband streams (quality, battery), each time with a new `onFinish`; a
+   * dependency on it would hand every kind a new `onComplete` once a second, and a kind
+   * whose timer depends on it (a timed instruction, a fixed-duration video) would
+   * restart that timer forever and never end.
+   */
+  const onFinishRef = useLatest(onFinish);
+  const onExitRef = useLatest(onExit);
 
   const resultsRef = useRef<TaskResult[]>([]);
   const finishedRef = useRef(false);
@@ -261,8 +275,8 @@ export function ProtocolRunner({
     return () => window.removeEventListener("pagehide", onHide);
   }, [sink]);
 
-  const soundtrack = useSoundtrack({
-    cues: protocol.soundtrack ?? [],
+  const { stopAll: stopSounds } = useSoundtrack({
+    cues: protocol.soundtrack ?? NO_CUES,
     stepIndex,
     running: screen === "running",
     emit: emitRun,
@@ -271,11 +285,13 @@ export function ProtocolRunner({
   const finish = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
-    soundtrack.stopAll();
+    stopSounds();
     if (protocol.endMarker)
       emitRun({ label: protocol.endMarker, kind: "system" });
-    void sink.flush().finally(() => onFinish(resultsRef.current, sink.all()));
-  }, [emitRun, onFinish, protocol.endMarker, sink, soundtrack]);
+    void sink
+      .flush()
+      .finally(() => onFinishRef.current(resultsRef.current, sink.all()));
+  }, [emitRun, onFinishRef, protocol.endMarker, sink, stopSounds]);
 
   const onComplete = useCallback(
     (result: TaskResult) => {
@@ -307,7 +323,7 @@ export function ProtocolRunner({
   const abort = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
-    soundtrack.stopAll();
+    stopSounds();
     emitRun({
       label: "run_aborted",
       kind: "system",
@@ -317,8 +333,8 @@ export function ProtocolRunner({
         reason: "user",
       },
     });
-    void sink.flush().finally(() => onExit("user"));
-  }, [emitRun, onExit, sink, soundtrack, step, stepIndex]);
+    void sink.flush().finally(() => onExitRef.current("user"));
+  }, [emitRun, onExitRef, sink, stopSounds, step, stepIndex]);
 
   // Escape opens the confirmation rather than stopping: a stray key must not end an
   // eight-minute session, but the way out must always be one keystroke away.

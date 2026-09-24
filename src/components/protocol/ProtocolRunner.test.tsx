@@ -118,6 +118,34 @@ describe("ProtocolRunner", () => {
     ]);
   });
 
+  test("a timed step ends while the host re-renders with new callbacks", async () => {
+    // The run page re-renders every second while a headband streams, each time with a
+    // new `onFinish`; a timed step that restarted its timer on it never ended.
+    const sink = createMemorySink();
+    const props = (onFinish = vi.fn()) => ({
+      protocol: TWO_PROMPTS,
+      seed: 1,
+      sink,
+      onFinish,
+      onExit: vi.fn(),
+    });
+    const hosts = [vi.fn()];
+    const { rerender } = render(<ProtocolRunner {...props(hosts[0])} />);
+    for (let i = 0; i < 6; i++) {
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+      });
+      hosts.push(vi.fn());
+      rerender(<ProtocolRunner {...props(hosts[hosts.length - 1])} />);
+    }
+
+    expect(sink.all().map((m) => m.label)).toContain("second_end");
+    // told once, and through a callback the host had passed by then, not the first one
+    const calls = hosts.map((host) => host.mock.calls.length);
+    expect(calls.reduce((a, b) => a + b)).toBe(1);
+    expect(calls[0]).toBe(0);
+  });
+
   test("stamps provenance and a run clock onto every marker", async () => {
     const { sink } = renderRunner();
     await act(async () => {

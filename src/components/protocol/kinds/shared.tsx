@@ -4,9 +4,9 @@
  * Small pieces the S18 block kinds share: a completion guard, a first-frame hook, the
  * fixation cross, the end tone and the layout every text-first kind uses.
  *
- * The runner passes new `emit`/`onComplete` identities when it re-renders; timers in a
- * kind must not restart because of that (a 60 s baseline would never end), so the hooks
- * here read the latest callbacks through refs.
+ * The runner keeps `emit`/`onComplete` stable within a step, but a kind should not rely
+ * on it: timers must not restart when a callback's identity changes (a 60 s baseline
+ * would never end), so the hooks here read the latest callbacks through refs.
  */
 
 import { type ReactNode, useCallback, useEffect, useRef } from "react";
