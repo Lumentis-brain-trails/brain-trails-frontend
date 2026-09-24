@@ -96,7 +96,8 @@ const clean = (v: string | undefined) =>
 export function toRegisterPayload(
   account: AccountForm,
   consent: { core: boolean; research: boolean; newsletter: boolean },
-  basics: BasicsForm
+  basics: BasicsForm,
+  wantsDeviceTest = false
 ) {
   return {
     email: account.email,
@@ -110,6 +111,9 @@ export function toRegisterPayload(
     // "" is the select's "prefer not to answer"; the API spells an unanswered field null,
     // and null there means nobody asked - which is not the same as declining to say.
     profile: { ...basics, sex_at_birth: clean(basics.sex_at_birth) },
+    // The fair's own question, asked only while a stand is open (V3-0013). The API
+    // ignores it when it is not, so a stale tab cannot enqueue anyone.
+    wants_device_test: wantsDeviceTest,
     wants_beta: false,
   };
 }

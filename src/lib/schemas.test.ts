@@ -74,6 +74,8 @@ describe("schemas", () => {
       research_consent: false,
       newsletter: false,
       profile: BASICS,
+      // Not asked outside a fair, and the API ignores it when the stand is closed.
+      wants_device_test: false,
       // Not asked at sign-up any more: false is "not asked yet", set after a protocol.
       wants_beta: false,
     });
@@ -92,6 +94,18 @@ describe("schemas", () => {
       "handedness",
       "sex_at_birth",
     ]);
+  });
+
+  test("the fair tick is carried only when it was ticked", () => {
+    const call = (wants: boolean) =>
+      toRegisterPayload(
+        { email: "a@b.it", password: "long-enough-pw" },
+        { core: true, research: false, newsletter: false },
+        BASICS,
+        wants
+      );
+    expect(call(false).wants_device_test).toBe(false);
+    expect(call(true).wants_device_test).toBe(true);
   });
 
   test("the newsletter is carried on its own, and never inferred from a consent", () => {
