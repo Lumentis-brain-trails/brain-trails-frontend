@@ -120,6 +120,134 @@ export interface paths {
         patch: operations["update_cohort_admin_cohorts__cohort_id__patch"];
         trace?: never;
     };
+    "/admin/fair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fair Mode
+         * @description Whether the stand is open, and how many people are in each state.
+         */
+        get: operations["fair_mode_admin_fair_get"];
+        /**
+         * Set Fair Mode
+         * @description Open or close the stand (V3-0013).
+         *
+         *     Turning it off stops registration asking the question; it does not empty the queue,
+         *     because the people already in it still came and still deserve their turn.
+         */
+        put: operations["set_fair_mode_admin_fair_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/fair/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fair Queue
+         * @description The stand's queue, first to tick first, with the name to call out.
+         *
+         *     Not paginated on purpose: a stand's queue is tens of people on one day, and the whole
+         *     point of the page is seeing all of it at once.
+         */
+        get: operations["fair_queue_admin_fair_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/fair/queue/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Fair State
+         * @description Mark someone as done, as no longer wanting a turn, or put them back in the queue.
+         *
+         *     `called` is deliberately absent: that state is a side effect of sending the email, and
+         *     setting it by hand would claim we told someone something we never told them.
+         */
+        patch: operations["set_fair_state_admin_fair_queue__user_id__patch"];
+        trace?: never;
+    };
+    "/admin/fair/queue/{user_id}/call": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call To The Stand
+         * @description Email someone that their turn is about five minutes away, and mark them called.
+         *
+         *     The mail is required, not best effort: the whole point is that the person is walking
+         *     around a fair and will only come back if it reaches them. A provider failure rolls the
+         *     state change back too (502 `mail_failed`), so the queue never says we called someone
+         *     we did not.
+         */
+        post: operations["call_to_the_stand_admin_fair_queue__user_id__call_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/protocols/{protocol_id}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Protocol Access
+         * @description Lock or unlock a protocol from the panel, live (V3-0012).
+         *
+         *     Which protocols a visitor may actually start is a decision that changes with the room
+         *     - a fair where only three are worth the queue, a study that wants one of them off -
+         *     so it belongs to an admin at the moment they need it, not to a constant in the seed.
+         *     A locked protocol stays listed on purpose: the catalog shows the shape of the
+         *     programme without pretending the content is ready (V3-0003).
+         *
+         *     Idempotent, audited, and 404 for an unknown or archived protocol. Nothing is frozen
+         *     by this: access lives on the protocol, never on a version, so a run already under way
+         *     finishes and only the next Play is refused.
+         */
+        patch: operations["set_protocol_access_admin_protocols__protocol_id__access_patch"];
+        trace?: never;
+    };
     "/admin/review": {
         parameters: {
             query?: never;
@@ -511,6 +639,32 @@ export interface paths {
          *     settings only, so it costs no database query (decision 0014).
          */
         get: operations["config_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/fair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fair
+         * @description Whether registration should ask about trying a headband (unauthenticated).
+         *
+         *     Deliberately not folded into `GET /config`, which reads settings only and costs no
+         *     query: this one needs the database, and keeping it separate means the rest of the app
+         *     still gets its configuration for free. The only page that calls it is the registration
+         *     screen, whose visitors are about to write to the database anyway, so it adds no idle
+         *     traffic of its own (decision 0014).
+         */
+        get: operations["fair_fair_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1115,7 +1269,7 @@ export interface paths {
          *
          *     Everything the recording owns sits under one prefix (V3-0009), timeline included.
          *     Its windows also sit on its person's brain landscape, which lives elsewhere, so a
-         *     rebuild is queued: the next map is built without them (V3-0013).
+         *     rebuild is queued: the next map is built without them (V3-0016).
          *     404 unless visible, 403 without `can_delete`, 409 while a job is active.
          */
         delete: operations["delete_recording_recordings__recording_id__delete"];
@@ -1262,7 +1416,7 @@ export interface paths {
          * Get Landscape
          * @description The brain landscape of this recording's person, with this recording's trail on it.
          *
-         *     The map is the subject's, built from all of their recordings (V3-0013); whoever may
+         *     The map is the subject's, built from all of their recordings (V3-0016); whoever may
          *     view the recording sees it, as they see the recording's own terrain. 409 `not_ready`
          *     while no map exists. When the map predates this recording, `trail` is null and a
          *     rebuild is queued, so the page can draw the recording's own terrain meanwhile and
@@ -1569,6 +1723,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AccessIn
+         * @description Whether a catalog item may be started, or is only advertised.
+         */
+        AccessIn: {
+            /**
+             * Access
+             * @enum {string}
+             */
+            access: "open" | "locked";
+        };
         /**
          * AnalysisOut
          * @description A full trail: component versions, window geometry and points ordered by `idx`.
@@ -2075,7 +2240,7 @@ export interface components {
         };
         /**
          * BrainLandscapeOut
-         * @description A person's brain landscape (V3-0013).
+         * @description A person's brain landscape (V3-0016).
          *
          *     `bounds` is `[x0, x1, y0, y1]`: the grid spans it evenly. `cells` says what happened
          *     around each visible grid point, as `[column, row, [[category, share], ...]]` with
@@ -2312,6 +2477,8 @@ export interface components {
         ConsentIn: {
             /** Core */
             core?: boolean | null;
+            /** Newsletter */
+            newsletter?: boolean | null;
             /** Research */
             research?: boolean | null;
         };
@@ -2334,6 +2501,10 @@ export interface components {
             core_version: string;
             /** Current Version */
             current_version: string;
+            /** Newsletter */
+            newsletter: boolean;
+            /** Newsletter At */
+            newsletter_at: string | null;
             /** Research */
             research: boolean;
             /** Research At */
@@ -2558,6 +2729,88 @@ export interface components {
             sigma_ms: number | null;
             /** Tau Ms */
             tau_ms: number | null;
+        };
+        /**
+         * FairModeIn
+         * @description Whether the stand is open.
+         */
+        FairModeIn: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /**
+         * FairModeOut
+         * @description Fair mode, and how the queue stands right now.
+         */
+        FairModeOut: {
+            /** Called */
+            called: number;
+            /** Declined */
+            declined: number;
+            /** Done */
+            done: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Waiting */
+            waiting: number;
+        };
+        /**
+         * FairOut
+         * @description Whether the stand is open, for the registration screen.
+         */
+        FairOut: {
+            /** Open */
+            open: boolean;
+        };
+        /**
+         * FairRow
+         * @description One person in the stand's queue, oldest first.
+         */
+        FairRow: {
+            /** Called At */
+            called_at: string | null;
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string | null;
+            /**
+             * Signed Up At
+             * Format: date-time
+             */
+            signed_up_at: string;
+            /** State */
+            state: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Wants Beta
+             * @default false
+             */
+            wants_beta: boolean;
+        };
+        /**
+         * FairState
+         * @description Where someone is in the stand's queue (V3-0013).
+         *
+         *     `waiting` is everyone who ticked the box and has not been dealt with; `called` is
+         *     someone who has been emailed to come over; `done` and `declined` are the two ways out.
+         *     Called is not a promise - people wander off - so an admin can put anyone back.
+         * @enum {string}
+         */
+        FairState: "waiting" | "called" | "done" | "declined";
+        /**
+         * FairStateIn
+         * @description Move someone along the queue by hand.
+         */
+        FairStateIn: {
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "waiting" | "done" | "declined";
         };
         /**
          * FeaturesOut
@@ -3457,6 +3710,13 @@ export interface components {
          *     client that does not know about it cannot grant it by accident - which is the whole
          *     point of an opt-in.
          *
+         *     `newsletter` is the third tick and the lightest: a mailing list, defaulted false like
+         *     every opt-in, and carrying no version because it says nothing about the privacy text.
+         *
+         *     `wants_device_test` is the fair's own question - "would you like to try a headband at
+         *     the stand?" - asked only while fair mode is on, and answered by joining a queue rather
+         *     than by anything happening to the account (V3-0013).
+         *
          *     `wants_beta` is an intention, not an admission: the admin board still decides who is
          *     let in and when. `intended_use` is the one question worth asking at the door, because
          *     it is what the board sorts on.
@@ -3474,6 +3734,11 @@ export interface components {
             intended_use?: string | null;
             /** Intended Use Other */
             intended_use_other?: string | null;
+            /**
+             * Newsletter
+             * @default false
+             */
+            newsletter: boolean;
             /** Password */
             password: string;
             profile?: components["schemas"]["ProfileIn"] | null;
@@ -3487,6 +3752,11 @@ export interface components {
              * @default false
              */
             wants_beta: boolean;
+            /**
+             * Wants Device Test
+             * @default false
+             */
+            wants_device_test: boolean;
         };
         /**
          * ReprocessIn
@@ -4138,6 +4408,191 @@ export interface operations {
             };
         };
     };
+    fair_mode_admin_fair_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FairModeOut"];
+                };
+            };
+        };
+    };
+    set_fair_mode_admin_fair_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FairModeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FairModeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fair_queue_admin_fair_queue_get: {
+        parameters: {
+            query?: {
+                state?: components["schemas"]["FairState"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FairRow"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_fair_state_admin_fair_queue__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FairStateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FairRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    call_to_the_stand_admin_fair_queue__user_id__call_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FairRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_protocol_access_admin_protocols__protocol_id__access_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                protocol_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolCard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     review_queue_admin_review_get: {
         parameters: {
             query?: never;
@@ -4707,6 +5162,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigOut"];
+                };
+            };
+        };
+    };
+    fair_fair_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FairOut"];
                 };
             };
         };
