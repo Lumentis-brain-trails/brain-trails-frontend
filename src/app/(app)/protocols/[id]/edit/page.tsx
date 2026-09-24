@@ -60,6 +60,8 @@ import {
 import { useHistory } from "@/lib/builder/history";
 import { KIND_SCHEMAS } from "@/lib/builder/schemas";
 import type { ProtocolDetail, ValidationResult } from "@/lib/protocol/catalog";
+import { bindMedia, mediaIds } from "@/lib/protocol/media";
+import { usePreviewMedia } from "@/lib/protocol/previewMedia";
 import { resolvePlan } from "@/lib/protocol/resolve";
 import { createMemorySink } from "@/lib/protocol/sink";
 import {
@@ -650,6 +652,10 @@ function useMediaIndex(): Record<string, BinMedia> {
 /**
  * The runner over the draft, with no headband and nothing stored: markers go to a
  * memory sink and are dropped when the preview closes.
+ *
+ * Media are bound exactly as a real run binds them, from a map built by
+ * `usePreviewMedia` instead of the session start. Without that step a video reached the
+ * runner with an id and no file, and the preview fell over at the first video block.
  */
 function Preview({
   tree,
@@ -671,21 +677,44 @@ function Preview({
       return null;
     }
   }, [tree]);
+  const ids = useMemo(() => (plan ? mediaIds(plan) : []), [plan]);
+  const { media, missing } = usePreviewMedia(ids);
+  const bound = useMemo(() => {
+    if (!plan || !media) return null;
+    try {
+      return { plan: bindMedia(plan, media), error: null };
+    } catch (e) {
+      return { plan: null, error: e instanceof Error ? e.message : String(e) };
+    }
+  }, [plan, media]);
 
-  if (!plan || plan.steps.length === 0)
+  const notice = (message: string) => (
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-(--scrim) p-6">
+      <Card className="max-w-sm space-y-3 text-center">
+        <p className="text-ink-2">{message}</p>
+        <Button onClick={onClose}>{t("close")}</Button>
+      </Card>
+    </div>
+  );
+
+  if (!plan || plan.steps.length === 0) return notice(t("preview_empty"));
+  if (missing)
+    return notice(
+      "One of the media in this protocol could not be loaded - it may have been deleted. Replace it and try again."
+    );
+  if (!bound)
     return (
-      <div className="fixed inset-0 z-100 flex items-center justify-center bg-(--scrim) p-6">
-        <Card className="max-w-sm space-y-3 text-center">
-          <p className="text-ink-2">{t("preview_empty")}</p>
-          <Button onClick={onClose}>{t("close")}</Button>
-        </Card>
+      <div className="fixed inset-0 z-100 flex items-center justify-center bg-black text-white/70">
+        Loading the media…
       </div>
     );
+  if (!bound.plan)
+    return notice(bound.error ?? "This protocol cannot be previewed.");
 
   return (
     <div className="fixed inset-0 z-100 bg-black">
       <ProtocolRunner
-        protocol={plan}
+        protocol={bound.plan}
         seed={1}
         sink={sink}
         warningShown
