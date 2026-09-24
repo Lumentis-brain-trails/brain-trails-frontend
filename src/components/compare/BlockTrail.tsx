@@ -33,6 +33,8 @@ const REACH = 1.5;
 const GROUND_INK = 0.16;
 const MARKER_R = 4.2;
 const GRADIENT_ID = "block-trail-region";
+/** Stands in for the label of a window the focus drops. */
+const DROPPED = "\u0000dropped";
 
 export interface BlockSpan {
   t_start_s: number;
@@ -54,6 +56,7 @@ export function BlockTrail({
   block,
   labels,
   groups,
+  kept = null,
   t,
   onSeek,
   height,
@@ -65,6 +68,8 @@ export function BlockTrail({
   labels: readonly (string | null)[] | null | undefined;
   /** The recording's label groups in slot order (`labelGroups`). */
   groups: readonly string[];
+  /** One flag per window of the block: whether the column's focus keeps it. */
+  kept?: readonly boolean[] | null;
   /** Session seconds of the cursor. */
   t: number;
   onSeek: (t: number) => void;
@@ -105,15 +110,29 @@ export function BlockTrail({
   }, [block, landscape, points]);
 
   const colourOf = (label: string | null | undefined): string => {
-    if (!label) return theme.ink3;
+    if (!label || label === DROPPED) return theme.ink3;
     const slot = groupSlot(groups, parseLabel(label).group);
     return slot === null ? theme.ink3 : theme.labels[slot];
   };
 
-  const segments = useMemo(
-    () => (labels ? labelledSegments(drawing.lit, labels) : []),
-    [drawing.lit, labels]
+  // a window the focus drops keeps its place on the line, faded, without a marker
+  const shown = useMemo(
+    () =>
+      labels ? labels.map((l, i) => (!kept || kept[i] ? l : DROPPED)) : null,
+    [kept, labels]
   );
+  const segments = useMemo(
+    () => (shown ? labelledSegments(drawing.lit, shown) : []),
+    [drawing.lit, shown]
+  );
+  const keptRange = useMemo((): [number, number] | null => {
+    if (!kept || kept.every(Boolean)) return null;
+    const first = kept.indexOf(true);
+    if (first < 0) return [1, 0];
+    const last = kept.lastIndexOf(true);
+    const n = Math.max(1, kept.length - 1);
+    return [first / n, last / n];
+  }, [kept]);
 
   const current = nearest(drawing.lit, t);
 
@@ -163,15 +182,17 @@ export function BlockTrail({
               d={polylinePath(segment.points)}
               fill="none"
               stroke={colourOf(segment.label)}
-              strokeOpacity={segment.label ? 1 : 0.6}
+              strokeOpacity={
+                segment.label === DROPPED ? 0.22 : segment.label ? 1 : 0.6
+              }
               strokeWidth={WIDTH}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           ))}
           {drawing.lit.map((p, i) => {
-            const label = labels[i];
-            if (!label) return null;
+            const label = shown?.[i];
+            if (!label || label === DROPPED) return null;
             const colour = colourOf(label);
             const marker = markerOf(parseLabel(label).act);
             if (marker === "ring")
@@ -219,6 +240,7 @@ export function BlockTrail({
           stops={theme.trail}
           width={WIDTH}
           casing="var(--surface)"
+          range={keptRange}
           showWindows
         />
       )}

@@ -1488,6 +1488,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings/{recording_id}/selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Selection
+         * @description Every metric of one block, for a stretch of it and some of its trial labels.
+         *
+         *     `block` is the block row's `key`; `start`/`end` bound the selection in seconds on the
+         *     recording's clock (the block's own bounds when absent); repeat `labels` to keep only
+         *     the windows and trials with those labels. Computed on request from the stored
+         *     features, embeddings and timeline, so it also serves recordings analysed before
+         *     labels and dynamics were stored. 404 without that block, 409 without an analysis
+         *     that has features and embeddings.
+         */
+        get: operations["get_selection_recordings__recording_id__selection_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/recordings/{recording_id}/signal": {
         parameters: {
             query?: never;
@@ -2267,6 +2294,13 @@ export interface components {
                     number
                 ][]
             ][];
+            /** Change */
+            change?: string | null;
+            /**
+             * Epoch
+             * @default 1
+             */
+            epoch: number;
             grid: components["schemas"]["BrainLandscapeGridOut"];
             /** N Recordings */
             n_recordings: number;
@@ -3788,6 +3822,44 @@ export interface components {
          * @enum {string}
          */
         ReviewState: "none" | "pending" | "approved" | "refused";
+        /**
+         * SelectionOut
+         * @description A block's metrics recomputed for part of it (`pipeline.features.selection`).
+         *
+         *     `t_start_s`/`t_end_s` are the selection actually used (clipped to the block);
+         *     `window_t` and `window_labels` describe every window of the block, so a page can
+         *     colour and count all of it while the numbers describe the selection. `bands` are
+         *     relative powers; `dynamics` are counted in the person's global regions when their
+         *     brain landscape holds the recording (`regions: "person"`, comparable across
+         *     recordings) and in the recording's own otherwise (`"session"`); `behaviour` covers
+         *     the trials whose onset falls in the selection and whose label was kept.
+         */
+        SelectionOut: {
+            /** Bands */
+            bands: {
+                [key: string]: number | null;
+            };
+            behaviour?: components["schemas"]["BehaviourOut"] | null;
+            /** Block Key */
+            block_key: string;
+            dynamics?: components["schemas"]["DynamicsOut"] | null;
+            /** N Windows */
+            n_windows: number;
+            /**
+             * Regions
+             * @default session
+             * @enum {string}
+             */
+            regions: "person" | "session";
+            /** T End S */
+            t_end_s: number;
+            /** T Start S */
+            t_start_s: number;
+            /** Window Labels */
+            window_labels: (string | null)[] | null;
+            /** Window T */
+            window_t: number[];
+        };
         /**
          * SessionOut
          * @description A session as the app sees it; `events_url` is a short-lived link when finished.
@@ -6497,6 +6569,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_selection_recordings__recording_id__selection_get: {
+        parameters: {
+            query: {
+                block: string;
+                start?: number | null;
+                end?: number | null;
+                labels?: string[] | null;
+            };
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelectionOut"];
                 };
             };
             /** @description Validation Error */

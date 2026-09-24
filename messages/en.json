@@ -466,7 +466,8 @@
       "short": "Too short to measure",
       "not_task": "Not a task",
       "no_labels": "No trials to group by",
-      "not_ready": "Not computed for this recording yet"
+      "not_ready": "Not computed for this recording yet",
+      "computing": "Computing…"
     },
     "units": {
       "bits": "bits",
@@ -475,59 +476,59 @@
     "rows": {
       "alpha": {
         "name": "Alpha",
-        "meaning": "Share of the signal's power at 8–12 Hz: relaxed, eyes-closed rhythm."
+        "meaning": "Share of the signal's power in the 8–12 Hz band. It rises when you relax with eyes closed and drops when you look and pay attention."
       },
       "beta": {
         "name": "Beta",
-        "meaning": "Share of power at 13–30 Hz: alert, engaged activity."
+        "meaning": "Share of power in the 13–30 Hz band. It tends to rise with alert, focused or tense activity."
       },
       "theta": {
         "name": "Theta",
-        "meaning": "Share of power at 4–8 Hz: drowsiness, or effortful focus."
+        "meaning": "Share of power in the 4–8 Hz band. It rises with drowsiness, and at the front of the head with effortful focus and memory."
       },
       "delta": {
         "name": "Delta",
-        "meaning": "Share of power below 4 Hz: deep sleep, or movement and blinks."
+        "meaning": "Share of power below 4 Hz. Awake, much of it comes from movement and blinks, so a high value often means a noisier stretch."
       },
       "entropy": {
         "name": "Entropy",
-        "meaning": "How hard it is to predict the next state from this one."
+        "meaning": "How hard it is to guess the next brain state from the current one, in bits. Low: the signal follows a routine; high: it wanders unpredictably."
       },
       "recurrence": {
         "name": "Recurrence",
-        "meaning": "How often the signal went back to a state it had already visited."
+        "meaning": "How often a move goes back to a state already visited in this stretch. High: the signal circles familiar places; low: it keeps finding new ones."
       },
       "modularity": {
         "name": "Modularity",
-        "meaning": "How much states group together by the kind of trial."
+        "meaning": "How much windows of the same kind of trial gather in the same states. Near 0: kinds of trial mix freely; higher: each has places of its own."
       },
       "diameter": {
         "name": "Diameter",
-        "meaning": "How wide the space the signal covered was."
+        "meaning": "How wide the range of brain states covered is, in ball widths of the map. Larger: the signal ranged further."
       },
       "stretching": {
         "name": "Stretching",
-        "meaning": "Average step from one state to the next, compared with the diameter."
+        "meaning": "The average step from one moment to the next, as a share of the diameter. High: big jumps across the space; low: small, gradual drift."
       },
       "accuracy": {
         "name": "Right actions",
-        "meaning": "Share of trials where the person did what the task asked."
+        "meaning": "Share of trials where the person did what the task asked. Read it with false alarms: pressing less can raise it on its own."
       },
       "reaction_time": {
         "name": "Reaction time",
-        "meaning": "Typical time from the target appearing to the press."
+        "meaning": "Typical time from the target appearing to the press (the median). Lower is faster."
       },
       "rt_spread": {
         "name": "Reaction spread",
-        "meaning": "How much reaction time varied: lower is steadier."
+        "meaning": "How much the reaction time varied from trial to trial. Lower is steadier."
       },
       "hit_rate": {
         "name": "Targets caught",
-        "meaning": "Share of targets that were answered."
+        "meaning": "Share of targets that got an answer. Missed targets pull it down."
       },
       "false_alarms": {
         "name": "False alarms",
-        "meaning": "Share of non-targets that were pressed anyway."
+        "meaning": "Share of non-targets pressed anyway: acting before checking. Lower is more careful."
       }
     },
     "labels": {
@@ -544,7 +545,20 @@
     "direction": {
       "higher": "higher",
       "lower": "lower"
-    }
+    },
+    "redrawn": "Its geometry was redrawn with your latest recording: places on it compare within this version.",
+    "focus": {
+      "from": "From",
+      "to": "To",
+      "labels": "Kinds of trial in {block}: press one to leave it out",
+      "noTrials": "No trials in this stretch",
+      "reset": "Whole block again"
+    },
+    "regions": {
+      "person": "Neurometrics counted in your personal map's regions: they compare with your other recordings.",
+      "session": "Neurometrics counted in this session's own regions: they compare within this recording only."
+    },
+    "averageWholeOnly": "The average person is for the whole block: show the whole block to compare with it."
   },
   "landscape": {
     "title": "Brain Landscape",
@@ -553,6 +567,11 @@
     "aria": "Your brain landscape: every recording on one map, height is where you spent the most time",
     "updating": "Updating with your latest recording…",
     "notReady": "Your landscape appears once your first recording has been analysed.",
-    "disclaimer": "Exploratory, not diagnostic. The map moves each time you record: places on it compare within one version, not across versions."
+    "disclaimer": "Exploratory, not diagnostic. The map moves each time you record: places on it compare within one version, not across versions.",
+    "unavailable": "This server does not have the Brain Landscape yet.",
+    "failed": "The landscape could not be loaded. Try again in a moment.",
+    "building": "Building your landscape. This page updates by itself.",
+    "redrawn": "The map's geometry was redrawn with your latest recording: places on it compare within this version, not with earlier ones.",
+    "epoch": "Geometry version {epoch}"
   }
 }

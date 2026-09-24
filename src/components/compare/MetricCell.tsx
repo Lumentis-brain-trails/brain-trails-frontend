@@ -45,6 +45,8 @@ export function MetricCell({
   block,
   other,
   series,
+  narrowed = false,
+  pending = false,
   t,
   onRemove,
 }: {
@@ -54,6 +56,10 @@ export function MetricCell({
   other: BlockMetrics | null;
   /** A band row's values across the session, for the line under the number. */
   series?: BandSeries | null;
+  /** The column shows part of its block: the whole-block average does not apply. */
+  narrowed?: boolean;
+  /** The column's numbers are being recomputed for a new focus. */
+  pending?: boolean;
   /** Session seconds of this column's cursor. */
   t: number;
   onRemove: () => void;
@@ -74,7 +80,9 @@ export function MetricCell({
   return (
     <div
       data-direction={way ?? "none"}
+      aria-busy={pending}
       className={cn(
+        pending && "opacity-60",
         "min-w-0 space-y-2 rounded-[var(--radius-control)] border p-3 transition-colors duration-(--m-fast)",
         way === "higher"
           ? "border-transparent bg-higher-soft"
@@ -109,7 +117,9 @@ export function MetricCell({
 
       {value === null ? (
         <p className="text-[14px] text-ink-3">
-          {tr(`missing.${missingReason(spec, block)}`)}
+          {pending && missingReason(spec, block) !== "not_task"
+            ? tr("missing.computing")
+            : tr(`missing.${missingReason(spec, block)}`)}
         </p>
       ) : (
         <>
@@ -144,17 +154,19 @@ export function MetricCell({
 
       {spec.group === "task" && value !== null && (
         <p className="type-caption text-ink-3">
-          {block.norm == null || block.norm.n_people === 0
-            ? tr("noAverage")
-            : norm === null
-              ? tr("averagePending", {
-                  min: MIN_PEOPLE,
-                  n: block.norm.n_people,
-                })
-              : tr("averagePerson", {
-                  value: formatValue(spec.format, norm),
-                  n: block.norm.n_people,
-                })}
+          {narrowed
+            ? tr("averageWholeOnly")
+            : block.norm == null || block.norm.n_people === 0
+              ? tr("noAverage")
+              : norm === null
+                ? tr("averagePending", {
+                    min: MIN_PEOPLE,
+                    n: block.norm.n_people,
+                  })
+                : tr("averagePerson", {
+                    value: formatValue(spec.format, norm),
+                    n: block.norm.n_people,
+                  })}
         </p>
       )}
 
