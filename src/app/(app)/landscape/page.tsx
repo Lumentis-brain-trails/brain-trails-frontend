@@ -13,6 +13,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
 import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
 import {
   Card,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
 import { type BrainLandscape, landscapeProblem } from "@/lib/brainLandscape";
+import { markEpochSeen } from "@/lib/landscapeStatus";
 
 /** How often to look again while the map is being built. */
 const POLL_MS = 5000;
@@ -46,6 +48,11 @@ export default function BrainLandscapePage() {
     ? null
     : landscapeProblem(problemOf(landscape.error));
   const data = landscape.data;
+  // the map is on screen: the sidebar's "redrawn" mark has done its job
+  const epoch = data?.epoch;
+  useEffect(() => {
+    if (epoch) markEpochSeen(epoch);
+  }, [epoch]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">

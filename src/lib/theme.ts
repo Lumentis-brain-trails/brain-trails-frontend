@@ -107,8 +107,9 @@ export interface ChartTheme {
    */
   labels: readonly [string, string, string];
   /**
-   * Contour lines on a 3D landscape. Solid, not the translucent `hairline`: WebGL draws
-   * those lines opaque, and a translucent white hairline comes out as bright white.
+   * Contour lines on a 3D landscape, etched into the colour: white on the light page, a
+   * dark line on the dark one. Solid, not the translucent `hairline`: WebGL draws those
+   * lines opaque.
    */
   contour: string;
   /**
@@ -135,7 +136,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     channels: [...LIGHT_TRAIL],
     ribbon: ["#1f9d6b", "#c98a12", "#dd6a2a", "#c8203a"],
     labels: ["#2a78d6", "#eb6834", "#1baf7a"],
-    contour: "#d2d2d7",
+    contour: "#ffffff",
     landscape: [
       [0, "#f3f7fc"],
       [0.18, "#cfe9f3"],

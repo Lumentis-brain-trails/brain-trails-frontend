@@ -25,6 +25,33 @@ export function axes(landscape: BrainLandscape): {
   return { xs: spread(x0, x1, nx), ys: spread(y0, y1, ny) };
 }
 
+/** Whether `(x, y)` lies on the map (the backend frames 90% of the windows). */
+export function onMap(
+  landscape: BrainLandscape,
+  x: number,
+  y: number
+): boolean {
+  const [x0, x1, y0, y1] = landscape.bounds;
+  return x >= x0 && x <= x1 && y >= y0 && y <= y1;
+}
+
+/**
+ * A trail's coordinates with every window off the map blanked (null), index for index:
+ * a 3D line breaks at a null, so a trail stops at the edge of the map instead of
+ * running off it towards an outlier, and colours, symbols and hover lines stay aligned.
+ */
+export function framedTrail(
+  landscape: BrainLandscape,
+  xs: readonly number[],
+  ys: readonly number[]
+): { x: (number | null)[]; y: (number | null)[] } {
+  const inside = xs.map((x, i) => onMap(landscape, x, ys[i]));
+  return {
+    x: xs.map((x, i) => (inside[i] ? x : null)),
+    y: ys.map((y, i) => (inside[i] ? y : null)),
+  };
+}
+
 /**
  * The landscape's height at `(x, y)`, bilinear between grid points, 0 off the map.
  * What lifts a trail onto the surface instead of leaving it under a hill.
@@ -36,7 +63,7 @@ export function heightAt(
 ): number {
   const [x0, x1, y0, y1] = landscape.bounds;
   const { nx, ny, z } = landscape.grid;
-  if (x < x0 || x > x1 || y < y0 || y > y1 || nx < 2 || ny < 2) return 0;
+  if (!onMap(landscape, x, y) || nx < 2 || ny < 2) return 0;
   const fx = ((x - x0) / (x1 - x0 || 1)) * (nx - 1);
   const fy = ((y - y0) / (y1 - y0 || 1)) * (ny - 1);
   const i = Math.min(nx - 2, Math.floor(fx));
