@@ -759,6 +759,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/landscape/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Landscape Status
+         * @description The caller's landscape epoch, for the sidebar's "redrawn" mark.
+         *
+         *     Reads the row alone - never the map in storage - and queues nothing: building the
+         *     first map is `GET /landscape`'s, when the person opens it.
+         */
+        get: operations["my_landscape_status_landscape_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media": {
         parameters: {
             query?: never;
@@ -2362,6 +2385,23 @@ export interface components {
             trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
             /** Version */
             version: number;
+        };
+        /**
+         * BrainLandscapeStatusOut
+         * @description Where the caller's brain landscape stands, without the map (V3-0017).
+         *
+         *     Cheap enough for the sidebar to ask on every page: one row, never storage. `epoch` is
+         *     null while there is no map, and moves only when the map is redrawn or refitted - every
+         *     place on it moved - so a client that remembers the last epoch it showed knows when to
+         *     say so. `pending` says a rebuild is queued or running.
+         */
+        BrainLandscapeStatusOut: {
+            /** Built At */
+            built_at: string | null;
+            /** Epoch */
+            epoch: number | null;
+            /** Pending */
+            pending: boolean;
         };
         /**
          * BrainLandscapeTrailOut
@@ -5391,6 +5431,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrainLandscapeOut"];
+                };
+            };
+        };
+    };
+    my_landscape_status_landscape_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeStatusOut"];
                 };
             };
         };

@@ -573,6 +573,7 @@
     "failed": "The landscape could not be loaded. Try again in a moment.",
     "building": "Building your landscape. This page updates by itself.",
     "redrawn": "The map's geometry was redrawn with your latest recording: places on it compare within this version, not with earlier ones.",
-    "epoch": "Geometry version {epoch}"
+    "epoch": "Geometry version {epoch}",
+    "sidebarRedrawn": "Redrawn"
   }
 }

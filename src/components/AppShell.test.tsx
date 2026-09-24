@@ -6,8 +6,11 @@ import {
   screen,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import messages from "../../messages/en.json";
 import { AppShell, isCurrentSection } from "./AppShell";
+import { LANDSCAPE_SEEN_KEY } from "@/lib/landscapeStatus";
 
 const pathname = vi.fn(() => "/");
 vi.mock("next/navigation", () => ({
@@ -15,8 +18,17 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 const me = vi.fn(async () => ({ email: "ada@lab.org", role: "user" }));
+const landscapeStatus = vi.fn(async () => ({
+  epoch: null as number | null,
+  built_at: null,
+  pending: false,
+}));
 vi.mock("@/lib/api", () => ({
-  api: { get: () => me(), logout: async () => {} },
+  api: {
+    get: (path: string) =>
+      path === "landscape/status" ? landscapeStatus() : me(),
+    logout: async () => {},
+  },
 }));
 
 function renderAt(path: string) {
@@ -25,11 +37,13 @@ function renderAt(path: string) {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={client}>
-      <AppShell>
-        <p>page</p>
-      </AppShell>
-    </QueryClientProvider>
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={client}>
+        <AppShell>
+          <p>page</p>
+        </AppShell>
+      </QueryClientProvider>
+    </NextIntlClientProvider>
   );
 }
 
@@ -82,4 +96,27 @@ test("the drawer opens from the top bar and closes on Escape", () => {
   expect(aside.dataset.open).toBe("true");
   fireEvent.keyDown(window, { key: "Escape" });
   expect(aside.dataset.open).toBe("false");
+});
+
+test("the Brain Landscape is marked when its map was redrawn since last seen", async () => {
+  landscapeStatus.mockResolvedValue({
+    epoch: 2,
+    built_at: null,
+    pending: false,
+  });
+  renderAt("/home");
+  expect(
+    await screen.findByRole("link", { name: "Brain Landscape · Redrawn" })
+  ).toBeTruthy();
+  cleanup();
+
+  window.localStorage.setItem(LANDSCAPE_SEEN_KEY, "2");
+  renderAt("/home");
+  await act(() => Promise.resolve());
+  expect(screen.getByRole("link", { name: "Brain Landscape" })).toBeTruthy();
+  landscapeStatus.mockResolvedValue({
+    epoch: null,
+    built_at: null,
+    pending: false,
+  });
 });
