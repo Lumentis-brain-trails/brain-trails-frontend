@@ -22,12 +22,13 @@ import { type Rng, hash32, mulberry32, shuffleInPlace } from "./rng";
 import {
   type BlockNode,
   type Cell,
+  type Cue,
   type LoopNode,
   type SequenceNode,
   type TreeNode,
   parseTree,
 } from "./tree";
-import type { ProtocolDefinition, ProtocolStep } from "./types";
+import type { PlannedCue, ProtocolDefinition, ProtocolStep } from "./types";
 
 /** The catalog facts a plan carries that the tree does not. */
 export interface PlanMeta {
@@ -278,6 +279,7 @@ export function resolvePlan(
     scope: {},
     iterations: [],
   });
+  const soundtrack = planSoundtrack(tree.soundtrack ?? [], steps);
   return {
     id: meta.id,
     version: meta.version,
@@ -288,5 +290,50 @@ export function resolvePlan(
     startMarker: "session_start",
     endMarker: "session_end",
     steps,
+    ...(soundtrack.length ? { soundtrack } : {}),
   };
+}
+
+/**
+ * Anchor each cue to the steps its blocks became (V3-0014).
+ *
+ * A block that repeats inside a loop anchors on its first occurrence. A cue whose start
+ * block never appears in the plan is dropped - it could not start - and a stop block that
+ * never appears falls back to the end of the protocol, so a sound is never left playing
+ * with nothing to end it.
+ */
+export function planSoundtrack(
+  cues: readonly Cue[],
+  steps: readonly ProtocolStep[]
+): PlannedCue[] {
+  const firstStep = (blockId: string) =>
+    steps.findIndex((s) => s.block?.block_id === blockId);
+  const planned: PlannedCue[] = [];
+  for (const cue of cues) {
+    let startStep: number | null = null;
+    if (cue.start?.block) {
+      const at = firstStep(cue.start.block);
+      if (at < 0) continue;
+      startStep = at;
+    }
+    let stop: PlannedCue["stop"];
+    if (cue.stop === "clip_end" || cue.stop === "protocol_end") {
+      stop = { kind: cue.stop };
+    } else {
+      const at = firstStep(cue.stop.block);
+      stop = at < 0 ? { kind: "protocol_end" } : { kind: "step", step: at };
+    }
+    planned.push({
+      id: cue.id,
+      ...(cue.label ? { label: cue.label } : {}),
+      media_id: cue.media_id,
+      startStep,
+      offsetS: cue.start?.offset_s ?? 0,
+      stop,
+      loop: cue.loop ?? false,
+      volume: cue.volume ?? 0.6,
+      fadeS: cue.fade_s ?? 1,
+    });
+  }
+  return planned;
 }

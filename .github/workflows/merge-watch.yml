@@ -1,0 +1,92 @@
+# Only the owner merges into beta and main (decision 0013, v2). GitHub Free has no branch
+# protection for private repositories, so nothing can stop it from happening; this makes
+# sure it never happens quietly. Each finding opens an issue assigned to the owner and
+# fails the run, so it shows red in Actions too.
+#
+# - a pull request into beta or main merged by anyone else;
+# - a promotion into main that was squashed: it cuts main off from beta's history and the
+#   next promotion conflicts on every file changed since;
+# - a push to beta or main that no merged pull request accounts for;
+# - dev, beta or main deleted (the repository's "delete head branch" setting did exactly
+#   that to beta on 2026-09-20).
+name: merge-watch
+on:
+  pull_request:
+    branches: [beta, main]
+    types: [closed]
+  push:
+    branches: [beta, main]
+  delete:
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+env:
+  OWNER: anonymous2532
+  GH_TOKEN: ${{ github.token }}
+  REPO: ${{ github.repository }}
+jobs:
+  merged-by:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      BASE: ${{ github.event.pull_request.base.ref }}
+      BY: ${{ github.event.pull_request.merged_by.login }}
+      MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+    steps:
+      - name: Who merged, and how
+        run: |
+          set -uo pipefail
+          problems=""
+          if [ "$BY" != "$OWNER" ]; then
+            problems="$problems- merged by **@$BY**; only @$OWNER merges into \`$BASE\`.\n"
+          fi
+          if [ "$BASE" = "main" ]; then
+            PARENTS=$(gh api "repos/$REPO/commits/$MERGE_SHA" -q '.parents | length')
+            if [ "$PARENTS" != "2" ]; then
+              problems="$problems- promoted with a **squash** (1 parent): main no longer contains beta's history, and the next beta → main will conflict on every file changed since. Back-merge main into dev with \`-s ours\` before the next promotion.\n"
+            fi
+          fi
+          [ -z "$problems" ] && { echo "ok: #$PR merged into $BASE by $BY"; exit 0; }
+          gh issue create --repo "$REPO" --assignee "$OWNER" \
+            --title "merge-watch: #$PR into $BASE" \
+            --body "$(printf "Pull request #%s into \`%s\`:\n\n%b\nSee decision 0013 (working method v2)." "$PR" "$BASE" "$problems")"
+          exit 1
+
+  pushed-without-a-pr:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.ref_name }}
+      SHA: ${{ github.sha }}
+      PUSHER: ${{ github.event.pusher.name }}
+    steps:
+      - name: Every commit on beta and main arrives through a merged pull request
+        run: |
+          set -uo pipefail
+          # The association between a merge commit and its pull request can lag a moment.
+          for _ in 1 2 3 4 5 6; do
+            PRS=$(gh api "repos/$REPO/commits/$SHA/pulls" \
+                  -q "[.[] | select(.merged_at != null and .base.ref == \"$BRANCH\")] | length")
+            [ "$PRS" != "0" ] && { echo "ok: $SHA came from a merged pull request"; exit 0; }
+            sleep 10
+          done
+          gh issue create --repo "$REPO" --assignee "$OWNER" \
+            --title "merge-watch: direct push to $BRANCH" \
+            --body "$(printf "\`%s\` was pushed to \`%s\` by @%s without a merged pull request.\n\nOnly merges of pull requests reach %s (decision 0013, v2)." "${SHA:0:7}" "$BRANCH" "$PUSHER" "$BRANCH")"
+          exit 1
+
+  deleted:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && contains(fromJSON('["dev","beta","main"]'), github.event.ref)
+    runs-on: ubuntu-latest
+    steps:
+      - name: An environment branch is gone
+        env:
+          GONE: ${{ github.event.ref }}
+          BY: ${{ github.actor }}
+        run: |
+          gh issue create --repo "$REPO" --assignee "$OWNER" \
+            --title "merge-watch: branch $GONE was deleted" \
+            --body "$(printf "\`%s\` was deleted by @%s. Restore it from the last pull request that merged into it (\"Restore branch\"), and turn off Settings → General → \"Automatically delete head branches\"." "$GONE" "$BY")"
+          exit 1

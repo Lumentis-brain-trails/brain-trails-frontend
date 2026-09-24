@@ -3,17 +3,21 @@
 /**
  * The beta programme, from the account page (V3-0008, amended).
  *
- * Registration asks only whether someone wants in and roughly what for; the credentials
- * the board actually selects on - a therapist's registration number, a lab's institution
- * and supervisor - are answered here, at leisure, and validated here too. The decision
- * columns are the board's: this form never touches them, and the card shows where the
- * answer got to rather than pretending it is still open.
+ * Registration no longer asks whether someone wants in: this card is where they apply,
+ * and the prompt at the end of their first report (`BetaPrompt`) sends them here with
+ * `BETA_APPLY_HASH`, which opens the form straight away. The credentials the board
+ * selects on - a therapist's registration number, a lab's institution and supervisor -
+ * are answered here, at leisure, and validated here too. The decision columns are the
+ * board's: this form never touches them, and the card shows where the answer got to
+ * rather than pretending it is still open.
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
 import type { ApplicationForm } from "@/lib/application";
 import { toApplicationPayload } from "@/lib/application";
+import { BETA_APPLY_HASH } from "@/lib/betaPrompt";
 import { useTaxonomies, labelFor } from "@/lib/taxonomies";
 import { ApplicationStep } from "@/components/application/ApplicationStep";
 import { ListField } from "@/components/form/ListField";
@@ -69,8 +73,20 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const lists = useTaxonomies();
-  const [editing, setEditing] = useState(false);
-  const [wantsBeta, setWantsBeta] = useState(data?.wants_beta ?? false);
+  const t = useTranslations("beta");
+  const card = useRef<HTMLDivElement>(null);
+  // Arriving from the report prompt opens the form. The card only mounts once the
+  // application has loaded, in the browser, so reading the hash here cannot mismatch a
+  // server render.
+  const [arrivedToApply] = useState(
+    () =>
+      typeof window !== "undefined" && window.location.hash === BETA_APPLY_HASH
+  );
+  const applying = arrivedToApply && !data?.wants_beta;
+  const [editing, setEditing] = useState(applying);
+  const [wantsBeta, setWantsBeta] = useState(
+    (data?.wants_beta ?? false) || applying
+  );
   const [use, setUse] = useState(data?.intended_use ?? "");
   const [useOther, setUseOther] = useState(data?.intended_use_other ?? "");
 
@@ -89,15 +105,19 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
     },
   });
 
+  useEffect(() => {
+    if (arrivedToApply) card.current?.scrollIntoView({ block: "start" });
+  }, [arrivedToApply]);
+
   if (!data) return null;
 
   return (
-    <Card>
+    <Card ref={card} className="scroll-mt-6">
       <SectionTitle>Beta programme</SectionTitle>
       <p className="mt-2 text-pretty text-ink-2">
         {data.wants_beta
           ? (DECISIONS[data.decision] ?? DECISIONS.pending)
-          : "You are not on the list. Tick the box below if you change your mind."}
+          : "You are not on the list."}
       </p>
       {save.error && (
         <div className="mt-4">
@@ -111,50 +131,52 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
         </div>
       )}
 
-      <div className="mt-6 space-y-4">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
-            checked={wantsBeta}
-            onChange={(e) => {
-              setWantsBeta(e.target.checked);
-              setEditing(true);
-            }}
-          />
-          <span>I would like to be a beta tester.</span>
-        </label>
+      {(data.wants_beta || editing) && (
+        <div className="mt-6 space-y-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+              checked={wantsBeta}
+              onChange={(e) => {
+                setWantsBeta(e.target.checked);
+                setEditing(true);
+              }}
+            />
+            <span>I would like to be a beta tester.</span>
+          </label>
 
-        {wantsBeta && !editing && (
-          <KeyValue
-            label="How you expect to use it"
-            value={
-              data.intended_use
-                ? data.intended_use === "other"
-                  ? (data.intended_use_other ?? "Other")
-                  : labelFor(data.intended_use)
-                : "Not said"
-            }
-          />
-        )}
+          {wantsBeta && !editing && (
+            <KeyValue
+              label="How you expect to use it"
+              value={
+                data.intended_use
+                  ? data.intended_use === "other"
+                    ? (data.intended_use_other ?? "Other")
+                    : labelFor(data.intended_use)
+                  : "Not said"
+              }
+            />
+          )}
 
-        {wantsBeta && editing && (
-          <ListField
-            label="How do you expect to use it?"
-            options={lists.data?.intended_use}
-            value={use}
-            field={{
-              value: use,
-              onChange: (e) => setUse(e.target.value),
-            }}
-            otherField={{
-              value: useOther,
-              onChange: (e) => setUseOther(e.target.value),
-            }}
-            placeholder="Not sure yet"
-          />
-        )}
-      </div>
+          {wantsBeta && editing && (
+            <ListField
+              label="How do you expect to use it?"
+              options={lists.data?.intended_use}
+              value={use}
+              field={{
+                value: use,
+                onChange: (e) => setUse(e.target.value),
+              }}
+              otherField={{
+                value: useOther,
+                onChange: (e) => setUseOther(e.target.value),
+              }}
+              placeholder="Not sure yet"
+            />
+          )}
+        </div>
+      )}
 
       {editing ? (
         <div className="mt-6">
@@ -165,16 +187,33 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
             busy={save.isPending}
           />
           <div className="mt-3">
-            <Button variant="secondary" onClick={() => setEditing(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setWantsBeta(data.wants_beta);
+                setEditing(false);
+              }}
+            >
               Cancel
             </Button>
           </div>
         </div>
       ) : (
         <div className="mt-6">
-          <Button variant="secondary" onClick={() => setEditing(true)}>
-            {data.wants_beta ? "Edit your answers" : "Answer the questions"}
-          </Button>
+          {data.wants_beta ? (
+            <Button variant="secondary" onClick={() => setEditing(true)}>
+              Edit your answers
+            </Button>
+          ) : (
+            <Button
+              onClick={() => {
+                setWantsBeta(true);
+                setEditing(true);
+              }}
+            >
+              {t("apply")}
+            </Button>
+          )}
         </div>
       )}
     </Card>

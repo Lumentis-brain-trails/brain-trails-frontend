@@ -20,6 +20,8 @@ const ALLOWED_PREFIXES = [
   "config",
   "taxonomies",
   "workspaces",
+  // the caller's own brain landscape (backend V3-0013); a recording's is under recordings/
+  "landscape",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];
