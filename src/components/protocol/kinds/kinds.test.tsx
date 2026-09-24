@@ -43,11 +43,16 @@ async function advance(ms: number) {
 }
 
 describe("S18 kinds", () => {
-  beforeEach(() => vi.useFakeTimers());
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // jsdom has no media playback; a video starts as a browser that allows it would
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+  });
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   test("instructions is the prompt renderer under the tree's name", () => {
@@ -372,6 +377,43 @@ describe("S18 kinds", () => {
     }
   });
 
+  test("video: a refused autoplay says so and offers Play, whatever the step allows", async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockRejectedValueOnce(new DOMException("no gesture", "NotAllowedError"))
+      .mockResolvedValue();
+    const { labels } = mount("video", {
+      src: "https://x/v.mp4",
+      allowPause: false,
+    });
+    await act(async () => {});
+
+    expect(labels()).toEqual(["autoplay_blocked"]);
+    expect(document.querySelector("video")!.controls).toBe(true);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Play the video" }));
+    });
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: "Play the video" })).toBeNull();
+    expect(document.querySelector("video")!.controls).toBe(false);
+  });
+
+  test("video: a file that cannot play is marked, and Continue ends the step", async () => {
+    const { results, labels } = mount("video", { src: "https://x/v.mp4" });
+    await act(async () => {
+      fireEvent(document.querySelector("video")!, new Event("error"));
+    });
+
+    expect(labels()).toEqual(["video_error"]);
+    expect(screen.getByText("This video could not be played.")).toBeVisible();
+    expect(results).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(results[0]).toMatchObject({
+      taskKind: "video",
+      summary: { error: "media" },
+    });
+  });
+
   test("video accepts a bound media_id config and rejects neither src nor id", () => {
     const schema = getTaskKind("video").configSchema;
     expect(
@@ -379,5 +421,46 @@ describe("S18 kinds", () => {
         .success
     ).toBe(true);
     expect(schema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("breathing", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  test("moves on to breathe out while the host re-renders with new callbacks", async () => {
+    // A new `emit`/`onComplete` every second (a streaming headband) used to restart the
+    // exercise from zero: the participant stayed on "Breathe in" for good.
+    const { Renderer, configSchema } = getTaskKind("breathing");
+    const config = configSchema.parse({
+      cycles: 2,
+      inhaleMs: 1500,
+      exhaleMs: 1500,
+    });
+    const labels: string[] = [];
+    const results: TaskResult[] = [];
+    const view = () => (
+      <Renderer
+        config={config as never}
+        stepId="s1"
+        phase="s1"
+        seed={1}
+        emit={(draft) => labels.push(draft.label)}
+        onComplete={(r) => results.push(r)}
+        reducedMotion={false}
+      />
+    );
+    const { rerender } = render(view());
+    for (let i = 0; i < 10; i++) {
+      await advance(700);
+      rerender(view());
+    }
+
+    expect(screen.queryByText("Breathe out")).not.toBeNull();
+    expect(labels.filter((l) => l === "breath_exhale")).toHaveLength(2);
+    expect(results).toHaveLength(1);
   });
 });

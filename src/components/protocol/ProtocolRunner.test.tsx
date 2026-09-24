@@ -197,6 +197,156 @@ describe("ProtocolRunner", () => {
     expect(aborted?.meta.step_id).toBe("first");
   });
 
+  test("the stop prompt is on the timeline, and closing it starts nothing again", async () => {
+    const { sink } = renderRunner();
+    await act(async () => {
+      screen.getByRole("button", { name: "Stop" }).click();
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: "Keep going" }).click();
+    });
+    for (let i = 0; i < 2; i++)
+      await act(async () => {
+        vi.advanceTimersByTime(1100);
+      });
+
+    expect(sink.all().map((m) => m.label)).toEqual([
+      "session_start",
+      "first_start",
+      "exit_prompt_shown",
+      "exit_prompt_dismissed",
+      "first_end",
+      "second_start",
+      "line_shown",
+      "second_end",
+      "session_end",
+    ]);
+  });
+
+  test("nothing is recorded after the run is stopped", async () => {
+    const { sink } = renderRunner();
+    await act(async () => {
+      screen.getByRole("button", { name: "Stop" }).click();
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: "Stop session" }).click();
+    });
+    // the block is still mounted behind the ending, and its timer still fires
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    const labels = sink.all().map((m) => m.label);
+    expect(labels.at(-1)).toBe("run_aborted");
+    expect(labels).not.toContain("first_end");
+  });
+
+  test("trials the stop prompt overlapped are marked invalid", async () => {
+    // Four trials; the prompt opens during the second and closes after the third began.
+    if (!hasTaskKind("test-trials"))
+      registerTaskKind({
+        name: "test-trials",
+        configSchema: z.object({}),
+        Renderer: function Trials({ emit, onComplete, stepId }) {
+          useEffect(() => {
+            const plan: [number, number, "stimulus" | "outcome"][] = [
+              [0, 1, "stimulus"],
+              [100, 1, "outcome"],
+              [200, 2, "stimulus"],
+              [400, 2, "outcome"],
+              [600, 3, "stimulus"],
+              [800, 3, "outcome"],
+              [850, 4, "stimulus"],
+              [900, 4, "outcome"],
+            ];
+            const timers = plan.map(([at, trial, kind]) =>
+              setTimeout(
+                () =>
+                  emit({ label: `t_${kind}`, kind, meta: { trial_id: trial } }),
+                at
+              )
+            );
+            timers.push(
+              setTimeout(
+                () =>
+                  onComplete({ stepId, taskKind: "test-trials", summary: {} }),
+                1000
+              )
+            );
+            return () => timers.forEach(clearTimeout);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+          }, []);
+          return null;
+        },
+      });
+    const sink = createMemorySink();
+    render(
+      <ProtocolRunner
+        protocol={{
+          ...TWO_PROMPTS,
+          steps: [
+            {
+              id: "trials",
+              kind: "test-trials",
+              label: "Trials",
+              phase: "trials",
+              config: {},
+            },
+          ],
+        }}
+        seed={1}
+        sink={sink}
+        onFinish={vi.fn()}
+        onExit={vi.fn()}
+      />
+    );
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: "Stop" }).click();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: "Keep going" }).click();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
+
+    const outcomes = sink
+      .all()
+      .filter((m) => m.label === "t_outcome")
+      .map((m) => [m.meta.trial_id, m.meta.invalid ?? false]);
+    expect(outcomes).toEqual([
+      [1, false],
+      [2, true],
+      [3, true],
+      [4, false],
+    ]);
+  });
+
+  test("Escape on the opening notice does not reach the run", async () => {
+    const sink = createMemorySink();
+    render(
+      <ProtocolRunner
+        protocol={{ ...TWO_PROMPTS, contentWarning: "Things move on screen." }}
+        seed={1}
+        sink={sink}
+        onFinish={vi.fn()}
+        onExit={vi.fn()}
+      />
+    );
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    expect(screen.queryByText("Stop this session?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Step one")).not.toBeInTheDocument();
+    expect(sink.all()).toHaveLength(0);
+  });
+
   test("shows the content warning before anything runs when one is declared", () => {
     const sink = createMemorySink();
     render(
