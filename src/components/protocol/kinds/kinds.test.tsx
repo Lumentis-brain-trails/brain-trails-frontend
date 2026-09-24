@@ -43,11 +43,16 @@ async function advance(ms: number) {
 }
 
 describe("S18 kinds", () => {
-  beforeEach(() => vi.useFakeTimers());
+  beforeEach(() => {
+    vi.useFakeTimers();
+    // jsdom has no media playback; a video starts as a browser that allows it would
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+  });
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   test("instructions is the prompt renderer under the tree's name", () => {
@@ -370,6 +375,43 @@ describe("S18 kinds", () => {
       delete proto.requestVideoFrameCallback;
       delete proto.cancelVideoFrameCallback;
     }
+  });
+
+  test("video: a refused autoplay says so and offers Play, whatever the step allows", async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockRejectedValueOnce(new DOMException("no gesture", "NotAllowedError"))
+      .mockResolvedValue();
+    const { labels } = mount("video", {
+      src: "https://x/v.mp4",
+      allowPause: false,
+    });
+    await act(async () => {});
+
+    expect(labels()).toEqual(["autoplay_blocked"]);
+    expect(document.querySelector("video")!.controls).toBe(true);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Play the video" }));
+    });
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: "Play the video" })).toBeNull();
+    expect(document.querySelector("video")!.controls).toBe(false);
+  });
+
+  test("video: a file that cannot play is marked, and Continue ends the step", async () => {
+    const { results, labels } = mount("video", { src: "https://x/v.mp4" });
+    await act(async () => {
+      fireEvent(document.querySelector("video")!, new Event("error"));
+    });
+
+    expect(labels()).toEqual(["video_error"]);
+    expect(screen.getByText("This video could not be played.")).toBeVisible();
+    expect(results).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(results[0]).toMatchObject({
+      taskKind: "video",
+      summary: { error: "media" },
+    });
   });
 
   test("video accepts a bound media_id config and rejects neither src nor id", () => {
