@@ -12,6 +12,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ApiRequestError, api } from "@/lib/api";
+import type { components } from "@/lib/api-types";
 import { useToast } from "@/components/Toast";
 import {
   Button,
@@ -22,15 +23,10 @@ import {
   buttonClass,
 } from "@/components/ui";
 
-interface ProtocolCard {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  access: "open" | "locked";
-  est_duration_s: number | null;
-  archived_at: string | null;
-}
+// From the contract, not by hand: a hand-written card once filtered on an `archived_at`
+// the API never sends, every row was dropped, and the page said "No official
+// protocols yet" with nothing to lock.
+type ProtocolCard = components["schemas"]["ProtocolCard"];
 
 function minutes(seconds: number | null): string {
   return seconds ? `${Math.round(seconds / 60)} min` : "–";
@@ -43,7 +39,9 @@ export default function AdminProtocolsPage() {
   const catalog = useQuery({
     queryKey: ["admin-protocols"],
     queryFn: () =>
-      api.get<ProtocolCard[]>("protocols?circle=official&include_locked=true"),
+      api.get<ProtocolCard[]>(
+        "protocols?circle=official&include_locked=true&limit=100"
+      ),
   });
 
   const setAccess = useMutation({
@@ -55,7 +53,7 @@ export default function AdminProtocolsPage() {
     },
   });
 
-  const items = (catalog.data ?? []).filter((p) => p.archived_at === null);
+  const items = (catalog.data ?? []).filter((p) => !p.archived);
   const open = items.filter((p) => p.access === "open").length;
 
   return (
