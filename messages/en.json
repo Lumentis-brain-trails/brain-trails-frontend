@@ -173,9 +173,9 @@
           "high": "Happy"
         },
         "arousal": {
-          "question": "How calm or excited did you feel?",
+          "question": "How calm or stressed did you feel?",
           "low": "Calm",
-          "high": "Excited"
+          "high": "Stressed"
         },
         "dominance": {
           "question": "How much in control did you feel?",
@@ -426,9 +426,6 @@
     "blockMeta": "{duration} · {windows} s of signal",
     "trail": "Brain trail",
     "trailAria": "The trail of {block}, on the session's terrain",
-    "onLandscape": "Trails on your brain landscape, built from {n, plural, one {# recording} other {# recordings}}. Turn either landscape to turn both.",
-    "landscapePending": "Your brain landscape is being updated to include this recording. Meanwhile the trails sit on this session's own terrain.",
-    "onSessionTerrain": "Trails on this session's own terrain.",
     "frame": {
       "taskAria": "The task as it looked at this moment of {block}",
       "trial": "Trial {n} of {total}",
@@ -551,7 +548,6 @@
       "higher": "higher",
       "lower": "lower"
     },
-    "redrawn": "Its geometry was redrawn with your latest recording: places on it compare within this version.",
     "focus": {
       "from": "From",
       "to": "To",

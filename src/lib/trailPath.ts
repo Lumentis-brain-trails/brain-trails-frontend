@@ -181,3 +181,38 @@ function mix(a: CurvePoint, b: CurvePoint, f: number): CurvePoint {
     u: a.u + (b.u - a.u) * f,
   };
 }
+
+/**
+ * Soften a trail's jitter: each window moves to the Gaussian-weighted mean of its
+ * neighbours in time (`sigma` in windows, three sigmas each side).
+ *
+ * Consecutive windows overlap and carry noise of their own, so the raw path zigzags where
+ * the state barely moved; a light average keeps the course and drops the zigzag. The
+ * first and last windows keep more of their own weight (the kernel is cut, not
+ * reflected), so a trail still starts and ends where it did. Drawing only: the numbers
+ * are never computed from the softened path.
+ */
+export function smoothPath<T extends { x: number; y: number }>(
+  points: readonly T[],
+  sigma = 1.2
+): T[] {
+  if (!(sigma > 0) || points.length < 3) return points.slice();
+  const reach = Math.max(1, Math.ceil(3 * sigma));
+  const weights = Array.from({ length: reach + 1 }, (_, d) =>
+    Math.exp(-(d * d) / (2 * sigma * sigma))
+  );
+  return points.map((point, i) => {
+    let x = 0;
+    let y = 0;
+    let total = 0;
+    for (let d = -reach; d <= reach; d += 1) {
+      const j = i + d;
+      if (j < 0 || j >= points.length) continue;
+      const w = weights[Math.abs(d)];
+      x += points[j].x * w;
+      y += points[j].y * w;
+      total += w;
+    }
+    return { ...point, x: x / total, y: y / total };
+  });
+}

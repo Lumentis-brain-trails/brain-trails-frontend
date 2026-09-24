@@ -20,7 +20,6 @@ import { useRouter } from "next/navigation";
 import { use, useCallback, useMemo, useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
-import type { BrainLandscape } from "@/lib/brainLandscape";
 import type { BandSeries } from "@/components/compare/MetricCell";
 import { CompareView, type PlanStep } from "@/components/compare/CompareView";
 import { formatDuration } from "@/lib/format";
@@ -57,8 +56,6 @@ type Features = components["schemas"]["FeaturesOut"];
 
 /** How many points a band line across the session is worth. */
 const MAX_POINTS = 600;
-/** How often to look again while the brain landscape is being (re)built. */
-const LANDSCAPE_POLL_MS = 5000;
 
 export default function RecordingDetailPage({
   params,
@@ -118,19 +115,6 @@ export default function RecordingDetailPage({
       api.get<Features>(`recordings/${id}/features?downsample=${fold}`),
     enabled: done,
     retry: false,
-  });
-  // The person's map of all their recordings (backend V3-0013). 409 while it is first
-  // built; `pending` while it is being rebuilt to include this recording. Either way the
-  // page draws the session's own terrain meanwhile and checks back.
-  const landscape = useQuery({
-    queryKey: ["recording-landscape", id],
-    queryFn: () => api.get<BrainLandscape>(`recordings/${id}/landscape`),
-    enabled: done,
-    retry: false,
-    refetchInterval: (query) =>
-      query.state.status === "error" || query.state.data?.pending
-        ? LANDSCAPE_POLL_MS
-        : false,
   });
   // The stored timeline is a presigned object, not an API route: fetch it directly.
   const timeline = useQuery({
@@ -322,7 +306,6 @@ export default function RecordingDetailPage({
           steps={steps}
           bands={bands}
           videoAt={videoAt}
-          landscape={landscape.data ?? null}
         />
       )}
 

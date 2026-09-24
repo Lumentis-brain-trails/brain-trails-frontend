@@ -125,10 +125,10 @@ export function LandscapeSurface({
         : { hoverinfo: "skip" as const }),
       showscale: false,
       opacity: 0.96,
-      colorscale: [
-        [0, theme.canvas],
-        [1, theme.ink3],
-      ],
+      colorscale: theme.landscape.map(([at, colour]) => [at, colour]) as [
+        number,
+        string,
+      ][],
       // contour lines every tenth of the peak: the landscape read as a topographic map
       contours: {
         z: {
