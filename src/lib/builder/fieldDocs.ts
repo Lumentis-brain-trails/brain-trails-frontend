@@ -332,9 +332,8 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
       help: "How long the circle shrinks.",
     },
     lines: {
-      label: "Text during the breathing",
-      help: "Optional lines shown under the circle, one after another.",
-      advanced: true,
+      label: "Text after the breaths",
+      help: "Optional lines shown one after another once the last breath ends, in place of the circle. To tell the participant what comes next, an Instructions block after this one is clearer.",
     },
   },
   "go-no-go": {

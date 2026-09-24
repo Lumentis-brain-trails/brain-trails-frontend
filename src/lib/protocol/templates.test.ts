@@ -129,6 +129,7 @@ describe("templates", () => {
       "settle",
       "challenge_a",
       "reset",
+      "rule",
       "challenge_b",
       "outro",
     ]);
@@ -138,9 +139,32 @@ describe("templates", () => {
       expect(step, ref.id).toBeTruthy();
       expect(step!.kind).toBe(ref.kind);
       expect(step!.label).toBe(ref.label);
-      expect(step!.config).toEqual(ref.config);
+      // The breathing step's rule lines moved to the "rule" step, checked below.
+      const config = { ...(ref.config as Record<string, unknown>) };
+      if (ref.kind === "breathing") delete config.lines;
+      expect(step!.config).toMatchObject(config);
       expect(step!.block?.condition).toBe(ref.phase);
     }
+    // The reset's if-then rule (2026-09-24): the code showed it as text inside the
+    // breathing step, where the builder hid it; it is now an instructions step of the
+    // same stage, the spec's own lines and pacing, and Start only once the last is up.
+    const reset = reference.steps.find((s) => s.id === "reset")!;
+    const rule = protocol.steps.find((s) => s.id === "rule")!;
+    expect(rule.kind).toBe("instructions");
+    expect(rule.block?.condition).toBe("coping");
+    expect((rule.config as { lines: unknown }).lines).toEqual(
+      (reset.config as { lines: unknown }).lines
+    );
+    const lines = (rule.config as { lines: { holdMs: number }[] }).lines;
+    const lastLineAt = lines
+      .slice(0, -1)
+      .reduce((total, line) => total + line.holdMs, 0);
+    expect(rule.config).toMatchObject({
+      advance: { mode: "either", minMs: lastLineAt },
+    });
+    expect(protocol.steps.find((s) => s.id === "reset")!.config).toMatchObject({
+      lines: [],
+    });
     const settle = protocol.steps.find((s) => s.id === "settle")!;
     expect(settle.kind).toBe("baseline");
     expect(settle.config).toMatchObject({ eyes: "open", duration_s: 30 });
