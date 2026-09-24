@@ -81,6 +81,23 @@ describe("describeFields over the exported kind schemas", () => {
     expect(cued.some((field) => field.path[0] === "goRatio")).toBe(false);
   });
 
+  test("n-back: a block without a pace is the fixed one; self-paced has its own blank", () => {
+    const fixed = describeFields(KINDS["n-back"] as JsonSchema, { n: 60 });
+    expect(byPath(fixed, "pace")).toMatchObject({
+      kind: "enum",
+      options: ["fixed", "self"],
+    });
+    expect(byPath(fixed, "isiMs").kind).toBe("number");
+    expect(fixed.some((field) => field.path[0] === "gapMs")).toBe(false);
+
+    const self = describeFields(KINDS["n-back"] as JsonSchema, {
+      pace: "self",
+      n: 40,
+    });
+    expect(byPath(self, "gapMs").kind).toBe("number");
+    expect(self.some((field) => field.path[0] === "stimulusMs")).toBe(false);
+  });
+
   test("questionnaire: a list of rows keeps the row schema", () => {
     const fields = describeFields(KINDS.questionnaire as JsonSchema, {});
     expect(byPath(fields, "instrument")).toMatchObject({

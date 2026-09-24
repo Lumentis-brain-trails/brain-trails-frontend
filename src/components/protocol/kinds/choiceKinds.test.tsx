@@ -155,6 +155,50 @@ describe("n-back", () => {
   });
 });
 
+describe("self-paced n-back", () => {
+  test("a letter waits for Continue; Match before it is the answer and shows", async () => {
+    const { results, outcomes } = mount("n-back", {
+      pace: "self",
+      n: 5,
+      load: 1,
+      lureRatio: 0,
+      gapMs: 300,
+    });
+    await pump(50);
+    const first = screen.getByText(/^[BFHKMQRX]$/).textContent;
+    await pump(10_000);
+    // ten seconds on, the same letter, nothing scored
+    expect(screen.getByText(/^[BFHKMQRX]$/).textContent).toBe(first);
+    expect(outcomes()).toHaveLength(0);
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Match" }));
+    await pump(10_100);
+    expect(
+      screen.getByRole("button", { name: "Marked as a match" })
+    ).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.keyDown(window, { key: "Enter", code: "Enter" });
+    await pump(10_200);
+    expect(outcomes()).toHaveLength(1);
+    expect(outcomes()[0]).toMatchObject({ pace: "self" });
+    expect(Number(outcomes()[0].advance_ms)).toBeGreaterThan(9_000);
+    // the blank, then the next letter, with Match cleared
+    await pump(10_600);
+    expect(screen.getByRole("button", { name: "Match" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    for (let i = 0; i < 4; i++) {
+      fireEvent.pointerDown(screen.getByRole("button", { name: "Continue" }));
+      await pump(clock + 500);
+    }
+    expect(outcomes()).toHaveLength(5);
+    expect(results).toHaveLength(1);
+    expect(results[0].summary).toHaveProperty("medianAdvanceMs");
+  });
+});
+
 describe("coding", () => {
   test("the key is on screen, a right digit brings the next symbol, the clock ends it", async () => {
     const { results, outcomes } = mount("coding", {

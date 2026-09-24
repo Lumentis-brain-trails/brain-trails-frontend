@@ -16,9 +16,10 @@
  * `correct_response` and the pressed `response`, and one outcome the Go/No-Go never
  * has: `error`, a press of the wrong key.
  *
- * Unlike the Go/No-Go, a trial may end at the response (`endOnResponse`), so onsets
- * cannot all be planned up front: each trial's plan is laid from the moment the previous
- * one ended. `planned_onset_ms` is still what the engine asked for and
+ * Unlike the Go/No-Go, a trial may end at the response (`endOnResponse`), or only when
+ * the participant moves on (`advanceKey`: a self-paced block, whose stimulus has no
+ * window and stays until that key), so onsets cannot all be planned up front: each
+ * trial's plan is laid from the moment the previous one ended. `planned_onset_ms` is still what the engine asked for and
  * `actual_onset_ms` the frame it got, so the onset error is measured, not assumed.
  */
 
@@ -65,6 +66,13 @@ export interface ChoiceConfig {
   keys: readonly string[];
   /** End the trial at the first press instead of at the end of its window. */
   endOnResponse?: boolean;
+  /**
+   * Self-paced: the stimulus stays, with no window, until this key is pressed; a press
+   * of `keys` before it is the answer, and none is a withhold. The trial's `stimulusMs`
+   * and `windowMs` are ignored, and its outcome carries `advance_ms`, how long the
+   * participant kept the stimulus.
+   */
+  advanceKey?: string;
   /** Stop starting trials after this long (a timed block such as symbol coding). */
   maxDurationMs?: number;
   lateFrameMs?: number;
@@ -81,6 +89,8 @@ export interface ChoiceOutcome {
   outcome: Outcome;
   response: string | null;
   rtMs: number | null;
+  /** Self-paced only: stimulus onset to the advance key. */
+  advanceMs?: number;
   invalid: boolean;
   practice: boolean;
 }
@@ -119,6 +129,8 @@ export interface ChoiceScene {
   upcoming: Record<string, unknown> | null;
   /** The last resolved outcome, for calm feedback during the pause. */
   feedback: Outcome | null;
+  /** The answer given to the stimulus on screen, so a self-paced one can show it. */
+  response: string | null;
   trialIndex: number;
   totalTrials: number;
   /** Run-relative time, for a timed block's remaining-time display. */
@@ -213,7 +225,14 @@ export function stepChoice(
   }
   next.lastFrameMs = nowMs;
 
-  let pendingPress = press && config.keys.includes(press.key) ? press : null;
+  const { advanceKey } = config;
+  let pendingPress =
+    press && (config.keys.includes(press.key) || press.key === advanceKey)
+      ? press
+      : null;
+  // Moving on means something only while a stimulus waits for it.
+  if (pendingPress?.key === advanceKey && next.phase !== "stimulus")
+    pendingPress = null;
 
   let guard = 0;
   for (;;) {
@@ -296,7 +315,8 @@ export function stepChoice(
 
     if (next.phase === "stimulus") {
       const onset = next.stimulusOnsetMs ?? next.phaseStartMs;
-      const windowEnd = onset + trial.windowMs;
+      const windowEnd =
+        advanceKey === undefined ? onset + trial.windowMs : Infinity;
 
       // A timed block ends on time even with an item still unanswered; that item was
       // never finished, so it is not scored as a miss.
@@ -308,6 +328,12 @@ export function stepChoice(
       ) {
         next.phase = "done";
         break;
+      }
+
+      let advancedAt: number | null = null;
+      if (pendingPress && pendingPress.key === advanceKey) {
+        advancedAt = Math.max(pendingPress.atMs, onset);
+        pendingPress = null;
       }
 
       if (pendingPress && next.response === null) {
@@ -330,16 +356,19 @@ export function stepChoice(
       }
 
       const ended =
-        next.response !== null && config.endOnResponse
-          ? true
-          : nowMs >= windowEnd;
+        advancedAt !== null ||
+        (next.response !== null && config.endOnResponse) ||
+        nowMs >= windowEnd;
       if (!ended) break;
 
       const outcome = classify(trial, next.response);
       const endMs =
-        next.response !== null && config.endOnResponse
-          ? onset + (next.responseRtMs ?? 0)
-          : windowEnd;
+        advancedAt !== null
+          ? advancedAt
+          : next.response !== null && config.endOnResponse
+            ? onset + (next.responseRtMs ?? 0)
+            : windowEnd;
+      const advanceMs = advancedAt === null ? null : advancedAt - onset;
       next.outcomes.push({
         trialId: trial.trialId,
         condition: trial.condition,
@@ -347,6 +376,7 @@ export function stepChoice(
         outcome,
         response: next.response,
         rtMs: next.responseRtMs,
+        ...(advanceMs !== null ? { advanceMs } : {}),
         invalid: next.invalid,
         practice: Boolean(trial.practice),
       });
@@ -360,6 +390,7 @@ export function stepChoice(
           ...(next.responseRtMs !== null
             ? { reaction_time_ms: next.responseRtMs }
             : {}),
+          ...(advanceMs !== null ? { advance_ms: advanceMs } : {}),
           ...(next.invalid ? { invalid: true } : {}),
         },
         atMs: Math.max(endMs, Math.min(nowMs, endMs + FRAME_MS)),
@@ -407,7 +438,8 @@ export function stepChoice(
   const showing =
     next.phase === "stimulus" &&
     current !== undefined &&
-    nowMs < (next.stimulusOnsetMs ?? 0) + current.stimulusMs &&
+    (advanceKey !== undefined ||
+      nowMs < (next.stimulusOnsetMs ?? 0) + current.stimulusMs) &&
     !(next.response !== null && config.endOnResponse);
   return {
     state: next,
@@ -418,6 +450,7 @@ export function stepChoice(
       stimulus: showing && current ? current.stimulus : null,
       upcoming: current ? current.stimulus : null,
       feedback: next.phase === "iti" ? feedback : null,
+      response: next.phase === "stimulus" ? next.response : null,
       trialIndex: Math.min(next.trialIndex, next.trials.length),
       totalTrials: next.trials.length,
       nowMs,
@@ -425,11 +458,16 @@ export function stepChoice(
   };
 }
 
-/** Upper bound on a block's length when every trial runs its whole window. */
+/**
+ * Upper bound on a block's length when every trial runs its whole window; a self-paced
+ * block (`advanceKey`) has none, and lasts as long as the participant takes.
+ */
 export function choiceDurationMs(
   trials: readonly ChoiceTrial[],
-  maxDurationMs?: number
+  maxDurationMs?: number,
+  advanceKey?: string
 ): number {
+  if (advanceKey !== undefined) return Infinity;
   const total = trials.reduce(
     (sum, t) =>
       sum +
