@@ -2,8 +2,9 @@ name: ci
 on:
   pull_request:
   merge_group:
+  # dev is not here: it is written by `integrate`, which dispatches this run itself.
   push:
-    branches: [dev, beta, main]
+    branches: [beta, main]
   workflow_dispatch: # runs the e2e job on demand while it is paused
 jobs:
   checks:

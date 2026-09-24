@@ -71,16 +71,26 @@ npm run e2e                              # Playwright; needs the local backend (
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).
 - Conventional Commits; PR title becomes the squash commit.
 
-## Working method (backend ADR 0013)
+## Working method (backend decision 0013, v2 since 2026-09-24)
 
-Branch from `dev` -> PR to `dev` -> `ci` green -> squash merge (feature PRs are not
-reviewed by the autonomous reviewer) -> `promote` `action=open` to beta -> Alessio
-dispatches `pr-review` on that PR (owner only, base `beta` only) -> `promote`
-`action=merge` (the review is optional; it never blocks the merge) ->
-`promote` workflow to `beta`, then `main` (with `vX.Y.Z`). Never push to
-`dev`/`beta`/`main` directly; rulesets enforce PRs on this repo.
+1. Branch from `beta` and open the PR **to `beta`**. `ci` runs on it.
+2. `integrate` rebuilds `dev` as `beta` + every open, non-draft PR to `beta` (oldest
+   first) and pushes it; Vercel deploys dev from that push. Each PR gets an
+   `integration` status: in dev, or left out because it conflicts with an older one.
+3. PRs to `beta` stay open: **only Alessio merges them, by hand**. Vercel deploys beta
+   on the merge.
+4. `beta -> main`: Alessio opens it by hand and merges it **with a merge commit, never a
+   squash**. Vercel deploys production on the merge.
+5. `vercel.json` deploys only `dev`, `beta` and `main` - no preview per PR: what a PR
+   looks like next to the others is dev.
+6. `dev` belongs to `integrate`: never push to it, never merge into it. Claude never
+   merges into `beta` or `main`, and nobody merges on a red or running `ci`.
+   `.claude/hooks/guard-git.py` enforces this in Claude Code sessions (it is a copy of
+   the backend's - change both); `merge-watch` flags anyone else; the repository's
+   rulesets protect `dev`, `beta` and `main` server-side (this repo is public).
 
 ## Session-start ritual (for Claude)
 
-Read the wiki `index.md`; `git fetch && git status`; open PRs and last `ci` on `dev`;
+Read the wiki `index.md`; `git fetch && git status`; open PRs to `beta` and the last
+`integrate` run (what is in dev, what was left out);
 `export GH_TOKEN=$(gh auth token --user anonymous2532)`.

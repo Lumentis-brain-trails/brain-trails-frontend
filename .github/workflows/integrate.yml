@@ -1,0 +1,124 @@
+# dev := beta + every open, non-draft pull request towards beta (decision 0013, v2).
+#
+# Feature pull requests target beta and stay open until the owner merges them by hand.
+# This keeps dev as the one place where all of them run together: it is rebuilt from
+# beta on every change to that set, and deployed. A pull request that does not merge
+# cleanly with the others - a textual conflict, or a migration on a head another one
+# already extends - is left out, and says so on itself; the rest still reach dev.
+#
+# Oldest first: when two pull requests collide, the one opened first is kept.
+#
+# dev is written only here. The push uses INTEGRATION_TOKEN when the secret exists (a
+# token with the `workflow` scope, needed when a pull request touches .github/workflows,
+# which GITHUB_TOKEN may not push) and GITHUB_TOKEN otherwise. Vercel deploys dev from
+# that push by itself; `ci` is dispatched explicitly, because a push by GITHUB_TOKEN
+# starts no workflow. The backend's copy of this file also counts alembic heads; there
+# is no database here, so that check stays inert (no scripts/alembic_heads.py).
+name: integrate
+on:
+  pull_request:
+    branches: [beta]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, closed]
+  push:
+    branches: [beta]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+  actions: write
+concurrency:
+  group: integrate
+  cancel-in-progress: true
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      MARK: "<!-- integrate -->"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: beta
+          fetch-depth: 0
+          token: ${{ secrets.INTEGRATION_TOKEN || github.token }}
+
+      - name: Build dev from beta and the open pull requests
+        run: |
+          set -euo pipefail
+          git config user.name "brain-trails-integrate"
+          git config user.email "integrate@lumentis.online"
+          git fetch -q origin dev || true
+          git checkout -q -B dev origin/beta
+          gh pr list --repo "$REPO" --base beta --state open --limit 100 \
+            --json number,isDraft,headRefOid \
+            | jq -r '.[] | select(.isDraft | not) | "\(.number) \(.headRefOid)"' \
+            | sort -n > prs.txt
+          : > included.txt
+          : > excluded.txt
+          while read -r N SHA; do
+            [ -n "$N" ] || continue
+            git fetch -q origin "pull/$N/head"
+            if git merge -q --no-ff --no-edit -m "integrate #$N" FETCH_HEAD 2>/dev/null; then
+              if [ -f scripts/alembic_heads.py ] && ! python3 scripts/alembic_heads.py >/dev/null; then
+                git reset -q --hard HEAD~1
+                echo "$N $SHA its migration forks the history: another open pull request already adds one on the same head. Rebase it on that one's migration." >> excluded.txt
+              else
+                echo "$N $SHA" >> included.txt
+              fi
+            else
+              FILES=$(git diff --name-only --diff-filter=U | head -5 | paste -sd' ' -)
+              git merge --abort
+              echo "$N $SHA does not merge with the pull requests before it (conflicts in: $FILES). Bring beta into it, or rebase it after them." >> excluded.txt
+            fi
+          done < prs.txt
+
+      - name: Publish dev when it changed
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify origin/dev >/dev/null && git diff --quiet origin/dev dev; then
+            echo "dev already holds this tree; nothing to publish."
+            exit 0
+          fi
+          git push -q --force origin dev
+          gh workflow run ci --repo "$REPO" --ref dev
+
+      - name: Tell every pull request where it stands
+        if: always()
+        run: |
+          set -uo pipefail
+          DEV=$(git rev-parse --short dev)
+          sticky() {  # $1 = PR number, $2 = body
+            ID=$(gh api "repos/$REPO/issues/$1/comments" --paginate \
+                  -q ".[] | select(.body | startswith(\"$MARK\")) | .id" | head -1)
+            if [ -n "$ID" ]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/$ID" -f body="$2" >/dev/null
+            elif [ -n "${3:-}" ]; then
+              gh api "repos/$REPO/issues/$1/comments" -f body="$2" >/dev/null
+            fi
+          }
+          while read -r N SHA; do
+            [ -n "$N" ] || continue
+            gh api "repos/$REPO/statuses/$SHA" -f state=success -f context=integration \
+              -f description="in dev at $DEV, with the other open pull requests" >/dev/null
+            sticky "$N" "$MARK
+          ✅ Integrated: this pull request is in \`dev\` at \`$DEV\` together with every other open one."
+          done < included.txt
+          while read -r N SHA REASON; do
+            [ -n "$N" ] || continue
+            gh api "repos/$REPO/statuses/$SHA" -f state=failure -f context=integration \
+              -f description="left out of dev: ${REASON:0:120}" >/dev/null
+            sticky "$N" "$MARK
+          ⚠️ **Left out of \`dev\`**: $REASON
+
+          The other open pull requests were integrated without it. Push a fix and this runs again." new
+          done < excluded.txt
+          INCLUDED=$(cut -d' ' -f1 included.txt | sed 's/^/#/' | paste -sd' ' -)
+          {
+            echo "## dev = beta + open pull requests"
+            printf 'dev is at %s.\n\n' "$DEV"
+            printf '**In dev:** %s\n\n' "${INCLUDED:-none}"
+            echo "**Left out:**"
+            while read -r N _ REASON; do printf -- '- #%s: %s\n' "$N" "$REASON"; done < excluded.txt
+          } >> "$GITHUB_STEP_SUMMARY"
