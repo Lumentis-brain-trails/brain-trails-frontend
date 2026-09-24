@@ -302,6 +302,10 @@ export interface paths {
         /**
          * Protocol Review Queue
          * @description Protocols waiting for a community decision, oldest first (admin only).
+         *
+         *     Each comes with its description and the outline of the version being shared: the
+         *     reviewer cannot open someone else's workspace protocol, so the queue is the only place
+         *     they see what they are approving.
          */
         get: operations["protocol_review_queue_admin_review_protocols_get"];
         put?: never;
@@ -365,10 +369,47 @@ export interface paths {
         /**
          * Users Overview
          * @description Per-user input statistics: recordings each account started as operator.
+         *
+         *     `beta` is whether the account is in the beta programme, so the list can show who is
+         *     in and offer the door to the rest without a detour through the board.
          */
         get: operations["users_overview_admin_users_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{user_id}/beta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join Beta
+         * @description Put an account in the beta programme and tell its owner by mail (admin only).
+         *
+         *     The direct door: the same acceptance the board gives, reached from the account rather
+         *     than from an application, for the common case since registration opened - a person
+         *     who already signed up, and whom an admin now wants in. It marks the application
+         *     accepted (creating the row when registration left none, with default answers, as the
+         *     account page does), places the account in `cohort_id` when given, audits the decision
+         *     as `admin.user.beta`, and mails the person.
+         *
+         *     The mail is required, not best effort: a provider failure answers 502 `mail_failed`
+         *     and rolls everything back, so nobody is in the beta without knowing it. An account
+         *     not yet verified gets its verification link instead (returned only in manual-mailer
+         *     mode, on the board's reissue route), and one behind the closed gate is opened as the
+         *     board would open it. 404 for an unknown account or cohort; 409 `invalid_state` when
+         *     the account is already in.
+         */
+        post: operations["join_beta_admin_users__user_id__beta_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2118,6 +2159,16 @@ export interface components {
             rt_slope_ms_per_min: number | null;
             /** Throughput Per Min */
             throughput_per_min?: number | null;
+        };
+        /**
+         * BetaIn
+         * @description Put an account in the beta programme: the cohort it lands in, and a private note.
+         */
+        BetaIn: {
+            /** Cohort Id */
+            cohort_id?: string | null;
+            /** Note */
+            note?: string | null;
         };
         /**
          * BetaProfile
@@ -4147,8 +4198,17 @@ export interface components {
         /**
          * UserOut
          * @description Public view of an account (no password hash).
+         *
+         *     `beta` says whether the account is in the beta programme - an accepted application,
+         *     whichever door let it in - so the account page can say so and the admin's user list
+         *     can show who is in without opening the board.
          */
         UserOut: {
+            /**
+             * Beta
+             * @default false
+             */
+            beta: boolean;
             /**
              * Created At
              * Format: date-time
@@ -4735,7 +4795,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProtocolCard"][];
+                    "application/json": components["schemas"]["ProtocolDetail"][];
                 };
             };
         };
@@ -4815,6 +4875,41 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+        };
+    };
+    join_beta_admin_users__user_id__beta_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BetaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
