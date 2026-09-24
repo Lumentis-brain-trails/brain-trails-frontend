@@ -7,6 +7,7 @@ import {
   humaniseName,
   removeAtPath,
   setAtPath,
+  switchVariant,
   type Field,
   type JsonSchema,
 } from "./fields";
@@ -319,5 +320,114 @@ describe("blankValue", () => {
 
   test("an unknown schema contributes nothing but a placeholder", () => {
     expect(blankValue(undefined)).toBeNull();
+  });
+});
+
+describe("switchVariant", () => {
+  const instructions = KINDS.instructions;
+  const config = {
+    lines: [{ text: "Breathe" }],
+    advance: { mode: "key", label: "Go on" },
+    footnote: "kept",
+  };
+
+  test("marks the constant a union is keyed on", () => {
+    const fields = describeFields(instructions, config);
+    expect(byPath(fields, "advance.mode")).toMatchObject({
+      kind: "enum",
+      options: ["timed", "key", "either"],
+      discriminator: true,
+    });
+    expect(byPath(fields, "lines").discriminator).toBeUndefined();
+  });
+
+  test("rebuilds the parent for the new branch: defaults in, the old branch out", () => {
+    // Andrea's draft, 2026-09-24: "key" -> "timed" left `label` and no `ms`.
+    expect(
+      switchVariant(instructions, config, ["advance", "mode"], "timed")
+    ).toEqual({
+      lines: [{ text: "Breathe" }],
+      advance: { mode: "timed", ms: 4000 },
+      footnote: "kept",
+    });
+  });
+
+  test("keeps a property both branches declare, and one no branch declares", () => {
+    const value = {
+      ...config,
+      advance: { mode: "key", label: "Go on", note: "mine" },
+    };
+    expect(
+      switchVariant(instructions, value, ["advance", "mode"], "either")
+    ).toEqual({
+      ...config,
+      advance: {
+        mode: "either",
+        minMs: 1000,
+        maxMs: 10000,
+        label: "Go on",
+        note: "mine",
+      },
+    });
+  });
+
+  test("a value that is not yet an object starts on the branch's defaults", () => {
+    expect(switchVariant(instructions, {}, ["advance", "mode"], "key")).toEqual(
+      {
+        advance: { mode: "key", label: "Continue" },
+      }
+    );
+  });
+
+  test("a union at the root and one inside a list row", () => {
+    const shape: JsonSchema = {
+      oneOf: [
+        {
+          type: "object",
+          properties: {
+            variant: { const: "a" },
+            x: { type: "number", default: 1 },
+          },
+        },
+        {
+          type: "object",
+          properties: {
+            variant: { const: "b" },
+            y: { type: "string", default: "" },
+          },
+        },
+      ],
+    };
+    expect(
+      switchVariant(shape, { variant: "a", x: 5 }, ["variant"], "b")
+    ).toEqual({
+      variant: "b",
+      y: "",
+    });
+    const list: JsonSchema = {
+      type: "object",
+      properties: { rows: { type: "array", items: shape } },
+    };
+    expect(
+      switchVariant(
+        list,
+        { rows: [{ variant: "a", x: 5 }] },
+        ["rows", "0", "variant"],
+        "b"
+      )
+    ).toEqual({ rows: [{ variant: "b", y: "" }] });
+  });
+
+  test("a plain enum that keys no union is simply set", () => {
+    const plain: JsonSchema = {
+      type: "object",
+      properties: { mode: { enum: ["x", "y"] }, other: { type: "string" } },
+    };
+    expect(
+      switchVariant(plain, { mode: "x", other: "o" }, ["mode"], "y")
+    ).toEqual({
+      mode: "y",
+      other: "o",
+    });
   });
 });

@@ -201,6 +201,48 @@ test("undo takes the last edit back", async () => {
   expect(onTimeline().queryByText("Resting baseline")).toBeNull();
 });
 
+test("Preview on a block that cannot run lists the fault and selects the block", async () => {
+  const broken = {
+    ...protocol,
+    draft: {
+      ...tree,
+      root: {
+        ...tree.root,
+        children: [
+          ...tree.root.children,
+          {
+            type: "block",
+            id: "instructions",
+            kind: "instructions",
+            label: "Read this",
+            config: { lines: [{ text: "" }], advance: { mode: "key" } },
+          },
+        ],
+      },
+    },
+  };
+  get.mockImplementation((path: string) =>
+    Promise.resolve(path.startsWith("protocols/") ? broken : [])
+  );
+  await renderBuilder();
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.builder.preview })
+    );
+  });
+  expect(screen.getByText(messages.builder.fix_before_preview)).toBeTruthy();
+  expect(
+    screen.getByRole("button", {
+      name: "Block 2: Read this · row 1 · Lines · Text",
+    })
+  ).toBeTruthy();
+  expect(screen.getByText(/"text" cannot be empty/)).toBeTruthy();
+  // the runner did not open, and the faulty block is the one in the inspector
+  expect(document.querySelector(".fixed.inset-0")).toBeNull();
+  expect(screen.getByDisplayValue("Read this")).toBeTruthy();
+  expect(post).not.toHaveBeenCalled();
+});
+
 /** The builder with nothing saved yet: `/protocols/new/edit`. */
 async function renderNewBuilder() {
   const client = new QueryClient({

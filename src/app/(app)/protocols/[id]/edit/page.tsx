@@ -18,7 +18,10 @@
  * stops autosaving and offers a reload rather than overwriting their work.
  *
  * Preview runs the real runner over `resolvePlan`, without a headband: what the
- * participant will see, in the browser, with no session and nothing stored.
+ * participant will see, in the browser, with no session and nothing stored. Preview and
+ * Publish first run the builder's own check (`checkTree`): a block whose config cannot
+ * run is listed with its clip and its setting, and selected, instead of a preview that
+ * says "nothing to preview" or a publish that fails on the server.
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +32,7 @@ import { BlockInspector } from "@/components/builder/BlockInspector";
 import { Bin } from "@/components/builder/Bin";
 import { Monitor } from "@/components/builder/Monitor";
 import { GroupInspector } from "@/components/builder/GroupInspector";
+import { FindingsList } from "@/components/builder/Findings";
 import { PublishDialog } from "@/components/builder/PublishDialog";
 import { type DragPayload, Timeline } from "@/components/builder/Timeline";
 import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
@@ -57,6 +61,7 @@ import {
   splitAt,
   ungroupAt,
 } from "@/lib/builder/draft";
+import { checkTree } from "@/lib/builder/findings";
 import { useHistory } from "@/lib/builder/history";
 import { KIND_SCHEMAS } from "@/lib/builder/schemas";
 import type { ProtocolDetail, ValidationResult } from "@/lib/protocol/catalog";
@@ -161,6 +166,8 @@ export default function BuilderPage({
   const [conflict, setConflict] = useState(false);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
   const [report, setReport] = useState<ValidationResult | null>(null);
+  /** What the findings stand in the way of, when they come from Preview or Publish. */
+  const [reportIntro, setReportIntro] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [preview, setPreview] = useState<ProtocolTree | null>(null);
   const loadedFor = useRef<string | null>(null);
@@ -266,8 +273,39 @@ export default function BuilderPage({
   const check = useMutation({
     mutationFn: () =>
       api.post<ValidationResult>(`protocols/${savedId}/validate`, {}),
-    onSuccess: setReport,
+    onSuccess: (next) => {
+      setReport(next);
+      setReportIntro(null);
+    },
   });
+
+  /**
+   * The builder's own check before Preview or Publish: true when the draft may go on.
+   * Otherwise the findings are shown and the first faulty clip is selected.
+   */
+  const passes = useCallback(
+    (intro: string): boolean => {
+      const errors = checkTree(tree);
+      if (errors.length === 0) return true;
+      setReport({ ok: false, errors, warnings: [], est_duration_s: 0 });
+      setReportIntro(intro);
+      const first = errors
+        .map((e) => clipOfPath(e.path))
+        .find((i) => i !== null);
+      if (first !== undefined && first !== null) {
+        setSelectedCue(null);
+        setSelected([first]);
+      }
+      return false;
+    },
+    [tree]
+  );
+  const openPreview = useCallback(() => {
+    if (passes(t("fix_before_preview"))) setPreview(tree);
+  }, [passes, t, tree]);
+  const openPublish = useCallback(() => {
+    if (passes(t("fix_before_publish"))) setPublishing(true);
+  }, [passes, t]);
 
   const edit = useCallback(
     (next: (current: ProtocolTree) => ProtocolTree) => history.set(next),
@@ -482,18 +520,10 @@ export default function BuilderPage({
           >
             {t("check")}
           </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setPreview(tree)}
-          >
+          <Button size="sm" variant="secondary" onClick={openPreview}>
             {t("preview")}
           </Button>
-          <Button
-            size="sm"
-            onClick={() => setPublishing(true)}
-            disabled={unsaved}
-          >
+          <Button size="sm" onClick={openPublish} disabled={unsaved}>
             {t("publish_action")}
           </Button>
         </div>
@@ -525,7 +555,7 @@ export default function BuilderPage({
             <Monitor
               clip={clips[selected[0] ?? 0]}
               media={mediaById}
-              onPlay={() => setPreview(tree)}
+              onPlay={openPreview}
               onSplit={(atS) =>
                 edit((current) =>
                   splitAt(current, selected[0] ?? 0, atS, mediaById)
@@ -537,22 +567,21 @@ export default function BuilderPage({
           {report && (
             <Card className="space-y-2">
               <h2 className="text-[15px] font-semibold">{t("findings")}</h2>
+              {reportIntro && (
+                <p className="type-caption text-ink-2">{reportIntro}</p>
+              )}
               {report.errors.length === 0 && report.warnings.length === 0 && (
                 <p className="type-caption text-ok">{t("all_good")}</p>
               )}
-              <ul className="space-y-1 text-[14px]">
-                {report.errors.map((issue, index) => (
-                  <li key={`e${index}`} className="text-danger">
-                    {issue.message}{" "}
-                    <span className="text-ink-3">({issue.path})</span>
-                  </li>
-                ))}
-                {report.warnings.map((issue, index) => (
-                  <li key={`w${index}`} className="text-warn">
-                    {issue.message}
-                  </li>
-                ))}
-              </ul>
+              <FindingsList
+                errors={report.errors}
+                warnings={report.warnings}
+                labels={clips.map((clip) => clip.label)}
+                onLocate={(index) => {
+                  setSelectedCue(null);
+                  setSelected([index]);
+                }}
+              />
             </Card>
           )}
         </section>
@@ -718,6 +747,12 @@ export default function BuilderPage({
       {publishing && detail.data && (
         <PublishDialog
           protocol={detail.data}
+          labels={clips.map((clip) => clip.label)}
+          onLocate={(index) => {
+            setPublishing(false);
+            setSelectedCue(null);
+            setSelected([index]);
+          }}
           onClose={() => setPublishing(false)}
           onPublished={() => {
             setPublishing(false);

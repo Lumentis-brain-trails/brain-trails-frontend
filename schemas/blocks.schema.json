@@ -800,14 +800,14 @@
                   "const": "timed"
                 },
                 "ms": {
+                  "default": 4000,
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
                 }
               },
               "required": [
-                "mode",
-                "ms"
+                "mode"
               ]
             },
             {
@@ -834,11 +834,13 @@
                   "const": "either"
                 },
                 "minMs": {
+                  "default": 1000,
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991
                 },
                 "maxMs": {
+                  "default": 10000,
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
@@ -849,9 +851,7 @@
                 }
               },
               "required": [
-                "mode",
-                "minMs",
-                "maxMs"
+                "mode"
               ]
             }
           ]
@@ -985,14 +985,14 @@
                   "const": "timed"
                 },
                 "ms": {
+                  "default": 4000,
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
                 }
               },
               "required": [
-                "mode",
-                "ms"
+                "mode"
               ]
             },
             {
@@ -1019,11 +1019,13 @@
                   "const": "either"
                 },
                 "minMs": {
+                  "default": 1000,
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991
                 },
                 "maxMs": {
+                  "default": 10000,
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
@@ -1034,9 +1036,7 @@
                 }
               },
               "required": [
-                "mode",
-                "minMs",
-                "maxMs"
+                "mode"
               ]
             }
           ]
