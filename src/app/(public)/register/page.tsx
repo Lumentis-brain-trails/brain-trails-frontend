@@ -30,9 +30,10 @@ import {
 import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
 
 /**
- * The two consents, worded as the privacy note words them (V3-0011). The first is what
- * the service needs to run at all and blocks the button; the second is a separate
- * question about research beyond that, and refusing it costs nothing.
+ * Three ticks (V3-0011, amended). The first is the consent the service needs to run at
+ * all and blocks the button; the second is a separate question about research beyond
+ * that; the third is a mailing list and not a consent to anything - which is why it is
+ * worded in one line and sits apart. Refusing either optional one costs nothing.
  */
 const CORE_CONSENT_TEXT =
   "Lumentis will collect and process my EEG recordings, exercise responses and related " +
@@ -102,6 +103,7 @@ export default function RegisterPage() {
   const [basics, setBasics] = useState<BasicsForm | null>(null);
   const [coreConsent, setCoreConsent] = useState(false);
   const [researchConsent, setResearchConsent] = useState(false);
+  const [newsletter, setNewsletter] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -133,7 +135,7 @@ export default function RegisterPage() {
         "auth/register",
         toRegisterPayload(
           account,
-          { core: coreConsent, research: researchConsent },
+          { core: coreConsent, research: researchConsent, newsletter },
           basics
         )
       );
@@ -340,6 +342,27 @@ export default function RegisterPage() {
                 </span>
               </label>
             </section>
+
+            <section className="border-t border-hairline pt-6">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={newsletter}
+                  onChange={(e) => setNewsletter(e.target.checked)}
+                  className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                />
+                <span>
+                  <span className="block">
+                    Send me occasional news about Brain Trails.
+                  </span>
+                  <span className="type-caption text-ink-3">
+                    A few emails, no more. Unsubscribe whenever you like from
+                    your account page.
+                  </span>
+                </span>
+              </label>
+            </section>
+
             <div className="flex gap-2">
               <Button
                 type="button"

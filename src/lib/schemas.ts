@@ -95,7 +95,7 @@ const clean = (v: string | undefined) =>
  */
 export function toRegisterPayload(
   account: AccountForm,
-  consent: { core: boolean; research: boolean },
+  consent: { core: boolean; research: boolean; newsletter: boolean },
   basics: BasicsForm
 ) {
   return {
@@ -105,6 +105,8 @@ export function toRegisterPayload(
     // `research_consent` is the separate optional question (V3-0011).
     consent: consent.core,
     research_consent: consent.research,
+    // A mailing list, not a consent: it carries no version and blocks nothing.
+    newsletter: consent.newsletter,
     // "" is the select's "prefer not to answer"; the API spells an unanswered field null,
     // and null there means nobody asked - which is not the same as declining to say.
     profile: { ...basics, sex_at_birth: clean(basics.sex_at_birth) },
