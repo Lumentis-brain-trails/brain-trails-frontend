@@ -47,24 +47,25 @@ test("a simulated session is uploaded and gets a trail", async ({
   });
   await page.getByRole("button", { name: /Open the recording/ }).click();
   await page.waitForURL("**/recordings/*");
-  await expect(page.getByText("Trail", { exact: true })).toBeVisible({
-    timeout: 150_000,
-  });
-
-  // the review page reads the same session back on one clock (S20)
-  await page.getByRole("link", { name: "Review", exact: true }).click();
-  await page.waitForURL("**/review");
+  // the recording opens on the comparison view: two blocks of the run, side by side
+  const left = page.getByRole("combobox", { name: "Left block" });
+  await expect(left).toBeVisible({ timeout: 150_000 });
   await expect(
-    page.getByRole("slider", { name: "Session timeline" })
+    page.getByRole("combobox", { name: "Right block" })
   ).toBeVisible();
-  await expect(page.getByTitle("Free recording")).toBeVisible({
-    timeout: 30_000,
-  });
+  await expect(
+    page.getByRole("heading", { name: "Brain trail" }).first()
+  ).toBeVisible();
+
+  // the old review address lands on the same page
+  const recording = page.url();
+  await page.goto(`${recording}/review`);
+  await page.waitForURL(recording);
+  await expect(left).toBeVisible({ timeout: 30_000 });
 });
 
 /**
- * The builder (sprint S19) and the review page (S20), end to end: build a protocol from
- * nothing, publish it, and read back the session the first test recorded.
+ * The builder (sprint S19), end to end: build a protocol from nothing and publish it.
  */
 test("a protocol is built on the timeline, published and played", async ({
   page,

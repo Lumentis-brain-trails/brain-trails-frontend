@@ -98,6 +98,14 @@ export interface ChartTheme {
    * which is why the two sets are not lightness variants of each other.
    */
   ribbon: readonly [string, string, string, string];
+  /**
+   * What was on screen in a trial (cargo, debris, a condition), in slot order: the
+   * colours of a labelled trail (`lib/compare/labels.ts`). Three, because three is what
+   * validates for colour-blind readers when every colour can sit next to every other;
+   * what the person did is carried by the marker, not by a fourth hue. Separate from the
+   * trail's time ramp so a label is never read as "early" or "late".
+   */
+  labels: readonly [string, string, string];
 }
 
 const LIGHT_TRAIL = ["#e8a02a", "#1bafc4", "#7c5ce6", "#e2569c"] as const;
@@ -115,6 +123,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     trailEnd: LIGHT_TRAIL[3],
     channels: [...LIGHT_TRAIL],
     ribbon: ["#1f9d6b", "#c98a12", "#dd6a2a", "#c8203a"],
+    labels: ["#2a78d6", "#eb6834", "#1baf7a"],
   },
   dark: {
     canvas: "#07090e",
@@ -127,6 +136,7 @@ export const CHART_THEMES: Record<ThemeName, ChartTheme> = {
     trailEnd: DARK_TRAIL[3],
     channels: [...DARK_TRAIL],
     ribbon: ["#84f6cd", "#fbe59c", "#ffa06a", "#ff4f66"],
+    labels: ["#3987e5", "#d95926", "#199e70"],
   },
 };
 
