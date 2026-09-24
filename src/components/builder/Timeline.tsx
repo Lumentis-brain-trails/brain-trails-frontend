@@ -31,8 +31,8 @@ import { identityOf } from "@/lib/builder/kinds";
 export const DRAG_TYPE = "application/x-brain-trails-clip";
 
 export interface DragPayload {
-  from: "bin-media" | "bin-element" | "timeline";
-  /** The media id, the element kind, or the clip index. */
+  from: "bin-media" | "bin-element" | "timeline" | "lane-cue" | "lane-stop";
+  /** The media id, the element kind, the clip index, or a sound's id on the lane. */
   value: string | number;
 }
 
@@ -60,10 +60,21 @@ export function dragPayload(event: React.DragEvent): DragPayload | null {
   }
 }
 
-const PX_PER_SECOND = 2.2;
+export const PX_PER_SECOND = 2.2;
 const MIN_WIDTH = 124;
+/** The gap between two clips: `w-3`. The sound lane lines its columns up with it. */
+export const GAP_PX = 12;
+/** The strip's inset: `p-3` plus its one-pixel border. */
+export const STRIP_INSET_PX = 13;
+
+/** How wide a clip is drawn; shared with the sound lane so the two line up. */
+export function clipWidth(clip: Clip, zoom: number): number {
+  return Math.max(MIN_WIDTH, clip.seconds * PX_PER_SECOND * zoom);
+}
 
 export interface TimelineProps {
+  /** Drawn under the clips, in the same horizontal scroll: the sound lane. */
+  lane?: React.ReactNode;
   clips: Clip[];
   selected: number[];
   zoom: number;
@@ -84,6 +95,7 @@ export function Timeline({
   onDropAt,
   onOpenGroup,
   covers = {},
+  lane,
 }: TimelineProps) {
   const t = useTranslations("builder.timeline");
   const [over, setOver] = useState<number | null>(null);
@@ -137,54 +149,57 @@ export function Timeline({
           {t("total", { time: formatClock(total) })}
         </span>
       </div>
-      <div
-        ref={strip}
-        data-testid="timeline"
-        className={cn(
-          "flex min-h-[7.5rem] items-stretch gap-0 overflow-x-auto rounded-[var(--radius-card)] border p-3 transition-colors",
-          over !== null
-            ? "border-accent bg-accent-soft"
-            : "border-hairline bg-surface-2"
-        )}
-        role="list"
-        aria-label={t("title")}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setOver(indexAt(event.clientX));
-        }}
-        onDragLeave={(event) => {
-          // only when the pointer really left the strip, not on the way over a clip
-          if (!event.currentTarget.contains(event.relatedTarget as Node))
+      <div className="overflow-x-auto">
+        <div
+          ref={strip}
+          data-testid="timeline"
+          className={cn(
+            "flex min-h-[7.5rem] w-max min-w-full items-stretch gap-0 rounded-[var(--radius-card)] border p-3 transition-colors",
+            over !== null
+              ? "border-accent bg-accent-soft"
+              : "border-hairline bg-surface-2"
+          )}
+          role="list"
+          aria-label={t("title")}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setOver(indexAt(event.clientX));
+          }}
+          onDragLeave={(event) => {
+            // only when the pointer really left the strip, not on the way over a clip
+            if (!event.currentTarget.contains(event.relatedTarget as Node))
+              setOver(null);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            const index = indexAt(event.clientX);
             setOver(null);
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          const index = indexAt(event.clientX);
-          setOver(null);
-          const payload = dragPayload(event);
-          if (payload) onDropAt(index, payload);
-        }}
-      >
-        {clips.length === 0 && (
-          <p className="type-caption pointer-events-none m-auto text-ink-3">
-            {t("empty")}
-          </p>
-        )}
-        {clips.map((clip) => (
-          <div key={clip.index} className="flex items-stretch">
-            {gap(clip.index)}
-            <ClipCard
-              clip={clip}
-              zoom={zoom}
-              selected={selected.includes(clip.index)}
-              issues={issues[clip.index]}
-              cover={coverOf(clip, covers)}
-              onSelect={onSelect}
-              onOpenGroup={onOpenGroup}
-            />
-          </div>
-        ))}
-        {gap(clips.length)}
+            const payload = dragPayload(event);
+            if (payload) onDropAt(index, payload);
+          }}
+        >
+          {clips.length === 0 && (
+            <p className="type-caption pointer-events-none m-auto text-ink-3">
+              {t("empty")}
+            </p>
+          )}
+          {clips.map((clip) => (
+            <div key={clip.index} className="flex items-stretch">
+              {gap(clip.index)}
+              <ClipCard
+                clip={clip}
+                zoom={zoom}
+                selected={selected.includes(clip.index)}
+                issues={issues[clip.index]}
+                cover={coverOf(clip, covers)}
+                onSelect={onSelect}
+                onOpenGroup={onOpenGroup}
+              />
+            </div>
+          ))}
+          {gap(clips.length)}
+        </div>
+        {lane}
       </div>
     </div>
   );
@@ -219,7 +234,7 @@ function ClipCard({
   const t = useTranslations("builder.timeline");
   const isGroup = clip.node.type !== "block";
   const kind = clip.node.type === "block" ? clip.node.kind : null;
-  const width = Math.max(MIN_WIDTH, clip.seconds * PX_PER_SECOND * zoom);
+  const width = clipWidth(clip, zoom);
 
   return (
     <div

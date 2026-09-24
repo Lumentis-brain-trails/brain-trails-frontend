@@ -40,6 +40,15 @@
   --ok-soft: rgba(52, 199, 89, 0.14);
   --warn: #b25000;
   --warn-soft: rgba(255, 159, 10, 0.16);
+  /* comparison view: which of two blocks is higher on a row. Blue and yellow on
+     purpose: a direction, not a verdict, so neither is the green/red of good/bad.
+     The ink steps are darker than the fills so the words stay readable. */
+  --higher: #2a78d6;
+  --higher-ink: #1f5fae;
+  --higher-soft: rgba(42, 120, 214, 0.11);
+  --lower: #eda100;
+  --lower-ink: #8a5a00;
+  --lower-soft: rgba(237, 161, 0, 0.16);
   --danger: #d70015;
   --danger-soft: rgba(255, 59, 48, 0.12);
   --glass: rgba(251, 251, 253, 0.78);
@@ -76,6 +85,12 @@
   --ok-soft: rgba(48, 209, 88, 0.16);
   --warn: #ff9f0a;
   --warn-soft: rgba(255, 159, 10, 0.16);
+  --higher: #3987e5;
+  --higher-ink: #7fb2f0;
+  --higher-soft: rgba(57, 135, 229, 0.17);
+  --lower: #c98500;
+  --lower-ink: #f0b93a;
+  --lower-soft: rgba(201, 133, 0, 0.19);
   --danger: #ff453a;
   --danger-soft: rgba(255, 69, 58, 0.16);
   --glass: rgba(7, 9, 14, 0.72);
@@ -123,6 +138,12 @@
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
+  --color-higher: var(--higher);
+  --color-higher-ink: var(--higher-ink);
+  --color-higher-soft: var(--higher-soft);
+  --color-lower: var(--lower);
+  --color-lower-ink: var(--lower-ink);
+  --color-lower-soft: var(--lower-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --font-sans:

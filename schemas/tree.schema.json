@@ -3,8 +3,16 @@
   "type": "object",
   "properties": {
     "schema": {
-      "type": "number",
-      "const": 1
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 1
+        },
+        {
+          "type": "number",
+          "const": 2
+        }
+      ]
     },
     "manifest": {
       "type": "object",
@@ -48,6 +56,96 @@
     },
     "root": {
       "$ref": "#/$defs/__schema0"
+    },
+    "soundtrack": {
+      "default": [],
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "media_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start": {
+            "default": {
+              "offset_s": 0
+            },
+            "type": "object",
+            "properties": {
+              "block": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "offset_s": {
+                "default": 0,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3600
+              }
+            },
+            "additionalProperties": false
+          },
+          "stop": {
+            "default": "clip_end",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "clip_end",
+                  "protocol_end"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "block": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  }
+                },
+                "required": [
+                  "block"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "loop": {
+            "default": false,
+            "type": "boolean"
+          },
+          "volume": {
+            "default": 0.6,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fade_s": {
+            "default": 1,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "id",
+          "media_id"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [

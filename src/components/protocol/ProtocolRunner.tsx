@@ -32,6 +32,7 @@ import {
 } from "@/lib/protocol/marker";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { hash32 } from "@/lib/protocol/rng";
+import { useSoundtrack } from "./useSoundtrack";
 import type { MarkerSink } from "@/lib/protocol/sink";
 import { pageProbe } from "@/lib/timing/probe";
 import {
@@ -260,13 +261,21 @@ export function ProtocolRunner({
     return () => window.removeEventListener("pagehide", onHide);
   }, [sink]);
 
+  const soundtrack = useSoundtrack({
+    cues: protocol.soundtrack ?? [],
+    stepIndex,
+    running: screen === "running",
+    emit: emitRun,
+  });
+
   const finish = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
+    soundtrack.stopAll();
     if (protocol.endMarker)
       emitRun({ label: protocol.endMarker, kind: "system" });
     void sink.flush().finally(() => onFinish(resultsRef.current, sink.all()));
-  }, [emitRun, onFinish, protocol.endMarker, sink]);
+  }, [emitRun, onFinish, protocol.endMarker, sink, soundtrack]);
 
   const onComplete = useCallback(
     (result: TaskResult) => {
@@ -298,6 +307,7 @@ export function ProtocolRunner({
   const abort = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
+    soundtrack.stopAll();
     emitRun({
       label: "run_aborted",
       kind: "system",
@@ -308,7 +318,7 @@ export function ProtocolRunner({
       },
     });
     void sink.flush().finally(() => onExit("user"));
-  }, [emitRun, onExit, sink, step, stepIndex]);
+  }, [emitRun, onExit, sink, soundtrack, step, stepIndex]);
 
   // Escape opens the confirmation rather than stopping: a stray key must not end an
   // eight-minute session, but the way out must always be one keystroke away.

@@ -61,11 +61,10 @@ describe("schemas", () => {
     expect(payload.native_languages).toEqual(["it", "en"]);
   });
 
-  test("registration carries the account, the four basics, both consents and the opt-in", () => {
+  test("registration carries the account, the four basics and both consents", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
-      { core: true, research: false },
-      { wants_beta: true, intended_use: "patients", intended_use_other: "" },
+      { core: true, research: false, newsletter: false },
       BASICS
     );
     expect(payload).toEqual({
@@ -73,18 +72,19 @@ describe("schemas", () => {
       password: "long-enough-pw",
       consent: true,
       research_consent: false,
+      newsletter: false,
       profile: BASICS,
-      wants_beta: true,
-      intended_use: "patients",
-      intended_use_other: null,
+      // Not asked outside a fair, and the API ignores it when the stand is closed.
+      wants_device_test: false,
+      // Not asked at sign-up any more: false is "not asked yet", set after a protocol.
+      wants_beta: false,
     });
   });
 
   test("the four basics are the only profile fields registration sends", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
-      { core: true, research: false },
-      { wants_beta: false, intended_use: "", intended_use_other: "" },
+      { core: true, research: false, newsletter: false },
       BASICS
     );
     // Everything else - coffee, sleep, medications - belongs to the account page.
@@ -96,22 +96,36 @@ describe("schemas", () => {
     ]);
   });
 
-  test("why someone wants in is dropped when they said no", () => {
-    const payload = toRegisterPayload(
-      { email: "a@b.it", password: "long-enough-pw" },
-      { core: true, research: false },
-      { wants_beta: false, intended_use: "patients", intended_use_other: "" },
-      BASICS
-    );
-    expect(payload.intended_use).toBeNull();
+  test("the fair tick is carried only when it was ticked", () => {
+    const call = (wants: boolean) =>
+      toRegisterPayload(
+        { email: "a@b.it", password: "long-enough-pw" },
+        { core: true, research: false, newsletter: false },
+        BASICS,
+        wants
+      );
+    expect(call(false).wants_device_test).toBe(false);
+    expect(call(true).wants_device_test).toBe(true);
+  });
+
+  test("the newsletter is carried on its own, and never inferred from a consent", () => {
+    const call = (newsletter: boolean) =>
+      toRegisterPayload(
+        { email: "a@b.it", password: "long-enough-pw" },
+        { core: true, research: false, newsletter },
+        BASICS
+      );
+    expect(call(false).newsletter).toBe(false);
+    expect(call(true).newsletter).toBe(true);
+    // Wanting our emails says nothing about agreeing to research, or the other way round.
+    expect(call(true).research_consent).toBe(false);
   });
 
   test("the optional research consent is carried, and is off unless it was ticked", () => {
     const call = (research: boolean) =>
       toRegisterPayload(
         { email: "a@b.it", password: "long-enough-pw" },
-        { core: true, research },
-        { wants_beta: false, intended_use: "", intended_use_other: "" },
+        { core: true, research, newsletter: false },
         BASICS
       );
     expect(call(false).research_consent).toBe(false);
@@ -129,8 +143,7 @@ describe("schemas", () => {
     });
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
-      { core: true, research: false },
-      { wants_beta: false, intended_use: "", intended_use_other: "" },
+      { core: true, research: false, newsletter: false },
       basics
     );
     expect(payload.profile.sex_at_birth).toBeNull();

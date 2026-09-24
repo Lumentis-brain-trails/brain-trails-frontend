@@ -61,7 +61,22 @@ export function bindMedia(
   plan: ProtocolDefinition,
   media: Record<string, BoundMedia>
 ): ProtocolDefinition {
-  return { ...plan, steps: plan.steps.map((step) => bindStep(step, media)) };
+  return {
+    ...plan,
+    steps: plan.steps.map((step) => bindStep(step, media)),
+    ...(plan.soundtrack
+      ? {
+          soundtrack: plan.soundtrack.map((cue) => {
+            const entry = media[cue.media_id];
+            if (!entry)
+              throw new Error(
+                `sound "${cue.id}": media ${cue.media_id} is not in the session's media`
+              );
+            return { ...cue, src: entry.url };
+          }),
+        }
+      : {}),
+  };
 }
 
 /** Every media id a plan references, e.g. to preload or to renew URLs. */
@@ -71,5 +86,6 @@ export function mediaIds(plan: ProtocolDefinition): string[] {
     const id = (step.config as { media_id?: unknown } | null)?.media_id;
     if (typeof id === "string") ids.add(id);
   }
+  for (const cue of plan.soundtrack ?? []) ids.add(cue.media_id);
   return [...ids];
 }

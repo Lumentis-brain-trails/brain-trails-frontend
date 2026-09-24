@@ -351,6 +351,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/me/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Consent
+         * @description Return what the caller has agreed to, and what the current text is.
+         *
+         *     The account page renders both; the app compares `core_version` with `current_version`
+         *     to know whether to ask again after the policy has moved.
+         */
+        get: operations["my_consent_auth_me_consent_get"];
+        /**
+         * Put My Consent
+         * @description Grant, withdraw or re-affirm a consent; absent fields are left alone.
+         *
+         *     Idempotent on purpose: an answer that does not move writes nothing, so a page that
+         *     saves on every render cannot fill the evidence log with noise. Granting anything
+         *     against a placeholder text is refused (503 `consent_unavailable`) for the same reason
+         *     registration is - nobody should agree to a text that does not exist - while
+         *     withdrawing is always allowed, because the right to take it back cannot depend on us
+         *     having published something.
+         */
+        put: operations["put_my_consent_auth_me_consent_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me/export": {
         parameters: {
             query?: never;
@@ -497,6 +531,31 @@ export interface paths {
          * @description Liveness probe reporting the deployed git SHA and environment (unauthenticated).
          */
         get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Landscape
+         * @description The caller's brain landscape, without any recording's trail.
+         *
+         *     409 `not_ready` while there is none yet. Asking is also what builds the first one for
+         *     an account that recorded before landscapes existed: a rebuild is queued when there
+         *     is something to build from and none is waiting - which is why the 409 is returned,
+         *     not raised, so the queued job commits with the request.
+         */
+        get: operations["my_landscape_landscape_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1055,6 +1114,8 @@ export interface paths {
          * @description Remove the recording, its analyses, its session and every stored artifact.
          *
          *     Everything the recording owns sits under one prefix (V3-0009), timeline included.
+         *     Its windows also sit on its person's brain landscape, which lives elsewhere, so a
+         *     rebuild is queued: the next map is built without them (V3-0013).
          *     404 unless visible, 403 without `can_delete`, 409 while a job is active.
          */
         delete: operations["delete_recording_recordings__recording_id__delete"];
@@ -1129,7 +1190,8 @@ export interface paths {
          *     An empty list when the recording has no session, when its timeline carried no
          *     `block_start`, or when the analysis predates S20: the review page shows the trail
          *     without a block table rather than an error. 409 `not_ready` only when there is no
-         *     analysis at all.
+         *     analysis at all. Task blocks get the average person's `norm`, computed on read so it
+         *     moves as more people run the protocol.
          */
         get: operations["get_blocks_recordings__recording_id__blocks_get"];
         put?: never;
@@ -1181,6 +1243,32 @@ export interface paths {
          *     (one produced before S20, or a run whose feature stage failed).
          */
         get: operations["get_features_recordings__recording_id__features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recordings/{recording_id}/landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Landscape
+         * @description The brain landscape of this recording's person, with this recording's trail on it.
+         *
+         *     The map is the subject's, built from all of their recordings (V3-0013); whoever may
+         *     view the recording sees it, as they see the recording's own terrain. 409 `not_ready`
+         *     while no map exists. When the map predates this recording, `trail` is null and a
+         *     rebuild is queued, so the page can draw the recording's own terrain meanwhile and
+         *     come back. The 409 is returned rather than raised so a job queued with it commits.
+         */
+        get: operations["get_landscape_recordings__recording_id__landscape_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1856,8 +1944,10 @@ export interface components {
          *     of the eyes-closed baseline block, null when the protocol has none - it is computed
          *     on the raw vectors, not on the trail, so it compares across sessions (V2-0005).
          *
-         *     A task block (go/no-go, flanker, n-back, coding) also carries `behaviour`, `erp` and
-         *     `prestimulus`; any block may carry `cardiac`, and a heartbeat-counting block
+         *     A task block (go/no-go, flanker, n-back, coding) also carries `behaviour`, `erp`,
+         *     `prestimulus`, its windows' trial `labels` (one per window whose start falls in the
+         *     block, null where no trial onset falls in the window) and the average person's
+         *     `norm`; any block may carry `cardiac` and `dynamics`, and a heartbeat-counting block
          *     `interoception`. All are null where they do not apply and on older analyses.
          */
         BlockMetricsOut: {
@@ -1881,6 +1971,7 @@ export interface components {
             cardiac?: components["schemas"]["CardiacOut"] | null;
             /** Condition */
             condition: string | null;
+            dynamics?: components["schemas"]["DynamicsOut"] | null;
             erp?: components["schemas"]["ErpOut"] | null;
             /** Good Contact */
             good_contact: number | null;
@@ -1893,10 +1984,13 @@ export interface components {
             kind: string | null;
             /** Label */
             label: string | null;
+            /** Labels */
+            labels?: (string | null)[] | null;
             /** N Windows */
             n_windows: number;
             /** Node Path */
             node_path: string | null;
+            norm?: components["schemas"]["BlockNormOut"] | null;
             prestimulus?: components["schemas"]["PrestimulusOut"] | null;
             /** Ratios */
             ratios: {
@@ -1906,6 +2000,27 @@ export interface components {
             t_end_s: number;
             /** T Start S */
             t_start_s: number;
+        };
+        /**
+         * BlockNormOut
+         * @description The average person on this block of this protocol (`app.norms`).
+         *
+         *     One vote per person, never the person being compared. Every measure is null while
+         *     `n_people` is below `app.norms.MIN_PEOPLE`; rates are 0..1, times in milliseconds.
+         */
+        BlockNormOut: {
+            /** Accuracy */
+            accuracy: number | null;
+            /** Commission Rate */
+            commission_rate: number | null;
+            /** Hit Rate */
+            hit_rate: number | null;
+            /** Median Rt Ms */
+            median_rt_ms: number | null;
+            /** N People */
+            n_people: number;
+            /** Rt Mad Ms */
+            rt_mad_ms: number | null;
         };
         /**
          * BoardRow
@@ -1935,6 +2050,80 @@ export interface components {
             task_label?: string | null;
             /** Title */
             title: string;
+        };
+        /**
+         * BrainLandscapeCategoryOut
+         * @description One thing that can have been happening in a window: its block, its trial label.
+         */
+        BrainLandscapeCategoryOut: {
+            /** Label */
+            label: string | null;
+            /** Task */
+            task: string;
+        };
+        /**
+         * BrainLandscapeGridOut
+         * @description The landscape's height on a regular grid: `z[row][column]`, peaking at 1.
+         */
+        BrainLandscapeGridOut: {
+            /** Nx */
+            nx: number;
+            /** Ny */
+            ny: number;
+            /** Z */
+            z: number[][];
+        };
+        /**
+         * BrainLandscapeOut
+         * @description A person's brain landscape (V3-0013).
+         *
+         *     `bounds` is `[x0, x1, y0, y1]`: the grid spans it evenly. `cells` says what happened
+         *     around each visible grid point, as `[column, row, [[category, share], ...]]` with
+         *     `category` an index into `categories`. `trail` is the asked-for recording's windows on
+         *     the map, null when the map was built before that recording; `pending` says a rebuild
+         *     is queued or running, so a page can come back for it.
+         */
+        BrainLandscapeOut: {
+            /** Bounds */
+            bounds: number[];
+            /**
+             * Built At
+             * Format: date-time
+             */
+            built_at: string;
+            /** Categories */
+            categories: components["schemas"]["BrainLandscapeCategoryOut"][];
+            /** Cells */
+            cells: [
+                number,
+                number,
+                [
+                    number,
+                    number
+                ][]
+            ][];
+            grid: components["schemas"]["BrainLandscapeGridOut"];
+            /** N Recordings */
+            n_recordings: number;
+            /** N Windows */
+            n_windows: number;
+            /** Pending */
+            pending: boolean;
+            trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * BrainLandscapeTrailOut
+         * @description One recording's windows placed on the landscape: start time and position.
+         */
+        BrainLandscapeTrailOut: {
+            /** T */
+            t: number[];
+            /** X */
+            x: number[];
+            /** Y */
+            y: number[];
         };
         /**
          * CaptureForms
@@ -2113,6 +2302,46 @@ export interface components {
             version: string;
         };
         /**
+         * ConsentIn
+         * @description A change to one or both consents; absent fields are left alone.
+         *
+         *     Both are optional so that the account page can send only the answer that moved, and so
+         *     that re-affirming the core consent after a policy update does not have to restate the
+         *     research answer and risk overwriting it.
+         */
+        ConsentIn: {
+            /** Core */
+            core?: boolean | null;
+            /** Research */
+            research?: boolean | null;
+        };
+        /**
+         * ConsentOut
+         * @description What this account has agreed to, and what the current text is.
+         *
+         *     `current_version` is the published text today; `core_version` is what this account
+         *     actually agreed to. They differ exactly when the policy has moved since, which is what
+         *     the re-consent gate watches for. `research` is the effective state; its version and
+         *     timestamp are null while it is not granted.
+         */
+        ConsentOut: {
+            /**
+             * Core At
+             * Format: date-time
+             */
+            core_at: string;
+            /** Core Version */
+            core_version: string;
+            /** Current Version */
+            current_version: string;
+            /** Research */
+            research: boolean;
+            /** Research At */
+            research_at: string | null;
+            /** Research Version */
+            research_version: string | null;
+        };
+        /**
          * CountingIntervalOut
          * @description One round of heartbeat counting; `actual` is null where the pulse was not clean.
          */
@@ -2193,6 +2422,33 @@ export interface components {
         DraftOut: {
             /** Draft Rev */
             draft_rev: number;
+        };
+        /**
+         * DynamicsOut
+         * @description How the signal moved inside a block, in the regions of the session's terrain.
+         *
+         *     `entropy` in bits (0: every next region predictable), `recurrence` 0..1 (share of moves
+         *     back to a region already visited), `modularity` Newman's Q of the windows grouped by
+         *     their trial label (null without labels), `diameter` in ball radii, `stretching` the
+         *     mean step over the diameter. All null under `pipeline.features.dynamics.MIN_WINDOWS`
+         *     windows, which `n_windows` shows. They compare blocks of one recording, not
+         *     recordings: the regions are fitted per recording.
+         */
+        DynamicsOut: {
+            /** Diameter */
+            diameter: number | null;
+            /** Entropy */
+            entropy: number | null;
+            /** Modularity */
+            modularity: number | null;
+            /** N Regions */
+            n_regions: number;
+            /** N Windows */
+            n_windows: number;
+            /** Recurrence */
+            recurrence: number | null;
+            /** Stretching */
+            stretching: number | null;
         };
         /**
          * ErpConditionOut
@@ -2845,6 +3101,14 @@ export interface components {
          *     handedness above all - so they are required here and required before a first session,
          *     while the rest is offered and never demanded. `PUT` semantics: what is absent is
          *     cleared, so the account page sends the whole form back.
+         *
+         *     `sex_at_birth` is the exception from V3-0011: health-adjacent, so it is not demanded to
+         *     open an account. Null means nobody asked, which is not what the taxonomy's own
+         *     `prefer_not_to_say` says - that one means asked, and declined.
+         *
+         *     `birth_year` carries the age floor. Only a year is collected, so the check is coarse at
+         *     the boundary; sharpening it would mean asking for a birthdate, which is more personal
+         *     data to guard exactly the wrong way round.
          */
         ProfileIn: {
             /** Alcohol Use */
@@ -2892,7 +3156,7 @@ export interface components {
             /** Psychiatric Conditions */
             psychiatric_conditions?: string | null;
             /** Sex At Birth */
-            sex_at_birth: string;
+            sex_at_birth?: string | null;
             /** Vision Correction */
             vision_correction?: string | null;
         };
@@ -2902,7 +3166,9 @@ export interface components {
          *
          *     A row written before a list existed - or before one was tightened - must still be
          *     readable on the admin board and on the account page. Validation belongs on the way
-         *     in, where the person can still fix the answer.
+         *     in, where the person can still fix the answer. The age floor is skipped for the same
+         *     reason: a profile written before V3-0011 must stay readable, and refusing to render it
+         *     would lock its owner out of the account page they need to correct or delete it.
          */
         ProfileOut: {
             /** Alcohol Use */
@@ -2950,7 +3216,7 @@ export interface components {
             /** Psychiatric Conditions */
             psychiatric_conditions?: string | null;
             /** Sex At Birth */
-            sex_at_birth: string;
+            sex_at_birth?: string | null;
             /** Vision Correction */
             vision_correction?: string | null;
         };
@@ -3185,6 +3451,12 @@ export interface components {
          *     optional, so a client that fills everything in one screen still can - the account
          *     page is where the rest is normally answered, at leisure.
          *
+         *     `consent` is the required core processing consent and keeps its name: it has always
+         *     meant that, and renaming it would break every client at once for no gain.
+         *     `research_consent` is the separate optional one (V3-0011), defaulted false so that a
+         *     client that does not know about it cannot grant it by accident - which is the whole
+         *     point of an opt-in.
+         *
          *     `wants_beta` is an intention, not an admission: the admin board still decides who is
          *     let in and when. `intended_use` is the one question worth asking at the door, because
          *     it is what the board sorts on.
@@ -3205,6 +3477,11 @@ export interface components {
             /** Password */
             password: string;
             profile?: components["schemas"]["ProfileIn"] | null;
+            /**
+             * Research Consent
+             * @default false
+             */
+            research_consent: boolean;
             /**
              * Wants Beta
              * @default false
@@ -4220,6 +4497,59 @@ export interface operations {
             };
         };
     };
+    my_consent_auth_me_consent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"];
+                };
+            };
+        };
+    };
+    put_my_consent_auth_me_consent_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_me_auth_me_export_get: {
         parameters: {
             query?: never;
@@ -4399,6 +4729,26 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    my_landscape_landscape_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeOut"];
                 };
             };
         };
@@ -5542,6 +5892,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeaturesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_landscape_recordings__recording_id__landscape_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeOut"];
                 };
             };
             /** @description Validation Error */

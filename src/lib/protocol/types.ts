@@ -88,10 +88,35 @@ export interface StepBlock {
   condition?: string;
 }
 
+/**
+ * A soundtrack cue as the runner needs it: anchors resolved to step indices (V3-0014).
+ *
+ * `startStep` null is the start of the protocol. A stop at a step fires as that step
+ * completes; `protocol_end` fires when the run ends; `clip_end` leaves it to the file.
+ * `src` is set by `bindMedia`, exactly as a block's is.
+ */
+export interface PlannedCue {
+  id: string;
+  label?: string;
+  media_id: string;
+  src?: string;
+  startStep: number | null;
+  offsetS: number;
+  stop:
+    | { kind: "clip_end" }
+    | { kind: "protocol_end" }
+    | { kind: "step"; step: number };
+  loop: boolean;
+  volume: number;
+  fadeS: number;
+}
+
 export interface ProtocolDefinition {
   id: string;
   version: number;
   title: string;
+  /** Sounds that play over the steps rather than taking a turn; absent for most plans. */
+  soundtrack?: PlannedCue[];
   /** Honoured by the host as a notice before the run (decision V2-0002). */
   contentWarning?: string;
   startMarker?: string;

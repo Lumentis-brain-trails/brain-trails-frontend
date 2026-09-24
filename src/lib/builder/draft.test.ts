@@ -42,6 +42,7 @@ const tree = (...children: BlockNode[]): ProtocolTree => ({
     min_quality: 0.6,
   },
   root: { type: "sequence", order: "fixed", children },
+  soundtrack: [],
 });
 
 test("clips read the root's children, with an estimated length each", () => {
