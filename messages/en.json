@@ -382,5 +382,12 @@
       "trimmed": "from {from} to {to}",
       "the_end": "the end"
     }
+  },
+  "beta": {
+    "apply": "Apply for beta testing",
+    "promptTitle": "Want to try what comes next?",
+    "promptText": "Brain Trails is in a closed beta. Beta testers get new protocols and features first, for free, and we ask them what they think. Applying takes a few questions.",
+    "promptLater": "Not now",
+    "promptLaterHint": "You can apply any time from your account."
   }
 }

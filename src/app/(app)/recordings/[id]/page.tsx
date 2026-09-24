@@ -8,6 +8,8 @@ import { ApiRequestError, api } from "@/lib/api";
 import { formatDuration } from "@/lib/format";
 import type { Analysis, Recording } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
+import type { ApplicationData } from "@/components/account/BetaCard";
+import { BetaPrompt } from "@/components/account/BetaPrompt";
 import { SignalPreview } from "@/components/SignalPreview";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TrailPlot } from "@/components/TrailPlot";
@@ -53,6 +55,13 @@ export default function RecordingDetailPage({
     enabled: recording.data?.status === "done" || isLive,
     refetchInterval: isLive ? 1500 : false,
     retry: isLive,
+  });
+
+  // Same query as the account page, so applying there is seen here without a refetch.
+  const application = useQuery({
+    queryKey: ["me-application"],
+    queryFn: () => api.get<ApplicationData>("auth/me/application"),
+    retry: false,
   });
 
   const reprocess = useMutation({
@@ -314,6 +323,11 @@ export default function RecordingDetailPage({
             )}
           </aside>
         </div>
+      )}
+
+      {/* last in the report: the beta question waits until it has been read to the end */}
+      {rec?.status === "done" && (
+        <BetaPrompt wantsBeta={application.data?.wants_beta ?? null} />
       )}
 
       {confirmDelete && (
