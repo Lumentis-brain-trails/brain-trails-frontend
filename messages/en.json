@@ -382,5 +382,155 @@
       "trimmed": "from {from} to {to}",
       "the_end": "the end"
     }
+  },
+  "beta": {
+    "apply": "Apply for beta testing",
+    "promptTitle": "Want to try what comes next?",
+    "promptText": "Brain Trails is in a closed beta. Beta testers get new protocols and features first, for free, and we ask them what they think. Applying takes a few questions.",
+    "promptLater": "Not now",
+    "promptLaterHint": "You can apply any time from your account."
+  },
+  "compare": {
+    "title": "Compare two blocks",
+    "left": "Left block",
+    "right": "Right block",
+    "block": "Block",
+    "blockOption": "{label} · {start}",
+    "blockMeta": "{duration} · {windows} s of signal",
+    "trail": "Brain trail",
+    "trailAria": "The trail of {block}, on the session's terrain",
+    "onLandscape": "Trails on your brain landscape, built from {n, plural, one {# recording} other {# recordings}}. Turn either landscape to turn both.",
+    "landscapePending": "Your brain landscape is being updated to include this recording. Meanwhile the trails sit on this session's own terrain.",
+    "onSessionTerrain": "Trails on this session's own terrain.",
+    "frame": {
+      "taskAria": "The task as it looked at this moment of {block}",
+      "trial": "Trial {n} of {total}",
+      "noTrials": "No trials recorded in this block",
+      "baseline": {
+        "open": "Eyes open, looking at the screen",
+        "closed": "Eyes closed"
+      },
+      "breathing": "A breathing guide",
+      "rest": "A resting screen",
+      "nothing": "Nothing recorded to show for this kind of block"
+    },
+    "onScreen": "On screen",
+    "cursor": "Moment in the block",
+    "cursorValue": "{at} of {total}",
+    "byTime": "Coloured from the start of the block to its end.",
+    "unlabelled": "Between trials",
+    "addRow": "Add a row",
+    "addRowPlaceholder": "Choose a measure…",
+    "removeRow": "Remove {row}",
+    "otherBlock": "Other block",
+    "averagePerson": "Average person: {value} ({n, plural, one {# person} other {# people}})",
+    "averagePending": "Average person: shown from {min} people, {n} so far",
+    "noAverage": "No one else has done this block yet",
+    "key": {
+      "block": "This block",
+      "other": "The other block",
+      "average": "Average person on this block",
+      "higher": "Higher than the other block",
+      "lower": "Lower than the other block"
+    },
+    "noBlocks": "This recording has no protocol blocks to compare. The trail of the whole session is below.",
+    "disclaimer": "Exploratory, not diagnostic. These describe one recording, not a person.",
+    "groups": {
+      "spectral": "Band power",
+      "dynamics": "Neurometrics",
+      "task": "Task"
+    },
+    "missing": {
+      "short": "Too short to measure",
+      "not_task": "Not a task",
+      "no_labels": "No trials to group by",
+      "not_ready": "Not computed for this recording yet"
+    },
+    "units": {
+      "bits": "bits",
+      "radii": "radii"
+    },
+    "rows": {
+      "alpha": {
+        "name": "Alpha",
+        "meaning": "Share of the signal's power at 8–12 Hz: relaxed, eyes-closed rhythm."
+      },
+      "beta": {
+        "name": "Beta",
+        "meaning": "Share of power at 13–30 Hz: alert, engaged activity."
+      },
+      "theta": {
+        "name": "Theta",
+        "meaning": "Share of power at 4–8 Hz: drowsiness, or effortful focus."
+      },
+      "delta": {
+        "name": "Delta",
+        "meaning": "Share of power below 4 Hz: deep sleep, or movement and blinks."
+      },
+      "entropy": {
+        "name": "Entropy",
+        "meaning": "How hard it is to predict the next state from this one."
+      },
+      "recurrence": {
+        "name": "Recurrence",
+        "meaning": "How often the signal went back to a state it had already visited."
+      },
+      "modularity": {
+        "name": "Modularity",
+        "meaning": "How much states group together by the kind of trial."
+      },
+      "diameter": {
+        "name": "Diameter",
+        "meaning": "How wide the space the signal covered was."
+      },
+      "stretching": {
+        "name": "Stretching",
+        "meaning": "Average step from one state to the next, compared with the diameter."
+      },
+      "accuracy": {
+        "name": "Right actions",
+        "meaning": "Share of trials where the person did what the task asked."
+      },
+      "reaction_time": {
+        "name": "Reaction time",
+        "meaning": "Typical time from the target appearing to the press."
+      },
+      "rt_spread": {
+        "name": "Reaction spread",
+        "meaning": "How much reaction time varied: lower is steadier."
+      },
+      "hit_rate": {
+        "name": "Targets caught",
+        "meaning": "Share of targets that were answered."
+      },
+      "false_alarms": {
+        "name": "False alarms",
+        "meaning": "Share of non-targets that were pressed anyway."
+      }
+    },
+    "labels": {
+      "cargo_pressed": "Cargo hit",
+      "cargo_held": "Cargo skipped",
+      "debris_pressed": "Debris hit",
+      "debris_held": "Debris skipped",
+      "pressed": "pressed",
+      "held": "held",
+      "right": "right",
+      "wrong": "wrong",
+      "missed": "missed"
+    },
+    "direction": {
+      "higher": "higher",
+      "lower": "lower"
+    }
+  },
+  "landscape": {
+    "title": "Brain Landscape",
+    "intro": "Every recording you have made, on one map. Peaks are where your brain spent the most time; hover anywhere to see what you were doing there.",
+    "meta": "{n, plural, one {# recording} other {# recordings}} · {windows} seconds of signal · updated {date}",
+    "aria": "Your brain landscape: every recording on one map, height is where you spent the most time",
+    "updating": "Updating with your latest recording…",
+    "notReady": "Your landscape appears once your first recording has been analysed.",
+    "disclaimer": "Exploratory, not diagnostic. The map moves each time you record: places on it compare within one version, not across versions."
   }
 }

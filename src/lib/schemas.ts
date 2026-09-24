@@ -75,39 +75,27 @@ export const basicsSchema = profileSchema
     message: `Brain Trails is for people aged ${MIN_AGE_YEARS} and over.`,
   });
 
-/**
- * The one question registration still asks beyond the account itself.
- *
- * Wanting in is not being in: the admin board still decides, after the account exists.
- * `intended_use` is asked here because it is what the board sorts on, and because at a
- * stand it is the only thing worth a person's time.
- */
-export const betaSchema = z.object({
-  wants_beta: z.boolean(),
-  intended_use: optional(40),
-  intended_use_other: optional(200),
-});
-
 export type ProfileForm = z.output<typeof profileSchema>;
 export type ProfileFormInput = z.input<typeof profileSchema>;
 export type AccountForm = z.output<typeof accountSchema>;
 export type BasicsForm = z.output<typeof basicsSchema>;
-export type BetaForm = z.output<typeof betaSchema>;
 
 /** An empty string means "not answered", which the API spells `null`. */
 const clean = (v: string | undefined) =>
   v === "" || v === undefined ? null : v;
 
 /**
- * Registration: the account, who you are in four fields, the opt-in, the consent.
+ * Registration: the account, who you are in four fields, the consent.
  *
  * The rest of the profile and all of the beta credentials are written later from the
- * account page, so a queue at a stand keeps moving.
+ * account page, so a queue at a stand keeps moving. Whether someone wants to be a beta
+ * tester is not asked here either: it is asked once they have tried a protocol and know
+ * what they would be testing, so `wants_beta` goes out as false - "not asked yet" - and
+ * is set from there.
  */
 export function toRegisterPayload(
   account: AccountForm,
   consent: { core: boolean; research: boolean },
-  beta: BetaForm,
   basics: BasicsForm
 ) {
   return {
@@ -120,11 +108,7 @@ export function toRegisterPayload(
     // "" is the select's "prefer not to answer"; the API spells an unanswered field null,
     // and null there means nobody asked - which is not the same as declining to say.
     profile: { ...basics, sex_at_birth: clean(basics.sex_at_birth) },
-    wants_beta: beta.wants_beta,
-    // Only meaningful alongside the opt-in: asking why someone wants in and then storing
-    // the answer for someone who said no would be noise on the board.
-    intended_use: beta.wants_beta ? clean(beta.intended_use) : null,
-    intended_use_other: beta.wants_beta ? clean(beta.intended_use_other) : null,
+    wants_beta: false,
   };
 }
 

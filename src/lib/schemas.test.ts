@@ -61,11 +61,10 @@ describe("schemas", () => {
     expect(payload.native_languages).toEqual(["it", "en"]);
   });
 
-  test("registration carries the account, the four basics, both consents and the opt-in", () => {
+  test("registration carries the account, the four basics and both consents", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
       { core: true, research: false },
-      { wants_beta: true, intended_use: "patients", intended_use_other: "" },
       BASICS
     );
     expect(payload).toEqual({
@@ -74,9 +73,8 @@ describe("schemas", () => {
       consent: true,
       research_consent: false,
       profile: BASICS,
-      wants_beta: true,
-      intended_use: "patients",
-      intended_use_other: null,
+      // Not asked at sign-up any more: false is "not asked yet", set after a protocol.
+      wants_beta: false,
     });
   });
 
@@ -84,7 +82,6 @@ describe("schemas", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
       { core: true, research: false },
-      { wants_beta: false, intended_use: "", intended_use_other: "" },
       BASICS
     );
     // Everything else - coffee, sleep, medications - belongs to the account page.
@@ -96,22 +93,11 @@ describe("schemas", () => {
     ]);
   });
 
-  test("why someone wants in is dropped when they said no", () => {
-    const payload = toRegisterPayload(
-      { email: "a@b.it", password: "long-enough-pw" },
-      { core: true, research: false },
-      { wants_beta: false, intended_use: "patients", intended_use_other: "" },
-      BASICS
-    );
-    expect(payload.intended_use).toBeNull();
-  });
-
   test("the optional research consent is carried, and is off unless it was ticked", () => {
     const call = (research: boolean) =>
       toRegisterPayload(
         { email: "a@b.it", password: "long-enough-pw" },
         { core: true, research },
-        { wants_beta: false, intended_use: "", intended_use_other: "" },
         BASICS
       );
     expect(call(false).research_consent).toBe(false);
@@ -130,7 +116,6 @@ describe("schemas", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
       { core: true, research: false },
-      { wants_beta: false, intended_use: "", intended_use_other: "" },
       basics
     );
     expect(payload.profile.sex_at_birth).toBeNull();

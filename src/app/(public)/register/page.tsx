@@ -5,9 +5,10 @@
  *
  * The profile and the beta credentials used to be asked here, over four steps. They are
  * not any more: at a stand with a queue behind you, every extra field is someone who
- * gives up. What is left is the account, one opt-in question, and the consent - and the
- * profile is asked later, by the backend, right before the first recording, where it is
- * about to matter and the person is already sitting down.
+ * gives up. What is left is the account and the consent - and the profile is asked
+ * later, by the backend, right before the first recording, where it is about to matter
+ * and the person is already sitting down. Being a beta tester is asked last of all, once
+ * they have tried a protocol and know what they would be testing.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -22,10 +23,8 @@ import { ListField } from "@/components/form/ListField";
 import {
   type AccountForm,
   type BasicsForm,
-  type BetaForm,
   accountSchema,
   basicsSchema,
-  betaSchema,
   toRegisterPayload,
 } from "@/lib/schemas";
 import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
@@ -101,7 +100,6 @@ export default function RegisterPage() {
   const [step, setStep] = useState<Step>("account");
   const [account, setAccount] = useState<AccountForm | null>(null);
   const [basics, setBasics] = useState<BasicsForm | null>(null);
-  const [beta, setBeta] = useState<BetaForm | null>(null);
   const [coreConsent, setCoreConsent] = useState(false);
   const [researchConsent, setResearchConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,18 +113,8 @@ export default function RegisterPage() {
   const basicsForm = useForm<BasicsForm>({
     resolver: zodResolver(basicsSchema) as unknown as Resolver<BasicsForm>,
   });
-  const betaForm = useForm<BetaForm>({
-    resolver: zodResolver(betaSchema),
-    defaultValues: {
-      wants_beta: false,
-      intended_use: "",
-      intended_use_other: "",
-    },
-  });
   // `useWatch` and not `form.watch`: the latter re-renders this whole page - both forms,
   // every field, every menu - on each keystroke, which is what made the form feel heavy.
-  const wantsBeta = useWatch({ control: betaForm.control, name: "wants_beta" });
-  const use = useWatch({ control: betaForm.control, name: "intended_use" });
   const sexAtBirth = useWatch({
     control: basicsForm.control,
     name: "sex_at_birth",
@@ -137,7 +125,7 @@ export default function RegisterPage() {
   });
 
   async function submitAll() {
-    if (!account || !basics || !beta || !coreConsent) return;
+    if (!account || !basics || !coreConsent) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -146,7 +134,6 @@ export default function RegisterPage() {
         toRegisterPayload(
           account,
           { core: coreConsent, research: researchConsent },
-          beta,
           basics
         )
       );
@@ -233,7 +220,6 @@ export default function RegisterPage() {
             className="enter-up max-w-lg space-y-8"
             onSubmit={basicsForm.handleSubmit((values) => {
               setBasics(values);
-              setBeta(betaForm.getValues());
               setStep("consent");
             })}
           >
@@ -286,38 +272,6 @@ export default function RegisterPage() {
                   placeholder="Select"
                 />
               </div>
-            </section>
-
-            <section className="space-y-4 border-t border-hairline pt-6">
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
-                  {...betaForm.register("wants_beta")}
-                />
-                <span>
-                  <span className="block">
-                    I would like to be a beta tester.
-                  </span>
-                  <span className="type-caption text-ink-3">
-                    New features before everyone else, free, and we ask what you
-                    think. Saying no changes nothing about your account.
-                  </span>
-                </span>
-              </label>
-              {wantsBeta && (
-                <div className="enter-up">
-                  <ListField
-                    label="How do you expect to use it?"
-                    hint="It helps us choose who to invite first. You can change it later."
-                    options={lists.data?.intended_use}
-                    value={use}
-                    field={betaForm.register("intended_use")}
-                    otherField={betaForm.register("intended_use_other")}
-                    placeholder="Not sure yet"
-                  />
-                </div>
-              )}
             </section>
 
             <div className="flex gap-2">
