@@ -246,6 +246,11 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
     },
   },
   "n-back": {
+    pace: {
+      label: "Pace",
+      help: "Fixed: every letter gets the same time, answered or not - the standard n-back. Self-paced: each letter stays until the participant presses Continue, with Match before it; it takes away the time pressure and records how long each letter was kept.",
+      options: { fixed: "Fixed", self: "Self-paced" },
+    },
     n: {
       label: "Letters",
       help: "How many letters are shown. 60 takes two and a half minutes.",
@@ -275,6 +280,11 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
     isiMs: {
       label: "Blank after the letter (ms)",
       help: "The pace is fixed: every letter gets its time plus this blank, answered or not.",
+      advanced: true,
+    },
+    gapMs: {
+      label: "Blank after Continue (ms)",
+      help: "A short blank between letters, so two equal letters in a row read as two.",
       advanced: true,
     },
   },

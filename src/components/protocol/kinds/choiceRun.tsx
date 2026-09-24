@@ -33,6 +33,7 @@ const IDLE: ChoiceScene = {
   stimulus: null,
   upcoming: null,
   feedback: null,
+  response: null,
   trialIndex: 0,
   totalTrials: 0,
   nowMs: 0,
@@ -45,6 +46,7 @@ function face(scene: ChoiceScene, tickMs: number | null): string {
     scene.cue,
     scene.stimulus ? scene.trialIndex : "-",
     scene.feedback,
+    scene.response,
     scene.trialIndex,
     tickMs === null ? "" : Math.floor(scene.nowMs / tickMs),
   ].join("|");
@@ -77,7 +79,11 @@ export function useChoiceRun(
     if (typeof requestAnimationFrame !== "function") return;
     const { trials, config } = build();
     let state = createChoiceEngine(trials, config);
-    const totalMs = choiceDurationMs(trials, config.maxDurationMs);
+    const totalMs = choiceDurationMs(
+      trials,
+      config.maxDurationMs,
+      config.advanceKey
+    );
     let t0: number | null = null;
     let lastFace = "";
     let lastHostMs = 0;

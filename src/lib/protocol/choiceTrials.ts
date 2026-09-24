@@ -134,16 +134,34 @@ export interface NBackOptions {
    * the order from recognising a recent letter.
    */
   lureRatio: number;
+  practice?: boolean;
+}
+
+/** The standard pace: every letter gets the same time, answered or not. */
+export interface FixedNBackOptions extends NBackOptions {
+  pace?: "fixed";
   stimulusMs: number;
   /** Blank time after the letter; the response window is letter plus blank. */
   isiMs: number;
-  practice?: boolean;
+}
+
+/**
+ * Self-paced: a letter stays until the participant moves on, and the next comes after
+ * `gapMs` of blank - without it two equal letters in a row would look like one. The
+ * engine runs these trials with an `advanceKey`; their timing fields are not used.
+ */
+export interface SelfPacedNBackOptions extends NBackOptions {
+  pace: "self";
+  gapMs: number;
 }
 
 type NBackCell = "match" | "lure" | "nonmatch";
 
 /** N-back letters: press when the letter is the one shown `load` items ago. */
-export function generateNBack(options: NBackOptions, rng: Rng): ChoiceTrial[] {
+export function generateNBack(
+  options: FixedNBackOptions | SelfPacedNBackOptions,
+  rng: Rng
+): ChoiceTrial[] {
   const { n, load, matchRatio, lureRatio } = options;
   if (!Number.isInteger(load) || load < 1 || load > 3)
     throw new Error("generateNBack: load must be 1, 2 or 3");
@@ -192,16 +210,26 @@ export function generateNBack(options: NBackOptions, rng: Rng): ChoiceTrial[] {
     kinds[i] = "nonmatch";
   });
 
+  const pace =
+    options.pace === "self"
+      ? { stimulusMs: 0, windowMs: 0, itiMs: options.gapMs }
+      : {
+          stimulusMs: options.stimulusMs,
+          windowMs: options.stimulusMs + options.isiMs,
+          itiMs: 0,
+        };
   return kinds.map((kind, i) => ({
     trialId: i,
     condition: kind,
     stimulus: { letter: letters[i] },
     correctResponse: kind === "match" ? "press" : null,
-    stimulusMs: options.stimulusMs,
-    windowMs: options.stimulusMs + options.isiMs,
-    itiMs: 0,
+    ...pace,
     ...(options.practice ? { practice: true } : {}),
-    meta: { load, letter: letters[i] },
+    meta: {
+      load,
+      letter: letters[i],
+      ...(options.pace === "self" ? { pace: "self" } : {}),
+    },
   }));
 }
 

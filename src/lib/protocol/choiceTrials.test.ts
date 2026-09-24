@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   CODING_SYMBOLS,
   type FlankerOptions,
-  type NBackOptions,
+  type FixedNBackOptions,
   generateCoding,
   generateFlanker,
   generateNBack,
@@ -20,7 +20,7 @@ const FLANKER: FlankerOptions = {
   itiMs: [400, 1200],
 };
 
-const NBACK: NBackOptions = {
+const NBACK: FixedNBackOptions = {
   n: 60,
   load: 2,
   matchRatio: 0.3,
@@ -144,6 +144,20 @@ describe("generateNBack", () => {
   test("the pace is fixed: window is letter plus blank, no extra pause", () => {
     const [first] = generateNBack(NBACK, mulberry32(1));
     expect(first).toMatchObject({ stimulusMs: 500, windowMs: 2500, itiMs: 0 });
+  });
+
+  test("self-paced: the same letters, no window, a blank after each, marked", () => {
+    const { n, load, matchRatio, lureRatio } = NBACK;
+    const selfPaced = generateNBack(
+      { n, load, matchRatio, lureRatio, pace: "self", gapMs: 500 },
+      mulberry32(3)
+    );
+    const fixed = generateNBack(NBACK, mulberry32(3));
+    expect(selfPaced.map((t) => t.stimulus)).toEqual(
+      fixed.map((t) => t.stimulus)
+    );
+    expect(selfPaced[0]).toMatchObject({ itiMs: 500, meta: { pace: "self" } });
+    expect(fixed[0].meta).not.toHaveProperty("pace");
   });
 
   test("impossible parameters throw", () => {
