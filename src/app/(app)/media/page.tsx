@@ -41,10 +41,14 @@ const REFUSALS: Record<string, string> = {
   unreadable: "The file could not be read.",
   no_video_stream: "The file has no video in it.",
   no_audio_stream: "The file has no audio in it.",
+  // Refusals of the probe before 2026-09-24 (V3-0003 amendment): such a file is now
+  // transcoded; the two messages stay for rows that failed under the old rule.
   unsupported_video_codec:
     "Browsers cannot play this video format. Export it as H.264 (MP4) or VP9 (WebM).",
   unsupported_audio_codec:
     "Browsers cannot play this audio format. Export it as AAC, MP3 or Opus.",
+  transcode_failed:
+    "The file could not be converted for the browser. Export it as H.264 (MP4) or AAC (M4A) and upload it again.",
   no_duration: "The file has no length.",
   probe_error: "The check failed. Try uploading it again.",
 };
