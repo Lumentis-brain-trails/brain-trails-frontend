@@ -21,7 +21,12 @@ import { TrailRibbon } from "@/components/TrailRibbon";
 import { groupSlot, markerOf, parseLabel } from "@/lib/compare/labels";
 import { useChartTheme } from "@/lib/theme";
 import { fitToBox } from "@/lib/thumb";
-import { type CurvePoint, polylinePath, trailCurve } from "@/lib/trailPath";
+import {
+  type CurvePoint,
+  polylinePath,
+  smoothPath,
+  trailCurve,
+} from "@/lib/trailPath";
 import type { Analysis } from "@/lib/types";
 
 const W = 520;
@@ -33,6 +38,9 @@ const REACH = 1.5;
 const GROUND_INK = 0.16;
 const MARKER_R = 4.2;
 const GRADIENT_ID = "block-trail-region";
+const SKY_ID = "block-trail-sky";
+/** Corner radius of the picture's light blue ground, in viewBox units. */
+const SKY_RADIUS = 16;
 /** Stands in for the label of a window the focus drops. */
 const DROPPED = "\u0000dropped";
 
@@ -94,12 +102,19 @@ export function BlockTrail({
       ...map({ x, y }),
       weight: (masses[i] ?? 0) / heaviest,
     }));
-    const whole = points.map((p) => map({ x: p.pc1, y: p.pc2 }));
-    const inside = blockWindows(points, block);
+    // softened once over the whole session, so the block's stretch is cut from the
+    // same line the rest of the session is drawn as
+    const whole = smoothPath(
+      points.map((p) => ({ ...map({ x: p.pc1, y: p.pc2 }), t: p.t_start }))
+    );
+    const inside = whole.filter(
+      (p) => p.t >= block.t_start_s && p.t < block.t_end_s
+    );
     const lit: (CurvePoint & { t: number })[] = inside.map((p, i) => ({
-      ...map({ x: p.pc1, y: p.pc2 }),
+      x: p.x,
+      y: p.y,
       u: i / Math.max(1, inside.length - 1),
-      t: p.t_start,
+      t: p.t,
     }));
     return {
       regions,
@@ -145,6 +160,10 @@ export function BlockTrail({
       aria-label={title}
     >
       <defs>
+        <linearGradient id={SKY_ID} x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0%" stopColor="var(--trail-sky-a)" />
+          <stop offset="100%" stopColor="var(--trail-sky-b)" />
+        </linearGradient>
         <radialGradient id={GRADIENT_ID}>
           <stop offset="0%" stopColor={theme.ink} stopOpacity={1} />
           <stop offset="35%" stopColor={theme.ink} stopOpacity={0.72} />
@@ -153,6 +172,7 @@ export function BlockTrail({
           <stop offset="100%" stopColor={theme.ink} stopOpacity={0} />
         </radialGradient>
       </defs>
+      <rect width={W} height={H} rx={SKY_RADIUS} fill={`url(#${SKY_ID})`} />
       {drawing.reach > 0 && (
         <g opacity={GROUND_INK}>
           {drawing.regions.map((region, i) => (

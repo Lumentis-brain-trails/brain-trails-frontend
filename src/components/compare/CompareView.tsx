@@ -16,27 +16,19 @@
  * clock would pin one of them to a time it does not have. The chosen rows are
  * remembered in this browser (`lib/compare/rows.ts`).
  *
- * The trails rest on a 3D terrain: the person's brain landscape - one map of all their
- * recordings, grown session by session (backend V3-0016, V3-0017) - when it already holds
- * this recording, and the session's own terrain until then (the page says which). Both
- * columns share one camera, so turning one turns the other. Without WebGL the trail is
- * drawn flat.
+ * The trails are drawn flat on the session's terrain, softened and on a light ground
+ * (`BlockTrail`); the 3D map of all of a person's recordings lives on its own page.
  *
  * Each column can be narrowed (`FocusControls`): a stretch of its block and, for a task
  * block, the kinds of trial to keep. Every number in the column is then the backend's
  * recomputation for that focus (`useSelection`); the average person stays whole-block.
  */
 import { useTranslations } from "next-intl";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { AddRowMenu } from "@/components/compare/AddRowMenu";
 import { FocusControls } from "@/components/compare/FocusControls";
 import { useSelection } from "@/components/compare/useSelection";
 import { BlockFrame, type FrameVideo } from "@/components/compare/BlockFrame";
-import { BlockLandscape } from "@/components/compare/BlockLandscape";
-import {
-  type Camera,
-  DEFAULT_CAMERA,
-} from "@/components/compare/LandscapeSurface";
 import { BlockTrail, blockWindows } from "@/components/compare/BlockTrail";
 import {
   type BandSeries,
@@ -44,11 +36,6 @@ import {
   NormMark,
 } from "@/components/compare/MetricCell";
 import { Select } from "@/components/ui";
-import {
-  type BrainLandscape,
-  sessionTerrain,
-  supportsWebGL,
-} from "@/lib/brainLandscape";
 import { formatClock } from "@/lib/builder/draft";
 import { labelGroups } from "@/lib/compare/labels";
 import {
@@ -99,7 +86,6 @@ export function CompareView({
   steps,
   bands,
   videoAt,
-  landscape = null,
 }: {
   /** The recording the blocks belong to: what the selections are asked of. */
   recordingId: string;
@@ -112,31 +98,15 @@ export function CompareView({
   bands: Readonly<Record<string, BandSeries>> | null;
   /** The video on screen at a session time, if any. */
   videoAt: (t: number) => FrameVideo | null;
-  /** The person's brain landscape, with this recording's trail on it when it has one. */
-  landscape?: BrainLandscape | null;
 }) {
   const tr = useTranslations("compare");
   const [pair, setPair] = useState(() => defaultPair(blocks));
   const [moments, setMoments] = useState<Record<string, number>>({});
   const [rows, setRows] = useState<RowId[]>(() => readRows());
-  const [camera, setCamera] = useState<Camera>(DEFAULT_CAMERA);
   const [focus, setFocus] = useState<[Focus, Focus]>([
     WHOLE_BLOCK,
     WHOLE_BLOCK,
   ]);
-  // the server cannot know; hydration takes its answer, then the browser's
-  const webgl = useSyncExternalStore(
-    noSubscription,
-    supportsWebGL,
-    () => false
-  );
-  const onLandscape = Boolean(landscape?.trail);
-  // the person's map when it holds this recording, else the session's own terrain
-  const terrain = useMemo(
-    () => (onLandscape ? landscape : sessionTerrain(analysis)),
-    [analysis, landscape, onLandscape]
-  );
-
   const byKey = (key: string) => blocks.find((b) => b.key === key) ?? blocks[0];
   const rowsOf = pair.map(byKey);
   const selections = [
@@ -170,16 +140,6 @@ export function CompareView({
 
   return (
     <div className="space-y-4">
-      <p className="type-caption text-center text-ink-3">
-        {onLandscape && landscape
-          ? tr("onLandscape", { n: landscape.n_recordings })
-          : landscape?.pending
-            ? tr("landscapePending")
-            : tr("onSessionTerrain")}
-        {onLandscape && landscape?.change === "redrawn"
-          ? ` ${tr("redrawn")}`
-          : ""}
-      </p>
       <div
         className="grid grid-cols-2 gap-3 sm:gap-5"
         style={{
@@ -243,30 +203,16 @@ export function CompareView({
                 <h3 className="type-caption font-medium text-ink-3">
                   {tr("trail")}
                 </h3>
-                {terrain && webgl ? (
-                  <BlockLandscape
-                    landscape={terrain}
-                    block={row}
-                    labels={labels}
-                    groups={groups}
-                    kept={kept}
-                    t={t}
-                    camera={camera}
-                    onCamera={setCamera}
-                    title={tr("trailAria", { block: title })}
-                  />
-                ) : (
-                  <BlockTrail
-                    analysis={analysis}
-                    block={row}
-                    labels={labels}
-                    groups={groups}
-                    kept={kept}
-                    t={t}
-                    onSeek={setT}
-                    title={tr("trailAria", { block: title })}
-                  />
-                )}
+                <BlockTrail
+                  analysis={analysis}
+                  block={row}
+                  labels={labels}
+                  groups={groups}
+                  kept={kept}
+                  t={t}
+                  onSeek={setT}
+                  title={tr("trailAria", { block: title })}
+                />
                 <label className="block">
                   <span className="type-caption flex justify-between text-ink-3">
                     <span>{tr("cursor")}</span>
@@ -412,9 +358,4 @@ function BarKey() {
       </li>
     </ul>
   );
-}
-
-/** WebGL support does not change while a page is open: nothing to subscribe to. */
-function noSubscription(): () => void {
-  return () => {};
 }

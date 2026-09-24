@@ -8,7 +8,6 @@
  * nothing else: no re-fitting, no re-blurring, the scale is the backend's.
  */
 import type { components } from "@/lib/api-types";
-import { densityField } from "@/lib/landscape";
 
 export type BrainLandscape = components["schemas"]["BrainLandscapeOut"];
 export type LandscapeCategory =
@@ -96,78 +95,4 @@ export function landscapeProblem(
     return "building";
   if (error.status === 404) return "unavailable";
   return "error";
-}
-
-/**
- * A recording's own terrain in the shape of a brain landscape, so its trail can rest on
- * a 3D surface before the person's map holds it.
- *
- * The session's terrain is the sum of one Gaussian per ball of its own cover, weighted
- * by the windows in it (`lib/landscape.ts`, mirroring the backend); normalised to peak 1
- * and paired with the recording's own trail, it is drawn exactly like the person's map.
- * Null when the analysis was not drawn on a landscape (an older PCA trail).
- */
-export function sessionTerrain(analysis: {
-  landscape: {
-    sigma: number;
-    positions: [number, number][];
-    masses: number[];
-  } | null;
-  points: { t_start: number; pc1: number; pc2: number }[];
-}): BrainLandscape | null {
-  const land = analysis.landscape;
-  if (!land || land.positions.length === 0 || !(land.sigma > 0)) return null;
-  const field = densityField(
-    land.positions.map(([x, y], i) => ({ x, y, mass: land.masses[i] ?? 0 })),
-    land.sigma,
-    SESSION_GRID,
-    SESSION_PADDING
-  );
-  if (field.xs.length < 2 || field.ys.length < 2) return null;
-  const peak = Math.max(1e-12, ...field.z.flat());
-  return {
-    version: 0,
-    built_at: "",
-    n_recordings: 1,
-    n_windows: analysis.points.length,
-    pending: false,
-    epoch: 0,
-    change: null,
-    bounds: [field.xs[0], field.xs.at(-1)!, field.ys[0], field.ys.at(-1)!],
-    grid: {
-      nx: field.xs.length,
-      ny: field.ys.length,
-      z: field.z.map((row) => row.map((v) => v / peak)),
-    },
-    categories: [],
-    cells: [],
-    trail: {
-      t: analysis.points.map((p) => p.t_start),
-      x: analysis.points.map((p) => p.pc1),
-      y: analysis.points.map((p) => p.pc2),
-    },
-  };
-}
-
-/** Grid points per axis of a session's own terrain: lighter than a person's map. */
-const SESSION_GRID = 72;
-/** How far past the outermost ball the session terrain reaches, in kernel widths. */
-const SESSION_PADDING = 2.5;
-
-let webgl: boolean | undefined;
-
-/** Whether this browser can draw WebGL, which the 3D surfaces need (asked once). */
-export function supportsWebGL(): boolean {
-  if (webgl !== undefined) return webgl;
-  webgl = probeWebGL();
-  return webgl;
-}
-
-function probeWebGL(): boolean {
-  try {
-    const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
-  } catch {
-    return false;
-  }
 }

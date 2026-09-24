@@ -43,6 +43,9 @@
   /* comparison view: which of two blocks is higher on a row. Blue and yellow on
      purpose: a direction, not a verdict, so neither is the green/red of good/bad.
      The ink steps are darker than the fills so the words stay readable. */
+  /* the report's trail ground: a very light blue, barely there */
+  --trail-sky-a: #f5f9fe;
+  --trail-sky-b: #e4effb;
   --higher: #2a78d6;
   --higher-ink: #1f5fae;
   --higher-soft: rgba(42, 120, 214, 0.11);
@@ -85,6 +88,8 @@
   --ok-soft: rgba(48, 209, 88, 0.16);
   --warn: #ff9f0a;
   --warn-soft: rgba(255, 159, 10, 0.16);
+  --trail-sky-a: #141c28;
+  --trail-sky-b: #0f1620;
   --higher: #3987e5;
   --higher-ink: #7fb2f0;
   --higher-soft: rgba(57, 135, 229, 0.17);
