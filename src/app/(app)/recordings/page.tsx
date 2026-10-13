@@ -8,6 +8,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
+import { useRecordingTitle } from "@/lib/protocol/official";
 import { taskName } from "@/lib/types";
 import type { Recording } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -23,6 +24,8 @@ import {
 
 export default function RecordingsPage() {
   const t = useTranslations("recordings");
+  // A run of an official protocol is titled after it: shown in the reader's language.
+  const titleOf = useRecordingTitle();
   const locale = useFormatLocale();
   const [showUpload, setShowUpload] = useState(false);
   const workspace = useCurrentWorkspace();
@@ -107,7 +110,7 @@ export default function RecordingsPage() {
                   className="pressable flex items-center gap-4 px-5 py-4 hover:bg-surface-2"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{r.title}</p>
+                    <p className="truncate font-medium">{titleOf(r)}</p>
                     <p className="type-caption mt-0.5 text-ink-3">
                       {t("list.meta", {
                         task: r.task_label

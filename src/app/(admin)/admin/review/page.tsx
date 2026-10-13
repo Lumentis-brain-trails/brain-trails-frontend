@@ -5,10 +5,12 @@
  * to the community waits here during the beta. Approve puts it on the community shelf,
  * refuse keeps it in its workspace, hide takes it down. A reviewer cannot open someone
  * else's workspace protocol, so each protocol comes with its description and outline:
- * this page is where they see what they approve. The staff app stays English (plan V3,
- * S26).
+ * this page is where they see what they approve - the outline in the words the
+ * protocol's own page will use (`protocols.detail.outline`, `protocols.kindWords`), the
+ * tags by the names of the catalog's rows (`protocols.tags`).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { MediaCard } from "@/components/MediaCard";
 import {
   Button,
@@ -18,6 +20,7 @@ import {
   Spinner,
 } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import { type ProtocolDetail, formatMinutes } from "@/lib/protocol/catalog";
 import type { Media } from "@/lib/types";
 
@@ -31,10 +34,11 @@ function Decisions({
   onDecide: (decision: Decision) => void;
   disabled: boolean;
 }) {
+  const t = useTranslations("admin.review");
   return (
     <div className="flex flex-wrap gap-2">
       <Button size="sm" onClick={() => onDecide("approve")} disabled={disabled}>
-        Approve
+        {t("approve")}
       </Button>
       <Button
         size="sm"
@@ -42,7 +46,7 @@ function Decisions({
         onClick={() => onDecide("refuse")}
         disabled={disabled}
       >
-        Refuse
+        {t("refuse")}
       </Button>
       <Button
         size="sm"
@@ -50,7 +54,7 @@ function Decisions({
         onClick={() => onDecide("hide")}
         disabled={disabled}
       >
-        Hide
+        {t("hide")}
       </Button>
     </div>
   );
@@ -65,6 +69,15 @@ function ProtocolRequest({
   onDecide: (decision: Decision) => void;
   disabled: boolean;
 }) {
+  const t = useTranslations("admin.review");
+  const tOutline = useTranslations("protocols.detail.outline");
+  const tKinds = useTranslations("protocols.kindWords");
+  const tTags = useTranslations("protocols.tags");
+  const duration = formatMinutes(item.est_duration_s);
+  const tags = item.tags.map((tag) => {
+    const title = `${tag}.title`;
+    return tTags.has(title as never) ? tTags(title as never) : tag;
+  });
   return (
     <Card inset className="space-y-3 p-4">
       <div className="flex gap-4">
@@ -79,11 +92,13 @@ function ProtocolRequest({
         <div className="min-w-0">
           <h3 className="text-[15px] font-semibold">{item.title}</h3>
           <p className="type-caption text-ink-3">
-            version {item.current_version}
-            {item.est_duration_s
-              ? ` · ${formatMinutes(item.est_duration_s)}`
-              : ""}
-            {item.tags.length > 0 && ` · ${item.tags.join(", ")}`}
+            {t("meta", {
+              version: item.current_version ?? "",
+              timed: item.est_duration_s ? "yes" : "no",
+              duration: duration ?? "",
+              tagged: tags.length > 0 ? "yes" : "no",
+              tags: tags.join(", "),
+            })}
           </p>
           {(item.description ?? item.summary) && (
             <p className="mt-1 text-ink-2">
@@ -94,7 +109,7 @@ function ProtocolRequest({
       </div>
       {item.content_warning && (
         <p className="type-caption text-ink-2">
-          Content warning: {item.content_warning}
+          {t("contentWarning", { warning: item.content_warning })}
         </p>
       )}
       {item.outline.length > 0 && (
@@ -103,10 +118,16 @@ function ProtocolRequest({
             <li key={i}>
               {step.label}
               <span className="text-ink-3">
-                {" — "}
-                {step.kind}
-                {step.count > 1 && ` ×${step.count}`}
-                {step.duration_s ? `, ${formatMinutes(step.duration_s)}` : ""}
+                {" "}
+                {tOutline("step", {
+                  kind: tKinds.has(step.kind as never)
+                    ? tKinds(step.kind as never)
+                    : step.kind,
+                  repeated: step.count > 1 ? "yes" : "no",
+                  count: step.count,
+                  timed: step.duration_s ? "yes" : "no",
+                  duration: formatMinutes(step.duration_s) ?? "",
+                })}
               </span>
             </li>
           ))}
@@ -118,6 +139,8 @@ function ProtocolRequest({
 }
 
 export default function AdminReviewPage() {
+  const t = useTranslations("admin.review");
+  const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const protocols = useQuery({
     queryKey: ["admin-review", "protocols"],
@@ -140,26 +163,24 @@ export default function AdminReviewPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="type-title mb-1">Review</h1>
-      <p className="mb-8 text-ink-2">
-        Protocols and items people asked to share with the community.
-      </p>
+      <h1 className="type-title mb-1">{t("title")}</h1>
+      <p className="mb-8 text-ink-2">{t("intro")}</p>
       {(protocols.isPending || media.isPending) && <Spinner />}
       {(protocols.isError || media.isError) && (
-        <ErrorBanner message="The queue could not be loaded." />
+        <ErrorBanner message={t("loadFailed")} />
       )}
       {decide.error instanceof ApiRequestError && (
-        <ErrorBanner message={decide.error.error.message} />
+        <ErrorBanner message={errorMessage(decide.error)} />
       )}
       {empty && (
         <Card inset>
-          <EmptyState title="Nothing to review." />
+          <EmptyState title={t("empty")} />
         </Card>
       )}
 
       {!!protocols.data?.length && (
         <section className="mb-10">
-          <h2 className="type-heading mb-4">Protocols</h2>
+          <h2 className="type-heading mb-4">{t("protocols")}</h2>
           <div className="space-y-4">
             {protocols.data.map((item) => (
               <ProtocolRequest
@@ -177,7 +198,7 @@ export default function AdminReviewPage() {
 
       {!!media.data?.length && (
         <section>
-          <h2 className="type-heading mb-4">Media</h2>
+          <h2 className="type-heading mb-4">{t("media")}</h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(228px,1fr))] gap-6">
             {media.data.map((item) => (
               <Card key={item.id} inset className="space-y-3 p-3">

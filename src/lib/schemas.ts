@@ -146,7 +146,8 @@ export function toRegisterPayload(
   account: AccountForm,
   consent: { core: boolean; research: boolean; newsletter: boolean },
   basics: BasicsForm,
-  wantsDeviceTest = false
+  wantsDeviceTest = false,
+  locale?: string
 ) {
   return {
     email: account.email,
@@ -164,6 +165,8 @@ export function toRegisterPayload(
     // ignores it when it is not, so a stale tab cannot enqueue anyone.
     wants_device_test: wantsDeviceTest,
     wants_beta: false,
+    // The language of this form: the account starts in it, and so does its first email.
+    ...(locale ? { locale } : {}),
   };
 }
 

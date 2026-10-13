@@ -162,6 +162,17 @@ describe("schemas", () => {
     });
   });
 
+  test("registration says which language the form was filled in", () => {
+    const payload = toRegisterPayload(
+      { email: "a@b.it", password: "long-enough-pw" },
+      { core: true, research: false, newsletter: false },
+      BASICS,
+      false,
+      "it"
+    );
+    expect(payload).toMatchObject({ locale: "it" });
+  });
+
   test("the four basics are the only profile fields registration sends", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },

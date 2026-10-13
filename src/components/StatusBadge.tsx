@@ -18,17 +18,6 @@ const TONE: Record<string, Tone> = {
   rejected: "bad",
 };
 
-/**
- * Account statuses, which only the staff app shows: it stays English by decision, so
- * these are not in the catalogue. Recording and job statuses are (`recordings.status`).
- */
-const STAFF_LABEL: Record<string, string> = {
-  pending: "Pending",
-  approved: "Approved",
-  active: "Active",
-  rejected: "Rejected",
-};
-
 const DOT: Record<Tone, string> = {
   ok: "bg-ok",
   busy: "bg-accent",
@@ -40,11 +29,13 @@ const DOT: Record<Tone, string> = {
 /**
  * Status as a dot + word. The dot pulses while something is in progress.
  *
- * The word is the catalogue's for a recording or job status, English for an account
- * status, and the raw status for one this component has never heard of.
+ * The word is the catalogue's: `recordings.status` for a recording or job status, then
+ * `admin.statuses` for an account status (the staff app is what shows those), and the
+ * raw status for one this component has never heard of.
  */
 export function StatusBadge({ status }: { status: string }) {
   const t = useTranslations("recordings.status");
+  const tAccount = useTranslations("admin.statuses");
   const tone = TONE[status] ?? "muted";
   const live = tone === "busy";
   return (
@@ -57,7 +48,9 @@ export function StatusBadge({ status }: { status: string }) {
       </span>
       {t.has(status as never)
         ? t(status as never)
-        : (STAFF_LABEL[status] ?? status)}
+        : tAccount.has(status as never)
+          ? tAccount(status as never)
+          : status}
     </span>
   );
 }

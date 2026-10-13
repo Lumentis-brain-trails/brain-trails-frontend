@@ -12,6 +12,10 @@
  * Everything else a recording page used to lead with - the raw signal, how the trail
  * was computed, reprocessing, the raw file - is still here, below the comparison, for
  * whoever wants it.
+ *
+ * What is read back is stored English: the session's title, the plan's labels and
+ * instructions, the block rows. When the session ran an official protocol they are
+ * shown in the reader's language instead (`lib/protocol/official.ts`), by block id.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -27,6 +31,7 @@ import { CompareView, type PlanStep } from "@/components/compare/CompareView";
 import { formatDuration } from "@/lib/format";
 import type { BlockMetrics } from "@/lib/compare/rows";
 import type { WireEvent } from "@/lib/protocol/marker";
+import { useOfficialTexts, useSessionProtocol } from "@/lib/protocol/official";
 import {
   mediaTimeAt,
   mediaWindows,
@@ -134,6 +139,11 @@ export default function RecordingDetailPage({
     staleTime: Infinity,
   });
 
+  // Null unless the session ran an official protocol; undefined while that is unknown.
+  const official = useOfficialTexts();
+  const ran = useSessionProtocol(session.data?.protocol_id);
+  const slug = ran?.slug ?? null;
+
   const events = useMemo(() => timeline.data ?? [], [timeline.data]);
   const plan = session.data?.resolved_plan as
     | { steps?: (PlanStep & { id: string; block?: { block_id?: string } })[] }
@@ -143,10 +153,11 @@ export default function RecordingDetailPage({
     const out: Record<string, PlanStep> = {};
     for (const step of plan?.steps ?? []) {
       const blockId = step.block?.block_id;
-      if (blockId && !(blockId in out)) out[blockId] = step;
+      if (blockId && !(blockId in out))
+        out[blockId] = official.step(slug, step);
     }
     return out;
-  }, [plan]);
+  }, [official, plan, slug]);
   const windows = useMemo(
     () => mediaWindows(events, runBlocks(events, plan)),
     [events, plan]
@@ -209,12 +220,29 @@ export default function RecordingDetailPage({
     !isLive &&
     (rec.status === "uploaded" || rec.status === "processing");
   const a = analysis.data;
-  const rows = blocks.data ?? [];
+  const rows = useMemo(
+    () =>
+      (blocks.data ?? []).map((block) => {
+        if (!block.label) return block;
+        const label = official.blockLabel(slug, block.block_id, block.label);
+        return label === block.label ? block : { ...block, label };
+      }),
+    [blocks.data, official, slug]
+  );
   const comparing = done && a && a.points.length >= 2 && rows.length > 0;
   const loadingComparison =
-    done && (analysis.isLoading || blocks.isLoading || session.isLoading);
+    done &&
+    (analysis.isLoading ||
+      blocks.isLoading ||
+      session.isLoading ||
+      ran === undefined);
+  // A run is named after its protocol, and so is its recording: a title that still is
+  // the official protocol's, word for word, reads in the reader's language. One the
+  // person changed is theirs.
+  const named = (title: string) =>
+    ran && title === ran.title ? official.title(ran.slug, title) : title;
   const protocol =
-    session.data?.title ??
+    (session.data ? named(session.data.title) : null) ??
     (rec?.task_label ? taskName(t, rec.task_label) : null) ??
     t("report.noProtocol");
 
@@ -229,7 +257,7 @@ export default function RecordingDetailPage({
       <header className="mt-3 mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           {rec ? (
-            <h1 className="type-title truncate">{rec.title}</h1>
+            <h1 className="type-title truncate">{named(rec.title)}</h1>
           ) : (
             <Skeleton className="h-9 w-64" />
           )}

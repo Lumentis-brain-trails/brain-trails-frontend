@@ -4,7 +4,11 @@ import {
   render as rtlRender,
   screen,
 } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { NextIntlClientProvider } from "next-intl";
 import { IntlEn } from "@/i18n/testing";
+import italian from "../../../messages/it.json";
 import { SPACE_THEME } from "@/components/protocol/kinds/render";
 import { STAGE_GROUND } from "@/lib/protocol/stage";
 import { type ReactElement, useEffect } from "react";
@@ -14,6 +18,8 @@ import { ProtocolRunner } from "./ProtocolRunner";
 import "./kinds";
 import type { Marker } from "@/lib/protocol/marker";
 import { hasTaskKind, registerTaskKind } from "@/lib/protocol/registry";
+import { resolvePlan } from "@/lib/protocol/resolve";
+import { parseProtocol } from "@/lib/protocol/schema";
 import { createMemorySink } from "@/lib/protocol/sink";
 import type { ProtocolDefinition } from "@/lib/protocol/types";
 
@@ -457,5 +463,144 @@ describe("ProtocolRunner", () => {
     expect(end.meta.duration).toBeCloseTo(0.5, 1);
     // A step without a block has no block fields.
     expect(markers[4].meta.block_id).toBeUndefined();
+  });
+
+  /**
+   * An official protocol in the participant's language (`lib/protocol/official.ts`).
+   * What is rendered is Italian; what is recorded, and the plan the host posted before
+   * the first block, is the stored English - the language of a run must never reach
+   * the data.
+   */
+  describe("an official protocol", () => {
+    const tree = JSON.parse(
+      readFileSync(
+        path.resolve(process.cwd(), "schemas/templates/resting-baseline.json"),
+        "utf8"
+      )
+    );
+    const plan = () =>
+      parseProtocol(
+        resolvePlan(tree, 1, {
+          id: "p1",
+          version: 1,
+          title: "Resting baseline",
+        })
+      );
+    const inItalian = (ui: ReactElement) =>
+      rtlRender(ui, {
+        wrapper: ({ children }) => (
+          <NextIntlClientProvider locale="it" messages={italian}>
+            {children}
+          </NextIntlClientProvider>
+        ),
+      });
+    const keys = italian.official["resting-baseline"].blocks;
+
+    test("is read in Italian while the plan and the markers stay as stored", async () => {
+      const protocol = plan();
+      const posted = structuredClone(protocol);
+      const sink = createMemorySink();
+      const props = () => ({
+        protocol,
+        officialSlug: "resting-baseline",
+        seed: 1,
+        sink,
+        onFinish: vi.fn(),
+        onExit: vi.fn(),
+      });
+      const view = inItalian(<ProtocolRunner {...props()} />);
+
+      expect(screen.getByText(keys.intro.label)).toBeInTheDocument();
+      expect(
+        screen.getByText(keys.intro.config.lines[0].text)
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Get ready")).toBeNull();
+      expect(
+        screen.queryByText("Sit comfortably and let your shoulders drop.")
+      ).toBeNull();
+
+      // The host re-renders every second: the copy handed to the task is made once
+      // per step, so the instruction's own timers are not restarted by it.
+      for (let second = 0; second < 6; second++) {
+        await act(async () => {
+          vi.advanceTimersByTime(1000);
+        });
+        view.rerender(<ProtocolRunner {...props()} />);
+      }
+      // a paragraph with a line break: matched on its text, not on a single node
+      expect(
+        screen.getByText(
+          (_, node) =>
+            node?.tagName === "P" &&
+            node.textContent === keys.intro.config.lines[1].text
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(keys.intro.config.lines[2].text)
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        screen
+          .getByRole("button", { name: keys.intro.config.advance.label })
+          .click();
+      });
+      expect(screen.getByText(keys.eyes_open.label)).toBeInTheDocument();
+
+      expect(protocol).toEqual(posted);
+      const recorded = JSON.stringify(sink.all());
+      expect(recorded).toContain('"block_id":"intro"');
+      for (const text of [
+        keys.intro.label,
+        keys.intro.config.lines[0].text,
+        keys.intro.config.advance.label,
+        keys.eyes_open.label,
+      ])
+        expect(recorded).not.toContain(text);
+    });
+
+    test("without the slug - a person's own protocol - it is shown as stored", () => {
+      inItalian(
+        <ProtocolRunner
+          protocol={plan()}
+          seed={1}
+          sink={createMemorySink()}
+          onFinish={vi.fn()}
+          onExit={vi.fn()}
+        />
+      );
+      expect(screen.getByText("Get ready")).toBeInTheDocument();
+      expect(
+        screen.getByText("Sit comfortably and let your shoulders drop.")
+      ).toBeInTheDocument();
+      expect(screen.queryByText(keys.intro.label)).toBeNull();
+    });
+
+    test("the opening notice names the protocol and its warning in Italian", () => {
+      const tree = JSON.parse(
+        readFileSync(
+          path.resolve(process.cwd(), "schemas/templates/sustained-focus.json"),
+          "utf8"
+        )
+      );
+      const protocol = parseProtocol(
+        resolvePlan(tree, 1, { id: "p2", version: 1, title: "Sustained Focus" })
+      );
+      inItalian(
+        <ProtocolRunner
+          protocol={protocol}
+          officialSlug="sustained-focus"
+          seed={1}
+          sink={createMemorySink()}
+          onFinish={vi.fn()}
+          onExit={vi.fn()}
+        />
+      );
+      const texts = italian.official["sustained-focus"];
+      expect(
+        screen.getByRole("heading", { name: texts.title })
+      ).toBeInTheDocument();
+      expect(screen.getByText(texts.contentWarning)).toBeInTheDocument();
+      expect(protocol.title).toBe("Sustained Focus");
+    });
   });
 });

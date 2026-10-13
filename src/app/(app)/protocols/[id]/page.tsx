@@ -14,6 +14,7 @@ import {
   formatMinutes,
   isPlayable,
 } from "@/lib/protocol/catalog";
+import { useOfficialTexts } from "@/lib/protocol/official";
 import {
   Button,
   buttonClass,
@@ -35,6 +36,10 @@ import { useToast } from "@/components/Toast";
  *
  * The outline names each block in plain words (`protocols.kindWords.<kind>`); a kind
  * the catalogue does not know yet is shown by its code rather than left blank.
+ *
+ * An official protocol's own words - title, description, warning, the outline's labels -
+ * come from the catalogue in the reader's language (`lib/protocol/official.ts`); a
+ * protocol somebody wrote is shown as stored.
  */
 export default function ProtocolPage({
   params,
@@ -46,6 +51,7 @@ export default function ProtocolPage({
   const tKinds = useTranslations("protocols.kindWords");
   const locale = useFormatLocale();
   const errorMessage = useErrorMessage();
+  const official = useOfficialTexts();
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -118,7 +124,7 @@ export default function ProtocolPage({
       </main>
     );
 
-  const p = item.data;
+  const p = official.detail(item.data);
   const locked = p.access === "locked";
   const playable = isPlayable(p);
   const draftChanged =

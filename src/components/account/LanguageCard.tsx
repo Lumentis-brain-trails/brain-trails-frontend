@@ -3,8 +3,9 @@
 /**
  * The language setting, from the account page.
  *
- * The choice lives in this browser (a cookie), not on the account: it takes effect
- * before anyone has signed in, and the entry screens carry the same switch.
+ * The choice is kept in this browser (a cookie, so the page renders in it at once) and
+ * on the account, so it follows the person and the backend writes to them in it. The
+ * entry screens carry the same switch for someone who has not signed in yet.
  */
 import { useTranslations } from "next-intl";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
@@ -21,7 +22,7 @@ export function LanguageCard() {
             <span className="block">{t("label")}</span>
             <span className="type-caption text-ink-3">{t("hint")}</span>
           </span>
-          <LanguageSwitch />
+          <LanguageSwitch account />
         </ListRow>
       </Card>
     </>

@@ -10,18 +10,8 @@ import i18next from "eslint-plugin-i18next";
  */
 const TRANSLATED_SURFACES = ["src/app/**", "src/components/**"];
 
-/**
- * The exceptions, each for a reason: the staff app stays English (plan V3, open
- * decision 6); the privacy note is legal text with its own review; the timing probe is
- * a developer tool that never ships to production.
- */
-const UNTRANSLATED = [
-  "src/app/(admin)/**",
-  "src/app/(public)/privacy/**",
-  "src/app/api/**",
-  "src/components/TimingProbeOverlay.tsx",
-  "**/*.test.{ts,tsx}",
-];
+/** Not screens: the BFF routes speak JSON to the client, and tests quote the copy. */
+const UNTRANSLATED = ["src/app/api/**", "**/*.test.{ts,tsx}"];
 
 const eslintConfig = defineConfig([
   ...nextVitals,

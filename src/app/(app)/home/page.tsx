@@ -8,6 +8,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
+import { useRecordingTitle } from "@/lib/protocol/official";
 import type { Recording } from "@/lib/types";
 import { TrailThumb } from "@/components/TrailThumb";
 import { UploadDialog } from "@/components/UploadDialog";
@@ -30,6 +31,8 @@ const RECENT = 4;
  */
 export default function HomePage() {
   const t = useTranslations("home");
+  // A run of an official protocol is titled after it: shown in the reader's language.
+  const titleOf = useRecordingTitle();
   const locale = useFormatLocale();
   const [showUpload, setShowUpload] = useState(false);
   const workspace = useCurrentWorkspace();
@@ -155,9 +158,9 @@ export default function HomePage() {
                   href={`/recordings/${r.id}`}
                   className="pressable group block"
                 >
-                  <TrailThumb recording={r} />
+                  <TrailThumb recording={{ ...r, title: titleOf(r) }} />
                   <p className="mt-3 truncate font-semibold group-hover:underline">
-                    {r.title}
+                    {titleOf(r)}
                   </p>
                   <p className="type-caption mt-0.5 text-ink-3">
                     {t("recent.meta", {

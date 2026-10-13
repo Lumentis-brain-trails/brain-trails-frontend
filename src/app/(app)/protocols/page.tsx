@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ApiRequestError, api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { type ProtocolCard as Card } from "@/lib/protocol/catalog";
+import { CATALOG_QUERY, useOfficialTexts } from "@/lib/protocol/official";
 import { MEDIA_TAGS, type MediaTag } from "@/lib/types";
 import { ProtocolCard } from "@/components/ProtocolCard";
 import {
@@ -51,11 +52,8 @@ export default function ProtocolsPage() {
   // a bad request or an expired session will not become valid on retry: fail fast
   const retry = (count: number, error: Error) =>
     error instanceof ApiRequestError && error.status < 500 ? false : count < 2;
-  const catalog = useQuery({
-    queryKey: ["protocols", "catalog"],
-    queryFn: () => api.get<Card[]>("protocols?include_locked=true&limit=100"),
-    retry,
-  });
+  const official = useOfficialTexts();
+  const catalog = useQuery({ ...CATALOG_QUERY, retry });
   const mine = useQuery({
     queryKey: ["protocols", "mine", workspace?.id],
     queryFn: () =>
@@ -69,10 +67,13 @@ export default function ProtocolsPage() {
   const tagsOf = (p: Card) => p.tags ?? [];
   const locked = (p: Card) => p.access === "locked";
 
-  /** Runnable first inside a row, so the one thing a reader can actually start leads. */
+  /**
+   * Runnable first inside a row, so the one thing a reader can actually start leads;
+   * then by the title the card shows, which for an official protocol is the reader's.
+   */
   const openFirst = (a: Card, b: Card) =>
     locked(a) === locked(b)
-      ? a.title.localeCompare(b.title)
+      ? official.card(a).title.localeCompare(official.card(b).title)
       : locked(a)
         ? 1
         : -1;

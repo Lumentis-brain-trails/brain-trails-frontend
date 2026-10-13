@@ -72,6 +72,8 @@ export interface UserInfo {
   status: string;
   created_at: string;
   email_verified_at: string | null;
+  /** The language chosen for the account; null until someone chooses (backend V3-0018). */
+  locale?: string | null;
 }
 
 export const TASK_LABELS = [

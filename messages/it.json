@@ -1311,7 +1311,7 @@
   "language": {
     "title": "Lingua",
     "label": "Lingua dell'app",
-    "hint": "Ricordata su questo browser."
+    "hint": "Salvata sul tuo account e su questo browser."
   },
   "meta": {
     "description": "Trasforma una registrazione EEG in un sentiero attraverso lo spazio degli stati cerebrali. Un prototipo di ricerca LuMentis."
@@ -2021,6 +2021,1072 @@
       "agree": "L'ho letta e sono d'accordo",
       "saving": "Salvataggio…",
       "decline": "Preferisci non accettare? Scrivi a {email} ed esporteremo o elimineremo tutto ciò che conserviamo su di te."
+    }
+  },
+  "privacy": {
+    "metaTitle": "Privacy",
+    "eyebrow": "Informativa sulla privacy · v{version}",
+    "title": "Che cosa succede ai tuoi dati.",
+    "draft": "<strong>Brain Trails è un prototipo di ricerca non clinico, e questa informativa è una bozza pubblicata in attesa di revisione legale.</strong> Descrive ciò che il sistema fa davvero oggi. Sarà sostituita da un'informativa sottoposta a revisione, e ti avviseremo quando accadrà.",
+    "intro": "Proteggere la privacy delle persone che usano Brain Trails conta per noi più di qualsiasi altra cosa facciamo con questo prototipo — ti chiediamo registrazioni del tuo cervello, e non lo prendiamo alla leggera. Stiamo facendo ogni sforzo per tenere i tuoi dati al sicuro e per rendere questa informativa pienamente conforme alla normativa che le si applica. Ci siamo impegnati a descrivere solo ciò che è vero oggi e non ciò che intendiamo costruire, e dove qualcosa non è ancora stato realizzato, questa informativa lo dice.",
+    "sections": {
+      "whatItIs": {
+        "title": "1. Che cos'è Brain Trails, e che cosa non è",
+        "p1": "Brain Trails è fornito a scopo informativo e di benessere. Salvo diversa indicazione scritta di Lumentis Analytics Inc., non è un dispositivo medico e non è destinato a diagnosticare, trattare, curare, prevenire o monitorare alcuna malattia o condizione medica. Non fornisce consulenza medica.",
+        "p2": "Non prendere decisioni mediche sulla base di Brain Trails. Per sintomi, diagnosi o trattamenti rivolgiti a un professionista sanitario qualificato."
+      },
+      "whoWeAre": {
+        "title": "2. Chi siamo",
+        "p1": "Lumentis Analytics Inc. risponde dei dati personali trattati tramite Brain Trails.",
+        "addressee": "Lumentis Analytics Inc., all'attenzione del Privacy Officer",
+        "postalAddress": "329 Howe Street, Unit 272, Vancouver, British Columbia V6C 3N2, Canada"
+      },
+      "collect": {
+        "title": "3. Che cosa raccogliamo",
+        "p1": "<strong>Il tuo account.</strong> Il tuo indirizzo email, la tua password (conservata solo come hash, mai come testo che possiamo leggere) e un identificativo dell'account generato da noi.",
+        "p2": "<strong>Quello che ci dici di te.</strong> Il tuo nome, l'anno di nascita e la mano dominante, e — se scegli di fornirli — dettagli come sesso alla nascita, sonno, caffeina, farmaci e condizioni neurologiche o psichiatriche. Diversi di questi dati riguardano la salute e sono sensibili. Sono obbligatori solo i pochi che rendono interpretabile una registrazione, nessuno dei quali alla creazione dell'account, e gli altri sono proposti e mai pretesi.",
+        "p3": "<strong>Le tue registrazioni.</strong> L'EEG acquisito durante una sessione, le informazioni sulla qualità del segnale e sul dispositivo, le tue risposte e i tuoi tempi durante un esercizio, e tutto ciò che ne deriva: caratteristiche, metriche, proiezioni, visualizzazioni e report.",
+        "p4": "Le registrazioni EEG e ciò che ne ricaviamo possono essere dati personali sensibili. A seconda del contesto possono essere considerati dati relativi alla salute o dati biometrici.",
+        "p5": "<strong>Informazioni tecniche.</strong> I normali log del server, il tipo di browser e di dispositivo, l'indirizzo IP e il cookie di sessione che mantiene attivo il tuo accesso."
+      },
+      "use": {
+        "title": "4. Che cosa ne facciamo",
+        "p1": "Li usiamo per far funzionare il servizio: per mantenere il tuo account, per ricevere ed elaborare le tue registrazioni, per calcolare le analisi e i report che hai richiesto, per mostrarti la tua cronologia, per mantenere il servizio sicuro e funzionante, e per risponderti quando ci scrivi.",
+        "p2": "<strong>Migliorare Brain Trails stesso.</strong> Usiamo le registrazioni e i dati derivati per verificare e migliorare l'accuratezza e l'affidabilità di ciò che Brain Trails fa — se una lettura è attendibile, se una metrica si comporta come dovrebbe, perché qualcosa non ha funzionato. Questo fa parte del funzionamento del servizio che stai usando.",
+        "p3": "<strong>Ricerca più ampia — solo se dici di sì.</strong> Separatamente, e solo con il consenso facoltativo che puoi dare alla creazione dell'account e modificare in qualsiasi momento dalla pagina del tuo account, possiamo conservare e usare le tue registrazioni pseudonimizzate e i dati derivati per la ricerca scientifica che va oltre il funzionamento e il miglioramento di questo servizio. Dire di no non cambia nulla per il tuo account, le tue registrazioni o i tuoi risultati. Se revochi il consenso, da quel momento smettiamo di usare i tuoi dati per la ricerca; non possiamo annullare la ricerca già svolta, né recuperare dati che sono stati resi anonimi in modo irreversibile.",
+        "p4": "Non vendiamo i tuoi dati personali, le tue registrazioni né nulla che ne derivi, e non li usiamo per pubblicità o tracciamento comportamentale di alcun tipo."
+      },
+      "consent": {
+        "title": "5. Consenso",
+        "p1": "Ti chiediamo due cose separatamente. La prima è il consenso al trattamento delle tue registrazioni e dei dati del tuo account per poterti fornire Brain Trails — senza, non c'è alcun servizio da offrirti. La seconda è il consenso facoltativo alla ricerca descritto sopra.",
+        "p2": "Puoi revocare quello facoltativo in qualsiasi momento dalla pagina del tuo account. Puoi revocare il primo eliminando il tuo account, sempre dalla pagina del tuo account, oppure scrivendoci. La revoca non annulla il trattamento già effettuato."
+      },
+      "pseudonymised": {
+        "title": "6. Pseudonimizzato non significa anonimo",
+        "p1": "Le tue registrazioni e tutto ciò che ne deriva sono conservati sotto un identificativo generato casualmente, e non sotto il tuo nome o la tua email, e i file stessi non contengono alcun dettaglio identificativo né nel nome né nel contenuto. La tua identità si trova in un database separato.",
+        "p2": "È una protezione reale, e non è anonimato. Finché possiamo ricollegare un identificativo a te — e tramite il nostro sistema di account possiamo — i dati restano dati personali, e questa informativa li considera tali in ogni sua parte. Non descriveremo nulla come anonimo a meno che non sia stato trattato in modo che una persona non sia più ragionevolmente identificabile a partire da quei dati."
+      },
+      "storage": {
+        "title": "7. Dove sono conservati",
+        "p1": "Lumentis Analytics Inc. è una società canadese. Le registrazioni, i file e il database dell'applicazione sono conservati a Francoforte, in Germania. L'applicazione stessa è servita da Vercel, la cui rete è globale, per cui le richieste possono essere gestite al di fuori di quella regione anche se i dati a riposo non lo sono.",
+        "p2": "Il personale autorizzato di Lumentis può accedere ai dati dal Canada e dall'Italia, ove necessario per far funzionare, mantenere e supportare il servizio."
+      },
+      "security": {
+        "title": "8. Sicurezza",
+        "p1": "Una parte di ciò che protegge i tuoi dati viene dalle piattaforme su cui costruiamo, per impostazione predefinita e senza che noi configuriamo nulla:",
+        "platforms": {
+          "1": "I file sono cifrati a riposo. Amazon S3 applica la cifratura lato server AES-256 a ogni nuovo oggetto, come livello di base che non può essere disattivato (<link>lo documenta AWS</link>).",
+          "2": "Il database è cifrato a riposo e vi si accede tramite TLS; vedi la <link>panoramica sulla sicurezza di Neon</link>.",
+          "3": "Il traffico tra il tuo browser e noi viaggia su HTTPS."
+        },
+        "p2": "E una parte è opera nostra:",
+        "own": {
+          "1": "Le password sono conservate solo come hash Argon2. Non possiamo leggerle.",
+          "2": "I tuoi file non sono mai pubblici. Vi si accede tramite link generati per un singolo file, che scadono nel giro di pochi minuti.",
+          "3": "L'accesso ai sistemi che conservano le registrazioni è limitato al ristretto numero di persone che gestiscono il servizio.",
+          "4": "L'identità è conservata in un luogo diverso dalle registrazioni, come descritto nella sezione 6."
+        },
+        "p3": "I link a quelle pagine ti dicono che cosa fanno i nostri fornitori; non equivalgono ad affermare che tutto, dalla nostra parte, sia configurato alla perfezione. Nessun sistema è completamente sicuro, e non possiamo prometterti che i tuoi dati non saranno mai violati. Quello che possiamo promettere è che indagheremo su qualunque cosa sospettiamo e che ti informeremo dove la legge lo richiede — e, per qualcosa di così sensibile, anche dove non lo richiede ma è evidente che vorresti saperlo."
+      },
+      "retention": {
+        "title": "9. Conservazione ed eliminazione",
+        "p1": "Conserviamo il tuo account e le tue registrazioni finché il tuo account esiste e questo prototipo è in funzione. Non abbiamo ancora fissato un periodo di conservazione definito e non intendiamo inventarne uno qui: puoi esportare o eliminare tutto in autonomia, in qualsiasi momento, dalla pagina del tuo account.",
+        "p2": "Poiché si tratta di un prototipo, i dati possono essere rimossi anche quando azzeriamo un ambiente. Ti avviseremo prima di farlo deliberatamente.",
+        "p3": "<strong>Quando elimini il tuo account</strong>, eliminiamo i tuoi dati personali: le tue registrazioni e i file su cui si basano, le analisi e i report che ne derivano, il tuo profilo — comprese le eventuali risposte relative alla salute che hai dato — e l'account stesso.",
+        "p4": "Una sola, circoscritta eccezione. Conserviamo una traccia minima del fatto che il consenso è stato dato e in seguito revocato o eliminato, per poter dimostrare che lo abbiamo chiesto correttamente e che abbiamo rispettato la tua richiesta. Quella traccia non contiene dati EEG, né informazioni sulla salute, né nome, né indirizzo email — solo un identificativo dell'account, la versione di questa informativa che è stata accettata, e quando. Una volta eliminato il tuo account, quell'identificativo non rimanda più a nulla di ciò che conserviamo.",
+        "p5": "I backup non vengono modificati a mano. Le copie dei dati contenute nei backup scompaiono man mano che quei backup scadono secondo il loro ciclo normale."
+      },
+      "disclosure": {
+        "title": "10. Chi altro li vede",
+        "p1": "Non vendiamo i tuoi dati personali e non li condividiamo a fini pubblicitari. Sono comunicati solo ai fornitori che ospitano e gestiscono il servizio per nostro conto in base a un contratto — oggi i nostri fornitori di archiviazione cloud, database, hosting ed email — a consulenti professionali ove realmente necessario, quando lo richiedono la legge o un valido procedimento legale, per proteggere le persone da un danno, nell'ambito di un'operazione commerciale soggetta alla normativa sulla privacy, e a chiunque tu ci chieda di condividerli."
+      },
+      "rights": {
+        "title": "11. I tuoi diritti",
+        "p1": "Due di questi puoi esercitarli in autonomia, subito, dalla pagina del tuo account: <strong>esportare tutto</strong> ciò che conserviamo su di te, ed <strong>eliminare il tuo account</strong>. Da lì puoi anche dare o revocare il consenso facoltativo alla ricerca.",
+        "p2": "Per tutto il resto — accesso, rettifica, limitazione di un determinato trattamento od opposizione a esso, o per chiedere che cosa abbiamo comunicato — scrivi a <email>{privacyEmail}</email>. Quell'indirizzo è letto da una persona. Potremmo dover verificare la tua identità prima di procedere.",
+        "p3": "Se non ti soddisfa il modo in cui abbiamo gestito qualcosa, puoi presentare reclamo all'Office of the Privacy Commissioner of Canada, oppure all'Office of the Information and Privacy Commissioner for British Columbia."
+      },
+      "cookies": {
+        "title": "12. Cookie",
+        "p1": "Usiamo un solo cookie, per mantenere attivo il tuo accesso, e la memoria del browser per piccole preferenze, come la scelta tra il tema chiaro e quello scuro. Nessun cookie pubblicitario, nessuno strumento di analisi di terze parti, nessun pixel di tracciamento. Se blocchi il cookie di sessione non potrai accedere.",
+        "p2": "Un cookie di sessione o un identificativo memorizzato non rendono anonime le tue registrazioni. Se un identificativo ci permette di trovare i tuoi dati, quei dati restano dati personali."
+      },
+      "age": {
+        "title": "13. Età",
+        "p1": "Brain Trails è destinato a persone di almeno 18 anni. Non apriamo consapevolmente account a chi è più giovane. Se ritieni che una persona con meno di 18 anni abbia creato un account, scrivici e lo elimineremo."
+      },
+      "otherServices": {
+        "title": "14. Altri servizi",
+        "p1": "Brain Trails funziona con una fascia EEG Muse, che è prodotta e supportata da un'altra società secondo la propria informativa sulla privacy. Lo stesso vale per i fornitori di infrastruttura indicati sopra. Ti invitiamo a leggere le loro informative."
+      },
+      "changes": {
+        "title": "15. Modifiche a questa informativa",
+        "p1": "Quando modificheremo questa informativa in modo rilevante, pubblicheremo una nuova versione e ti chiederemo di leggerla e accettarla al tuo prossimo accesso. La versione è indicata in cima a questa pagina e viene annotata sul tuo account quando accetti, così resta sempre traccia di ciò che hai effettivamente accettato."
+      },
+      "contact": {
+        "title": "16. Contatti",
+        "p1": "Domande, richieste o reclami: <email>{privacyEmail}</email>, oppure Lumentis Analytics Inc., all'attenzione del Privacy Officer, 329 Howe Street, Unit 272, Vancouver, British Columbia V6C 3N2, Canada."
+      }
+    }
+  },
+  "admin": {
+    "shared": {
+      "backToAdmin": "Torna all'admin"
+    },
+    "statuses": {
+      "pending": "In attesa",
+      "approved": "Approvato",
+      "active": "Attivo",
+      "rejected": "Rifiutato"
+    },
+    "dashboard": {
+      "title": "Panoramica",
+      "intro": "Partecipanti e statistiche sui dati in ingresso in tutto il prototipo.",
+      "links": {
+        "fair": "Lo stand",
+        "protocols": "Blocchi del catalogo",
+        "review": "Revisione delle pubblicazioni",
+        "applications": "Esamina le candidature"
+      },
+      "loadFailed": "Non è stato possibile caricare le statistiche.",
+      "stats": {
+        "active": "Partecipanti attivi",
+        "pending": "In attesa di esame",
+        "rejected": "{count, plural, one {# rifiutato} other {# rifiutati}}",
+        "recordings": "Registrazioni",
+        "liveSessions": "{count, plural, one {# sessione in diretta} other {# sessioni in diretta}}",
+        "minutes": "Minuti di segnale",
+        "failedJobs": "{count, plural, one {# elaborazione non riuscita} other {# elaborazioni non riuscite}}"
+      },
+      "byTask": {
+        "title": "Registrazioni per compito",
+        "empty": "Ancora nessuna registrazione."
+      },
+      "uploads": {
+        "title": "Caricamenti, ultimi 14 giorni",
+        "empty": "Ancora nessun caricamento.",
+        "aria": "Caricamenti al giorno"
+      },
+      "valueOf": "{label}: {value}",
+      "participants": {
+        "title": "Partecipanti",
+        "participant": "Partecipante",
+        "status": "Stato",
+        "recordings": "Registrazioni",
+        "minutes": "Minuti",
+        "lastActivity": "Ultima attività",
+        "allApplications": "Tutte le candidature"
+      }
+    },
+    "applications": {
+      "title": "Candidature",
+      "intro": "Chi entra nella beta, e in quale coorte.",
+      "decision": "Decisione",
+      "tabs": {
+        "pending": "In attesa",
+        "waitlisted": "In lista d'attesa",
+        "accepted": "Accettate",
+        "rejected": "Rifiutate"
+      },
+      "empty": {
+        "pending": "Nessuna candidatura in attesa.",
+        "waitlisted": "Nessuna candidatura in lista d'attesa.",
+        "accepted": "Nessuna candidatura accettata.",
+        "rejected": "Nessuna candidatura rifiutata."
+      },
+      "forbidden": "È richiesto il ruolo di admin.",
+      "profile": "Profilo",
+      "cohort": "Coorte",
+      "allProfiles": "Tutti i profili",
+      "allCohorts": "Tutte le coorti",
+      "profiles": {
+        "private": "Privato",
+        "therapist": "Terapeuta",
+        "lab_lead": "Responsabile di laboratorio",
+        "lab_member": "Membro di laboratorio"
+      },
+      "meta": "{profile} · {email} · candidatura del {date}{inCohort, select, yes { · {cohort}} other {}}",
+      "answers": {
+        "labels": {
+          "registration_no": "N. di iscrizione all'albo",
+          "headband": "Fascia",
+          "device": "Dispositivo",
+          "expected_subjects": "Persone previste"
+        },
+        "webBluetooth": "Web Bluetooth",
+        "bluetoothUnknown": "Non indicato",
+        "bluetoothYes": "Sì",
+        "bluetoothNo": "No - qui non può associare la fascia"
+      },
+      "verification": {
+        "manual": "Modalità email manuale: invia questo link di verifica al candidato.",
+        "copy": "Copia",
+        "copied": "Copiato",
+        "reissue": "Genera un nuovo link di verifica"
+      },
+      "cohorts": {
+        "title": "Coorti",
+        "empty": "Ancora nessuna coorte. Creane una per costruire il campione con criterio.",
+        "counts": "{accepted}{hasTarget, select, yes { / {target}} other {}} accettati · {waitlisted} in lista d'attesa",
+        "new": "Nuova coorte",
+        "anyProfile": "Qualsiasi",
+        "target": "Obiettivo",
+        "add": "Aggiungi"
+      },
+      "decide": {
+        "noCohort": "Nessuna coorte",
+        "note": "Nota (solo admin)",
+        "accept": "Accetta",
+        "waitlist": "Metti in lista d'attesa",
+        "reject": "Rifiuta"
+      }
+    },
+    "fair": {
+      "title": "Lo stand",
+      "intro": "Finché lo stand è aperto, la registrazione chiede se si vuole provare la fascia. Poi ci si può allontanare: quando chiami una persona, le arriva un'email che dice che il suo turno è tra circa cinque minuti.",
+      "open": "Lo stand è aperto.",
+      "closed": "Lo stand è chiuso.",
+      "openHint": "Alle nuove registrazioni viene posta la domanda.",
+      "closedHint": "Chiudere non svuota la coda — chi è già in coda mantiene il turno.",
+      "openAction": "Apri lo stand",
+      "closeAction": "Chiudi lo stand",
+      "stats": {
+        "waiting": "In attesa",
+        "called": "Chiamati",
+        "done": "Fatti",
+        "declined": "Non più in coda"
+      },
+      "states": {
+        "done": "fatto",
+        "declined": "non più in coda"
+      },
+      "conversion": "Tra chi ha provato la fascia, {converted} su {tried} hanno chiesto di diventare beta tester ({percent}%).",
+      "wantsBeta": "Ha chiesto di diventare beta tester",
+      "queue": "In coda",
+      "nobody": "Nessuno è in attesa.",
+      "calledAgo": "chiamato{when, select, now { adesso} minutes { {n} min fa} hours { {n} h fa} other {}}",
+      "signedUp": "{email} · iscrizione {when, select, now {adesso} minutes {{n} min fa} hours {{n} h fa} other {}}",
+      "call": "Chiama",
+      "callAgain": "Chiama di nuovo",
+      "done": "Fatto",
+      "gone": "Assente",
+      "seenTo": "Conclusi",
+      "toast": {
+        "emailed": "Email inviata a {email}.",
+        "done": "Segnato come fatto.",
+        "declined": "Tolto dalla coda."
+      }
+    },
+    "protocols": {
+      "title": "Blocchi del catalogo",
+      "intro": "Un protocollo bloccato resta in elenco — le persone vedono cosa è in arrivo — ma non può essere avviato. Le modifiche hanno effetto subito; una sessione già in corso arriva alla fine.",
+      "changeFailed": "Non è stato possibile cambiare il blocco.",
+      "official": "Protocolli ufficiali",
+      "startable": "Avviabili: {open} su {total}",
+      "empty": "Ancora nessun protocollo ufficiale.",
+      "locked": "bloccato",
+      "lock": "Blocca",
+      "unlock": "Sblocca",
+      "toast": {
+        "locked": "Bloccato.",
+        "unlocked": "Sbloccato."
+      }
+    },
+    "review": {
+      "title": "Revisione",
+      "intro": "Protocolli ed elementi che le persone hanno chiesto di condividere con la community.",
+      "loadFailed": "Non è stato possibile caricare la coda.",
+      "empty": "Niente da revisionare.",
+      "protocols": "Protocolli",
+      "media": "Media",
+      "approve": "Approva",
+      "refuse": "Rifiuta",
+      "hide": "Nascondi",
+      "meta": "versione {version}{timed, select, yes { · {duration}} other {}}{tagged, select, yes { · {tags}} other {}}",
+      "contentWarning": "Avviso sui contenuti: {warning}"
+    },
+    "probe": {
+      "fps": "fps {fps}",
+      "dropped": "persi {count}",
+      "onset": "onset p95 {p95} ms (max {max}, n {count})"
+    }
+  },
+  "official": {
+    "attention-networks": {
+      "title": "Reti dell'attenzione",
+      "summary": "Il gioco delle frecce con lampi di avviso: allerta, orientamento e conflitto, separatamente.",
+      "description": "L'Attention Network Test. Un lampo può avvisarti che le frecce stanno arrivando, oppure mostrarti dove; le frecce possono essere d'accordo oppure no. Dal confronto tra questi casi escono tre punteggi: quanto aiuta un avviso, quanto aiuta sapere il punto, e quanto costa il conflitto. Due round da quattro minuti.",
+      "contentWarning": "Frecce e brevi lampi compaiono sullo schermo per circa otto minuti, e tu rispondi in fretta. Puoi fermarti in qualsiasi momento.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Prima riposi, poi due round di un gioco con le frecce."
+              },
+              "1": {
+                "text": "Circa dodici minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        },
+        "rule": {
+          "label": "La regola",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Tieni gli occhi sulla croce.\nSopra o sotto comparirà una fila di frecce."
+              },
+              "1": {
+                "text": "Da che parte punta la freccia CENTRALE?\nPremi il tasto freccia sinistra o destra, oppure tocca il lato."
+              },
+              "2": {
+                "text": "A volte prima lampeggia una stella. Ti dice che le frecce stanno arrivando,\ne a volte dove. Continua a guardare la croce."
+              },
+              "3": {
+                "text": "Prima una breve esercitazione. Ti dirà com'è andata."
+              }
+            },
+            "advance": {
+              "label": "Esercitati"
+            }
+          }
+        },
+        "practice": {
+          "label": "Esercitazione"
+        },
+        "ready": {
+          "label": "Si fa sul serio",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Quella era l'esercitazione.\nOra due round da quattro minuti, con una pausa in mezzo."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "networks_a": {
+          "label": "Primo round"
+        },
+        "break": {
+          "label": "Pausa",
+          "config": {
+            "message": "Riposa gli occhi. Il secondo round parte da solo."
+          }
+        },
+        "networks_b": {
+          "label": "Secondo round"
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Finito."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "breath-pacing": {
+      "title": "Respirazione ritmata",
+      "summary": "Cinque minuti di respirazione lenta, sei respiri al minuto, tra due momenti di riposo.",
+      "description": "Inspira per quattro secondi ed espira per sei, seguendo un cerchio. Riposa prima e dopo a occhi chiusi, e ogni volta di' come ti senti, così il cambiamento ha un prima e un dopo. Con una fascia dotata di sensore del polso viene misurata anche la tua frequenza cardiaca.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Prima riposi, poi respiri seguendo un cerchio per cinque minuti."
+              },
+              "1": {
+                "text": "Circa nove minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        },
+        "mood_before": {
+          "label": "Come ti senti?",
+          "config": {
+            "prompt": "Pensa a come ti senti in questo momento."
+          }
+        },
+        "rule": {
+          "label": "Il ritmo",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Inspira mentre il cerchio si allarga,\nespira mentre si restringe."
+              },
+              "1": {
+                "text": "L'espirazione è più lunga dell'inspirazione. Non sforzarti:\nse ti gira la testa, respira normalmente."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "paced": {
+          "label": "Respira con il cerchio"
+        },
+        "eyes_closed_after": {
+          "label": "Occhi chiusi, di nuovo"
+        },
+        "mood_after": {
+          "label": "E adesso?",
+          "config": {
+            "prompt": "Pensa a come ti senti adesso."
+          }
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Finito."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "emotion-video": {
+      "title": "Video ed emozioni",
+      "summary": "Brevi clip di film in ordine casuale, ciascuna seguita da come ti ha fatto sentire.",
+      "description": "Una baseline a riposo, poi clip di film autorizzate in un ordine estratto per questa sessione, ciascuna seguita da una pausa e da un Self-Assessment Manikin, poi una baseline di chiusura.",
+      "contentWarning": "Questo protocollo mostra brevi clip di film scelte per suscitare emozioni, alcune delle quali spiacevoli. Puoi fermarti in qualsiasi momento.",
+      "blocks": {
+        "baseline_pre": {
+          "label": "Baseline a riposo"
+        },
+        "clip_video": {
+          "label": "Clip"
+        },
+        "clip_rating": {
+          "label": "Come ti ha fatto sentire?",
+          "config": {
+            "prompt": "Pensa a cosa hai provato mentre guardavi la clip."
+          }
+        },
+        "baseline_post": {
+          "label": "Baseline a riposo"
+        }
+      },
+      "groups": {
+        "clips": {
+          "label": "Clip"
+        }
+      }
+    },
+    "flanker-control": {
+      "title": "Controllo flanker",
+      "summary": "Da che parte punta la freccia centrale, quando quelle intorno non sono d'accordo?",
+      "description": "Una fila di cinque frecce, a cui rispondere il più in fretta possibile. Quando le frecce esterne puntano dall'altra parte rallenti e sbagli più spesso: quel costo dice quanto lavora la tua attenzione per escludere ciò che sta accanto al bersaglio, e viene misurata anche la risposta del tuo cervello a un errore.",
+      "contentWarning": "Delle frecce lampeggiano sullo schermo per circa quattro minuti, e tu rispondi in fretta. Puoi fermarti in qualsiasi momento.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Prima riposi, poi un gioco veloce con le frecce."
+              },
+              "1": {
+                "text": "Circa sette minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        },
+        "rule": {
+          "label": "La regola",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Comparirà una fila di frecce."
+              },
+              "1": {
+                "text": "Da che parte punta la freccia CENTRALE?\nPremi il tasto freccia sinistra o destra, oppure tocca il lato."
+              },
+              "2": {
+                "text": "Le altre frecce possono puntare dall'altra parte. Ignorale.\nRispondi in fretta, ma senza sbagliare."
+              },
+              "3": {
+                "text": "Prima una breve esercitazione. Ti dirà com'è andata."
+              }
+            },
+            "advance": {
+              "label": "Esercitati"
+            }
+          }
+        },
+        "practice": {
+          "label": "Esercitazione"
+        },
+        "ready": {
+          "label": "Si fa sul serio",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Quella era l'esercitazione.\nOra circa quattro minuti, senza suggerimenti."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "arrows": {
+          "label": "Freccia centrale"
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Finito."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "free-recording": {
+      "title": "Registrazione libera",
+      "summary": "Registra il tuo EEG senza nulla sullo schermo, per tutto il tempo che vuoi.",
+      "description": "Nessuno stimolo: la fascia registra mentre riposi, leggi o mediti, e ti fermi quando hai finito. Il modo più semplice per vedere il tuo sentiero.",
+      "blocks": {
+        "free_recording": {
+          "label": "Registrazione libera"
+        }
+      }
+    },
+    "interoceptive-focus": {
+      "title": "Attenzione interocettiva",
+      "summary": "Conta i battiti del tuo cuore tra due segnali acustici, senza toccarti il polso.",
+      "description": "Quattro round di conteggio in silenzio, poi quanti battiti e con quanta sicurezza. Il sensore del polso della fascia conta i battiti reali, così vedi con quanta precisione senti il tuo cuore - e se la tua sicurezza segue la tua accuratezza, che è la parte più rivelatrice.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Prima riposi, poi ascolti il battito del tuo cuore, per quattro volte."
+              },
+              "1": {
+                "text": "Circa sette minuti in tutto. Siediti comodamente, mani a riposo, audio acceso."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        },
+        "mood_before": {
+          "label": "Come ti senti?",
+          "config": {
+            "prompt": "Pensa a come ti senti in questo momento."
+          }
+        },
+        "rule": {
+          "label": "La regola",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Tra due segnali acustici, conta in silenzio i battiti del tuo cuore."
+              },
+              "1": {
+                "text": "Non toccarti il polso né il collo. Limitati a sentire.\nConta solo i battiti che senti davvero. Non tirare a indovinare."
+              },
+              "2": {
+                "text": "Poi scrivi quanti. Sentirne pochi o nessuno è una risposta normale."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "counting": {
+          "label": "Conta i battiti del tuo cuore"
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Finito."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "processing-speed": {
+      "title": "Velocità di elaborazione",
+      "summary": "Abbina simboli e numeri contro il tempo, due volte per novanta secondi.",
+      "description": "Una tabella abbina nove simboli a nove cifre; compare un simbolo e tu premi la sua cifra, quante più volte riesci. Una delle misure brevi di velocità mentale più sensibili che esistano: cambia con il sonno, l'età e la stanchezza. La tabella cambia a ogni round.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Un breve riposo, poi due round in cui abbini simboli e numeri contro il tempo."
+              },
+              "1": {
+                "text": "Circa sei minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_open": {
+          "label": "Occhi aperti"
+        },
+        "rule": {
+          "label": "La regola",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Una tabella in alto abbina ogni simbolo a un numero."
+              },
+              "1": {
+                "text": "Al centro compare un simbolo.\nPremi il suo numero, sulla tastiera o sullo schermo."
+              },
+              "2": {
+                "text": "Quanti più riesci, senza errori. Prima una breve esercitazione."
+              }
+            },
+            "advance": {
+              "label": "Esercitati"
+            }
+          }
+        },
+        "practice": {
+          "label": "Esercitazione"
+        },
+        "ready": {
+          "label": "Si fa sul serio",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Ora novanta secondi. La tabella è cambiata.\nVai più in fretta che puoi, senza sbagliare."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "coding_a": {
+          "label": "Primo round"
+        },
+        "break": {
+          "label": "Pausa",
+          "config": {
+            "message": "Sciogli le mani. Ancora un round, con una nuova tabella."
+          }
+        },
+        "coding_b": {
+          "label": "Secondo round"
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Finito."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "resting-baseline": {
+      "title": "Baseline a riposo",
+      "summary": "Un minuto a occhi aperti, un minuto a occhi chiusi.",
+      "description": "Il riferimento con cui si confronta ogni altra sessione: due minuti a riposo, prima a occhi aperti su una croce, poi chiusi finché un segnale acustico non ti dice di riaprirli.",
+      "blocks": {
+        "intro": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Siediti comodamente e lascia cadere le spalle."
+              },
+              "1": {
+                "text": "Prima un minuto a occhi aperti su una croce.\nPoi un minuto a occhi chiusi."
+              },
+              "2": {
+                "text": "Resta immobile e rilassa il viso e la mandibola."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_open": {
+          "label": "Occhi aperti"
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        }
+      }
+    },
+    "signal-navigator": {
+      "title": "Signal Navigator",
+      "summary": "Un gioco di attenzione go/no-go con respirazione guidata.",
+      "description": "Aggancia il carico e lascia passare i detriti. Prima la respirazione guidata, poi due round del gioco: misura quanto bene mantieni una regola e trattieni una risposta.",
+      "contentWarning": "Degli oggetti si muovono sullo schermo per circa cinque minuti. È disponibile una modalità con movimento ridotto, e puoi fermarti in qualsiasi momento.",
+      "blocks": {
+        "arrival": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Il carico attraverserà lo schermo."
+              },
+              "1": {
+                "text": "Premi Aggancia per il carico blu.\nLascia passare i detriti."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "settle": {
+          "label": "Mettiti a tuo agio"
+        },
+        "challenge_a": {
+          "label": "Aggancia il carico"
+        },
+        "reset": {
+          "label": "Fermati e pianifica"
+        },
+        "rule": {
+          "label": "La regola per la prossima rotta",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Nota l'impulso di andare di fretta."
+              },
+              "1": {
+                "text": "Per la prossima rotta:\nPrima il faro, poi il carico."
+              },
+              "2": {
+                "text": "Faro verde + carico blu\nAggancia."
+              },
+              "3": {
+                "text": "Tutto il resto\nLascia passare."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "challenge_b": {
+          "label": "Aspetta il segnale"
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Rotta completata."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "sustained-focus": {
+      "title": "Attenzione sostenuta",
+      "summary": "Sei minuti ininterrotti di go/no-go, con baseline a riposo e una verifica dell'umore.",
+      "description": "Riposa a occhi chiusi, esercitati, poi aggancia il carico per sei minuti mentre rari detriti ti chiedono di trattenerti. Pensato per essere misurato: abbastanza prove per vedere la risposta del tuo cervello quando ti trattieni e quando sbagli, e abbastanza lungo per vedere l'attenzione calare.",
+      "contentWarning": "Degli oggetti si muovono sullo schermo per circa sei minuti senza pause. È disponibile una modalità con movimento ridotto, e puoi fermarti in qualsiasi momento.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Prima riposi, poi una lunga rotta."
+              },
+              "1": {
+                "text": "Circa nove minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        },
+        "eyes_open": {
+          "label": "Occhi aperti"
+        },
+        "mood_before": {
+          "label": "Come ti senti?",
+          "config": {
+            "prompt": "Pensa a come ti senti in questo momento."
+          }
+        },
+        "rule": {
+          "label": "La regola",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Il carico attraverserà lo schermo."
+              },
+              "1": {
+                "text": "Premi Aggancia per il carico blu.\nLascia passare i detriti."
+              },
+              "2": {
+                "text": "Prima una breve esercitazione."
+              }
+            },
+            "advance": {
+              "label": "Esercitati"
+            }
+          }
+        },
+        "practice": {
+          "label": "Esercitazione"
+        },
+        "ready": {
+          "label": "La rotta lunga",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Quella era l'esercitazione.\nLa rotta che ti aspetta dura circa sei minuti."
+              },
+              "1": {
+                "text": "Quasi tutto è carico.\nResta all'erta per i detriti."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "focus": {
+          "label": "Mantieni la concentrazione"
+        },
+        "mood_after": {
+          "label": "E adesso?",
+          "config": {
+            "prompt": "Pensa a come ti senti ora che la rotta è finita."
+          }
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Rotta completata."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "working-memory-span": {
+      "title": "Span di memoria di lavoro",
+      "summary": "Lettere una alla volta: è quella di una posizione prima? Di due?",
+      "description": "L'n-back. Prima facile, poi più difficile: tieni a mente le ultime lettere e le aggiorni a ogni nuova lettera. Il theta frontale cresce con il carico, proprio dove ascolta una fascia, e alla fine valuti quanto ti è sembrato difficile.",
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Prima riposi, poi un gioco di memoria con le lettere, facile e poi più difficile."
+              },
+              "1": {
+                "text": "Circa nove minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Occhi chiusi"
+        },
+        "rule_1": {
+          "label": "La regola facile",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Le lettere compaiono una alla volta."
+              },
+              "1": {
+                "text": "Premi Corrisponde (o la barra spaziatrice) quando una lettera\nè UGUALE A QUELLA APPENA PRIMA."
+              },
+              "2": {
+                "text": "Altrimenti non fare nulla. Prima una breve esercitazione."
+              }
+            },
+            "advance": {
+              "label": "Esercitati"
+            }
+          }
+        },
+        "practice": {
+          "label": "Esercitazione"
+        },
+        "one_back": {
+          "label": "Una posizione prima"
+        },
+        "rule_2": {
+          "label": "La regola più difficile",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Ora premi Corrisponde quando una lettera è uguale\na quella di DUE POSIZIONI PRIMA."
+              },
+              "1": {
+                "text": "B ... K ... B  corrisponde.\nB ... B no. È fatto apposta per essere difficile."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "two_back": {
+          "label": "Due posizioni prima"
+        },
+        "effort": {
+          "label": "Quanto è stato difficile?",
+          "config": {
+            "prompt": "Pensa all'ultimo round, due posizioni prima."
+          }
+        },
+        "outro": {
+          "label": "Ritorno",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Finito."
+              },
+              "1": {
+                "text": "Riposa un momento."
+              }
+            },
+            "footnote": "Questo non è un test né una diagnosi medica."
+          }
+        }
+      }
+    },
+    "coming-task-switching": {
+      "title": "Cambio di compito",
+      "summary": "In arrivo.",
+      "blocks": {
+        "free_recording": {
+          "label": "Registrazione libera"
+        }
+      }
+    },
+    "coming-attentional-blink": {
+      "title": "Blink attentivo",
+      "summary": "In arrivo.",
+      "blocks": {
+        "free_recording": {
+          "label": "Registrazione libera"
+        }
+      }
+    },
+    "coming-threat-detection": {
+      "title": "Rilevamento della minaccia",
+      "summary": "In arrivo.",
+      "blocks": {
+        "free_recording": {
+          "label": "Registrazione libera"
+        }
+      }
+    },
+    "coming-visual-oddballs": {
+      "title": "Oddball visivi",
+      "summary": "In arrivo.",
+      "blocks": {
+        "free_recording": {
+          "label": "Registrazione libera"
+        }
+      }
+    },
+    "coming-paired-associates": {
+      "title": "Coppie associate",
+      "summary": "In arrivo.",
+      "blocks": {
+        "free_recording": {
+          "label": "Registrazione libera"
+        }
+      }
     }
   }
 }

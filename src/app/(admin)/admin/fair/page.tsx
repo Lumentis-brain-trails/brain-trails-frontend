@@ -8,8 +8,10 @@
  * you ever want to do to a row. Everything else is deliberately absent.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import { useToast } from "@/components/Toast";
 import {
   Button,
@@ -40,32 +42,37 @@ interface FairRow {
   wants_beta: boolean;
 }
 
-const LABEL: Record<FairRow["state"], string> = {
-  waiting: "waiting",
-  called: "called",
-  done: "done",
-  declined: "not any more",
-};
+/** A row nobody is waiting on any more: tried the headband, or left the queue. */
+type ClosedRow = FairRow & { state: "done" | "declined" };
 
 /** Blue, as Andrea asked: someone who has asked to be a beta tester. */
 function BetaDot() {
+  const t = useTranslations("admin.fair");
   return (
     <span
-      title="Asked to be a beta tester"
-      aria-label="Asked to be a beta tester"
+      title={t("wantsBeta")}
+      aria-label={t("wantsBeta")}
       className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#0a84ff]"
     />
   );
 }
 
-function since(iso: string): string {
+/**
+ * How long ago, as the arguments of the catalogue's sentences (`calledAgo`,
+ * `signedUp`) rather than as words: `when` picks the branch, `n` is its number of
+ * minutes or hours (unused for `now`).
+ */
+function since(iso: string): { when: "now" | "minutes" | "hours"; n: number } {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  return `${Math.round(minutes / 60)} h ago`;
+  if (minutes < 1) return { when: "now", n: 0 };
+  if (minutes < 60) return { when: "minutes", n: minutes };
+  return { when: "hours", n: Math.round(minutes / 60) };
 }
 
 export default function AdminFairPage() {
+  const t = useTranslations("admin.fair");
+  const tShared = useTranslations("admin.shared");
+  const errorMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
   const refresh = () =>
@@ -88,7 +95,7 @@ export default function AdminFairPage() {
   const toggle = useMutation({
     mutationFn: (enabled: boolean) => api.put("admin/fair", { enabled }),
     onSuccess: async (_d, enabled) => {
-      toast("success", enabled ? "The stand is open." : "The stand is closed.");
+      toast("success", enabled ? t("open") : t("closed"));
       await refresh();
     },
   });
@@ -108,10 +115,10 @@ export default function AdminFairPage() {
       toast(
         "success",
         what === "call"
-          ? `Emailed ${row.email}.`
+          ? t("toast.emailed", { email: row.email })
           : what === "done"
-            ? "Marked done."
-            : "Taken off the queue."
+            ? t("toast.done")
+            : t("toast.declined")
       );
       await refresh();
     },
@@ -123,7 +130,7 @@ export default function AdminFairPage() {
     (r) => r.state === "waiting" || r.state === "called"
   );
   const closed = rows.filter(
-    (r) => r.state === "done" || r.state === "declined"
+    (r): r is ClosedRow => r.state === "done" || r.state === "declined"
   );
   const tried = rows.filter((r) => r.state === "done");
   const converted = tried.filter((r) => r.wants_beta).length;
@@ -132,39 +139,27 @@ export default function AdminFairPage() {
     <main className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">The stand</h1>
-          <p className="mt-2 text-pretty text-ink-2">
-            While the stand is open, registration asks whether someone would
-            like to try the headband. They can then walk away: calling them
-            sends an email saying their turn is about five minutes off.
-          </p>
+          <h1 className="type-title">{t("title")}</h1>
+          <p className="mt-2 text-pretty text-ink-2">{t("intro")}</p>
         </div>
         <Link href="/admin" className={buttonClass("secondary")}>
-          Back to admin
+          {tShared("backToAdmin")}
         </Link>
       </div>
 
       {error && (
         <div className="mb-6">
-          <ErrorBanner
-            message={
-              error instanceof ApiRequestError
-                ? error.error.message
-                : "The request failed."
-            }
-          />
+          <ErrorBanner message={errorMessage(error)} />
         </div>
       )}
 
       <Card className="mb-8 flex flex-wrap items-center justify-between gap-4 p-5">
         <div>
           <p className="font-medium">
-            {mode.data?.enabled ? "The stand is open." : "The stand is closed."}
+            {mode.data?.enabled ? t("open") : t("closed")}
           </p>
           <p className="type-caption text-ink-3">
-            {mode.data?.enabled
-              ? "New registrations are being asked the question."
-              : "Closing does not empty the queue — people already in it keep their turn."}
+            {mode.data?.enabled ? t("openHint") : t("closedHint")}
           </p>
         </div>
         <Button
@@ -175,26 +170,38 @@ export default function AdminFairPage() {
           {toggle.isPending
             ? "…"
             : mode.data?.enabled
-              ? "Close the stand"
-              : "Open the stand"}
+              ? t("closeAction")
+              : t("openAction")}
         </Button>
       </Card>
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Waiting" value={String(mode.data?.waiting ?? "–")} />
-        <Stat label="Called" value={String(mode.data?.called ?? "–")} />
-        <Stat label="Done" value={String(mode.data?.done ?? "–")} />
-        <Stat label="Not any more" value={String(mode.data?.declined ?? "–")} />
+        <Stat
+          label={t("stats.waiting")}
+          value={String(mode.data?.waiting ?? "–")}
+        />
+        <Stat
+          label={t("stats.called")}
+          value={String(mode.data?.called ?? "–")}
+        />
+        <Stat label={t("stats.done")} value={String(mode.data?.done ?? "–")} />
+        <Stat
+          label={t("stats.declined")}
+          value={String(mode.data?.declined ?? "–")}
+        />
       </div>
       {tried.length > 0 && (
         <p className="-mt-4 mb-8 flex items-center gap-2 text-[14px] text-ink-2">
           <BetaDot />
-          {converted} of {tried.length} who tried the headband asked to be beta
-          testers ({Math.round((converted / tried.length) * 100)}%).
+          {t("conversion", {
+            converted,
+            tried: tried.length,
+            percent: Math.round((converted / tried.length) * 100),
+          })}
         </p>
       )}
 
-      <SectionTitle>In the queue</SectionTitle>
+      <SectionTitle>{t("queue")}</SectionTitle>
       <Card inset>
         {queue.isLoading && (
           <div className="space-y-2 p-5">
@@ -203,7 +210,7 @@ export default function AdminFairPage() {
           </div>
         )}
         {!queue.isLoading && live.length === 0 && (
-          <p className="px-5 py-4 text-ink-3">Nobody is waiting.</p>
+          <p className="px-5 py-4 text-ink-3">{t("nobody")}</p>
         )}
         {live.map((row, i) => {
           const busy =
@@ -224,13 +231,20 @@ export default function AdminFairPage() {
                   {row.wants_beta && <BetaDot />}
                   {row.state === "called" && (
                     <span className="rounded-full bg-ok-soft px-2 py-0.5 text-[12px] text-ok">
-                      {LABEL.called}
-                      {row.called_at ? ` ${since(row.called_at)}` : ""}
+                      {t(
+                        "calledAgo",
+                        row.called_at
+                          ? since(row.called_at)
+                          : { when: "unknown", n: 0 }
+                      )}
                     </span>
                   )}
                 </span>
                 <span className="type-caption block truncate pl-7 text-ink-3">
-                  {row.email} · signed up {since(row.signed_up_at)}
+                  {t("signedUp", {
+                    email: row.email,
+                    ...since(row.signed_up_at),
+                  })}
                 </span>
               </span>
               <span className="flex shrink-0 gap-2">
@@ -239,7 +253,7 @@ export default function AdminFairPage() {
                   disabled={busy}
                   onClick={() => act.mutate({ row, what: "call" })}
                 >
-                  {row.state === "called" ? "Call again" : "Call"}
+                  {row.state === "called" ? t("callAgain") : t("call")}
                 </Button>
                 <Button
                   size="sm"
@@ -247,7 +261,7 @@ export default function AdminFairPage() {
                   disabled={busy}
                   onClick={() => act.mutate({ row, what: "done" })}
                 >
-                  Done
+                  {t("done")}
                 </Button>
                 <Button
                   size="sm"
@@ -255,7 +269,7 @@ export default function AdminFairPage() {
                   disabled={busy}
                   onClick={() => act.mutate({ row, what: "declined" })}
                 >
-                  Gone
+                  {t("gone")}
                 </Button>
               </span>
             </div>
@@ -265,7 +279,7 @@ export default function AdminFairPage() {
 
       {closed.length > 0 && (
         <>
-          <SectionTitle className="mt-8">Seen to</SectionTitle>
+          <SectionTitle className="mt-8">{t("seenTo")}</SectionTitle>
           <Card inset>
             {closed.map((row) => (
               <div
@@ -277,7 +291,7 @@ export default function AdminFairPage() {
                   {row.wants_beta && <BetaDot />}
                 </span>
                 <span className="type-caption shrink-0 text-ink-3">
-                  {LABEL[row.state]}
+                  {t(`states.${row.state}`)}
                 </span>
               </div>
             ))}

@@ -14,6 +14,12 @@
  * forms and the session is closed; the backend queues the analysis. An upload that fails
  * keeps the files in memory and offers a retry.
  *
+ * An official protocol is shown in the reader's language (`lib/protocol/official.ts`):
+ * the title, the warning and consent text, the outline, the labels on the result
+ * screen, and - through the runner's `officialSlug` - what each block puts on screen.
+ * That is display only: the plan resolved and posted here, the summary and every event
+ * keep the stored English, whatever language the run was read in.
+ *
  * Deferred (Alessio, 2026-09-19): writing the capture to disk as it arrives, automatic
  * Bluetooth reconnection and media preload - see the S16 sprint notes.
  */
@@ -61,6 +67,7 @@ import type { PhaseSummary } from "@/lib/protocol/metrics";
 import { resultTitles } from "@/lib/protocol/results";
 import { devToolsAllowed } from "@/lib/env";
 import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
+import { officialSlug, useOfficialTexts } from "@/lib/protocol/official";
 import {
   type StimulusSessionStart,
   finishSession,
@@ -111,16 +118,24 @@ export default function RunProtocolPage({
     queryFn: () => api.get<ProtocolDetail>(`protocols/${protocolId}`),
     staleTime: Infinity,
   });
+  const official = useOfficialTexts();
+  // Null for a protocol somebody wrote: every text of theirs is shown as stored.
+  const slug = officialSlug(protocol.data);
+  // What the pages before and after the run read; `protocol.data` stays as stored.
+  const shown = useMemo(
+    () => (protocol.data ? official.detail(protocol.data) : undefined),
+    [official, protocol.data]
+  );
   const manifest = useMemo<ConsentManifest>(() => {
     const raw = (protocol.data?.definition ?? {}) as {
       manifest?: Partial<ConsentManifest>;
     };
-    return {
+    return official.manifest(slug, {
       content_warning: raw.manifest?.content_warning ?? null,
       requires_consent: raw.manifest?.requires_consent ?? false,
       consent_text: raw.manifest?.consent_text ?? null,
-    };
-  }, [protocol.data]);
+    });
+  }, [official, protocol.data, slug]);
 
   const transport = useSyncExternalStore(
     () => () => {},
@@ -293,7 +308,7 @@ export default function RunProtocolPage({
   }, [close, sink]);
 
   if (protocol.isPending) return <Spinner />;
-  if (protocol.isError || !protocol.data)
+  if (protocol.isError || !protocol.data || !shown)
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <ErrorBanner message={errorText(protocol.error)} />
@@ -306,7 +321,7 @@ export default function RunProtocolPage({
         {needsConsentGate(manifest) ? (
           <ConsentGate
             manifest={manifest}
-            title={protocol.data.title}
+            title={shown.title}
             onAccept={() => setPhase("preflight")}
             onDecline={() => router.push(`/protocols/${protocolId}`)}
           />
@@ -319,12 +334,12 @@ export default function RunProtocolPage({
   if (phase === "preflight")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="type-title mb-1">{protocol.data.title}</h1>
+        <h1 className="type-title mb-1">{shown.title}</h1>
         {/* a one-block protocol named after its block would say its title twice */}
         <p className="mb-6 text-ink-2">
-          {protocol.data.outline.length > 1
-            ? protocol.data.outline.map((s) => s.label).join(" → ")
-            : protocol.data.summary}
+          {shown.outline.length > 1
+            ? shown.outline.map((s) => s.label).join(" → ")
+            : shown.summary}
         </p>
         {error && (
           <div className="mb-6">
@@ -356,6 +371,7 @@ export default function RunProtocolPage({
         ) : (
           <ProtocolRunner
             protocol={plan}
+            officialSlug={slug}
             warningShown={needsConsentGate(manifest)}
             seed={session?.seed ?? 1}
             sink={sink}
@@ -368,7 +384,14 @@ export default function RunProtocolPage({
     );
 
   const done = outcome?.aborted === false;
-  const titles = resultTitles(results, plan);
+  // Named for the reader; `plan`, already posted, keeps its stored labels.
+  const titles = resultTitles(
+    results,
+    plan && {
+      ...plan,
+      steps: plan.steps.map((step) => official.step(slug, step)),
+    }
+  );
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="type-title mb-4">{done ? t("complete") : t("stopped")}</h1>

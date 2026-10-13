@@ -8,6 +8,7 @@ import {
   formatMinutes,
   isPlayable,
 } from "@/lib/protocol/catalog";
+import { useOfficialTexts } from "@/lib/protocol/official";
 import { Icon, cn } from "@/components/ui";
 
 /** Cover stand-in for protocols without an image: a stable hue per slug. */
@@ -25,9 +26,13 @@ function hueOf(slug: string): number {
  *
  * A locked protocol is advertised, not runnable, and looks like it: desaturated,
  * badged with a padlock, and a plain element with `aria-disabled` rather than a link.
+ *
+ * An official protocol's title, summary and warning are read from the catalogue in the
+ * reader's language; anyone else's are shown as stored (`lib/protocol/official.ts`).
  */
-export function ProtocolCard({ item }: { item: Card }) {
+export function ProtocolCard({ item: stored }: { item: Card }) {
   const t = useTranslations("protocols.card");
+  const item = useOfficialTexts().card(stored);
   const preview = useRef<HTMLVideoElement>(null);
   const locked = item.access === "locked";
   const draft = item.current_version === null;

@@ -12,7 +12,7 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { type Resolver, useForm, useWatch } from "react-hook-form";
@@ -89,6 +89,7 @@ function Steps({ current }: { current: Step }) {
 }
 
 export default function RegisterPage() {
+  const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("public.register");
   const errorMessage = useErrorMessage();
@@ -137,7 +138,8 @@ export default function RegisterPage() {
           account,
           { core: coreConsent, research: researchConsent, newsletter },
           basics,
-          fairOpen && wantsDeviceTest
+          fairOpen && wantsDeviceTest,
+          locale
         )
       );
       // Where they go depends on what the account already is: open and waiting for the
