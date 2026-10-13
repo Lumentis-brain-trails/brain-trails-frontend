@@ -12,6 +12,48 @@ const optional = (max: number) =>
  */
 export const MIN_AGE_YEARS = 18;
 
+/** The bounds of a password, mirroring `RegisterIn` in app/schemas.py. */
+export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_MAX_LENGTH = 200;
+
+/**
+ * What a form can be told is wrong with an answer, as keys of `common.validation` in the
+ * message catalogue.
+ *
+ * A schema has no locale, so it cannot carry a sentence: the issue's `message` is one of
+ * these keys and the form turns it into words where the error is shown
+ * (`useValidationMessage` in `@/lib/validationMessage`). `schemas.test.ts` holds every
+ * key here to the catalogue, and every issue of the keyed schemas to this list.
+ */
+export const VALIDATION_KEYS = [
+  "email",
+  "passwordTooShort",
+  "passwordTooLong",
+  "fullName",
+  "birthYear",
+  "choose",
+  "minAge",
+] as const;
+
+export type ValidationKey = (typeof VALIDATION_KEYS)[number];
+
+/** Spells a key where zod takes any string, so a typo is a compile error. */
+const key = (name: ValidationKey): string => name;
+
+/**
+ * The three profile fields a form validates visibly, each written once.
+ *
+ * Every way the field can fail reports the same catalogue key: the person needs to know
+ * what to type, not which of zod's checks tripped.
+ */
+const fullName = (message: ValidationKey) =>
+  z.string(message).min(2, message).max(200, message);
+const birthYear = (message: ValidationKey) =>
+  z.coerce.number(message).int(message).min(1900, message).max(2100, message);
+const handedness = (message: ValidationKey) =>
+  z.enum(["left", "right", "ambidextrous"], message);
+const sexAtBirth = z.string().max(30).optional().or(z.literal(""));
+
 /**
  * The profile, as the account page sends it back (`PUT /auth/me/profile`).
  *
@@ -22,10 +64,10 @@ export const MIN_AGE_YEARS = 18;
  * nothing here enumerates their options.
  */
 export const profileSchema = z.object({
-  full_name: z.string().min(2).max(200),
-  birth_year: z.coerce.number().int().min(1900).max(2100),
-  sex_at_birth: z.string().max(30).optional().or(z.literal("")),
-  handedness: z.enum(["left", "right", "ambidextrous"]),
+  full_name: fullName("fullName"),
+  birth_year: birthYear("birthYear"),
+  sex_at_birth: sexAtBirth,
+  handedness: handedness("choose"),
   gender: optional(50),
   gender_other: optional(50),
   education_level: optional(100),
@@ -48,9 +90,13 @@ export const profileSchema = z.object({
   notes: z.string().optional().or(z.literal("")),
 });
 
+/** Sign-in and the first step of registration; every failure is a `ValidationKey`. */
 export const accountSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(10).max(200),
+  email: z.string(key("email")).email(key("email")),
+  password: z
+    .string(key("passwordTooShort"))
+    .min(PASSWORD_MIN_LENGTH, key("passwordTooShort"))
+    .max(PASSWORD_MAX_LENGTH, key("passwordTooLong")),
 });
 
 /**
@@ -62,17 +108,20 @@ export const accountSchema = z.object({
  * short fields and saves the person being stopped later with the headband already on.
  * Everything else - coffee, sleep, medications, the beta credentials - stays on the
  * account page, where nobody is waiting behind you.
+ *
+ * The same rules as the profile's own four fields, reported as `ValidationKey`s: this is
+ * the form a person who reads no English fills in first.
  */
-export const basicsSchema = profileSchema
-  .pick({
-    full_name: true,
-    birth_year: true,
-    sex_at_birth: true,
-    handedness: true,
+export const basicsSchema = z
+  .object({
+    full_name: fullName("fullName"),
+    birth_year: birthYear("birthYear"),
+    sex_at_birth: sexAtBirth,
+    handedness: handedness("choose"),
   })
   .refine((v) => new Date().getFullYear() - v.birth_year >= MIN_AGE_YEARS, {
     path: ["birth_year"],
-    message: `Brain Trails is for people aged ${MIN_AGE_YEARS} and over.`,
+    message: key("minAge"),
   });
 
 export type ProfileForm = z.output<typeof profileSchema>;

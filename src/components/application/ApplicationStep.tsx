@@ -11,7 +11,7 @@
  * `messages/*.json`.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { type Resolver, useForm, useWatch } from "react-hook-form";
 import {
@@ -42,27 +42,29 @@ export function ApplicationStep({
   busy = false,
 }: Props) {
   const t = useTranslations("application");
+  const locale = useLocale();
   const detected = useMemo(() => detectEnvironment(), []);
-  // Built once per mount and kept as elements, not data: ~250 countries plus the
+  // Built once per language and kept as elements, not data: ~250 countries plus the
   // languages is nearly 300 DOM nodes, and rebuilding them on each render is what makes
-  // a form with this step in it feel heavy to type in.
+  // a form with this step in it feel heavy to type in. They are named and sorted in
+  // the app's locale, which is not always the browser's.
   const countryOptions = useMemo(
     () =>
-      countries().map(({ code, name }) => (
+      countries(locale).map(({ code, name }) => (
         <option key={code} value={code}>
           {name}
         </option>
       )),
-    []
+    [locale]
   );
   const languageOptions = useMemo(
     () =>
-      languages().map(({ code, name }) => (
+      languages(locale).map(({ code, name }) => (
         <option key={code} value={code}>
           {name}
         </option>
       )),
-    []
+    [locale]
   );
   const form = useForm<ApplicationForm>({
     // zod v4 coerce makes the input `unknown`; the cast pins the parsed output type.

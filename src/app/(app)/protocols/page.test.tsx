@@ -1,6 +1,7 @@
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { IntlEn } from "@/i18n/testing";
 import type { ProtocolCard } from "@/lib/protocol/catalog";
 import ProtocolsPage from "./page";
 
@@ -45,9 +46,11 @@ function renderPage() {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={client}>
-      <ProtocolsPage />
-    </QueryClientProvider>
+    <IntlEn>
+      <QueryClientProvider client={client}>
+        <ProtocolsPage />
+      </QueryClientProvider>
+    </IntlEn>
   );
 }
 

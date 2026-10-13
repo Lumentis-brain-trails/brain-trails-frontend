@@ -12,8 +12,11 @@
  * when, is the part they have a right to see without asking us for it.
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import { useToast } from "@/components/Toast";
 import { Card, ErrorBanner, KeyValue, SectionTitle } from "@/components/ui";
 
@@ -29,47 +32,69 @@ export interface ConsentData {
 
 const PRIVACY_EMAIL = "privacy@lumentis.ca";
 
-function onDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "–";
+function onDate(value: string | null, locale: string): string {
+  return value ? new Date(value).toLocaleDateString(locale) : "–";
 }
 
 export function PrivacyCard({ data }: { data: ConsentData | undefined }) {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const t = useTranslations("account.privacy");
+  const locale = useFormatLocale();
+  const errorMessage = useErrorMessage();
 
   const save = useMutation({
     mutationFn: (research: boolean) => api.put("auth/me/consent", { research }),
     onSuccess: async (_result, research) => {
-      toast(
-        "success",
-        research ? "Thank you - you are contributing." : "Withdrawn."
-      );
+      toast("success", research ? t("thanks") : t("withdrawn"));
       await queryClient.invalidateQueries({ queryKey: ["me-consent"] });
     },
   });
 
   if (!data) return null;
 
+  // One sentence with two links inside: the catalogue holds the sentence, the tags
+  // below are where each language places the links in it.
+  const contact = t.rich("contact", {
+    email: PRIVACY_EMAIL,
+    note: (chunks) => (
+      <Link
+        href="/privacy?in=tab"
+        target="_blank"
+        rel="noreferrer"
+        className="font-semibold text-ink hover:underline"
+      >
+        {chunks}
+      </Link>
+    ),
+    hidden: (chunks) => <span className="sr-only">{chunks}</span>,
+    address: (chunks) => (
+      <a
+        href={`mailto:${PRIVACY_EMAIL}`}
+        className="font-semibold text-ink hover:underline"
+      >
+        {chunks}
+      </a>
+    ),
+  });
+
   return (
     <Card>
-      <SectionTitle>Privacy and consent</SectionTitle>
+      <SectionTitle>{t("title")}</SectionTitle>
 
       {save.error && (
         <div className="mt-4">
-          <ErrorBanner
-            message={
-              save.error instanceof ApiRequestError
-                ? save.error.error.message
-                : "Could not save."
-            }
-          />
+          <ErrorBanner message={errorMessage(save.error)} />
         </div>
       )}
 
       <div className="mt-6 space-y-4">
         <KeyValue
-          label="Processing your recordings"
-          value={`Agreed on ${onDate(data.core_at)} · version ${data.core_version}`}
+          label={t("processing")}
+          value={t("agreed", {
+            date: onDate(data.core_at, locale),
+            version: data.core_version,
+          })}
         />
 
         <label className="flex cursor-pointer items-start gap-3 border-t border-hairline pt-4">
@@ -81,36 +106,20 @@ export function PrivacyCard({ data }: { data: ConsentData | undefined }) {
             onChange={(e) => save.mutate(e.target.checked)}
           />
           <span>
-            <span className="block">
-              Contribute my data to broader research.
-            </span>
+            <span className="block">{t("research")}</span>
             <span className="type-caption text-ink-3">
               {data.research
-                ? `Agreed on ${onDate(data.research_at)} · version ${data.research_version}. Untick to withdraw: we stop using your data for research from then on, though we cannot undo research already done.`
-                : "Optional. Your results, your recordings and everything else work exactly the same either way."}
+                ? t("researchAgreed", {
+                    date: onDate(data.research_at, locale),
+                    version: data.research_version ?? "–",
+                  })
+                : t("researchOptional")}
             </span>
           </span>
         </label>
 
         <p className="type-caption border-t border-hairline pt-4 text-ink-3">
-          Read the{" "}
-          <Link
-            href="/privacy?in=tab"
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-ink hover:underline"
-          >
-            privacy note
-            <span className="sr-only"> (opens in a new tab)</span>
-          </Link>
-          , or write to{" "}
-          <a
-            href={`mailto:${PRIVACY_EMAIL}`}
-            className="font-semibold text-ink hover:underline"
-          >
-            {PRIVACY_EMAIL}
-          </a>
-          . You can export or delete everything below.
+          {contact}
         </p>
       </div>
     </Card>

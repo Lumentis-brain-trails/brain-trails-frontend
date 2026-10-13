@@ -1,4 +1,6 @@
+import { createTranslator } from "next-intl";
 import { describe, expect, test } from "vitest";
+import messages from "../../../messages/en.json";
 import "@/components/protocol/kinds";
 import type { ProtocolTree } from "@/lib/protocol/tree";
 import { checkTree, locate } from "./findings";
@@ -53,28 +55,74 @@ describe("checkTree", () => {
         rule: "config",
         path: "root/0/config/lines/1/text",
         message: '"text" cannot be empty.',
+        text: { key: "empty", values: { name: "text" } },
       },
       {
         rule: "config",
         path: "root/0/config/advance/mode",
         message: '"mode" must be one of "timed", "key", "either".',
+        text: {
+          key: "oneOf",
+          values: { name: "mode", options: '"timed", "key", "either"' },
+        },
       },
       {
         rule: "config",
         path: "root/1/config/lines",
         message: '"lines" is required.',
+        text: { key: "required", values: { name: "lines" } },
       },
       {
         rule: "config",
         path: "root/2/config/variant",
         message: '"variant" must be one of "simple", "cued".',
+        text: {
+          key: "oneOf",
+          values: { name: "variant", options: '"simple", "cued"' },
+        },
       },
       {
         rule: "unknown_kind",
         path: "root/3",
         message: 'Unknown block kind "nope".',
+        text: { key: "unknownKind", values: { kind: "nope" } },
       },
     ]);
+  });
+
+  test("the catalogue says each of its sentences as the English message does", () => {
+    const en = createTranslator({
+      locale: "en",
+      messages,
+      namespace: "builder.findingText",
+    });
+    const findings = checkTree(
+      tree(
+        block("a", "instructions", {
+          lines: [{ text: "" }],
+          advance: { mode: "sometimes" },
+        }),
+        block("b", "instructions", { advance: { mode: "key" } }),
+        block("c", "nope", {})
+      )
+    );
+    expect(findings.map((f) => f.text?.key)).toEqual([
+      "empty",
+      "oneOf",
+      "required",
+      "unknownKind",
+    ]);
+    for (const finding of findings)
+      expect(en(finding.text!.key, finding.text!.values)).toBe(finding.message);
+  });
+
+  test("a fault with no sentence of its own keeps zod's message and no key", () => {
+    const [finding] = checkTree(
+      tree(block("a", "rest", { mode: "timed", duration_s: -1 }))
+    );
+    expect(finding.path).toBe("root/0/config/duration_s");
+    expect(finding.message).not.toBe("");
+    expect(finding.text).toBeUndefined();
   });
 
   test("walks a loop's template and leaves a column-filled config to the server", () => {

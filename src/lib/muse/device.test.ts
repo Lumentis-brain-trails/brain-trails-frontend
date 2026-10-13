@@ -285,6 +285,22 @@ describe("BluetoothMuse chooser", () => {
     });
     expect(requestDevice).toHaveBeenCalledTimes(1);
   });
+
+  test("a stop the driver decides on carries a code beside its message", async () => {
+    const bluetooth = {
+      requestDevice: async () =>
+        Object.assign(new EventTarget(), { name: "Muse-0000", gatt: null }),
+    } as unknown as Bluetooth;
+    const failed = new BluetoothMuse(bluetooth).connect();
+    await expect(failed).rejects.toThrow(
+      'Bluetooth failed at "choose a headband" (Error: This device does not expose GATT)'
+    );
+    await expect(failed).rejects.toMatchObject({
+      step: "chooseHeadband",
+      stream: null,
+      refusal: "noGatt",
+    });
+  });
 });
 
 describe("BluetoothMuse raw capture", () => {

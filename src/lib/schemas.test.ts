@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import en from "../../messages/en.json";
+import it from "../../messages/it.json";
 import {
   accountSchema,
   basicsSchema,
@@ -6,7 +8,13 @@ import {
   profileSchema,
   toProfilePayload,
   toRegisterPayload,
+  VALIDATION_KEYS,
 } from "./schemas";
+
+/** The message of every issue a parse raises, in order. */
+const messages = (result: {
+  error?: { issues: { message: string }[] };
+}): string[] => (result.error?.issues ?? []).map((issue) => issue.message);
 
 const validProfile = {
   full_name: "Ada Lovelace",
@@ -39,6 +47,79 @@ describe("schemas", () => {
       accountSchema.safeParse({ email: "a@b.it", password: "long-enough-pw" })
         .success
     ).toBe(true);
+  });
+
+  test("the account form names each problem by its catalogue key", () => {
+    expect(
+      messages(accountSchema.safeParse({ email: "a@b.it", password: "short" }))
+    ).toEqual(["passwordTooShort"]);
+    expect(
+      messages(
+        accountSchema.safeParse({
+          email: "a@b.it",
+          password: "x".repeat(201),
+        })
+      )
+    ).toEqual(["passwordTooLong"]);
+    expect(
+      messages(
+        accountSchema.safeParse({ email: "nope", password: "long-enough-pw" })
+      )
+    ).toEqual(["email"]);
+    // a field the form never filled in is the same problem as an empty one
+    expect(messages(accountSchema.safeParse({}))).toEqual([
+      "email",
+      "passwordTooShort",
+    ]);
+  });
+
+  test("the four registration answers name their problems by key too", () => {
+    const answers = {
+      full_name: "Ada Lovelace",
+      birth_year: "1990",
+      sex_at_birth: "",
+      handedness: "right",
+    };
+    const problem = (extra: Record<string, unknown>) =>
+      messages(basicsSchema.safeParse({ ...answers, ...extra }));
+    expect(problem({ full_name: "A" })).toEqual(["fullName"]);
+    expect(problem({ full_name: "x".repeat(201) })).toEqual(["fullName"]);
+    // an empty number input, then a year that is not whole
+    expect(problem({ birth_year: "" })).toEqual(["birthYear"]);
+    expect(problem({ birth_year: "1990.5" })).toEqual(["birthYear"]);
+    // a year still to come is also "too young"; a form shows the first of the two
+    expect(problem({ birth_year: "2500" })).toEqual(["birthYear", "minAge"]);
+    expect(problem({ handedness: "" })).toEqual(["choose"]);
+    expect(
+      problem({ birth_year: String(new Date().getFullYear() - 10) })
+    ).toEqual(["minAge"]);
+  });
+
+  test("every key a schema can report has its sentence in each language", () => {
+    for (const catalogue of [en, it]) {
+      expect(Object.keys(catalogue.common.validation).sort()).toEqual(
+        [...VALIDATION_KEYS].sort()
+      );
+    }
+  });
+
+  test("the profile keeps the same four rules as registration", () => {
+    // The account page's schema shares the field definitions, keys included: a field
+    // that fails reads the same sentence on both forms.
+    const bad = {
+      full_name: "A",
+      birth_year: "2500",
+      sex_at_birth: "",
+      handedness: "both",
+    };
+    const paths = (result: { error?: { issues: { path: PropertyKey[] }[] } }) =>
+      (result.error?.issues ?? []).map((issue) => issue.path.join("."));
+    expect(paths(profileSchema.safeParse(bad))).toEqual(
+      paths(basicsSchema.safeParse(bad))
+    );
+    for (const message of messages(profileSchema.safeParse(bad))) {
+      expect(VALIDATION_KEYS).toContain(message);
+    }
   });
 
   test("profile coerces numbers and validates handedness", () => {

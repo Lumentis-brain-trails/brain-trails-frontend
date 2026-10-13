@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef } from "react";
 import {
@@ -26,6 +27,7 @@ function hueOf(slug: string): number {
  * badged with a padlock, and a plain element with `aria-disabled` rather than a link.
  */
 export function ProtocolCard({ item }: { item: Card }) {
+  const t = useTranslations("protocols.card");
   const preview = useRef<HTMLVideoElement>(null);
   const locked = item.access === "locked";
   const draft = item.current_version === null;
@@ -71,16 +73,16 @@ export function ProtocolCard({ item }: { item: Card }) {
       <span className="material-glass absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-ink">
         {locked ? (
           <>
-            <Icon name="lock" className="h-3 w-3" /> Locked
+            <Icon name="lock" className="h-3 w-3" /> {t("locked")}
           </>
         ) : item.visibility === "official" ? (
-          "Official"
+          t("official")
         ) : item.visibility === "public" ? (
-          "Community"
+          t("community")
         ) : draft ? (
-          "Draft"
+          t("draft")
         ) : (
-          "Yours"
+          t("yours")
         )}
       </span>
     </div>
@@ -98,7 +100,7 @@ export function ProtocolCard({ item }: { item: Card }) {
       </h3>
       <p className="type-caption truncate text-ink-3">
         {locked
-          ? "Beta testers only"
+          ? t("betaOnly")
           : [duration, item.summary].filter(Boolean).join(" · ") || " "}
       </p>
       {item.content_warning && !locked && (
@@ -114,7 +116,7 @@ export function ProtocolCard({ item }: { item: Card }) {
       <div
         className="w-[228px] shrink-0"
         aria-disabled="true"
-        aria-label={`${item.title} — locked, available to beta testers`}
+        aria-label={t("lockedLabel", { title: item.title })}
       >
         {cover}
         {text}

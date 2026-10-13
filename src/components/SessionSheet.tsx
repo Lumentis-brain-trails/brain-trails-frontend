@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
@@ -11,6 +12,7 @@ import {
 import { MODEL_PROFILES } from "@/lib/muse/models";
 import {
   uploadToStorage,
+  useUploadErrorMessage,
   type Presign,
   type SessionPresign,
 } from "@/lib/upload";
@@ -47,6 +49,9 @@ export function SessionSheet({
   session: StoppedSession;
   onClose: () => void;
 }) {
+  const t = useTranslations("recordings.session");
+  const tModel = useTranslations("device.models");
+  const describe = useUploadErrorMessage();
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -76,7 +81,7 @@ export function SessionSheet({
         with_ble: captureBlob !== null,
       });
       if (blob.size > presign.max_mb * 1024 * 1024)
-        throw new Error(`Session exceeds ${presign.max_mb} MB.`);
+        throw new Error(t("tooLarge", { max: presign.max_mb }));
       // An oversized capture must not cost the session: the EEG still goes up,
       // and the user is told what was left behind.
       const captureFits =
@@ -117,97 +122,92 @@ export function SessionSheet({
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["recordings"] });
-      toast("success", "Session uploaded. Processing started.");
-      if (data.captureSkipped)
-        toast(
-          "error",
-          "The raw Bluetooth capture was too large to upload and was not kept."
-        );
+      toast("success", t("done"));
+      if (data.captureSkipped) toast("error", t("captureSkipped"));
       router.push(`/recordings/${data.recording_id}`);
     },
     onError: (e: Error) => {
       setProgress(null);
-      setError(e.message);
+      setError(describe(e));
     },
   });
 
   return (
-    <Sheet
-      title="Session recorded"
-      onClose={onClose}
-      dismissible={!upload.isPending}
-    >
+    <Sheet title={t("title")} onClose={onClose} dismissible={!upload.isPending}>
       <div className="space-y-5">
         {error && <ErrorBanner message={error} />}
         <div className="rounded-[var(--radius-card)] border border-hairline">
           <KeyValue
-            label="Duration"
+            label={t("duration")}
             value={fmtSeconds(capture.durationS)}
             mono
           />
           <KeyValue
-            label="Samples"
-            value={`${capture.sampleCount} · ${lost} missing`}
+            label={t("samples")}
+            value={t("samplesValue", {
+              count: String(capture.sampleCount),
+              missing: String(lost),
+            })}
             mono
           />
           <KeyValue
-            label="Packets lost"
+            label={t("packetsLost")}
             value={String(timeline.lostPackets)}
             mono
           />
           <KeyValue
-            label="Clock"
+            label={t("clock")}
             value={
               timeline.effectiveRateHz
-                ? `${timeline.effectiveRateHz.toFixed(2)} Hz · drift ${timeline.driftPpm?.toFixed(0)} ppm`
+                ? t("clockValue", {
+                    rate: timeline.effectiveRateHz.toFixed(2),
+                    drift: String(timeline.driftPpm?.toFixed(0)),
+                  })
                 : "—"
             }
             mono
           />
+          <KeyValue label={t("headband")} value={tModel(session.model)} />
           <KeyValue
-            label="Headband"
-            value={MODEL_PROFILES[session.model].label}
-          />
-          <KeyValue
-            label="Other sensors"
+            label={t("otherSensors")}
             value={(() => {
               const c = session.extras.counts();
               const motion = (c.acc ?? 0) * 3;
               const ppg = (c.ppg_infrared ?? 0) * 6;
-              if (motion + ppg === 0) return "none";
-              const parts = [`${motion} motion`];
+              if (motion + ppg === 0) return t("sensorsNone");
               // The Athena's PPG is not decoded yet; it is in the raw capture.
-              if (MODEL_PROFILES[session.model].hasPpg)
-                parts.push(`${ppg} PPG samples`);
-              return parts.join(" · ");
+              return MODEL_PROFILES[session.model].hasPpg
+                ? t("sensorsMotionPpg", {
+                    motion: String(motion),
+                    ppg: String(ppg),
+                  })
+                : t("sensorsMotion", { motion: String(motion) });
             })()}
             mono
           />
           <KeyValue
-            label="Raw capture"
+            label={t("rawCapture")}
             value={
               session.raw.count > 0
-                ? `${session.raw.count} packets · ${fmtMb(session.raw.payloadBytes)}`
-                : "none (simulated)"
+                ? t("rawValue", {
+                    count: String(session.raw.count),
+                    size: fmtMb(session.raw.payloadBytes),
+                  })
+                : t("rawNone")
             }
             mono
           />
           <KeyValue
-            label="Arrival jitter"
+            label={t("jitter")}
             value={
               timeline.jitterRmsMs !== null
-                ? `${timeline.jitterRmsMs.toFixed(1)} ms RMS`
+                ? t("jitterValue", { ms: timeline.jitterRmsMs.toFixed(1) })
                 : "—"
             }
             mono
           />
         </div>
-        {lost > 0 && (
-          <p className="type-caption text-ink-3">
-            Missing samples are interpolated by the pipeline and listed as gaps
-            on the recording.
-          </p>
-        )}
+        {lost > 0 && <p className="type-caption text-ink-3">{t("gaps")}</p>}
         {progress !== null && (
           <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
             <div
@@ -222,13 +222,13 @@ export function SessionSheet({
             disabled={upload.isPending}
             onClick={onClose}
           >
-            Discard
+            {t("discard")}
           </Button>
           <Button
             disabled={upload.isPending || capture.blocks.length === 0}
             onClick={() => upload.mutate()}
           >
-            {upload.isPending ? "Uploading…" : "Upload and analyze"}
+            {upload.isPending ? t("uploading") : t("upload")}
           </Button>
         </div>
       </div>

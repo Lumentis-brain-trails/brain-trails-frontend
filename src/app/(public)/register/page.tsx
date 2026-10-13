@@ -12,18 +12,22 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { type Resolver, useForm, useWatch } from "react-hook-form";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import { useAppConfig } from "@/lib/features";
 import { useFairOpen } from "@/lib/fair";
 import { useTaxonomies } from "@/lib/taxonomies";
+import { useValidationMessage } from "@/lib/validationMessage";
 import { AuthPanel } from "@/components/AuthPanel";
 import { ListField } from "@/components/form/ListField";
 import {
   type AccountForm,
   type BasicsForm,
+  PASSWORD_MIN_LENGTH,
   accountSchema,
   basicsSchema,
   toRegisterPayload,
@@ -35,33 +39,22 @@ import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
  * all and blocks the button; the second is a separate question about research beyond
  * that; the third is a mailing list and not a consent to anything - which is why it is
  * worded in one line and sits apart. Refusing either optional one costs nothing.
+ *
+ * The wording of all three is in the catalogue (`public.register.consent`): the two
+ * consent texts are what the person agrees to, so a locale's version of them is part of
+ * the consent record and changes with the same care as the English.
  */
-const CORE_CONSENT_TEXT =
-  "Lumentis will collect and process my EEG recordings, exercise responses and related " +
-  "technical information to provide my results, metrics, visualizations and reports; to " +
-  "maintain and secure the service; to assess signal quality and troubleshoot; and to " +
-  "evaluate and improve the accuracy and reliability of the features provided through it. " +
-  "Recordings are held under a pseudonymous identifier and stored in Frankfurt, Germany.";
-
-const RESEARCH_CONSENT_TEXT =
-  "Lumentis may also keep and use my pseudonymised recordings, derived features and " +
-  "responses for broader scientific research beyond running and improving this service - " +
-  "including work on mental health, neurology and cognitive science, and developing and " +
-  "validating future methods and models.";
-
 type Step = "account" | "you" | "consent";
 
-const STEPS: { key: Step; label: string }[] = [
-  { key: "account", label: "Account" },
-  { key: "you", label: "You" },
-  { key: "consent", label: "Consent" },
-];
+/** In the order they are walked; the words are `public.register.steps.<step>`. */
+const STEPS: Step[] = ["account", "you", "consent"];
 
 function Steps({ current }: { current: Step }) {
-  const now = STEPS.findIndex((s) => s.key === current) + 1;
+  const t = useTranslations("public.register");
+  const now = STEPS.indexOf(current) + 1;
   return (
-    <ol className="flex items-center gap-2" aria-label="Progress">
-      {STEPS.map(({ key, label }, i) => {
+    <ol className="flex items-center gap-2" aria-label={t("progress")}>
+      {STEPS.map((key, i) => {
         const n = i + 1;
         const state = n < now ? "done" : n === now ? "now" : "todo";
         return (
@@ -83,7 +76,7 @@ function Steps({ current }: { current: Step }) {
                 state === "now" ? "font-medium text-ink" : "text-ink-3"
               )}
             >
-              {label}
+              {t(`steps.${key}`)}
             </span>
             {i < STEPS.length - 1 && (
               <span aria-hidden className="mx-1 h-px w-6 bg-hairline-strong" />
@@ -97,6 +90,9 @@ function Steps({ current }: { current: Step }) {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations("public.register");
+  const errorMessage = useErrorMessage();
+  const fieldError = useValidationMessage();
   const config = useAppConfig();
   const lists = useTaxonomies();
   const [step, setStep] = useState<Step>("account");
@@ -107,7 +103,8 @@ export default function RegisterPage() {
   const [newsletter, setNewsletter] = useState(false);
   const [wantsDeviceTest, setWantsDeviceTest] = useState(false);
   const fairOpen = useFairOpen();
-  const [error, setError] = useState<string | null>(null);
+  // The thrown error, put into words at render so it follows the language.
+  const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const accountForm = useForm<AccountForm>({
@@ -147,9 +144,7 @@ export default function RegisterPage() {
       // email, open outright, or still an application waiting for an admin.
       router.push(`/pending?status=${user.status}`);
     } catch (e) {
-      setError(
-        e instanceof ApiRequestError ? e.error.message : "Network error."
-      );
+      setError(e);
       setSubmitting(false);
     }
   }
@@ -158,17 +153,15 @@ export default function RegisterPage() {
     <main className="mx-auto w-full max-w-2xl px-6 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">Create your account.</h1>
-          <p className="mt-2 text-ink-2">
-            Three short steps. Four questions about you, and the rest later.
-          </p>
+          <h1 className="type-title">{t("title")}</h1>
+          <p className="mt-2 text-ink-2">{t("intro")}</p>
         </div>
         <Steps current={step} />
       </div>
       <AuthPanel>
-        {error && (
+        {error !== null && (
           <div className="mb-6">
-            <ErrorBanner message={error} />
+            <ErrorBanner message={errorMessage(error)} />
           </div>
         )}
 
@@ -183,8 +176,8 @@ export default function RegisterPage() {
             })}
           >
             <Field
-              label="Email"
-              error={accountForm.formState.errors.email?.message}
+              label={t("email")}
+              error={fieldError(accountForm.formState.errors.email?.message)}
             >
               <Input
                 type="email"
@@ -194,9 +187,9 @@ export default function RegisterPage() {
               />
             </Field>
             <Field
-              label="Password"
-              hint="At least 10 characters."
-              error={accountForm.formState.errors.password?.message}
+              label={t("password")}
+              hint={t("passwordHint", { min: PASSWORD_MIN_LENGTH })}
+              error={fieldError(accountForm.formState.errors.password?.message)}
             >
               <Input
                 type="password"
@@ -205,16 +198,19 @@ export default function RegisterPage() {
               />
             </Field>
             <div className="pt-2">
-              <Button type="submit">Continue</Button>
+              <Button type="submit">{t("continue")}</Button>
             </div>
             <p className="pt-4 text-[14px] text-ink-2">
-              Already registered?{" "}
-              <Link
-                className="font-semibold text-ink hover:underline"
-                href="/login"
-              >
-                Sign in
-              </Link>
+              {t.rich("alreadyRegistered", {
+                link: (chunks) => (
+                  <Link
+                    className="font-semibold text-ink hover:underline"
+                    href="/login"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </p>
           </form>
         )}
@@ -231,17 +227,15 @@ export default function RegisterPage() {
           >
             <section className="space-y-4">
               <div>
-                <h2 className="type-heading">A little about you.</h2>
-                <p className="mt-2 text-pretty text-ink-2">
-                  Four questions. They are the ones an EEG cannot be read
-                  without - which hand you write with changes where activity
-                  shows up on the scalp. Everything else can wait.
-                </p>
+                <h2 className="type-heading">{t("about.title")}</h2>
+                <p className="mt-2 text-pretty text-ink-2">{t("about.text")}</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
-                  label="Full name"
-                  error={basicsForm.formState.errors.full_name?.message}
+                  label={t("fullName")}
+                  error={fieldError(
+                    basicsForm.formState.errors.full_name?.message
+                  )}
                 >
                   <Input
                     autoComplete="name"
@@ -250,8 +244,10 @@ export default function RegisterPage() {
                   />
                 </Field>
                 <Field
-                  label="Year of birth"
-                  error={basicsForm.formState.errors.birth_year?.message}
+                  label={t("birthYear")}
+                  error={fieldError(
+                    basicsForm.formState.errors.birth_year?.message
+                  )}
                 >
                   <Input
                     type="number"
@@ -261,21 +257,25 @@ export default function RegisterPage() {
                   />
                 </Field>
                 <ListField
-                  label="Sex at birth"
+                  label={t("sexAtBirth")}
                   options={lists.data?.sex_at_birth}
                   field={basicsForm.register("sex_at_birth")}
                   value={sexAtBirth}
-                  error={basicsForm.formState.errors.sex_at_birth?.message}
-                  placeholder="Select"
-                  info="A variable in the analysis, asked as it is recorded at birth. Your gender is yours to describe, on the account page."
+                  error={fieldError(
+                    basicsForm.formState.errors.sex_at_birth?.message
+                  )}
+                  placeholder={t("select")}
+                  info={t("sexAtBirthInfo")}
                 />
                 <ListField
-                  label="Handedness"
+                  label={t("handedness")}
                   options={lists.data?.handedness}
                   field={basicsForm.register("handedness")}
                   value={handedness}
-                  error={basicsForm.formState.errors.handedness?.message}
-                  placeholder="Select"
+                  error={fieldError(
+                    basicsForm.formState.errors.handedness?.message
+                  )}
+                  placeholder={t("select")}
                 />
               </div>
             </section>
@@ -290,12 +290,9 @@ export default function RegisterPage() {
                     onChange={(e) => setWantsDeviceTest(e.target.checked)}
                   />
                   <span>
-                    <span className="block">
-                      I would like to try the headband at the stand.
-                    </span>
+                    <span className="block">{t("fair.label")}</span>
                     <span className="type-caption text-ink-3">
-                      You do not have to wait here. We email you when your turn
-                      is about five minutes away, so go and see the rest.
+                      {t("fair.hint")}
                     </span>
                   </span>
                 </label>
@@ -308,9 +305,9 @@ export default function RegisterPage() {
                 variant="secondary"
                 onClick={() => setStep("account")}
               >
-                Back
+                {t("back")}
               </Button>
-              <Button type="submit">Continue</Button>
+              <Button type="submit">{t("continue")}</Button>
             </div>
           </form>
         )}
@@ -318,21 +315,25 @@ export default function RegisterPage() {
         {step === "consent" && (
           <div key="consent" className="enter-up max-w-lg space-y-6">
             <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
-              {CORE_CONSENT_TEXT}{" "}
-              <Link
-                className="font-semibold text-ink hover:underline"
-                href="/privacy?in=tab"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Read the privacy note
-                <span className="sr-only"> (opens in a new tab)</span>
-              </Link>
-              .
+              {t.rich("consent.core", {
+                link: (chunks) => (
+                  <Link
+                    className="font-semibold text-ink hover:underline"
+                    href="/privacy?in=tab"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+                hidden: (chunks) => <span className="sr-only">{chunks}</span>,
+              })}
             </p>
             {config.data?.consent_version && (
               <p className="text-[13px] text-ink-3">
-                Version {config.data.consent_version}
+                {t("consent.version", {
+                  version: config.data.consent_version,
+                })}
               </p>
             )}
             <label className="flex cursor-pointer items-start gap-3">
@@ -342,12 +343,12 @@ export default function RegisterPage() {
                 onChange={(e) => setCoreConsent(e.target.checked)}
                 className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
               />
-              <span>I have read the privacy note and I consent.</span>
+              <span>{t("consent.coreTick")}</span>
             </label>
 
             <section className="space-y-4 border-t border-hairline pt-6">
               <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
-                {RESEARCH_CONSENT_TEXT}
+                {t("consent.research")}
               </p>
               <label className="flex cursor-pointer items-start gap-3">
                 <input
@@ -357,13 +358,9 @@ export default function RegisterPage() {
                   className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
                 />
                 <span>
-                  <span className="block">
-                    I agree to contribute my data to broader research.
-                  </span>
+                  <span className="block">{t("consent.researchTick")}</span>
                   <span className="type-caption text-ink-3">
-                    Optional, and separate from the consent above. Saying no
-                    changes nothing about your account or your results, and you
-                    can change your mind on the account page at any time.
+                    {t("consent.researchHint")}
                   </span>
                 </span>
               </label>
@@ -378,12 +375,9 @@ export default function RegisterPage() {
                   className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
                 />
                 <span>
-                  <span className="block">
-                    Send me occasional news about Brain Trails.
-                  </span>
+                  <span className="block">{t("consent.newsletterTick")}</span>
                   <span className="type-caption text-ink-3">
-                    A few emails, no more. Unsubscribe whenever you like from
-                    your account page.
+                    {t("consent.newsletterHint")}
                   </span>
                 </span>
               </label>
@@ -395,10 +389,10 @@ export default function RegisterPage() {
                 variant="secondary"
                 onClick={() => setStep("you")}
               >
-                Back
+                {t("back")}
               </Button>
               <Button onClick={submitAll} disabled={!coreConsent || submitting}>
-                {submitting ? "Creating…" : "Create account"}
+                {submitting ? t("creating") : t("create")}
               </Button>
             </div>
           </div>

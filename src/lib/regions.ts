@@ -1,10 +1,12 @@
 /**
- * Countries and languages as codes, named by the browser.
+ * Countries and languages as codes, named by the platform in the app's language.
  *
  * The backend validates these by shape (ISO 3166-1 alpha-2, ISO 639-1) and deliberately
  * does not serve the lists: 250 country names from our API would only go stale, and
  * `Intl.DisplayNames` already knows them in the reader's own language. So the codes live
- * here as data and the words are asked for at render time.
+ * here as data and the words are asked for at render time, in the locale the caller
+ * passes: the app's (`useLocale()`), which is not the browser's once the reader has
+ * picked a language.
  *
  * Unlike the product's own taxonomies these are not "base categories plus other": a
  * short list would push the twentieth country into `other` and lose exactly the signal
@@ -27,26 +29,43 @@ const LANGUAGE_CODES =
 
 function named(
   codes: string,
-  type: "region" | "language"
+  type: "region" | "language",
+  locale: string | undefined
 ): { code: string; name: string }[] {
   let names: Intl.DisplayNames | null = null;
   try {
-    names = new Intl.DisplayNames(undefined, { type });
+    names = new Intl.DisplayNames(locale, { type });
   } catch {
     names = null; // very old engine: the codes themselves still work as labels
   }
   return codes
     .split(" ")
-    .map((code) => ({ code, name: names?.of(code) ?? code }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .map((code) => ({ code, name: menuCase(names?.of(code) ?? code, locale) }))
+    .sort((a, b) => a.name.localeCompare(b.name, locale));
 }
 
-/** Every country, sorted by its name in the reader's locale. */
-export function countries(): { code: string; name: string }[] {
-  return named(COUNTRY_CODES, "region");
+/**
+ * A name as a menu entry starts with a capital.
+ *
+ * `Intl.DisplayNames` returns the mid-sentence form, which for languages is lower case
+ * in Italian ("inglese"); CLDR asks for a capitalised first word in a list or menu and
+ * the API does not apply that itself. English names already are, so nothing changes there.
+ */
+function menuCase(name: string, locale: string | undefined): string {
+  return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
 }
 
-/** The offered languages, sorted by name in the reader's locale. */
-export function languages(): { code: string; name: string }[] {
-  return named(LANGUAGE_CODES, "language");
+/**
+ * Every country, sorted by its name in `locale`.
+ *
+ * Pass the app's locale (`useLocale()`). Left out, the browser's own is used, which is
+ * a different thing once the reader has picked a language in the app.
+ */
+export function countries(locale?: string): { code: string; name: string }[] {
+  return named(COUNTRY_CODES, "region", locale);
+}
+
+/** The offered languages, sorted by name in `locale`; see `countries` for the argument. */
+export function languages(locale?: string): { code: string; name: string }[] {
+  return named(LANGUAGE_CODES, "language", locale);
 }

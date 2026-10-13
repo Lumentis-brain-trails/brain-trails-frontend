@@ -128,5 +128,34 @@ describe("useMuse", () => {
     });
     expect(result.current.status).toBe("error");
     expect(result.current.error).toMatch(/GATT/);
+    expect(result.current.failure).toEqual({
+      code: "other",
+      message: "GATT operation failed",
+    });
+  });
+
+  test("a closed chooser is a failure with a code, cleared by the next attempt", async () => {
+    let attempts = 0;
+    const band = {
+      name: "x",
+      model: "muse-2" as const,
+      connect: async () => {
+        if (attempts++ === 0)
+          throw new DOMException("cancelled", "NotFoundError");
+      },
+      disconnect: async () => {},
+      on: () => () => {},
+    };
+    const { result } = renderHook(() => useMuse(() => band));
+    await act(async () => {
+      await result.current.connect();
+    });
+    expect(result.current.error).toBe("No headband selected.");
+    expect(result.current.failure).toEqual({ code: "noneSelected" });
+    await act(async () => {
+      await result.current.connect();
+    });
+    expect(result.current.status).toBe("connected");
+    expect(result.current.failure).toBeNull();
   });
 });

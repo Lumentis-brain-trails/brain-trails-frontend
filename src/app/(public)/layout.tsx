@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { CornerRibbons } from "@/components/CornerRibbons";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { Logo } from "@/components/Logo";
+import { BRAND } from "@/components/ui";
 
 /**
  * The auth flow stays in the entry screen's room: the same dark ground, the same
@@ -8,11 +11,12 @@ import { Logo } from "@/components/Logo";
  * the name in the brand face. The subtree pins `data-theme="dark"`, so every
  * primitive inside resolves the dark tokens whatever appearance the app is in.
  */
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = await getTranslations("public.footer");
   return (
     <div
       data-theme="dark"
@@ -28,16 +32,18 @@ export default function PublicLayout({
           className="font-display flex items-center gap-2 text-[20px] font-bold tracking-[-0.02em]"
         >
           <Logo size={48} className="-my-2 -ml-1" />
-          Braintrails
+          {BRAND}
         </Link>
       </header>
       <div className="flex flex-1 flex-col">{children}</div>
       <footer className="font-display flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 pt-6 pb-5 text-[11px] tracking-[0.15em] text-[#56607a] uppercase">
-        <span>Non-clinical prototype</span>
+        <span>{t("nonClinical")}</span>
         <span aria-hidden>·</span>
         <Link href="/privacy" className="hover:text-ink-2">
-          privacy
+          {t("privacy")}
         </Link>
+        <span aria-hidden>·</span>
+        <LanguageSwitch variant="links" />
       </footer>
     </div>
   );

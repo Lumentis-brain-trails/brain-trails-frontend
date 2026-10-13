@@ -1,9 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
 /** Local class join: `ui.tsx` imports this file, so it cannot import `cn` back. */
 const cx = (...parts: (string | false)[]) => parts.filter(Boolean).join(" ");
+
+/** The button's face: the letter that stands for "information" in every language. */
+const GLYPH = "i";
 
 /**
  * An info button: what a setting is for, one click or hover away instead of always on
@@ -13,11 +17,12 @@ const cx = (...parts: (string | false)[]) => parts.filter(Boolean).join(" ");
 export function InfoTip({ text, label }: { text: string; label?: string }) {
   const [open, setOpen] = useState(false);
   const id = useId();
+  const t = useTranslations("common");
   return (
     <span className="group/info relative inline-flex">
       <button
         type="button"
-        aria-label={label ? `About: ${label}` : "About this setting"}
+        aria-label={label ? t("infoAbout", { label }) : t("infoAboutSetting")}
         aria-describedby={id}
         aria-expanded={open}
         onClick={(event) => {
@@ -29,7 +34,7 @@ export function InfoTip({ text, label }: { text: string; label?: string }) {
         onBlur={() => setOpen(false)}
         className="flex h-4 w-4 items-center justify-center rounded-full border border-hairline text-[10px] leading-none font-semibold text-ink-3 hover:border-ink-3 hover:text-ink"
       >
-        i
+        {GLYPH}
       </button>
       <span
         id={id}

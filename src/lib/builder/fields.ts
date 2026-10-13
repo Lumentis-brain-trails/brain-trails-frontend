@@ -17,7 +17,9 @@
  * delete an author's setting on the next save.
  *
  * The labels are derived from the property names, not translated: they are the schema's
- * own vocabulary, author-facing, and English-only like the rest of the app until S26.
+ * own vocabulary, and only the fallback an author sees. A documented setting is shown
+ * under the name `fieldDocs.ts` reads from the catalogue, in the author's language; a
+ * derived name is what a setting nobody documented yet keeps, in English.
  */
 
 /** A JSON Schema object. `true`/`false` schemas are not used by the kinds. */

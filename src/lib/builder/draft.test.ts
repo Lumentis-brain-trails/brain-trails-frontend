@@ -1,9 +1,10 @@
 import { expect, test } from "vitest";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { registerBuiltInKinds } from "@/components/protocol/kinds";
-import type { BlockNode, ProtocolTree } from "@/lib/protocol/tree";
+import type { BlockNode, ProtocolTree, TreeNode } from "@/lib/protocol/tree";
 import {
   ELEMENTS,
+  type GroupNode,
   blockForElement,
   blockForMedia,
   clipSeconds,
@@ -178,6 +179,35 @@ test("the bin's elements and media produce blocks that carry their source", () =
   expect(media.config).toEqual({ media_id: "m1" });
   expect(media.label).toBe("Calm sea");
   expect(labelOf(media)).toBe("Calm sea");
+});
+
+test("a group nobody named is called what the caller says, a named one keeps its name", () => {
+  const group = {
+    type: "sequence",
+    id: "g",
+    order: "fixed",
+    children: [block("a")],
+  } as TreeNode;
+  const loop = setGroupRepeat(group as GroupNode, true);
+  const names = { group: "Gruppo", loop: "Gruppo (si ripete)" };
+  expect(labelOf(group)).toBe("Group");
+  expect(labelOf(loop)).toBe("Group (repeats)");
+  expect(labelOf(group, names)).toBe("Gruppo");
+  expect(labelOf(loop, names)).toBe("Gruppo (si ripete)");
+  expect(labelOf({ ...group, label: "Warm-up" } as TreeNode, names)).toBe(
+    "Warm-up"
+  );
+  const base = tree(block("a"));
+  const drawn = clips(
+    { ...base, root: { ...base.root, children: [block("a"), group, loop] } },
+    {},
+    names
+  );
+  expect(drawn.map((clip) => clip.label)).toEqual([
+    "a",
+    "Gruppo",
+    "Gruppo (si ripete)",
+  ]);
 });
 
 test("the clock reads minutes, and hours when there are any", () => {

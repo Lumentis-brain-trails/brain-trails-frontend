@@ -10,6 +10,11 @@
  *
  * Findings use the server's shape and path grammar (`root/<clip>/…/config/<field>`),
  * so one list and one badge per clip draw both the server's report and this one.
+ *
+ * The server's messages are English and shown as they arrive. The ones written here
+ * also say which sentence they are (`text`), so the list can show them in the reader's
+ * language (`builder.findingText.<key>`); `message` stays the English of the same
+ * sentence, for anything that reads a finding without a translator.
  */
 
 import type { $ZodIssue } from "zod/v4/core";
@@ -17,10 +22,22 @@ import { getTaskKind, hasTaskKind } from "@/lib/protocol/registry";
 import type { ProtocolTree, TreeNode } from "@/lib/protocol/tree";
 import { humaniseName } from "./fields";
 
+/** The sentences this module writes; each is a key under `builder.findingText`. */
+export type FindingTextKey = "required" | "empty" | "oneOf" | "unknownKind";
+
+/** A finding's sentence as a catalogue key and the values it is filled with. */
+export interface FindingText {
+  key: FindingTextKey;
+  values: Record<string, string>;
+}
+
 export interface Finding {
   rule: string;
   path: string;
+  /** English, in the server's words. */
   message: string;
+  /** Only on findings made in the browser; the server's have a `message` alone. */
+  text?: FindingText;
 }
 
 /** At most this many findings per block: enough to fix it in one pass, not a wall. */
@@ -53,6 +70,7 @@ function visit(node: TreeNode, path: string, out: Finding[]): void {
       rule: "unknown_kind",
       path,
       message: `Unknown block kind "${node.kind}".`,
+      text: { key: "unknownKind", values: { kind: node.kind } },
     });
     return;
   }
@@ -62,7 +80,7 @@ function visit(node: TreeNode, path: string, out: Finding[]): void {
     out.push({
       rule: "config",
       path: [`${path}/config`, ...issue.path.map(String)].join("/"),
-      message: explain(issue),
+      ...explain(issue),
     });
 }
 
@@ -76,21 +94,31 @@ function hasVar(value: unknown): boolean {
   return Object.values(value).some(hasVar);
 }
 
-/** A zod issue in the words the server's validator uses for the same fault. */
-function explain(issue: $ZodIssue): string {
+/**
+ * A zod issue in the words the server's validator uses for the same fault. A fault
+ * with no sentence of its own keeps zod's message, which is English only.
+ */
+function explain(issue: $ZodIssue): Pick<Finding, "message" | "text"> {
   const last = issue.path[issue.path.length - 1];
-  const name = JSON.stringify(String(last ?? "value"));
+  const name = String(last ?? "value");
+  const quoted = JSON.stringify(name);
   if (
     issue.code === "invalid_type" &&
     /received undefined$/.test(issue.message)
   )
-    return `${name} is required.`;
+    return {
+      message: `${quoted} is required.`,
+      text: { key: "required", values: { name } },
+    };
   if (
     issue.code === "too_small" &&
     issue.origin === "string" &&
     issue.minimum === 1
   )
-    return `${name} cannot be empty.`;
+    return {
+      message: `${quoted} cannot be empty.`,
+      text: { key: "empty", values: { name } },
+    };
   const options = /^Invalid discriminator value\. Expected (.+)$/.exec(
     issue.message
   );
@@ -99,9 +127,12 @@ function explain(issue: $ZodIssue): string {
       .split(" | ")
       .map((option) => JSON.stringify(option.replace(/^'|'$/g, "")))
       .join(", ");
-    return `${name} must be one of ${listed}.`;
+    return {
+      message: `${quoted} must be one of ${listed}.`,
+      text: { key: "oneOf", values: { name, options: listed } },
+    };
   }
-  return issue.message;
+  return { message: issue.message };
 }
 
 /** Where a finding points: the clip on the timeline, and the setting inside it. */

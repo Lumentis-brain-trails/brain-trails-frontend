@@ -16,19 +16,15 @@
  * and a request still waiting can be cancelled (`POST /media/{id}/unpublish`).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import { useState } from "react";
 import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
 import { Button, ErrorBanner, KeyValue, Skeleton } from "@/components/ui";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import type { Media } from "@/lib/types";
-
-const errorText = (e: unknown) =>
-  e instanceof ApiRequestError
-    ? e.error.message
-    : e instanceof Error
-      ? e.message
-      : "Something went wrong.";
 
 function formatDuration(seconds: number | null | undefined): string {
   if (seconds == null) return "–";
@@ -39,6 +35,7 @@ function formatDuration(seconds: number | null | undefined): string {
 
 /** The item itself, played with controls - or its text, or nothing to play. */
 function Player({ item }: { item: Media }) {
+  const t = useTranslations("media.viewer");
   const frame =
     "w-full rounded-[var(--radius-card)] border border-hairline bg-black";
   if (item.kind === "video")
@@ -51,7 +48,7 @@ function Player({ item }: { item: Media }) {
         className={`${frame} aspect-video`}
       />
     ) : (
-      <p className="type-caption text-ink-3">This video has no file yet.</p>
+      <p className="type-caption text-ink-3">{t("noVideoFile")}</p>
     );
   if (item.kind === "audio")
     return (
@@ -67,7 +64,7 @@ function Player({ item }: { item: Media }) {
         {item.url ? (
           <audio src={item.url} controls className="w-full" />
         ) : (
-          <p className="type-caption text-ink-3">This sound has no file yet.</p>
+          <p className="type-caption text-ink-3">{t("noAudioFile")}</p>
         )}
       </div>
     );
@@ -77,11 +74,7 @@ function Player({ item }: { item: Media }) {
         {item.definition.body}
       </div>
     );
-  return (
-    <p className="type-caption text-ink-3">
-      This item is played inside a protocol; there is nothing to watch here.
-    </p>
-  );
+  return <p className="type-caption text-ink-3">{t("nothingToWatch")}</p>;
 }
 
 export function MediaViewer({
@@ -91,6 +84,9 @@ export function MediaViewer({
   id: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("media.viewer");
+  const locale = useFormatLocale();
+  const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [confirming, setConfirming] = useState(false);
@@ -107,9 +103,7 @@ export function MediaViewer({
     onSuccess: (result) => {
       toast(
         "success",
-        result.status === "archived"
-          ? "Archived: the protocols that play it keep it."
-          : "Deleted."
+        result.status === "archived" ? t("toast.archived") : t("toast.deleted")
       );
       void queryClient.invalidateQueries({ queryKey: ["media"] });
       onClose();
@@ -122,8 +116,8 @@ export function MediaViewer({
       toast(
         "success",
         updated.review_state === "none" && updated.visibility === "workspace"
-          ? "Taken back: it is yours alone again."
-          : "Done."
+          ? t("toast.takenBack")
+          : t("toast.done")
       );
       void queryClient.invalidateQueries({ queryKey: ["media"] });
     },
@@ -136,12 +130,12 @@ export function MediaViewer({
 
   return (
     <Sheet
-      title={item.data?.title ?? "Your media"}
+      title={item.data?.title ?? t("fallbackTitle")}
       onClose={onClose}
       className="sm:max-w-2xl"
     >
       {item.isPending && <Skeleton className="aspect-video w-full" />}
-      {item.isError && <ErrorBanner message="This item could not be loaded." />}
+      {item.isError && <ErrorBanner message={t("loadError")} />}
       {item.data && (
         <div className="space-y-4">
           <Player item={item.data} />
@@ -150,21 +144,21 @@ export function MediaViewer({
           )}
           <div className="rounded-[var(--radius-card)] border border-hairline">
             <KeyValue
-              label="Length"
+              label={t("length")}
               value={formatDuration(item.data.duration_s)}
             />
             <KeyValue
-              label="Uploaded"
-              value={new Date(item.data.created_at).toLocaleDateString()}
+              label={t("uploaded")}
+              value={new Date(item.data.created_at).toLocaleDateString(locale)}
             />
             <KeyValue
-              label="Shared"
+              label={t("shared")}
               value={
                 item.data.visibility === "workspace"
                   ? item.data.review_state === "pending"
-                    ? "In review"
-                    : "Only you"
-                  : "In the community"
+                    ? t("sharedValue.inReview")
+                    : t("sharedValue.onlyYou")
+                  : t("sharedValue.community")
               }
             />
           </div>
@@ -172,8 +166,8 @@ export function MediaViewer({
             <div className="space-y-3 rounded-[var(--radius-card)] border border-hairline bg-surface-2 p-4">
               <p className="text-ink-2">
                 {played > 0
-                  ? `${played === 1 ? "A protocol plays" : `${played} protocols play`} this item: it leaves your media but keeps playing there, and your past sessions are unaffected.`
-                  : "This deletes the file for good. Your past sessions are unaffected."}
+                  ? t("confirm.archive", { count: played })
+                  : t("confirm.delete")}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -181,10 +175,10 @@ export function MediaViewer({
                   onClick={() => remove.mutate()}
                   disabled={remove.isPending}
                 >
-                  {played > 0 ? "Archive it" : "Delete it"}
+                  {played > 0 ? t("confirm.archiveIt") : t("confirm.deleteIt")}
                 </Button>
                 <Button variant="ghost" onClick={() => setConfirming(false)}>
-                  Keep it
+                  {t("confirm.keep")}
                 </Button>
               </div>
             </div>
@@ -196,23 +190,20 @@ export function MediaViewer({
                   onClick={() => withdraw.mutate()}
                   disabled={withdraw.isPending}
                 >
-                  {waiting ? "Cancel the request" : "Take it back"}
+                  {waiting ? t("cancelRequest") : t("takeBack")}
                 </Button>
               )}
               <Button variant="ghost" onClick={() => setConfirming(true)}>
-                Delete
+                {t("delete")}
               </Button>
             </div>
           )}
           {shared && (
-            <p className="type-caption text-ink-3">
-              Taking it back keeps it out of the community; protocols you
-              already shared go on playing it.
-            </p>
+            <p className="type-caption text-ink-3">{t("takeBackNote")}</p>
           )}
-          {remove.error && <ErrorBanner message={errorText(remove.error)} />}
+          {remove.error && <ErrorBanner message={errorMessage(remove.error)} />}
           {withdraw.error && (
-            <ErrorBanner message={errorText(withdraw.error)} />
+            <ErrorBanner message={errorMessage(withdraw.error)} />
           )}
         </div>
       )}

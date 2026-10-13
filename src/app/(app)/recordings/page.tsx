@@ -1,11 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
+import { taskName } from "@/lib/types";
 import type { Recording } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UploadDialog } from "@/components/UploadDialog";
@@ -19,6 +22,8 @@ import {
 } from "@/components/ui";
 
 export default function RecordingsPage() {
+  const t = useTranslations("recordings");
+  const locale = useFormatLocale();
   const [showUpload, setShowUpload] = useState(false);
   const workspace = useCurrentWorkspace();
   const recordings = useQuery({
@@ -38,29 +43,30 @@ export default function RecordingsPage() {
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">Recordings</h1>
-          <p className="mt-1 text-ink-2">Every session, one trail.</p>
+          <h1 className="type-title">{t("list.title")}</h1>
+          <p className="mt-1 text-ink-2">{t("list.subtitle")}</p>
         </div>
         <Button onClick={() => setShowUpload(true)}>
-          <Icon name="plus" /> New recording
+          <Icon name="plus" /> {t("list.new")}
         </Button>
       </header>
 
       {list && list.length > 0 && (
         <div className="stagger mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Stat label="Sessions" value={list.length} />
+          <Stat label={t("list.stats.sessions")} value={list.length} />
           <Stat
-            label="Signal collected"
+            label={t("list.stats.signal")}
             value={formatDuration(
               list.reduce((a, r) => a + (r.duration_s ?? 0), 0)
             )}
           />
           <Stat
-            label="Last upload"
+            label={t("list.stats.last")}
             value={formatDate(
               new Date(
                 Math.max(...list.map((r) => +new Date(r.created_at)))
-              ).toISOString()
+              ).toISOString(),
+              locale
             )}
           />
         </div>
@@ -75,17 +81,17 @@ export default function RecordingsPage() {
       )}
       {recordings.isError && (
         <Card>
-          <p className="text-ink-2">Could not load recordings.</p>
+          <p className="text-ink-2">{t("list.loadFailed")}</p>
         </Card>
       )}
       {list?.length === 0 && (
         <Card inset>
           <EmptyState
-            title="No recordings yet."
-            text="Upload a Muse EEG file to see your first trail."
+            title={t("list.emptyTitle")}
+            text={t("list.emptyText")}
             action={
               <Button onClick={() => setShowUpload(true)}>
-                Upload your first recording
+                {t("list.emptyAction")}
               </Button>
             }
           />
@@ -103,9 +109,13 @@ export default function RecordingsPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{r.title}</p>
                     <p className="type-caption mt-0.5 text-ink-3">
-                      {r.task_label?.replaceAll("_", " ") ?? "No task"} ·{" "}
-                      {formatDuration(r.duration_s)} ·{" "}
-                      {formatDate(r.created_at)}
+                      {t("list.meta", {
+                        task: r.task_label
+                          ? taskName(t, r.task_label)
+                          : t("list.noTask"),
+                        duration: formatDuration(r.duration_s),
+                        date: formatDate(r.created_at, locale),
+                      })}
                     </p>
                   </div>
                   <StatusBadge status={r.status} />

@@ -5,12 +5,17 @@
  * hard-codes a list: it fetches one and renders it in the order it arrives. An option
  * that exists here but not there would be a 422 the person cannot understand.
  *
- * The labels below are the only thing the frontend owns - the codes are data, the words
- * are presentation. They stay in English with the rest of the staff app; they move into
- * the message catalogue when locales arrive (S26).
+ * The words are the only thing the frontend owns - the codes are data, the words are
+ * presentation - and they live in the message catalogue (`taxonomies.option.<code>`),
+ * resolved where an option is rendered: `useOptionLabel()` in a component, `optionLabel`
+ * with a translator anywhere else.
  */
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useCallback } from "react";
 import { api } from "@/lib/api";
+
+type TaxonomiesT = ReturnType<typeof useTranslations<"taxonomies">>;
 
 /** Every list the API declares, keyed by field name. */
 export type Taxonomies = Record<string, string[]>;
@@ -18,70 +23,38 @@ export type Taxonomies = Record<string, string[]>;
 /** The option that opens a companion free-text field. */
 export const OTHER = "other";
 
-const LABELS: Record<string, string> = {
-  // sex at birth
-  female: "Female",
-  male: "Male",
-  intersex: "Intersex",
-  prefer_not_to_say: "Prefer not to say",
-  // gender
-  woman: "Woman",
-  man: "Man",
-  non_binary: "Non-binary",
-  // handedness
-  left: "Left-handed",
-  right: "Right-handed",
-  ambidextrous: "Ambidextrous",
-  // education
-  primary: "Primary school",
-  secondary: "Secondary school",
-  vocational: "Vocational training",
-  bachelor: "Bachelor's degree",
-  master: "Master's degree",
-  doctorate: "Doctorate",
-  // occupation
-  student: "Student",
-  healthcare: "Healthcare",
-  research_academia: "Research or academia",
-  education: "Education",
-  engineering_it: "Engineering or IT",
-  arts_media: "Arts or media",
-  business_admin: "Business or administration",
-  trades: "Skilled trades",
-  service: "Service work",
-  retired: "Retired",
-  not_working: "Not working right now",
-  // frequencies, shared by meditation, nicotine and alcohol
-  none: "None",
-  tried: "Tried it",
-  former: "Used to",
-  occasional: "Occasionally",
-  weekly: "Weekly",
-  daily: "Daily",
-  // vision and hearing
-  glasses: "Glasses",
-  contacts: "Contact lenses",
-  surgery: "Corrective surgery",
-  tinnitus: "Tinnitus",
-  hearing_loss: "Hearing loss",
-  // intended use
-  personal: "For myself",
-  patients: "With patients or clients",
-  research: "In research",
-  teaching: "In teaching",
-  // the tail
-  [OTHER]: "Other",
-};
-
 /**
- * The words for one option code.
+ * The words for one option code, in the translator's language.
+ *
+ * A code means the same in every list in English, but not everywhere: `none` is
+ * "Nessuna" under vision correction and "Mai" under alcohol in Italian. So the catalogue
+ * may refine a code per list (`taxonomies.byList.<list>.<code>`), and passing the list's
+ * name - the field name `GET /taxonomies` keys it by - picks the refinement when there is
+ * one. Without it, or without a refinement, the code's general words are used.
  *
  * Falls back to the code with its underscores opened up: a list can gain an option on
- * the server before this file learns its label, and a slightly clumsy word beats an
+ * the server before the catalogue learns its words, and a slightly clumsy word beats an
  * empty menu entry.
  */
-export function labelFor(code: string): string {
-  return LABELS[code] ?? code.replace(/_/g, " ");
+export function optionLabel(
+  t: TaxonomiesT,
+  code: string,
+  list?: string
+): string {
+  const refined = `byList.${list}.${code}`;
+  if (list && t.has(refined as never)) return t(refined as never);
+  const general = `option.${code}`;
+  if (t.has(general as never)) return t(general as never);
+  return code.replace(/_/g, " ");
+}
+
+/** `const label = useOptionLabel(); label(code, list)` inside a component. */
+export function useOptionLabel(): (code: string, list?: string) => string {
+  const t = useTranslations("taxonomies");
+  return useCallback(
+    (code: string, list?: string) => optionLabel(t, code, list),
+    [t]
+  );
 }
 
 /** Every list, fetched once and kept for the session: they change on deploy, not in use. */

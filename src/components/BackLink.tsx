@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { hasInAppHistory } from "@/lib/appHistory";
 
@@ -19,6 +20,7 @@ import { hasInAppHistory } from "@/lib/appHistory";
  */
 export function BackLink({ className }: { className?: string }) {
   const router = useRouter();
+  const t = useTranslations("common");
   return (
     <button
       type="button"
@@ -28,7 +30,7 @@ export function BackLink({ className }: { className?: string }) {
         else router.push("/");
       }}
     >
-      Back
+      {t("back")}
     </button>
   );
 }

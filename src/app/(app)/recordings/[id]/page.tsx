@@ -15,10 +15,12 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useMemo, useState } from "react";
 import { ApiRequestError, api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import type { components } from "@/lib/api-types";
 import type { BandSeries } from "@/components/compare/MetricCell";
 import { CompareView, type PlanStep } from "@/components/compare/CompareView";
@@ -31,6 +33,7 @@ import {
   parseTimeline,
   runBlocks,
 } from "@/lib/review/timeline";
+import { taskName } from "@/lib/types";
 import type { Analysis, Recording } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
 import type { ApplicationData } from "@/components/account/BetaCard";
@@ -67,6 +70,9 @@ export default function RecordingDetailPage({
   const router = useRouter();
   const toast = useToast();
   const tr = useTranslations("compare");
+  const t = useTranslations("recordings");
+  const locale = useFormatLocale();
+  const errorMessage = useErrorMessage();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const recording = useQuery({
@@ -146,8 +152,8 @@ export default function RecordingDetailPage({
     [events, plan]
   );
   const videoAt = useCallback(
-    (t: number) => {
-      const at = mediaTimeAt(windows, t);
+    (time: number) => {
+      const at = mediaTimeAt(windows, time);
       const media = at?.mediaId ? links.data?.media[at.mediaId] : undefined;
       return at && media?.url
         ? { url: media.url, poster: media.poster_url, time: at.mediaTime }
@@ -168,13 +174,15 @@ export default function RecordingDetailPage({
     mutationFn: (cleaner: string) =>
       api.post(`recordings/${id}/reprocess`, { cleaner }),
     onSuccess: () => {
-      toast("success", "Reprocessing started.");
+      toast("success", t("report.toasts.reprocessing"));
       queryClient.invalidateQueries({ queryKey: ["recording", id] });
     },
     onError: (e) =>
       toast(
         "error",
-        e instanceof ApiRequestError ? e.error.message : "Request failed."
+        e instanceof ApiRequestError
+          ? errorMessage(e)
+          : t("report.toasts.requestFailed")
       ),
   });
 
@@ -182,14 +190,16 @@ export default function RecordingDetailPage({
     mutationFn: () => api.delete(`recordings/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recordings"] });
-      toast("success", "Recording deleted.");
+      toast("success", t("report.toasts.deleted"));
       router.push("/recordings");
     },
     onError: (e) => {
       setConfirmDelete(false);
       toast(
         "error",
-        e instanceof ApiRequestError ? e.error.message : "Could not delete."
+        e instanceof ApiRequestError
+          ? errorMessage(e)
+          : t("report.toasts.deleteFailed")
       );
     },
   });
@@ -203,6 +213,10 @@ export default function RecordingDetailPage({
   const comparing = done && a && a.points.length >= 2 && rows.length > 0;
   const loadingComparison =
     done && (analysis.isLoading || blocks.isLoading || session.isLoading);
+  const protocol =
+    session.data?.title ??
+    (rec?.task_label ? taskName(t, rec.task_label) : null) ??
+    t("report.noProtocol");
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -210,7 +224,7 @@ export default function RecordingDetailPage({
         href="/recordings"
         className="type-caption inline-flex items-center gap-1 font-medium text-accent hover:underline"
       >
-        <Icon name="back" className="h-3.5 w-3.5" /> Recordings
+        <Icon name="back" className="h-3.5 w-3.5" /> {t("report.back")}
       </Link>
       <header className="mt-3 mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
@@ -220,20 +234,16 @@ export default function RecordingDetailPage({
             <Skeleton className="h-9 w-64" />
           )}
           <p className="mt-2 text-ink-2">
-            {session.data?.title ??
-              rec?.task_label?.replaceAll("_", " ") ??
-              "No protocol"}
-            {rec && (
-              <>
-                {" · "}
-                {formatDuration(rec.duration_s)}
-                {" · "}
-                {new Date(rec.created_at).toLocaleString(undefined, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </>
-            )}
+            {rec
+              ? t("report.subtitle", {
+                  protocol,
+                  duration: formatDuration(rec.duration_s),
+                  date: new Date(rec.created_at).toLocaleString(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }),
+                })
+              : protocol}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -245,7 +255,7 @@ export default function RecordingDetailPage({
               >
                 <span className="ping absolute inset-0 text-danger" />
               </span>
-              LIVE
+              {t("report.live")}
             </span>
           )}
           {rec && <StatusBadge status={rec.status} />}
@@ -256,13 +266,11 @@ export default function RecordingDetailPage({
         <Card className="enter-up mb-6 flex items-center gap-4">
           <Spinner className="text-accent" />
           <div>
-            <p className="font-medium">Processing your recording</p>
+            <p className="font-medium">{t("report.processing.title")}</p>
             <p className="type-caption text-ink-3">
-              Cleaning, embedding and projecting
               {rec.job && rec.job.attempts > 1
-                ? ` · attempt ${rec.job.attempts}`
-                : ""}
-              . This page updates by itself.
+                ? t("report.processing.textAttempt", { n: rec.job.attempts })
+                : t("report.processing.text")}
             </p>
           </div>
         </Card>
@@ -270,17 +278,17 @@ export default function RecordingDetailPage({
 
       {rec?.status === "empty" && (
         <div className="mb-6">
-          <ErrorBanner message="No EEG was recorded in this session: it ended before the headband sent any data." />
+          <ErrorBanner message={t("report.empty")} />
         </div>
       )}
       {rec?.status === "capturing" && (
         <div className="mb-6">
-          <ErrorBanner message="This session is still recording, or was closed before it finished. It is closed automatically after three hours." />
+          <ErrorBanner message={t("report.capturing")} />
         </div>
       )}
       {rec?.status === "failed" && (
         <Card className="enter-up mb-6 space-y-4">
-          <ErrorBanner message="Processing failed." />
+          <ErrorBanner message={t("report.failed")} />
           {rec.job?.error && (
             <pre className="max-h-40 overflow-auto rounded-[var(--radius-control)] bg-surface-2 p-3 font-mono text-[12px] text-ink-2">
               {rec.job.error.slice(0, 800)}
@@ -290,7 +298,7 @@ export default function RecordingDetailPage({
             onClick={() => reprocess.mutate("classic")}
             disabled={reprocess.isPending}
           >
-            Retry
+            {t("report.retry")}
           </Button>
         </Card>
       )}
@@ -317,7 +325,7 @@ export default function RecordingDetailPage({
               <TrailPlot analysis={a} />
             ) : (
               <p className="flex h-[460px] items-center justify-center text-ink-3">
-                Waiting for the first windows, about four seconds of signal…
+                {t("report.waiting")}
               </p>
             )}
           </Card>
@@ -328,7 +336,7 @@ export default function RecordingDetailPage({
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_300px]">
           <details className="group">
             <summary className="type-caption cursor-pointer px-1 font-medium text-ink-3 hover:text-ink">
-              Signal and technical details
+              {t("report.details.summary")}
             </summary>
             <div className="mt-3 space-y-4">
               {rec?.duration_s ? (
@@ -338,13 +346,31 @@ export default function RecordingDetailPage({
               ) : null}
               {a && (
                 <Card inset>
-                  <KeyValue label="Cleaner" value={a.cleaner_name} />
-                  <KeyValue label="Embedder" value={a.embedder_name} />
-                  <KeyValue label="Window" value={`${a.window_s} s`} />
-                  <KeyValue label="Step" value={`${a.step_s} s`} />
-                  <KeyValue label="Points" value={a.points.length} />
+                  <KeyValue
+                    label={t("report.details.cleaner")}
+                    value={a.cleaner_name}
+                  />
+                  <KeyValue
+                    label={t("report.details.embedder")}
+                    value={a.embedder_name}
+                  />
+                  <KeyValue
+                    label={t("report.details.window")}
+                    value={`${a.window_s} s`}
+                  />
+                  <KeyValue
+                    label={t("report.details.step")}
+                    value={`${a.step_s} s`}
+                  />
+                  <KeyValue
+                    label={t("report.details.points")}
+                    value={a.points.length}
+                  />
                   {a.landscape && (
-                    <KeyValue label="Regions" value={a.landscape.n_nodes} />
+                    <KeyValue
+                      label={t("report.details.regions")}
+                      value={a.landscape.n_nodes}
+                    />
                   )}
                 </Card>
               )}
@@ -352,20 +378,20 @@ export default function RecordingDetailPage({
           </details>
 
           <section>
-            <SectionTitle>Actions</SectionTitle>
+            <SectionTitle>{t("report.actions.title")}</SectionTitle>
             <Card inset>
               <ActionRow
-                label="Reprocess with classic cleaner"
+                label={t("report.actions.reprocessClassic")}
                 onClick={() => reprocess.mutate("classic")}
                 disabled={reprocess.isPending}
               />
               <ActionRow
-                label="Reprocess without cleaning"
+                label={t("report.actions.reprocessRaw")}
                 onClick={() => reprocess.mutate("identity")}
                 disabled={reprocess.isPending}
               />
               <ActionRow
-                label="Download raw file"
+                label={t("report.actions.download")}
                 icon="download"
                 onClick={async () => {
                   const { url } = await api.get<{ url: string }>(
@@ -375,7 +401,7 @@ export default function RecordingDetailPage({
                 }}
               />
               <ActionRow
-                label="Delete recording"
+                label={t("report.actions.delete")}
                 icon="trash"
                 tone="danger"
                 onClick={() => setConfirmDelete(true)}
@@ -390,23 +416,22 @@ export default function RecordingDetailPage({
 
       {confirmDelete && (
         <Sheet
-          title="Delete this recording?"
+          title={t("report.delete.title")}
           onClose={() => setConfirmDelete(false)}
         >
-          <p className="text-ink-2">
-            The file, the analyses and the trail are removed for good. This
-            cannot be undone.
-          </p>
+          <p className="text-ink-2">{t("report.delete.text")}</p>
           <div className="mt-6 flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-              Keep
+              {t("report.delete.keep")}
             </Button>
             <Button
               variant="danger"
               onClick={() => remove.mutate()}
               disabled={remove.isPending}
             >
-              {remove.isPending ? "Deleting…" : "Delete"}
+              {remove.isPending
+                ? t("report.delete.deleting")
+                : t("report.delete.confirm")}
             </Button>
           </div>
         </Sheet>

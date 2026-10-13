@@ -1,7 +1,13 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render as rtlRender,
+  screen,
+} from "@testing-library/react";
+import { IntlEn } from "@/i18n/testing";
 import { SPACE_THEME } from "@/components/protocol/kinds/render";
 import { STAGE_GROUND } from "@/lib/protocol/stage";
-import { useEffect } from "react";
+import { type ReactElement, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ProtocolRunner } from "./ProtocolRunner";
@@ -10,6 +16,9 @@ import type { Marker } from "@/lib/protocol/marker";
 import { hasTaskKind, registerTaskKind } from "@/lib/protocol/registry";
 import { createMemorySink } from "@/lib/protocol/sink";
 import type { ProtocolDefinition } from "@/lib/protocol/types";
+
+/** The runner reads its chrome from the catalogue; `rerender` keeps the provider. */
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: IntlEn });
 
 const TWO_PROMPTS: ProtocolDefinition = {
   id: "test-protocol",

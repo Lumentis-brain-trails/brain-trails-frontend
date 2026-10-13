@@ -1,0 +1,2026 @@
+{
+  "errors": {
+    "unknown": "Qualcosa è andato storto. Riprova tra un momento.",
+    "network": "Impossibile raggiungere il server. Controlla la connessione e riprova.",
+    "unauthorized": "La sessione è scaduta. Accedi di nuovo.",
+    "forbidden": "Non hai accesso a questo contenuto.",
+    "forbidden_path": "Questa parte del servizio non è disponibile dall'app.",
+    "not_found": "Non è stato possibile trovarlo. Potrebbe essere stato eliminato.",
+    "rate_limited": "Troppi tentativi. Aspetta un minuto e riprova.",
+    "conflict": "È stato modificato altrove. Ricarica per vedere l'ultima versione.",
+    "email_taken": "Esiste già un account con questa email.",
+    "consent_required": "Serve il consenso al trattamento dei dati.",
+    "invalid_token": "Il link di verifica non è valido o è scaduto.",
+    "invalid_state": "Questo account non è in attesa di verifica.",
+    "mail_failed": "Non siamo riusciti a inviare l'email di verifica. Riprova tra poco."
+  },
+  "application": {
+    "step": "Candidatura",
+    "title": "La tua candidatura",
+    "intro": "Brain Trails è in beta chiusa. Raccontaci chi sei e come lo useresti: leggiamo ogni candidatura e scegliamo un piccolo gruppo con cui iniziare.",
+    "profile": {
+      "label": "Mi candido come",
+      "private": "Privato, per uso personale",
+      "therapist": "Psicoterapeuta",
+      "lab_lead": "Responsabile di un laboratorio di ricerca",
+      "lab_member": "Ricercatore o studente in un laboratorio"
+    },
+    "organisation": "Organizzazione",
+    "role_title": "Ruolo",
+    "registration_no": "Numero di iscrizione all'albo",
+    "registration_no_hint": "La tua iscrizione all'ordine professionale.",
+    "institution": "Istituzione",
+    "supervisor": "Supervisore",
+    "purpose": "Cosa vorresti fare con Brain Trails?",
+    "headband": {
+      "label": "Quale fascia possiedi?",
+      "muse-2": "Muse 2",
+      "muse-s-athena": "Muse S Athena",
+      "other": "Un'altra fascia EEG",
+      "none": "Ancora nessuna"
+    },
+    "device": "Dispositivo su cui registrerai",
+    "browser": "Browser",
+    "detected": "Compilato a partire da questo browser; correggilo se registrerai altrove.",
+    "bluetooth_ok": "Questo browser può associare una fascia.",
+    "bluetooth_missing": "Questo browser non può associare una fascia via Bluetooth. Puoi candidarti comunque: dicci su quale dispositivo registreresti.",
+    "country": "Paese",
+    "country_hint": "Due lettere, per esempio IT.",
+    "language": "Lingua",
+    "language_hint": "Per esempio it o en.",
+    "expected_subjects": "Quante persone registreresti?",
+    "expected_subjects_hint": "Pazienti o partecipanti, all'incirca.",
+    "contact_ok": "Potete contattarmi per un riscontro durante la beta.",
+    "required": "Obbligatorio per questo profilo.",
+    "invalid_country": "Usa il codice del paese di due lettere.",
+    "back": "Indietro",
+    "continue": "Continua"
+  },
+  "auth": {
+    "waitlisted": "La tua candidatura è in lista d'attesa. Ti scriveremo appena si libera un posto.",
+    "status": {
+      "account_pending": "La tua registrazione è ancora in attesa della revisione di un admin.",
+      "account_rejected": "La tua registrazione non è stata approvata.",
+      "account_waitlisted": "La tua candidatura è in lista d'attesa. Ti scriveremo appena si libera un posto.",
+      "email_not_verified": "Il tuo account è approvato, ma l'email non è ancora verificata. Chiedi il link a un admin.",
+      "invalid_credentials": "Email o password errata.",
+      "rate_limited": "Troppi tentativi. Aspetta un minuto e riprova."
+    }
+  },
+  "run": {
+    "preflight": {
+      "title": "Prima di iniziare",
+      "intro": "Indossa la fascia e aspetta che tutte e quattro le luci siano verdi. La registrazione parte con la sessione e si ferma alla sua fine.",
+      "source": "Fascia",
+      "bluetooth": "Fascia via Bluetooth",
+      "simulated": "Muse 2 simulata",
+      "simulated_athena": "Muse S Athena simulata",
+      "connect": "Connetti",
+      "connecting": "Connessione…",
+      "connected": "Connessa a {name}",
+      "unsupported": "Questo browser non può associare una fascia. Usa Chrome o Edge su un computer, oppure l'app Brain Trails su iPhone e iPad.",
+      "contact_wait": "In attesa di un buon contatto su tutti e quattro i sensori.",
+      "contact_ok": "Buon contatto su tutti e quattro i sensori.",
+      "override": "Avvia comunque con un contatto imperfetto",
+      "start": "Avvia la sessione",
+      "starting": "Avvio…",
+      "clock_wait": "Sincronizzazione con la fascia…",
+      "back": "Indietro"
+    },
+    "surface": {
+      "recording": "Registrazione in corso",
+      "fullscreen_failed": "Lo schermo intero è stato rifiutato; la sessione prosegue nella finestra.",
+      "fullscreen": "Schermo intero"
+    },
+    "upload": {
+      "title": "Salvataggio della sessione",
+      "progress": "Caricamento della registrazione… {pct}%",
+      "failed": "Non è stato possibile caricare la registrazione: {message}",
+      "retry": "Riprova il caricamento",
+      "done": "Salvata. L'analisi è in corso.",
+      "open": "Apri la registrazione",
+      "back": "Torna ai protocolli",
+      "stopped": "Sessione interrotta",
+      "complete": "Sessione completata",
+      "nothing": "La sessione si è interrotta prima che venisse registrato qualcosa.",
+      "sync_failed": "Dalla fascia non è arrivato alcun segnale. Controlla che sia accesa e associata, poi riprova.",
+      "dropped": "La fascia si è disconnessa, quindi la sessione si è interrotta. Quello che era stato registrato fino a quel momento è stato conservato."
+    },
+    "consent": {
+      "title": "Prima di cominciare",
+      "warning": "Avviso sui contenuti",
+      "consent": "Consenso",
+      "agree": "Ho letto e accetto di partecipare.",
+      "accept": "Continua",
+      "decline": "Indietro",
+      "required": "Spunta la casella per continuare."
+    },
+    "runner": {
+      "reduceMotion": "Riduci il movimento",
+      "begin": "Inizia",
+      "disclaimer": "Questa non è una valutazione né una diagnosi medica. Puoi fermarti in qualsiasi momento.",
+      "stop": "Ferma",
+      "stopTitle": "Fermare questa sessione?",
+      "stopBody": "Quello che hai fatto finora viene conservato. Non puoi riprendere questa sessione.",
+      "keepGoing": "Continua",
+      "stopSession": "Ferma la sessione"
+    },
+    "results": {
+      "hits": "Bersagli colti",
+      "misses": "Bersagli mancati",
+      "falseDocks": "Agganci sbagliati",
+      "medianRt": "TR mediano",
+      "rtVariability": "Variabilità del TR",
+      "criterion": "Criterio"
+    }
+  },
+  "signals": {
+    "title": "Contatto dei sensori",
+    "levels": {
+      "unknown": "In attesa",
+      "good": "Buono",
+      "noisy": "Disturbato",
+      "saturated": "Saturo",
+      "flat": "Nessun contatto"
+    },
+    "hints": {
+      "unknown": "In attesa del segnale",
+      "good": "Buon contatto",
+      "noisy": "Rilassati e resta immobile",
+      "saturated": "Solleva e riposiziona",
+      "flat": "Premi delicatamente"
+    },
+    "help": {
+      "open": "Dove poggiano i sensori",
+      "title": "Dove poggiano i sensori",
+      "intro": "La fascia tiene quattro elettrodi a secco a contatto con la pelle: due sulla fronte appena sopra le sopracciglia, due dietro le orecchie. Le luci seguono la fascia da sinistra a destra così come la indossi, quindi la luce più a sinistra è il sensore dietro l'orecchio sinistro.",
+      "where": {
+        "TP9": "Dietro l'orecchio sinistro",
+        "AF7": "Fronte a sinistra, sopra il sopracciglio",
+        "AF8": "Fronte a destra, sopra il sopracciglio",
+        "TP10": "Dietro l'orecchio destro"
+      },
+      "reference_label": "Fpz",
+      "reference": "Riferimento, centro della fronte"
+    },
+    "diagram": {
+      "label": "Fascia: TP9 {TP9}, AF7 {AF7}, AF8 {AF8}, TP10 {TP10}",
+      "levels": {
+        "unknown": "in attesa",
+        "good": "buono",
+        "noisy": "disturbato",
+        "saturated": "saturo",
+        "flat": "nessun contatto"
+      },
+      "caption": "vista frontale · la sinistra di chi la indossa è a sinistra"
+    },
+    "live": {
+      "caption": "ultimi {seconds} s · {rate} Hz"
+    },
+    "preview": {
+      "stage": "Fase del segnale",
+      "cleaned": "Pulito",
+      "standardized": "Standardizzato",
+      "range": "{start}–{end} s",
+      "windowStart": "Inizio della finestra",
+      "unavailable": "Segnale non disponibile."
+    }
+  },
+  "kinds": {
+    "common": {
+      "continue": "Continua",
+      "loading": "Caricamento…",
+      "media_error": "Non è stato possibile riprodurlo. Puoi continuare con la sessione."
+    },
+    "fixation": {
+      "label": "Croce di fissazione"
+    },
+    "baseline": {
+      "open": "Tieni gli occhi aperti e lascia riposare lo sguardo sulla croce.",
+      "closed": "Chiudi gli occhi e rilassati. Un segnale acustico ti dirà quando riaprirli.",
+      "closed_silent": "Chiudi gli occhi e rilassati finché lo schermo non cambia."
+    },
+    "rest": {
+      "timed": "Fai una breve pausa.",
+      "self_paced": "Prenditi il tempo che ti serve. Premi Fine quando hai finito.",
+      "elapsed": "Trascorso {time}",
+      "finish": "Fine"
+    },
+    "countdown": {
+      "label": "Si parte tra"
+    },
+    "audio": {
+      "listen": "Ascolta"
+    },
+    "text": {
+      "error": "Non è stato possibile caricare questo testo. Puoi continuare con la sessione."
+    },
+    "questionnaire": {
+      "submit": "Invia",
+      "unanswered": "Rispondi a tutte le domande per continuare.",
+      "point": "{value} di {max}",
+      "sam": {
+        "valence": {
+          "question": "Quanto è stata piacevole la sensazione che hai provato?",
+          "low": "Infelice",
+          "high": "Felice"
+        },
+        "arousal": {
+          "question": "Quanta calma o quanto stress hai provato?",
+          "low": "Calma",
+          "high": "Stress"
+        },
+        "dominance": {
+          "question": "Quanto ti è sembrato di avere il controllo?",
+          "low": "Poco controllo",
+          "high": "Pieno controllo"
+        }
+      },
+      "nasa_tlx": {
+        "mental": {
+          "question": "Quanto è stato mentalmente impegnativo il compito?",
+          "low": "Molto basso",
+          "high": "Molto alto"
+        },
+        "physical": {
+          "question": "Quanto è stato fisicamente impegnativo il compito?",
+          "low": "Molto basso",
+          "high": "Molto alto"
+        },
+        "temporal": {
+          "question": "Quanto è stato frenetico o incalzante il ritmo del compito?",
+          "low": "Molto basso",
+          "high": "Molto alto"
+        },
+        "performance": {
+          "question": "Quanto bene sei riuscito a fare ciò che ti era stato chiesto?",
+          "low": "Perfetto",
+          "high": "Fallimento"
+        },
+        "effort": {
+          "question": "Quanto hai dovuto impegnarti per raggiungere il tuo livello di prestazione?",
+          "low": "Molto basso",
+          "high": "Molto alto"
+        },
+        "frustration": {
+          "question": "Quanta insicurezza, scoraggiamento, irritazione, stress o fastidio hai provato?",
+          "low": "Molto basso",
+          "high": "Molto alto"
+        }
+      }
+    },
+    "quiz": {
+      "progress": "Domanda {n} di {total}",
+      "correct": "Corretto",
+      "incorrect": "Non proprio",
+      "next": "Avanti"
+    },
+    "choice": {
+      "progress": "{n} di {total}",
+      "feedback": {
+        "hit": "Corretto",
+        "error": "Lato sbagliato",
+        "miss": "Troppo lento",
+        "correct_rejection": "Corretto",
+        "commission_error": "Non corrisponde"
+      }
+    },
+    "flanker": {
+      "area": "Compito delle frecce",
+      "left": "Sinistra",
+      "right": "Destra"
+    },
+    "nback": {
+      "area": "Compito di memoria di lettere",
+      "match": "Corrisponde",
+      "rule": "Premi quando corrisponde a {load} posizioni prima",
+      "ruleSelfPaced": "Premi Corrisponde quando corrisponde a {load} posizioni prima, poi Continua",
+      "marked": "Segnata come corrispondente",
+      "continue": "Continua"
+    },
+    "coding": {
+      "area": "Il simbolo a cui rispondere",
+      "key": "Quale cifra corrisponde a quale simbolo",
+      "left": "{seconds} s rimasti"
+    },
+    "heartbeat": {
+      "ready": "Al segnale acustico, inizia a contare in silenzio i battiti del tuo cuore. Non toccarti il polso. Conta solo i battiti che senti davvero.",
+      "counting": "Conta i battiti del tuo cuore fino al prossimo segnale acustico.",
+      "progress": "Round {n} di {total}",
+      "how_many": "Quanti battiti hai contato?",
+      "how_sure": "Quanto ne sei sicuro?",
+      "guessing": "A caso",
+      "certain": "Certezza"
+    },
+    "video": {
+      "error": "Non è stato possibile riprodurre questo video.",
+      "play": "Riproduci",
+      "playLabel": "Riproduci il video"
+    },
+    "goNoGo": {
+      "area": "Area degli stimoli di Signal Navigator",
+      "progress": "Prova {n} di {total}",
+      "dock": "Aggancia"
+    },
+    "prompt": {
+      "wait": "{label} tra {seconds} s"
+    },
+    "breathing": {
+      "settle": "Mettiti a tuo agio",
+      "inhale": "Inspira",
+      "hold": "Trattieni",
+      "exhale": "Espira"
+    }
+  },
+  "builder": {
+    "back": "Indietro",
+    "not_found": "Questo protocollo non è nel tuo catalogo.",
+    "read_only": "Questo protocollo appartiene a qualcun altro. Fanne una copia per modificarlo.",
+    "saving": "Salvataggio…",
+    "saved": "Salvato",
+    "untitled": "Nuovo protocollo",
+    "not_saved_yet": "Non ancora salvato - viene conservato appena aggiungi qualcosa.",
+    "undo": "Annulla",
+    "redo": "Ripristina",
+    "check": "Verifica",
+    "preview": "Anteprima",
+    "publish": {
+      "title": "Pubblica questo protocollo",
+      "name": "Nome",
+      "summary": "Una riga per la scheda",
+      "summary_hint": "Cosa fa, in una frase.",
+      "description": "Descrizione",
+      "tags": "Tag",
+      "cancel": "Annulla",
+      "publish": "Pubblica",
+      "publish_version": "Pubblica la versione {version}",
+      "invalid": "Questo protocollo non può ancora essere pubblicato:",
+      "failed": "Pubblicazione non riuscita. Riprova."
+    },
+    "conflict": "Questo protocollo è stato salvato altrove. Ricaricalo per continuare a modificarlo; le modifiche non salvate che hai qui sovrascriverebbero quelle.",
+    "reload": "Ricarica",
+    "zoom": "Zoom",
+    "group": {
+      "title": "Gruppo",
+      "repetitions": "Ripetizioni",
+      "repetitions_hint": "Quante volte viene eseguita l'intera tabella.",
+      "order": "Ordine",
+      "order_hint": "L'ordine in cui viene riprodotto il contenuto del gruppo.",
+      "order_fixed": "Come disposto",
+      "order_shuffle": "Mescolato",
+      "order_sequential": "In ordine",
+      "order_random": "Casuale",
+      "max_run_same": "Serie più lunga della stessa condizione",
+      "max_run_same_hint": "Lascia vuoto per consentire qualsiasi serie.",
+      "advanced": "Avanzate",
+      "conditions_hint": "Una colonna per ogni valore letto dai blocchi, una riga per ogni condizione.",
+      "column_name": "Nome della colonna {index}",
+      "add_column": "Aggiungi colonna",
+      "remove_column": "Rimuovi la colonna {name}",
+      "cell": "{column}, riga {row}",
+      "no_rows": "Ancora nessuna condizione.",
+      "add_row": "Aggiungi riga",
+      "remove_row": "Rimuovi la riga {index}",
+      "remove": "Rimuovi"
+    },
+    "ungroup": "Separa",
+    "findings": "Segnalazioni",
+    "all_good": "Nessun problema trovato.",
+    "select_a_clip": "Seleziona un blocco sulla timeline per cambiarne le impostazioni.",
+    "preview_empty": "Non c'è ancora niente da vedere in anteprima: trascina qualcosa sulla timeline.",
+    "close": "Chiudi",
+    "timeline": {
+      "title": "Timeline",
+      "empty": "Trascina qui un media o un elemento, oppure fai doppio clic su di esso.",
+      "insert_at": "Inserisci alla posizione {position}",
+      "blocks": "{count, plural, one {# blocco} other {# blocchi}}",
+      "total": "Totale {time}",
+      "group_blocks": "Gruppo · {count, plural, one {# blocco} other {# blocchi}}",
+      "errors": "{count, plural, one {# errore} other {# errori}}",
+      "warnings": "{count, plural, one {# avviso} other {# avvisi}}"
+    },
+    "bin": {
+      "title": "Materiali",
+      "media": "Media",
+      "elements": "Elementi",
+      "search": "Cerca tra i tuoi media",
+      "no_media": "Ancora niente da usare. Carica un video o un suono.",
+      "upload": "Carica",
+      "tasks": "Compiti"
+    },
+    "publish_action": "Pubblica",
+    "form": {
+      "none": "Non impostato",
+      "range_from": "Da",
+      "range_to": "A",
+      "list_empty": "Ancora niente qui.",
+      "row": "Riga {index}",
+      "remove": "Rimuovi",
+      "remove_row": "Rimuovi la riga {index} di {name}",
+      "add_row": "Aggiungi",
+      "unsupported_label": "Impostazioni avanzate",
+      "unsupported": "Questa impostazione non ha ancora un modulo. Viene mostrata così come è salvata e lasciata com'è.",
+      "add_to": "Aggiungi a {name}",
+      "advanced": "Impostazioni avanzate ({count})",
+      "nothing_to_set": "Niente da impostare: questo blocco funziona così com'è."
+    },
+    "inspector": {
+      "title": "Blocco",
+      "label": "Nome",
+      "kind": "Tipo",
+      "kind_hint": "Il tipo viene scelto quando il blocco è aggiunto e non può essere cambiato qui.",
+      "condition": "Condizione",
+      "condition_hint": "Una parola per ciò che questo blocco rappresenta nel tuo esperimento (calma, paura, controllo). I blocchi con la stessa condizione vengono confrontati insieme nella revisione e nei dati esportati. Lascia vuoto se non stai confrontando nulla.",
+      "pre_fixation_s": "Croce prima (s)",
+      "jitter_s": "Extra casuale (s)",
+      "post_rest_s": "Pausa dopo (s)",
+      "skippable": "Il partecipante può saltare questo blocco",
+      "settings": "Impostazioni",
+      "unknown_kind": "Tipo sconosciuto",
+      "unknown_kind_hint": "Questa app non conosce questo tipo di blocco. Le sue impostazioni vengono lasciate intatte.",
+      "from_column": "Dalla colonna {name}",
+      "duplicate": "Duplica",
+      "delete": "Elimina",
+      "around": "Tempi intorno al blocco e analisi",
+      "pre_fixation_s_hint": "Mostra una croce di fissazione per questa durata prima che il blocco inizi, per stabilizzare lo sguardo.",
+      "jitter_s_hint": "Aggiunge un tempo casuale, fino a questo valore, alla croce prima del blocco, così il partecipante non può prevedere l'inizio esatto.",
+      "post_rest_s_hint": "Uno schermo vuoto per questa durata dopo il blocco, per lasciare che il segnale torni a riposo.",
+      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato."
+    },
+    "group_action": "Raggruppa",
+    "monitor": {
+      "empty": "Trascina un video o un elemento sulla timeline qui sotto. Qui compare ciò che vedrà il partecipante.",
+      "group": "Gruppo",
+      "play": "Riproduci il protocollo",
+      "split": "Dividi qui",
+      "split_hint": "Metti in pausa il video nel punto in cui vuoi il taglio, poi dividi: ottieni due clip sullo stesso video e puoi mettere tra loro un questionario o una pausa.",
+      "trimmed": "da {from} a {to}",
+      "the_end": "la fine"
+    },
+    "soundtrack": {
+      "title": "Suono",
+      "empty": "Trascina qui un suono per riprodurlo sopra i blocchi — una musica di sottofondo, un'istruzione a voce.",
+      "only_audio": "Su questa traccia vanno solo i suoni.",
+      "drag_stop": "Trascina fino al blocco in cui deve fermarsi",
+      "inspector_title": "Suono",
+      "label": "Nome",
+      "starts": "Inizia",
+      "starts_protocol": "Quando inizia il protocollo",
+      "starts_block": "Quando inizia “{label}”",
+      "delay": "Ritardo (secondi)",
+      "stops": "Si ferma",
+      "stops_clip": "Quando il suono finisce",
+      "stops_protocol": "Quando finisce il protocollo",
+      "stops_block": "Quando finisce “{label}”",
+      "loop": "Ripeti in loop",
+      "loop_needs_stop": "Un suono in loop ha bisogno di un punto in cui fermarsi: la fine del protocollo o di un blocco.",
+      "volume": "Volume",
+      "fade": "Dissolvenza in entrata e in uscita (secondi)",
+      "remove": "Rimuovi il suono",
+      "note": "I suoni vengono riprodotti sopra i blocchi invece di occupare un turno. Per un suono che deve essere sincronizzato con l'EEG, usa un blocco audio.",
+      "unnamed": "Suono"
+    },
+    "fix_before_preview": "Correggi questi punti prima dell'anteprima:",
+    "fix_before_publish": "Correggi questi punti prima di pubblicare:",
+    "finding_block": "Blocco {n}: {label}",
+    "finding_row": "riga {n}",
+    "finding_protocol": "Protocollo",
+    "unnamedGroup": "Gruppo",
+    "unnamedLoop": "Gruppo (si ripete)",
+    "previewMissingMedia": "Non è stato possibile caricare uno dei media di questo protocollo - potrebbe essere stato eliminato. Sostituiscilo e riprova.",
+    "previewLoading": "Caricamento dei media…",
+    "previewFailed": "Non è possibile mostrare l'anteprima di questo protocollo.",
+    "findingText": {
+      "required": "\"{name}\" è obbligatorio.",
+      "empty": "\"{name}\" non può essere vuoto.",
+      "oneOf": "\"{name}\" deve essere uno tra {options}.",
+      "unknownKind": "Tipo di blocco sconosciuto \"{kind}\"."
+    },
+    "kinds": {
+      "video": {
+        "label": "Video",
+        "hint": "Riproduce un video a schermo intero."
+      },
+      "audio": {
+        "label": "Suono",
+        "hint": "Riproduce un suono su uno schermo scuro."
+      },
+      "text": {
+        "label": "Lettura",
+        "hint": "Un testo che il partecipante legge al proprio ritmo."
+      },
+      "image-sequence": {
+        "label": "Sequenza di immagini",
+        "hint": "Immagini mostrate una dopo l'altra, ognuna con il proprio marker."
+      },
+      "go-no-go": {
+        "label": "Signal Navigator",
+        "hint": "Il gioco go/no-go: aggancia il carico, lascia passare i detriti."
+      },
+      "breathing": {
+        "label": "Respirazione guidata",
+        "hint": "Un cerchio che si allarga e si restringe, da seguire con il respiro."
+      },
+      "quiz": {
+        "label": "Quiz",
+        "hint": "Domande con risposte giuste e sbagliate."
+      },
+      "flanker": {
+        "label": "Frecce (flanker)",
+        "hint": "Da che parte punta la freccia centrale? Le frecce intorno possono non essere d'accordo. Con gli indizi è l'Attention Network Test."
+      },
+      "n-back": {
+        "label": "Memoria di lettere (n-back)",
+        "hint": "Una lettera alla volta: premi quando è la stessa di qualche passo fa."
+      },
+      "coding": {
+        "label": "Codifica di simboli",
+        "hint": "Abbina simboli e cifre contro il tempo: quanti in novanta secondi."
+      },
+      "heartbeat": {
+        "label": "Conteggio dei battiti",
+        "hint": "Conta i battiti del tuo cuore tra due segnali acustici, senza toccarti il polso."
+      },
+      "baseline": {
+        "label": "Baseline a riposo",
+        "hint": "Seduti e fermi, a occhi aperti o chiusi: il riferimento con cui si confronta ogni altro blocco."
+      },
+      "rest": {
+        "label": "Pausa",
+        "hint": "Una pausa tra i blocchi, a tempo o finché il partecipante non continua."
+      },
+      "fixation": {
+        "label": "Croce di fissazione",
+        "hint": "Una croce da guardare, per fermare lo sguardo prima di uno stimolo."
+      },
+      "countdown": {
+        "label": "Conto alla rovescia",
+        "hint": "3, 2, 1 prima del blocco successivo."
+      },
+      "questionnaire": {
+        "label": "Questionario",
+        "hint": "Chiede come si sente il partecipante (SAM) o pone le tue domande."
+      },
+      "instructions": {
+        "label": "Istruzioni",
+        "hint": "Testo sullo schermo che spiega cosa viene dopo."
+      },
+      "prompt": {
+        "label": "Messaggio",
+        "hint": "Una riga breve sullo schermo, poi la sessione prosegue."
+      }
+    },
+    "palette": {
+      "instructions": {
+        "label": "Istruzioni",
+        "text": {
+          "line": "Spiega al partecipante cosa succede adesso.",
+          "continue": "Continua"
+        }
+      },
+      "fixation": {
+        "label": "Croce di fissazione"
+      },
+      "baseline": {
+        "label": "Baseline a riposo"
+      },
+      "rest": {
+        "label": "Pausa"
+      },
+      "countdown": {
+        "label": "Conto alla rovescia"
+      },
+      "questionnaire": {
+        "label": "Come ti senti? (SAM)"
+      },
+      "go-no-go": {
+        "label": "Signal Navigator"
+      },
+      "breathing": {
+        "label": "Respirazione guidata"
+      },
+      "go-no-go-cued": {
+        "label": "Signal Navigator, con faro",
+        "hint": "Prima arriva un faro verde o rosso, che cambia la regola."
+      },
+      "flanker": {
+        "label": "Frecce (flanker)"
+      },
+      "flanker-ant": {
+        "label": "Reti attentive",
+        "hint": "Il compito delle frecce con indizi di allerta e di posizione: allerta, orientamento, conflitto."
+      },
+      "n-back": {
+        "label": "Memoria di lettere (2-back)"
+      },
+      "n-back-self-paced": {
+        "label": "n-back a ritmo libero",
+        "hint": "Le stesse lettere, ma ognuna resta finché il partecipante non preme Continua."
+      },
+      "coding": {
+        "label": "Codifica di simboli"
+      },
+      "heartbeat": {
+        "label": "Conteggio dei battiti"
+      }
+    },
+    "fields": {
+      "common": {
+        "markers": {
+          "label": "Nomi degli eventi",
+          "help": "Il nome che questo momento prende nella timeline degli eventi della registrazione. Cambialo solo se la tua analisi si aspetta un nome preciso."
+        },
+        "lines/text": {
+          "label": "Testo",
+          "help": "Quello che legge il partecipante. Un a capo nel riquadro è un a capo sullo schermo."
+        },
+        "lines/holdMs": {
+          "label": "Resta sullo schermo (ms)",
+          "help": "Per quanto tempo questa riga resta visibile prima della successiva. 1000 ms sono un secondo."
+        },
+        "lines/marker": {
+          "label": "Nome dell'evento",
+          "help": "Il nome che questo momento prende nella timeline degli eventi della registrazione. Cambialo solo se la tua analisi si aspetta un nome preciso."
+        },
+        "lines": {
+          "label": "Righe di testo",
+          "help": "Mostrate una dopo l'altra, in quest'ordine."
+        },
+        "advance": {
+          "label": "Come si prosegue"
+        },
+        "advance/mode": {
+          "label": "Il blocco termina",
+          "help": "Dopo un tempo fisso, quando il partecipante preme il pulsante, oppure al primo dei due.",
+          "options": {
+            "timed": "Dopo un tempo fisso",
+            "key": "Quando il partecipante continua",
+            "either": "Pulsante, oppure un limite di tempo"
+          }
+        },
+        "advance/label": {
+          "label": "Testo del pulsante",
+          "help": "Cosa c'è scritto sul pulsante per proseguire, per esempio Continua o Inizia."
+        },
+        "advance/ms": {
+          "label": "Durata (ms)",
+          "help": "Quanto dura il blocco quando termina da solo."
+        },
+        "advance/minMs": {
+          "label": "Il pulsante compare dopo (ms)",
+          "help": "Fino ad allora il pulsante è disattivato, così nessuno salta il testo senza leggerlo."
+        },
+        "advance/maxMs": {
+          "label": "Prosegue da solo dopo (ms)",
+          "help": "Un limite di tempo per chi non preme mai il pulsante."
+        },
+        "footnote": {
+          "label": "Nota in piccolo",
+          "help": "Una riga discreta sotto il testo, per un promemoria come 'puoi fermarti in qualsiasi momento'."
+        },
+        "markers/*": {
+          "help": "Il nome che questo momento prende nella timeline degli eventi della registrazione. Cambialo solo se la tua analisi si aspetta un nome preciso."
+        }
+      },
+      "video": {
+        "allowPause": {
+          "label": "Il partecipante può mettere in pausa",
+          "help": "Se è disattivato, tutti i partecipanti restano sulla stessa timeline, che è ciò che serve per confrontarli."
+        },
+        "endOn": {
+          "label": "Il blocco termina",
+          "help": "Quando il video finisce, oppure dopo un tempo fisso anche se il video è più lungo.",
+          "options": {
+            "ended": "Quando finisce il video",
+            "duration": "Dopo un tempo fisso"
+          }
+        },
+        "durationMs": {
+          "label": "Tempo fisso (ms)",
+          "help": "Usato solo quando il blocco termina dopo un tempo fisso."
+        },
+        "start_s": {
+          "label": "Inizia a (s)",
+          "help": "Riproduce il video da questo secondo invece che dall'inizio. Dividere una clip sulla timeline compila questo valore."
+        },
+        "end_s": {
+          "label": "Termina a (s)",
+          "help": "Si ferma a questo secondo del video invece che alla fine."
+        },
+        "cues": {
+          "label": "Momenti da segnare",
+          "help": "Punti del video che vuoi ritrovare nella registrazione: uno spavento improvviso, un cambio di scena. Ognuno diventa un evento sulla timeline."
+        },
+        "cues/atS": {
+          "label": "A (s)",
+          "help": "Secondi dall'inizio del video."
+        },
+        "cues/label": {
+          "label": "Nome",
+          "help": "Come si chiama l'evento nella timeline."
+        },
+        "cues/note": {
+          "label": "Nota",
+          "help": "Per te; il partecipante non la vede mai."
+        }
+      },
+      "audio": {
+        "volume": {
+          "label": "Volume",
+          "help": "Da 0 (muto) a 1 (il livello originale del file)."
+        },
+        "start_s": {
+          "label": "Inizia a (s)",
+          "help": "Salta l'inizio del file: riproduce da questo secondo."
+        },
+        "end_s": {
+          "label": "Termina a (s)",
+          "help": "Taglia la fine del file: si ferma a questo secondo."
+        }
+      },
+      "text": {
+        "body": {
+          "label": "Testo",
+          "help": "Quello che legge il partecipante."
+        },
+        "min_s": {
+          "label": "Tempo minimo di lettura (s)",
+          "help": "Fino ad allora Continua è disattivato, così il testo viene letto davvero."
+        }
+      },
+      "baseline": {
+        "eyes": {
+          "label": "Occhi",
+          "help": "A occhi chiusi il ritmo alfa è più forte, ed è il riferimento con cui la pagina di revisione confronta ogni blocco. A occhi aperti si è più vicini a come si svolgono gli altri blocchi.",
+          "options": {
+            "open": "Aperti",
+            "closed": "Chiusi"
+          }
+        },
+        "duration_s": {
+          "label": "Durata (s)",
+          "help": "Di solito uno o due minuti. Sotto i 30 s è troppo breve per essere un riferimento stabile."
+        },
+        "end_tone": {
+          "label": "Riproduci un segnale acustico alla fine",
+          "help": "Così un partecipante a occhi chiusi sa quando riaprirli."
+        }
+      },
+      "rest": {
+        "mode": {
+          "label": "La pausa termina",
+          "help": "Dopo un tempo fisso, oppure quando il partecipante si sente pronto.",
+          "options": {
+            "timed": "Dopo un tempo fisso",
+            "self_paced": "Quando il partecipante continua"
+          }
+        },
+        "duration_s": {
+          "label": "Durata (s)",
+          "help": "Usata quando la pausa termina dopo un tempo fisso."
+        },
+        "message": {
+          "label": "Messaggio",
+          "help": "Cosa dice lo schermo durante la pausa."
+        }
+      },
+      "fixation": {
+        "duration_s": {
+          "label": "Durata (s)",
+          "help": "Per quanto tempo resta la croce. Di solito uno o due secondi prima di uno stimolo."
+        }
+      },
+      "countdown": {
+        "from": {
+          "label": "Conta da",
+          "help": "Con 3 mostra 3, 2, 1 - un numero al secondo."
+        }
+      },
+      "flanker": {
+        "n": {
+          "label": "Prove",
+          "help": "Quante righe di frecce. 96 richiedono circa tre minuti; con gli indizi usa un multiplo di 8, così ogni combinazione compare lo stesso numero di volte."
+        },
+        "congruentRatio": {
+          "label": "Quota di righe concordi",
+          "help": "La frazione di righe in cui le frecce esterne puntano nella stessa direzione di quella centrale, da 0 a 1. A 0,5 il disaccordo non si può prevedere."
+        },
+        "cues": {
+          "label": "Indizi prima della riga",
+          "help": "Lascia vuoto per il semplice compito delle frecce. Con gli indizi la riga compare sopra o sotto la croce e può essere preceduta da un breve asterisco: è l'Attention Network Test. Usali tutti e quattro per ottenere i suoi tre punteggi.",
+          "options": {
+            "none": "Nessun indizio",
+            "center": "Sulla croce (quando, non dove)",
+            "double": "Sopra e sotto (quando, non dove)",
+            "spatial": "Dove comparirà la riga"
+          }
+        },
+        "practice": {
+          "label": "È un'esercitazione",
+          "help": "Segna ogni prova come esercitazione: viene eseguita, ma non entra mai nel punteggio."
+        },
+        "feedback": {
+          "label": "Indica giusto o sbagliato",
+          "help": "Mostra Corretto, Lato sbagliato o Troppo lento dopo ogni riga. Usalo per l'esercitazione; nel blocco vero cambia il modo in cui le persone rispondono."
+        },
+        "maxRun": {
+          "label": "Serie più lunga",
+          "help": "Il numero massimo di righe dello stesso tipo di seguito."
+        },
+        "cueMs": {
+          "label": "L'indizio resta (ms)",
+          "help": "100 ms è lo standard: abbastanza per vederlo, troppo poco per spostarci lo sguardo."
+        },
+        "cueTargetMs": {
+          "label": "Dall'indizio alla riga (ms)",
+          "help": "L'intervallo vuoto tra la scomparsa dell'indizio e la comparsa della riga."
+        },
+        "stimulusMs": {
+          "label": "Tempo per rispondere (ms)",
+          "help": "La riga resta fino a una risposta o per questo tempo, poi conta come troppo lenta."
+        },
+        "itiMs": {
+          "label": "Pausa tra le righe (ms)",
+          "help": "Tempo minimo e massimo sulla croce tra due righe. Variarlo impedisce di rispondere a ritmo."
+        }
+      },
+      "n-back": {
+        "pace": {
+          "label": "Ritmo",
+          "help": "Fisso: ogni lettera ha lo stesso tempo, con o senza risposta - l'n-back standard. Libero: ogni lettera resta finché il partecipante non preme Continua, con Corrisponde prima; toglie la pressione del tempo e registra per quanto è stata tenuta ogni lettera.",
+          "options": {
+            "fixed": "Fisso",
+            "self": "Libero"
+          }
+        },
+        "n": {
+          "label": "Lettere",
+          "help": "Quante lettere vengono mostrate. 60 richiedono due minuti e mezzo."
+        },
+        "load": {
+          "label": "Quanti passi indietro",
+          "help": "1: è uguale alla lettera precedente? 2: è uguale a quella ancora prima? 3 è difficile per la maggior parte delle persone. Confronta blocchi con carichi diversi per vedere crescere lo sforzo."
+        },
+        "matchRatio": {
+          "label": "Quota di corrispondenze",
+          "help": "La frazione di lettere che ripetono quella di tanti passi prima, da 0 a 1. Lo standard è circa 0,3."
+        },
+        "lureRatio": {
+          "label": "Quota di quasi corrispondenze",
+          "help": "Lettere che si ripetono a un passo di distanza da quello giusto: sembrano una corrispondenza e vanno lasciate passare. Distinguono il ricordare l'ordine dal semplice riconoscere una lettera recente. 0 le disattiva."
+        },
+        "practice": {
+          "label": "È un'esercitazione",
+          "help": "Segna ogni prova come esercitazione: viene eseguita, ma non entra mai nel punteggio."
+        },
+        "stimulusMs": {
+          "label": "La lettera resta (ms)",
+          "help": "La lettera scompare dopo questo tempo; la risposta può ancora arrivare."
+        },
+        "isiMs": {
+          "label": "Schermo vuoto dopo la lettera (ms)",
+          "help": "Il ritmo è fisso: ogni lettera ha il suo tempo più questo vuoto, con o senza risposta."
+        },
+        "gapMs": {
+          "label": "Schermo vuoto dopo Continua (ms)",
+          "help": "Un breve vuoto tra le lettere, così due lettere uguali di seguito si leggono come due."
+        }
+      },
+      "coding": {
+        "duration_s": {
+          "label": "Durata (secondi)",
+          "help": "Per quanto tempo il partecipante continua ad abbinare. 90 secondi è lo standard; il punteggio è quante ne abbina correttamente in quel tempo."
+        },
+        "practice": {
+          "label": "È un'esercitazione",
+          "help": "Segna ogni risposta come esercitazione: viene eseguita, ma non entra mai nel punteggio."
+        },
+        "pairs": {
+          "label": "Simboli nella chiave",
+          "help": "Quante coppie simbolo-cifra consultare, da 2 a 9. Nove è lo standard; con meno coppie è più facile memorizzarle e il compito misura meno la velocità."
+        },
+        "itiMs": {
+          "label": "Pausa tra i simboli (ms)",
+          "help": "Un breve vuoto dopo ogni risposta, così due momenti dall'aspetto identico non vengono scambiati per uno."
+        }
+      },
+      "heartbeat": {
+        "intervals_s": {
+          "label": "Turni di conteggio (secondi ciascuno)",
+          "help": "Un numero per turno. Usa durate diverse, altrimenti le persone moltiplicano una frequenza cardiaca stimata per il tempo. Il sensore del polso della fascia conta i battiti reali."
+        },
+        "shuffle": {
+          "label": "Turni in ordine casuale",
+          "help": "Un ordine diverso a ogni sessione, così le durate non si possono imparare."
+        },
+        "confidence": {
+          "label": "Chiedi quanto sono sicuri",
+          "help": "Dopo ogni turno. Quanto la sicurezza segue l'accuratezza è una misura a sé, e la più indicativa nell'ansia."
+        },
+        "ready_s": {
+          "label": "Tempo di preparazione (secondi)",
+          "help": "Per quanto tempo viene mostrata l'istruzione prima del segnale acustico di inizio."
+        }
+      },
+      "breathing": {
+        "cycles": {
+          "label": "Respiri",
+          "help": "Quanti cicli completi di inspirazione ed espirazione."
+        },
+        "inhaleMs": {
+          "label": "Inspira (ms)",
+          "help": "Per quanto tempo il cerchio si allarga. 4500 ms con un'espirazione uguale sono circa 6,5 respiri al minuto."
+        },
+        "holdMs": {
+          "label": "Trattieni (ms)",
+          "help": "Una pausa tra inspirazione ed espirazione. Lascia vuoto per non averla."
+        },
+        "exhaleMs": {
+          "label": "Espira (ms)",
+          "help": "Per quanto tempo il cerchio si restringe."
+        },
+        "lines": {
+          "label": "Testo dopo i respiri",
+          "help": "Righe facoltative mostrate una dopo l'altra quando finisce l'ultimo respiro, al posto del cerchio. Per dire al partecipante cosa viene dopo è più chiaro un blocco Istruzioni dopo questo."
+        }
+      },
+      "go-no-go": {
+        "variant": {
+          "label": "Versione",
+          "help": "Semplice: aggancia il carico blu, lascia passare i detriti arancioni. Con faro: prima arriva una luce verde o rossa che cambia la regola, ed è più difficile.",
+          "options": {
+            "simple": "Semplice",
+            "cued": "Con faro"
+          }
+        },
+        "n": {
+          "label": "Oggetti",
+          "help": "Quanti oggetti attraversano lo schermo. 100 richiedono circa due minuti."
+        },
+        "goRatio": {
+          "label": "Quota di carico",
+          "help": "La frazione di oggetti da agganciare, da 0 a 1. Intorno a 0,7 agganciare diventa un'abitudine, ed è questo che rende difficile trattenersi."
+        },
+        "validGoRatio": {
+          "label": "Quota di faro verde + carico",
+          "help": "La frazione di prove in cui il partecipante deve agganciare, da 0 a 1."
+        },
+        "practice": {
+          "label": "Esercitazione all'inizio",
+          "help": "Alcuni oggetti senza punteggio prima di quelli veri."
+        },
+        "travelMs": {
+          "label": "Tempo di attraversamento (ms)",
+          "help": "Quanto impiega un oggetto ad attraversare lo schermo: un tempo minimo e uno massimo, con un valore scelto a caso tra i due. Più breve è più difficile."
+        },
+        "itiMs": {
+          "label": "Pausa tra gli oggetti (ms)",
+          "help": "Tempo vuoto minimo e massimo tra due oggetti."
+        },
+        "cueMs": {
+          "label": "Il faro resta acceso (ms)",
+          "help": "Tempo minimo e massimo in cui il faro è acceso."
+        },
+        "cueTargetMs": {
+          "label": "Dal faro all'oggetto (ms)",
+          "help": "Attesa minima e massima tra il faro e l'oggetto."
+        },
+        "maxRun": {
+          "label": "Massimo di carichi di seguito",
+          "help": "Evita che l'ordine casuale produca lunghe serie che rendono il compito prevedibile."
+        },
+        "maxNogoRun": {
+          "label": "Massimo di detriti di seguito",
+          "help": "Lo stesso, per gli oggetti da lasciar passare."
+        },
+        "maxCueRun": {
+          "label": "Massimo di fari uguali di seguito",
+          "help": "Limita le serie di fari dello stesso colore."
+        },
+        "maxOutcomeRun": {
+          "label": "Massimo di risposte uguali di seguito",
+          "help": "Limita le serie di prove con la stessa risposta giusta."
+        },
+        "nogoMix": {
+          "label": "Tipi di prove 'trattieni'",
+          "help": "Come si dividono le prove in cui il partecipante non deve agganciare. Le tre quote sommano a 1."
+        },
+        "nogoMix/redCargo": {
+          "label": "Faro rosso + carico"
+        },
+        "nogoMix/greenDebris": {
+          "label": "Faro verde + detriti"
+        },
+        "nogoMix/redDebris": {
+          "label": "Faro rosso + detriti"
+        }
+      },
+      "image-sequence": {
+        "items": {
+          "label": "Immagini",
+          "help": "Mostrate in quest'ordine, oppure mescolate."
+        },
+        "items/id": {
+          "label": "Nome",
+          "help": "Come si chiama questa immagine nella timeline."
+        },
+        "items/src": {
+          "label": "Indirizzo dell'immagine",
+          "help": "L'URL dell'immagine."
+        },
+        "items/class": {
+          "label": "Categoria",
+          "help": "Un gruppo a cui l'immagine appartiene (volti, case), per confrontare le categorie in seguito."
+        },
+        "items/durationMs": {
+          "label": "Mostrata per (ms)"
+        },
+        "isiMs": {
+          "label": "Intervallo tra le immagini (ms)",
+          "help": "Schermo vuoto tra due immagini."
+        },
+        "jitterMs": {
+          "label": "Intervallo casuale in più (ms)",
+          "help": "A ogni intervallo si aggiunge fino a questo valore, così il ritmo non è prevedibile."
+        },
+        "loops": {
+          "label": "Ripetizioni della lista"
+        },
+        "shuffle": {
+          "label": "Mescola l'ordine",
+          "help": "Un ordine diverso per ogni partecipante, lo stesso per lo stesso partecipante e lo stesso seed."
+        }
+      },
+      "questionnaire": {
+        "instrument": {
+          "label": "Questionario",
+          "help": "Il SAM chiede, con delle immagini, quanto il partecipante si sente bene e quanto si sente attivato. La VAS è un solo cursore. Il NASA-TLX misura il carico di lavoro. Personalizzato usa le tue domande qui sotto.",
+          "options": {
+            "sam": "SAM - come ti senti (immagini)",
+            "vas": "VAS - un cursore",
+            "nasa_tlx": "NASA-TLX - carico di lavoro",
+            "custom": "Personalizzato - le tue domande"
+          }
+        },
+        "prompt": {
+          "label": "Domanda in alto",
+          "help": "Mostrata sopra le scale, per esempio 'Come ti ha fatto sentire il video?'"
+        },
+        "items": {
+          "label": "Le tue domande",
+          "help": "Usate solo dal questionario Personalizzato."
+        },
+        "items/id": {
+          "label": "Nome breve",
+          "help": "Come si chiama la risposta nei dati esportati."
+        },
+        "items/text": {
+          "label": "Domanda"
+        },
+        "items/type": {
+          "label": "Si risponde con",
+          "options": {
+            "likert": "Punti su una scala",
+            "slider": "Un cursore",
+            "choice": "Una tra più scelte"
+          }
+        },
+        "items/points": {
+          "label": "Punti sulla scala",
+          "help": "Di solito 5 o 7."
+        },
+        "items/min": {
+          "label": "Valore minimo"
+        },
+        "items/max": {
+          "label": "Valore massimo"
+        },
+        "items/anchors": {
+          "label": "Parole ai due estremi",
+          "help": "Per esempio 'Per niente' ed 'Estremamente'."
+        },
+        "items/choices": {
+          "label": "Scelte"
+        }
+      },
+      "quiz": {
+        "scenes": {
+          "label": "Domande"
+        },
+        "scenes/prompt": {
+          "label": "Domanda"
+        },
+        "scenes/choices": {
+          "label": "Risposte"
+        },
+        "scenes/correct": {
+          "label": "Risposta giusta (numero)",
+          "help": "La posizione della risposta giusta nella lista, partendo da 0."
+        },
+        "feedback": {
+          "label": "Indica se la risposta era giusta",
+          "help": "Se è disattivato, il partecipante non impara durante il quiz."
+        }
+      }
+    }
+  },
+  "beta": {
+    "apply": "Candidati come beta tester",
+    "promptTitle": "Vuoi provare quello che arriva dopo?",
+    "promptText": "Brain Trails è in beta chiusa. I beta tester ricevono per primi i nuovi protocolli e le nuove funzioni, gratis, e noi chiediamo loro cosa ne pensano. Per candidarsi bastano poche domande.",
+    "promptLater": "Non ora",
+    "promptLaterHint": "Puoi candidarti in qualsiasi momento dal tuo account.",
+    "cardTitle": "Programma beta",
+    "status": {
+      "pending": "Abbiamo le tue risposte. Non devi fare altro.",
+      "accepted": "Sei nella beta.",
+      "waitlisted": "In lista d'attesa - ti scriviamo appena c'è posto.",
+      "rejected": "Non questa volta."
+    },
+    "notOnList": "Non sei in lista.",
+    "wantsBeta": "Vorrei diventare beta tester.",
+    "intendedUse": "Come pensi di usarlo",
+    "intendedUseQuestion": "Come pensi di usarlo?",
+    "notSaid": "Non indicato",
+    "notSureYet": "Non lo so ancora",
+    "saved": "Salvato.",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "cancel": "Annulla",
+    "edit": "Modifica le tue risposte"
+  },
+  "compare": {
+    "title": "Confronta due blocchi",
+    "left": "Blocco a sinistra",
+    "right": "Blocco a destra",
+    "block": "Blocco",
+    "blockOption": "{label} · {start}",
+    "blockMeta": "{duration} · {windows} s di segnale",
+    "trail": "Sentiero cerebrale",
+    "trailAria": "Il sentiero di {block}, sul terreno della sessione",
+    "frame": {
+      "taskAria": "Il compito come appariva in questo momento di {block}",
+      "trial": "Prova {n} di {total}",
+      "noTrials": "Nessuna prova registrata in questo blocco",
+      "baseline": {
+        "open": "Occhi aperti, sguardo sullo schermo",
+        "closed": "Occhi chiusi"
+      },
+      "breathing": "Una guida per il respiro",
+      "rest": "Una schermata di pausa",
+      "nothing": "Niente di registrato da mostrare per questo tipo di blocco"
+    },
+    "onScreen": "Sullo schermo",
+    "cursor": "Momento nel blocco",
+    "cursorValue": "{at} di {total}",
+    "byTime": "Colorato dall'inizio del blocco alla sua fine.",
+    "unlabelled": "Tra una prova e l'altra",
+    "addRow": "Aggiungi una riga",
+    "addRowPlaceholder": "Scegli una misura…",
+    "removeRow": "Rimuovi {row}",
+    "otherBlock": "Altro blocco",
+    "averagePerson": "Persona media: {value} ({n, plural, one {# persona} other {# persone}})",
+    "averagePending": "Persona media: mostrata a partire da {min} persone, finora {n}",
+    "noAverage": "Nessun altro ha ancora fatto questo blocco",
+    "key": {
+      "block": "Questo blocco",
+      "other": "L'altro blocco",
+      "average": "Persona media su questo blocco",
+      "higher": "Più alto dell'altro blocco",
+      "lower": "Più basso dell'altro blocco"
+    },
+    "noBlocks": "Questa registrazione non ha blocchi di protocollo da confrontare. Il sentiero dell'intera sessione è qui sotto.",
+    "disclaimer": "Esplorativo, non diagnostico. Queste misure descrivono una registrazione, non una persona.",
+    "groups": {
+      "spectral": "Potenza di banda",
+      "dynamics": "Neurometriche",
+      "task": "Compito"
+    },
+    "missing": {
+      "short": "Troppo breve per essere misurato",
+      "not_task": "Non è un compito",
+      "no_labels": "Nessuna prova per cui raggruppare",
+      "not_ready": "Non ancora calcolato per questa registrazione",
+      "computing": "Calcolo in corso…"
+    },
+    "units": {
+      "bits": "bit",
+      "radii": "raggi"
+    },
+    "rows": {
+      "alpha": {
+        "name": "Alfa",
+        "meaning": "Quota della potenza del segnale nella banda 8–12 Hz. Sale quando ti rilassi a occhi chiusi e scende quando guardi e presti attenzione."
+      },
+      "beta": {
+        "name": "Beta",
+        "meaning": "Quota della potenza nella banda 13–30 Hz. Tende a salire con un'attività vigile, concentrata o tesa."
+      },
+      "theta": {
+        "name": "Theta",
+        "meaning": "Quota della potenza nella banda 4–8 Hz. Sale con la sonnolenza e, nella parte frontale della testa, con la concentrazione impegnativa e la memoria."
+      },
+      "delta": {
+        "name": "Delta",
+        "meaning": "Quota della potenza sotto i 4 Hz. Da svegli, gran parte viene da movimenti e battiti di ciglia, quindi un valore alto indica spesso un tratto più disturbato."
+      },
+      "entropy": {
+        "name": "Entropia",
+        "meaning": "Quanto è difficile indovinare il prossimo stato cerebrale a partire da quello attuale, in bit. Bassa: il segnale segue una routine; alta: vaga in modo imprevedibile."
+      },
+      "recurrence": {
+        "name": "Ricorrenza",
+        "meaning": "Quanto spesso uno spostamento torna a uno stato già visitato in questo tratto. Alta: il segnale gira intorno a luoghi familiari; bassa: continua a trovarne di nuovi."
+      },
+      "modularity": {
+        "name": "Modularità",
+        "meaning": "Quanto le finestre dello stesso tipo di prova si raccolgono negli stessi stati. Vicino a 0: i tipi di prova si mescolano liberamente; più alta: ognuno ha luoghi propri."
+      },
+      "diameter": {
+        "name": "Diametro",
+        "meaning": "Quanto è ampia la gamma di stati cerebrali coperta, in larghezze di palla della mappa. Più grande: il segnale si è spinto più lontano."
+      },
+      "stretching": {
+        "name": "Allungamento",
+        "meaning": "Il passo medio da un momento al successivo, come quota del diametro. Alto: grandi salti attraverso lo spazio; basso: una deriva piccola e graduale."
+      },
+      "accuracy": {
+        "name": "Azioni corrette",
+        "meaning": "Quota di prove in cui la persona ha fatto ciò che il compito chiedeva. Leggila insieme ai falsi allarmi: premere di meno può farla salire da sola."
+      },
+      "reaction_time": {
+        "name": "Tempo di reazione",
+        "meaning": "Tempo tipico dalla comparsa del bersaglio alla pressione (la mediana). Più basso significa più veloce."
+      },
+      "rt_spread": {
+        "name": "Variabilità di reazione",
+        "meaning": "Quanto è variato il tempo di reazione da una prova all'altra. Più bassa significa più costante."
+      },
+      "hit_rate": {
+        "name": "Bersagli colti",
+        "meaning": "Quota di bersagli che hanno ricevuto una risposta. I bersagli mancati la abbassano."
+      },
+      "false_alarms": {
+        "name": "Falsi allarmi",
+        "meaning": "Quota di non bersagli premuti comunque: agire prima di controllare. Più bassa significa più attenzione."
+      }
+    },
+    "labels": {
+      "cargo_pressed": "Carico colpito",
+      "cargo_held": "Carico lasciato",
+      "debris_pressed": "Detrito colpito",
+      "debris_held": "Detrito lasciato",
+      "pressed": "premuto",
+      "held": "trattenuto",
+      "right": "giusto",
+      "wrong": "sbagliato",
+      "missed": "mancato"
+    },
+    "direction": {
+      "higher": "più alto",
+      "lower": "più basso"
+    },
+    "focus": {
+      "from": "Da",
+      "to": "A",
+      "labels": "Tipi di prova in {block}: premine uno per escluderlo",
+      "noTrials": "Nessuna prova in questo tratto",
+      "reset": "Di nuovo l'intero blocco"
+    },
+    "regions": {
+      "person": "Neurometriche contate nelle regioni della tua mappa personale: si confrontano con le tue altre registrazioni.",
+      "session": "Neurometriche contate nelle regioni di questa sessione: si confrontano solo all'interno di questa registrazione."
+    },
+    "averageWholeOnly": "La persona media riguarda l'intero blocco: mostra l'intero blocco per confrontarti con essa."
+  },
+  "landscape": {
+    "title": "Paesaggio cerebrale",
+    "intro": "Tutte le registrazioni che hai fatto, su un'unica mappa. Le cime sono i punti in cui il tuo cervello ha passato più tempo; passa il cursore ovunque per vedere cosa stavi facendo lì.",
+    "meta": "{n, plural, one {# registrazione} other {# registrazioni}} · {windows} secondi di segnale · aggiornato {date}",
+    "aria": "Il tuo paesaggio cerebrale: tutte le registrazioni su un'unica mappa, l'altezza indica dove hai passato più tempo",
+    "updating": "Aggiornamento con la tua ultima registrazione…",
+    "notReady": "Il tuo paesaggio compare quando la tua prima registrazione è stata analizzata.",
+    "disclaimer": "Esplorativo, non diagnostico. La mappa si sposta a ogni registrazione: i punti si confrontano all'interno di una stessa versione, non tra versioni diverse.",
+    "unavailable": "Questo server non ha ancora il Paesaggio cerebrale.",
+    "failed": "Non è stato possibile caricare il paesaggio. Riprova tra un momento.",
+    "building": "Stiamo costruendo il tuo paesaggio. Questa pagina si aggiorna da sola.",
+    "redrawn": "La geometria della mappa è stata ridisegnata con la tua ultima registrazione: i punti si confrontano all'interno di questa versione, non con le precedenti.",
+    "epoch": "Versione della geometria {epoch}",
+    "sidebarRedrawn": "Ridisegnato"
+  },
+  "language": {
+    "title": "Lingua",
+    "label": "Lingua dell'app",
+    "hint": "Ricordata su questo browser."
+  },
+  "meta": {
+    "description": "Trasforma una registrazione EEG in un sentiero attraverso lo spazio degli stati cerebrali. Un prototipo di ricerca LuMentis."
+  },
+  "media": {
+    "page": {
+      "title": "I miei media",
+      "intro": "I video e i suoni che hai caricato. Aprine uno per rivederlo; un video si avvia come protocollo dalla sua scheda.",
+      "upload": "Carica",
+      "loadError": "Non è stato possibile caricare i tuoi media.",
+      "empty": {
+        "title": "Ancora nessun caricamento",
+        "text": "Carica un video o un suono con cui costruire i protocolli."
+      },
+      "lockedNote": {
+        "failed": "Rifiutato",
+        "processing": "In verifica"
+      },
+      "checking": "Verifica del file in corso…",
+      "refused": "Il file è stato rifiutato.",
+      "createProtocol": "Crea un protocollo"
+    },
+    "refusals": {
+      "unreadable": "Non è stato possibile leggere il file.",
+      "no_video_stream": "Il file non contiene video.",
+      "no_audio_stream": "Il file non contiene audio.",
+      "unsupported_video_codec": "I browser non riescono a riprodurre questo formato video. Esportalo in H.264 (MP4) o VP9 (WebM).",
+      "unsupported_audio_codec": "I browser non riescono a riprodurre questo formato audio. Esportalo in AAC, MP3 o Opus.",
+      "transcode_failed": "Non è stato possibile convertire il file per il browser. Esportalo in H.264 (MP4) o AAC (M4A) e caricalo di nuovo.",
+      "no_duration": "Il file non ha una durata.",
+      "probe_error": "La verifica non è riuscita. Prova a caricarlo di nuovo."
+    },
+    "share": {
+      "action": "Condividi con la community",
+      "inCommunity": "Nella community",
+      "inReview": "In revisione",
+      "notAccepted": "Non accettato",
+      "dialog": {
+        "title": "Condividi con la community",
+        "body": "“{title}” passa prima da noi per un controllo. Una volta accettato, chiunque nella community potrà riprodurlo.",
+        "rights": "Ho realizzato io questo file o ho il diritto di condividerlo pubblicamente.",
+        "ask": "Chiedi la pubblicazione",
+        "cancel": "Annulla"
+      }
+    },
+    "card": {
+      "kinds": {
+        "video": "Video",
+        "audio": "Audio",
+        "text": "Testo",
+        "quiz": "Quiz",
+        "game": "Gioco"
+      },
+      "locked": "Bloccato",
+      "yours": "Tuo",
+      "betaOnly": "Solo per i beta tester",
+      "contentWarning": "Avviso sui contenuti",
+      "lockedLabel": "{title} — {note}",
+      "open": "Apri {title}"
+    },
+    "upload": {
+      "title": "Carica un video o un audio",
+      "chooseFile": "Prima scegli un file.",
+      "needTitle": "Dagli un titolo.",
+      "tooLarge": "Il file supera {max} MB.",
+      "done": "Caricato. Viene verificato in background e compare quando è pronto.",
+      "drop": "Trascina qui un MP4, WebM o MOV",
+      "choose": "oppure fai clic per scegliere",
+      "fields": {
+        "title": "Titolo",
+        "titlePlaceholder": "Che cos'è?",
+        "description": "Descrizione",
+        "descriptionHint": "Facoltativa.",
+        "descriptionPlaceholder": "Qualcosa che vale la pena ricordare di questa clip."
+      },
+      "cancel": "Annulla",
+      "uploading": "Caricamento…",
+      "add": "Aggiungi alla libreria"
+    },
+    "viewer": {
+      "fallbackTitle": "I tuoi media",
+      "loadError": "Non è stato possibile caricare questo elemento.",
+      "noVideoFile": "Questo video non ha ancora un file.",
+      "noAudioFile": "Questo suono non ha ancora un file.",
+      "nothingToWatch": "Questo elemento viene riprodotto all'interno di un protocollo; qui non c'è niente da guardare.",
+      "length": "Durata",
+      "uploaded": "Caricato",
+      "shared": "Condivisione",
+      "sharedValue": {
+        "inReview": "In revisione",
+        "onlyYou": "Solo tu",
+        "community": "Nella community"
+      },
+      "confirm": {
+        "archive": "{count, plural, one {Un protocollo riproduce questo elemento: esce dai tuoi media ma continua a essere riprodotto lì, e le tue sessioni passate non cambiano.} other {# protocolli riproducono questo elemento: esce dai tuoi media ma continua a essere riprodotto lì, e le tue sessioni passate non cambiano.}}",
+        "delete": "Il file viene eliminato definitivamente. Le tue sessioni passate non cambiano.",
+        "archiveIt": "Archivia",
+        "deleteIt": "Elimina",
+        "keep": "Tienilo"
+      },
+      "cancelRequest": "Annulla la richiesta",
+      "takeBack": "Ritiralo",
+      "delete": "Elimina",
+      "takeBackNote": "Ritirandolo resta fuori dalla community; i protocolli che hai già condiviso continuano a riprodurlo.",
+      "toast": {
+        "archived": "Archiviato: i protocolli che lo riproducono lo conservano.",
+        "deleted": "Eliminato.",
+        "takenBack": "Ritirato: è di nuovo soltanto tuo.",
+        "done": "Fatto."
+      }
+    }
+  },
+  "protocols": {
+    "catalog": {
+      "title": "Protocolli",
+      "intro": "Scegli cosa avviare mentre registri. Il tuo EEG procede in parallelo.",
+      "new": "Nuovo protocollo",
+      "loadError": "Non è stato possibile caricare il catalogo. Ricarica la pagina o accedi di nuovo.",
+      "empty": {
+        "title": "Ancora nessun protocollo",
+        "text": "Carica un video nella sezione I miei media e trasformalo in un protocollo, oppure chiedi a un admin di pubblicare quelli ufficiali.",
+        "action": "Vai a I miei media"
+      },
+      "rows": {
+        "official": {
+          "title": "Ufficiali",
+          "hint": "Creati e verificati dal team di Brain Trails."
+        },
+        "mine": {
+          "title": "I tuoi",
+          "hint": "Visibili solo nel tuo spazio di lavoro, bozze comprese."
+        },
+        "community": {
+          "title": "Community",
+          "hint": "Condivisi da altre persone, revisionati prima di comparire."
+        }
+      },
+      "lockedNote": "I protocolli bloccati fanno parte del programma ma non sono ancora aperti. I beta tester li ricevono per primi."
+    },
+    "tags": {
+      "attention": {
+        "title": "Attenzione",
+        "hint": "Tieni a mente un bersaglio, ignora il resto e ferma una risposta già avviata."
+      },
+      "anxiety": {
+        "title": "Ansia",
+        "hint": "Calma il corpo, poi osserva come reagisce il segnale."
+      },
+      "cognitive_decline": {
+        "title": "Declino cognitivo",
+        "hint": "Memoria, velocità e flessibilità, misurate ogni volta allo stesso modo."
+      }
+    },
+    "card": {
+      "locked": "Bloccato",
+      "official": "Ufficiale",
+      "community": "Community",
+      "draft": "Bozza",
+      "yours": "Tuo",
+      "betaOnly": "Solo per i beta tester",
+      "lockedLabel": "{title} — bloccato, disponibile per i beta tester"
+    },
+    "kindWords": {
+      "instructions": "Istruzioni",
+      "prompt": "Istruzioni",
+      "fixation": "Croce di fissazione",
+      "baseline": "Baseline a riposo",
+      "rest": "Pausa",
+      "countdown": "Conto alla rovescia",
+      "video": "Video",
+      "audio": "Suono",
+      "text": "Lettura",
+      "questionnaire": "Questionario",
+      "quiz": "Quiz",
+      "breathing": "Respirazione guidata",
+      "go-no-go": "Gioco go/no-go",
+      "flanker": "Gioco delle frecce",
+      "n-back": "Gioco di memoria con le lettere",
+      "coding": "Codifica di simboli",
+      "heartbeat": "Conteggio dei battiti",
+      "image-sequence": "Immagini",
+      "group": "Gruppo"
+    },
+    "detail": {
+      "notFound": "Questo protocollo non è nel tuo catalogo.",
+      "back": "Torna ai protocolli",
+      "visibility": {
+        "official": "Ufficiale",
+        "community": "Community",
+        "workspace": "Il tuo spazio di lavoro"
+      },
+      "version": "versione {version}",
+      "draftNotPublished": "bozza, non pubblicata",
+      "waitingForReview": "in attesa di revisione",
+      "play": "Avvia",
+      "locked": "Bloccato",
+      "notPublished": "Non pubblicato",
+      "lockedHint": "Non ancora aperto: i beta tester lo ricevono per primi",
+      "warning": {
+        "title": "Prima di iniziare",
+        "stop": "Puoi fermarti in qualsiasi momento."
+      },
+      "outline": {
+        "title": "Cosa succede",
+        "step": "— {kind}{repeated, select, yes { ×{count}} other {}}{timed, select, yes {, {duration}} other {}}",
+        "note": "Indossi la fascia per tutto il tempo; la registrazione inizia e finisce con la sessione."
+      },
+      "duration": "Durata",
+      "added": "Aggiunto",
+      "yours": {
+        "title": "Il tuo protocollo",
+        "unpublished": "Pubblicalo per avviarlo. La pubblicazione lo controlla prima.",
+        "changed": "La bozza contiene modifiche non ancora pubblicate.",
+        "published": "Pubblicato. Le sessioni conservano la versione che hanno eseguito."
+      },
+      "actions": {
+        "edit": "Modifica",
+        "publish": "Pubblica",
+        "check": "Controlla",
+        "share": "Condividi con la community",
+        "delete": "Elimina",
+        "copy": "Crea una copia da modificare"
+      },
+      "confirmDelete": "Eliminare “{title}”?",
+      "toast": {
+        "published": "Pubblicato: è pronto per essere avviato.",
+        "sentForReview": "Inviato in revisione: comparirà in Community una volta approvato.",
+        "shared": "Condiviso con la community.",
+        "archived": "Archiviato: le tue sessioni passate lo conservano.",
+        "deleted": "Eliminato."
+      },
+      "findings": {
+        "ok": "Nessun problema trovato · {duration}"
+      }
+    }
+  },
+  "account": {
+    "title": "Account",
+    "access": {
+      "title": "Accesso",
+      "email": "Email",
+      "role": "Ruolo",
+      "roleAdmin": "Amministratore",
+      "roleParticipant": "Partecipante",
+      "memberSince": "Data di iscrizione"
+    },
+    "profile": {
+      "title": "Il tuo profilo",
+      "missing": "Ci servono le prime quattro risposte prima della tua prima registrazione: sono ciò che rende leggibile un EEG in seguito. Il resto è facoltativo, sempre.",
+      "saved": "Profilo salvato.",
+      "save": "Salva il profilo",
+      "saving": "Salvataggio…",
+      "select": "Seleziona",
+      "fields": {
+        "fullName": "Nome e cognome",
+        "birthYear": "Anno di nascita",
+        "sexAtBirth": "Sesso alla nascita",
+        "sexAtBirthInfo": "Una variabile dell'analisi, chiesta così come è registrata alla nascita. Il genere è la domanda successiva e sta a te descriverlo.",
+        "handedness": "Mano dominante",
+        "handednessInfo": "La mano con cui scrivi cambia il punto dello scalpo in cui compare l'attività, quindi questa risposta conta davvero.",
+        "gender": "Genere",
+        "educationLevel": "Titolo di studio",
+        "occupation": "Occupazione",
+        "nativeLanguages": "Lingue madri",
+        "nativeLanguagesHint": "Separate da virgole.",
+        "musicalTrainingYears": "Anni di formazione musicale",
+        "meditationPractice": "Pratica di meditazione",
+        "caffeineCupsPerDay": "Caffè al giorno (tazze)",
+        "avgSleepHours": "Sonno medio (ore)",
+        "nicotineUse": "Nicotina",
+        "alcoholUse": "Alcol",
+        "visionCorrection": "Correzione della vista",
+        "hearingIssues": "Udito",
+        "medications": "Farmaci",
+        "neurologicalConditions": "Condizioni neurologiche",
+        "psychiatricConditions": "Condizioni psichiatriche",
+        "notes": "Note"
+      }
+    },
+    "privacy": {
+      "title": "Privacy e consenso",
+      "processing": "Trattamento delle tue registrazioni",
+      "agreed": "Consenso dato il {date} · versione {version}",
+      "research": "Contribuisco con i miei dati a ricerche più ampie.",
+      "researchAgreed": "Consenso dato il {date} · versione {version}. Togli la spunta per ritirarlo: da quel momento smettiamo di usare i tuoi dati per la ricerca, anche se non possiamo annullare la ricerca già svolta.",
+      "researchOptional": "Facoltativo. I tuoi risultati, le tue registrazioni e tutto il resto funzionano esattamente allo stesso modo in entrambi i casi.",
+      "thanks": "Grazie - stai contribuendo.",
+      "withdrawn": "Consenso ritirato.",
+      "contact": "Leggi <note>l'informativa sulla privacy<hidden> (si apre in una nuova scheda)</hidden></note> oppure scrivi a <address>{email}</address>. Qui sotto puoi esportare o eliminare tutto."
+    },
+    "data": {
+      "title": "I tuoi dati",
+      "export": "Esporta tutto",
+      "exportHint": "Profilo, registrazioni e link ai file validi un'ora, in JSON.",
+      "delete": "Elimina l'account",
+      "deleteHint": "Rimuove ogni registrazione, analisi e file archiviato."
+    },
+    "delete": {
+      "title": "Eliminare il tuo account?",
+      "text": "Questa operazione elimina il tuo account, ogni registrazione e ogni file archiviato. Non si può tornare indietro. Conferma con la tua password.",
+      "password": "Password",
+      "keep": "Mantieni il mio account",
+      "confirm": "Elimina tutto",
+      "deleting": "Eliminazione…",
+      "done": "Il tuo account e i tuoi dati sono stati eliminati."
+    }
+  },
+  "taxonomies": {
+    "option": {
+      "female": "Femmina",
+      "male": "Maschio",
+      "intersex": "Intersex",
+      "prefer_not_to_say": "Preferisco non dirlo",
+      "woman": "Donna",
+      "man": "Uomo",
+      "non_binary": "Non binario",
+      "left": "Mano sinistra",
+      "right": "Mano destra",
+      "ambidextrous": "Entrambe le mani",
+      "primary": "Scuola primaria",
+      "secondary": "Scuola secondaria",
+      "vocational": "Formazione professionale",
+      "bachelor": "Laurea triennale",
+      "master": "Laurea magistrale",
+      "doctorate": "Dottorato di ricerca",
+      "student": "Studente",
+      "healthcare": "Sanità",
+      "research_academia": "Ricerca o università",
+      "education": "Istruzione",
+      "engineering_it": "Ingegneria o informatica",
+      "arts_media": "Arte o media",
+      "business_admin": "Impresa o amministrazione",
+      "trades": "Mestieri specializzati",
+      "service": "Servizi",
+      "retired": "In pensione",
+      "not_working": "Al momento non lavoro",
+      "none": "Nessuno",
+      "tried": "Ho provato",
+      "former": "In passato",
+      "occasional": "Ogni tanto",
+      "weekly": "Ogni settimana",
+      "daily": "Ogni giorno",
+      "glasses": "Occhiali",
+      "contacts": "Lenti a contatto",
+      "surgery": "Chirurgia correttiva",
+      "tinnitus": "Acufene",
+      "hearing_loss": "Perdita dell'udito",
+      "personal": "Per me",
+      "patients": "Con pazienti o clienti",
+      "research": "Nella ricerca",
+      "teaching": "Nell'insegnamento",
+      "other": "Altro"
+    },
+    "byList": {
+      "education_level": {
+        "none": "Nessuno"
+      },
+      "meditation_practice": {
+        "none": "Nessuna"
+      },
+      "nicotine_use": {
+        "none": "Mai"
+      },
+      "alcohol_use": {
+        "none": "Mai"
+      },
+      "vision_correction": {
+        "none": "Nessuna"
+      },
+      "hearing_issues": {
+        "none": "Nessun problema"
+      }
+    }
+  },
+  "home": {
+    "welcome": "È bello rivederti.",
+    "start": {
+      "title": "Inizia un nuovo sentiero",
+      "text": "Indossa la fascia, scegli un protocollo, premi avvia. Anche la registrazione libera è un protocollo.",
+      "record": "Registra",
+      "pick": "Scegli uno stimolo",
+      "upload": "Carica un file"
+    },
+    "week": {
+      "title": "Questa settimana",
+      "sessions": "Sessioni",
+      "signal": "Segnale registrato",
+      "all": "Tutte le sessioni"
+    },
+    "recent": {
+      "title": "Sentieri recenti",
+      "all": "Tutte le registrazioni",
+      "loadFailed": "Non è stato possibile caricare le registrazioni.",
+      "emptyTitle": "Ancora nessun sentiero.",
+      "emptyText": "Avvia un protocollo o carica un file Muse: il suo sentiero appare qui.",
+      "emptyAction": "Registra la tua prima sessione",
+      "meta": "{date} · {duration}"
+    }
+  },
+  "recordings": {
+    "status": {
+      "done": "Pronta",
+      "processing": "In elaborazione",
+      "running": "In esecuzione",
+      "queued": "In coda",
+      "uploaded": "Caricata",
+      "capturing": "In registrazione",
+      "empty": "Nessun EEG",
+      "failed": "Non riuscita"
+    },
+    "tasks": {
+      "rest_eyes_open": "riposo a occhi aperti",
+      "rest_eyes_closed": "riposo a occhi chiusi",
+      "meditation": "meditazione",
+      "breathing_exercise": "esercizio di respirazione",
+      "mental_arithmetic": "calcolo mentale",
+      "reading": "lettura",
+      "music_listening": "ascolto di musica",
+      "memory_recall": "richiamo dalla memoria",
+      "motor_imagery": "immaginazione motoria",
+      "video_watching": "visione di un video"
+    },
+    "list": {
+      "title": "Registrazioni",
+      "subtitle": "Ogni sessione, un sentiero.",
+      "new": "Nuova registrazione",
+      "stats": {
+        "sessions": "Sessioni",
+        "signal": "Segnale raccolto",
+        "last": "Ultimo caricamento"
+      },
+      "loadFailed": "Non è stato possibile caricare le registrazioni.",
+      "emptyTitle": "Ancora nessuna registrazione.",
+      "emptyText": "Carica un file EEG Muse per vedere il tuo primo sentiero.",
+      "emptyAction": "Carica la tua prima registrazione",
+      "noTask": "Nessun compito",
+      "meta": "{task} · {duration} · {date}"
+    },
+    "report": {
+      "back": "Registrazioni",
+      "noProtocol": "Nessun protocollo",
+      "subtitle": "{protocol} · {duration} · {date}",
+      "live": "IN DIRETTA",
+      "processing": {
+        "title": "Stiamo elaborando la tua registrazione",
+        "text": "Pulizia, embedding e proiezione. Questa pagina si aggiorna da sola.",
+        "textAttempt": "Pulizia, embedding e proiezione · tentativo {n}. Questa pagina si aggiorna da sola."
+      },
+      "empty": "In questa sessione non è stato registrato alcun EEG: è finita prima che la fascia inviasse dati.",
+      "capturing": "Questa sessione è ancora in registrazione, oppure è stata chiusa prima di finire. Viene chiusa automaticamente dopo tre ore.",
+      "failed": "Elaborazione non riuscita.",
+      "retry": "Riprova",
+      "waiting": "In attesa delle prime finestre, circa quattro secondi di segnale…",
+      "details": {
+        "summary": "Segnale e dettagli tecnici",
+        "cleaner": "Pulizia",
+        "embedder": "Embedder",
+        "window": "Finestra",
+        "step": "Passo",
+        "points": "Punti",
+        "regions": "Regioni"
+      },
+      "actions": {
+        "title": "Azioni",
+        "reprocessClassic": "Rielabora con la pulizia classica",
+        "reprocessRaw": "Rielabora senza pulizia",
+        "download": "Scarica il file grezzo",
+        "delete": "Elimina la registrazione"
+      },
+      "delete": {
+        "title": "Eliminare questa registrazione?",
+        "text": "Il file, le analisi e il sentiero vengono rimossi per sempre. Non si può annullare.",
+        "keep": "Mantieni",
+        "confirm": "Elimina",
+        "deleting": "Eliminazione…"
+      },
+      "toasts": {
+        "reprocessing": "Rielaborazione avviata.",
+        "deleted": "Registrazione eliminata.",
+        "requestFailed": "Richiesta non riuscita.",
+        "deleteFailed": "Non è stato possibile eliminarla."
+      }
+    },
+    "upload": {
+      "title": "Nuova registrazione",
+      "drop": "Trascina qui un file Muse",
+      "dropHint": "Mind Monitor .csv o .edf, fino a 50 MB. Va direttamente nell'archivio.",
+      "chosen": "{size} · clicca per cambiare",
+      "fieldTitle": "Titolo",
+      "titlePlaceholder": "Meditazione del mattino",
+      "cleaning": "Pulizia",
+      "cleaningClassic": "Classica (filtri + riparazione)",
+      "cleaningNone": "Nessuna (grezzo standardizzato)",
+      "task": "Compito",
+      "taskNone": "Non specificato",
+      "progress": "Caricamento {progress}%",
+      "registering": "Salvataggio della registrazione…",
+      "cancel": "Annulla",
+      "submit": "Carica",
+      "submitting": "Caricamento…",
+      "done": "Caricamento completato. Elaborazione avviata.",
+      "errors": {
+        "noFile": "Scegli prima un file .csv o .edf.",
+        "noTitle": "Dai un titolo alla registrazione.",
+        "tooLarge": "Il file supera {max} MB.",
+        "storage_failed": "caricamento nell'archivio non riuscito ({status})",
+        "network": "errore di rete durante il caricamento nell'archivio"
+      }
+    },
+    "session": {
+      "title": "Sessione registrata",
+      "duration": "Durata",
+      "samples": "Campioni",
+      "samplesValue": "{count} · {missing} mancanti",
+      "packetsLost": "Pacchetti persi",
+      "clock": "Clock",
+      "clockValue": "{rate} Hz · deriva {drift} ppm",
+      "headband": "Fascia",
+      "otherSensors": "Altri sensori",
+      "sensorsNone": "nessuno",
+      "sensorsMotion": "{motion} di movimento",
+      "sensorsMotionPpg": "{motion} di movimento · {ppg} campioni PPG",
+      "rawCapture": "Acquisizione grezza",
+      "rawValue": "{count} pacchetti · {size}",
+      "rawNone": "nessuna (simulata)",
+      "jitter": "Jitter di arrivo",
+      "jitterValue": "{ms} ms RMS",
+      "gaps": "I campioni mancanti vengono interpolati dalla pipeline ed elencati come lacune nella registrazione.",
+      "discard": "Scarta",
+      "upload": "Carica e analizza",
+      "uploading": "Caricamento…",
+      "done": "Sessione caricata. Elaborazione avviata.",
+      "captureSkipped": "L'acquisizione Bluetooth grezza era troppo grande per essere caricata e non è stata conservata.",
+      "tooLarge": "La sessione supera {max} MB."
+    },
+    "trail": {
+      "aria": "Sentiero della registrazione, dalla prima finestra all'ultima, sul paesaggio energetico della sessione",
+      "thumbAria": "Sentiero di {title}",
+      "thumb": {
+        "failed": "Nessun sentiero: elaborazione non riuscita",
+        "empty": "Nessun sentiero: non è stato registrato alcun EEG",
+        "capturing": "Registrazione in corso",
+        "drawing": "Disegno del sentiero…",
+        "unavailable": "Sentiero non disponibile"
+      }
+    }
+  },
+  "device": {
+    "errors": {
+      "noneSelected": "Nessuna fascia selezionata.",
+      "connectFailed": "Connessione non riuscita ({detail}).",
+      "failedAt": {
+        "loadBluetooth": "Il Bluetooth si è interrotto durante il caricamento ({detail})",
+        "chooseHeadband": "Il Bluetooth si è interrotto durante la scelta della fascia ({detail})",
+        "openLink": "Il Bluetooth si è interrotto all'apertura del collegamento ({detail})",
+        "findService": "Il Bluetooth si è interrotto durante la ricerca del servizio Muse ({detail})",
+        "findControl": "Il Bluetooth si è interrotto durante la ricerca della caratteristica di controllo ({detail})",
+        "detectModel": "Il Bluetooth si è interrotto durante il riconoscimento del modello ({detail})",
+        "subscribe": "Il Bluetooth si è interrotto durante la sottoscrizione a {stream} ({detail})",
+        "sendStart": "Il Bluetooth si è interrotto all'invio dei comandi di avvio ({detail})"
+      },
+      "refusals": {
+        "noGatt": "Errore: questo dispositivo non espone GATT",
+        "noDataStream": "Errore: questa Muse non ha avviato il flusso di dati"
+      }
+    },
+    "models": {
+      "muse-2": "Muse 2 / Muse S",
+      "athena": "Muse S Athena",
+      "simulated": "Fascia simulata"
+    }
+  },
+  "common": {
+    "close": "Chiudi",
+    "back": "Indietro",
+    "infoAbout": "Informazioni: {label}",
+    "infoAboutSetting": "Informazioni su questa impostazione",
+    "loadingOptions": "Caricamento delle opzioni…",
+    "preferNotToAnswer": "Preferisco non rispondere",
+    "otherPleaseSay": "{label}: specifica",
+    "validation": {
+      "email": "Indirizzo email non valido",
+      "passwordTooShort": "Almeno {min} caratteri.",
+      "passwordTooLong": "Al massimo {max} caratteri.",
+      "fullName": "Scrivi il tuo nome e cognome.",
+      "birthYear": "Scrivi un anno di nascita valido.",
+      "choose": "Scegli un'opzione.",
+      "minAge": "Brain Trails è per chi ha almeno {age} anni."
+    }
+  },
+  "public": {
+    "landing": {
+      "tagline": "Indossa la fascia, scegli uno stimolo, guarda il tuo sentiero prendere forma.",
+      "signIn": "Accedi",
+      "createAccount": "Crea un account"
+    },
+    "footer": {
+      "nonClinical": "Prototipo non clinico",
+      "privacy": "privacy"
+    },
+    "login": {
+      "title": "Rieccoti.",
+      "subtitle": "I tuoi sentieri sono dove li hai lasciati.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Accedi",
+      "submitting": "Accesso in corso…",
+      "newHere": "Prima volta qui? <link>Crea un account</link>"
+    },
+    "pending": {
+      "approved": {
+        "title": "Controlla la tua email.",
+        "body": "Ti abbiamo mandato un link per confermare il tuo indirizzo. Aprilo e sei dentro - resta valido per 24 ore. Se non arriva, guarda nella cartella dello spam."
+      },
+      "active": {
+        "title": "Il tuo account è aperto.",
+        "body": "Accedi con l'email e la password che hai appena scelto."
+      },
+      "pending": {
+        "title": "Registrazione ricevuta.",
+        "body": "Un admin la esaminerà. Una volta approvata, potrai accedere con l'email e la password che hai scelto."
+      },
+      "signIn": "Vai all'accesso"
+    },
+    "verify": {
+      "working": "Verifica dell'email in corso…",
+      "title": "Email verificata.",
+      "text": "Il tuo account è attivo.",
+      "signIn": "Accedi",
+      "missingToken": "Manca il token di verifica."
+    },
+    "register": {
+      "title": "Crea il tuo account.",
+      "intro": "Tre brevi passaggi. Quattro domande su di te, e il resto più avanti.",
+      "progress": "Avanzamento",
+      "steps": {
+        "account": "Account",
+        "you": "Tu",
+        "consent": "Consenso"
+      },
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "Almeno {min} caratteri.",
+      "continue": "Continua",
+      "back": "Indietro",
+      "alreadyRegistered": "Hai già un account? <link>Accedi</link>",
+      "about": {
+        "title": "Qualcosa su di te.",
+        "text": "Quattro domande. Sono quelle senza cui un EEG non si può leggere - la mano con cui scrivi cambia il punto in cui l'attività compare sullo scalpo. Tutto il resto può aspettare."
+      },
+      "fullName": "Nome e cognome",
+      "birthYear": "Anno di nascita",
+      "sexAtBirth": "Sesso alla nascita",
+      "sexAtBirthInfo": "Una variabile dell'analisi, chiesta così come è registrata alla nascita. Il tuo genere lo descrivi tu, nella pagina dell'account.",
+      "handedness": "Mano dominante",
+      "select": "Seleziona",
+      "fair": {
+        "label": "Vorrei provare la fascia allo stand.",
+        "hint": "Non devi aspettare qui. Ti scriviamo un'email quando al tuo turno mancano circa cinque minuti, quindi vai pure a vedere il resto."
+      },
+      "consent": {
+        "core": "Lumentis raccoglierà e tratterà le mie registrazioni EEG, le risposte agli esercizi e le relative informazioni tecniche per fornire i miei risultati, le metriche, le visualizzazioni e i report; per mantenere e proteggere il servizio; per valutare la qualità del segnale e risolvere i problemi; e per valutare e migliorare l'accuratezza e l'affidabilità delle funzioni offerte attraverso il servizio. Le registrazioni sono conservate sotto un identificativo pseudonimo e archiviate a Francoforte, in Germania. <link>Leggi l'informativa sulla privacy<hidden> (si apre in una nuova scheda)</hidden></link>.",
+        "version": "Versione {version}",
+        "coreTick": "Ho letto l'informativa sulla privacy e do il mio consenso.",
+        "research": "Lumentis può inoltre conservare e usare le mie registrazioni pseudonimizzate, le caratteristiche derivate e le risposte per una ricerca scientifica più ampia, oltre il funzionamento e il miglioramento di questo servizio - compresi studi su salute mentale, neurologia e scienze cognitive, e lo sviluppo e la validazione di metodi e modelli futuri.",
+        "researchTick": "Accetto di contribuire con i miei dati a una ricerca più ampia.",
+        "researchHint": "Facoltativo, e separato dal consenso qui sopra. Dire di no non cambia nulla per il tuo account o i tuoi risultati, e puoi cambiare idea in qualsiasi momento dalla pagina dell'account.",
+        "newsletterTick": "Mandatemi ogni tanto notizie su Brain Trails.",
+        "newsletterHint": "Qualche email, non di più. Puoi annullare l'iscrizione quando vuoi dalla pagina dell'account."
+      },
+      "create": "Crea account",
+      "creating": "Creazione…"
+    }
+  },
+  "shell": {
+    "nav": {
+      "home": "Home",
+      "protocols": "Protocolli",
+      "media": "I miei media",
+      "recordings": "Registrazioni",
+      "landscape": "Paesaggio cerebrale",
+      "account": "Account",
+      "admin": "Admin"
+    },
+    "sections": "Sezioni",
+    "you": "Tu",
+    "openNavigation": "Apri la navigazione",
+    "closeNavigation": "Chiudi la navigazione",
+    "lightAppearance": "Aspetto chiaro",
+    "darkAppearance": "Aspetto scuro",
+    "signOut": "Esci",
+    "error": {
+      "title": "Qualcosa è andato storto.",
+      "text": "Puoi riprovare o tornare alla home.",
+      "retry": "Riprova",
+      "home": "Home"
+    },
+    "notFound": {
+      "title": "Questa pagina non esiste.",
+      "home": "Torna alla home"
+    },
+    "policyUpdate": {
+      "title": "L'informativa sulla privacy è cambiata",
+      "text": "Abbiamo pubblicato una nuova versione dell'informativa che spiega cosa succede alle tue registrazioni e ai tuoi dati. Prima di proseguire, leggila e dicci che sei d'accordo.",
+      "versions": "Avevi accettato la versione {agreed}. Quella attuale è la {current}.",
+      "readNote": "Leggi l'informativa sulla privacy<hidden> (si apre in una nuova scheda)</hidden>",
+      "agree": "L'ho letta e sono d'accordo",
+      "saving": "Salvataggio…",
+      "decline": "Preferisci non accettare? Scrivi a {email} ed esporteremo o elimineremo tutto ciò che conserviamo su di te."
+    }
+  }
+}

@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- The app speaks Italian. The language follows the browser on a first visit and can
+  be switched between English and Italiano from the account page and from the footer
+  of the entry screens; the choice is remembered on that browser (`bt-locale` cookie)
+  and applies at once, without a reload. Every screen a participant or an author opens
+  is translated - entry and registration, home, recordings and reports, the brain
+  landscape, protocols and their runs, media, the builder with the explanation of
+  every setting, the account - and the remaining inline English moved into the
+  catalogue to make that possible (about 870 new keys beside the 420 that existed).
+  Still English, on purpose: the admin pages, the privacy note, and what comes from
+  the API as content (the official protocols' titles and instructions, emails). A test
+  holds the two catalogues to the same keys, arguments and tags and formats every
+  message; the inline-text lint now covers the whole app. Dates follow the chosen
+  language in the browser's regional form (`useFormatLocale`). Field errors on the
+  entry forms are authored sentences instead of zod's generated ones.
+
 - The trail picture is readable again. It is framed on the path instead of on the
   whole Ball Mapper layout, which is three times wider than any trail drawn on it -
   the trail used to occupy under a third of the picture, and the bulk of its windows

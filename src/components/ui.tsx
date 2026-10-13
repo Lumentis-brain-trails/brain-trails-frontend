@@ -9,6 +9,13 @@
 import { type ComponentProps, forwardRef } from "react";
 import { InfoTip } from "@/components/InfoTip";
 
+/**
+ * The product's name as it is written on screen. A proper noun: it is the same in every
+ * language, so it lives here and not in the message catalogue, where a translator could
+ * change it.
+ */
+export const BRAND = "Braintrails";
+
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }

@@ -12,6 +12,7 @@
  * spec requires them to be reachable at all times - including mid-frame inside a canvas.
  */
 
+import { useTranslations } from "next-intl";
 import {
   useCallback,
   useEffect,
@@ -101,6 +102,7 @@ export function ProtocolRunner({
   onFinish,
   onExit,
 }: ProtocolRunnerProps) {
+  const t = useTranslations("run.runner");
   // Something to say before the first block: a warning nobody has shown yet, or the
   // motion choice for a protocol that moves things on screen.
   const movesOnScreen = useMemo(
@@ -427,14 +429,11 @@ export function ProtocolRunner({
                 checked={reducedMotion}
                 onChange={(event) => setMotionOverride(event.target.checked)}
               />
-              Reduce motion
+              {t("reduceMotion")}
             </label>
           )}
-          <Button onClick={() => setScreen("running")}>Begin</Button>
-          <p className="type-caption text-ink-3">
-            This is not a medical assessment or diagnosis. You can stop at any
-            time.
-          </p>
+          <Button onClick={() => setScreen("running")}>{t("begin")}</Button>
+          <p className="type-caption text-ink-3">{t("disclaimer")}</p>
         </div>
       </Shell>
     );
@@ -460,16 +459,14 @@ export function ProtocolRunner({
       {screen === "confirm-exit" && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-(--scrim)">
           <div className="enter-pop max-w-sm rounded-[var(--radius-sheet)] border border-hairline bg-surface p-6 text-center shadow-(--shadow-sheet)">
-            <h2 className="type-heading mb-2">Stop this session?</h2>
-            <p className="mb-5 text-[14px] text-ink-2">
-              What you have done so far is kept. You cannot resume this run.
-            </p>
+            <h2 className="type-heading mb-2">{t("stopTitle")}</h2>
+            <p className="mb-5 text-[14px] text-ink-2">{t("stopBody")}</p>
             <div className="flex justify-center gap-3">
               <Button variant="ghost" onClick={() => setScreen("running")}>
-                Keep going
+                {t("keepGoing")}
               </Button>
               <Button variant="danger" onClick={abort}>
-                Stop session
+                {t("stopSession")}
               </Button>
             </div>
           </div>
@@ -488,6 +485,7 @@ function Shell({
   onStop: () => void;
   label?: string;
 }) {
+  const t = useTranslations("run.runner");
   return (
     <div
       data-theme="dark"
@@ -496,7 +494,7 @@ function Shell({
       <div className="flex items-center justify-between px-6 py-3">
         <span className="text-[14px] text-ink-2">{label ?? ""}</span>
         <Button variant="ghost" onClick={onStop}>
-          Stop
+          {t("stop")}
         </Button>
       </div>
       <div className="min-h-0 flex-1">{children}</div>

@@ -8,10 +8,17 @@
  * like `rule_instruction_shown` stays in the protocol data rather than in this component.
  */
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
+
+/**
+ * The button's words when the author gives none. Stored in the block as the schema's
+ * default, so the renderer recognises it and shows the reader's language instead.
+ */
+const DEFAULT_ADVANCE_LABEL = "Continue";
 
 export const promptConfigSchema = z.object({
   lines: z
@@ -30,12 +37,15 @@ export const promptConfigSchema = z.object({
       mode: z.literal("timed"),
       ms: z.number().int().positive().default(4000),
     }),
-    z.object({ mode: z.literal("key"), label: z.string().default("Continue") }),
+    z.object({
+      mode: z.literal("key"),
+      label: z.string().default(DEFAULT_ADVANCE_LABEL),
+    }),
     z.object({
       mode: z.literal("either"),
       minMs: z.number().int().min(0).default(1000),
       maxMs: z.number().int().positive().default(10000),
-      label: z.string().default("Continue"),
+      label: z.string().default(DEFAULT_ADVANCE_LABEL),
     }),
   ]),
   footnote: z.string().optional(),
@@ -49,6 +59,7 @@ function PromptRenderer({
   onComplete,
   stepId,
 }: TaskContext<PromptConfig>) {
+  const t = useTranslations("kinds");
   const [visible, setVisible] = useState(1);
   const [canAdvance, setCanAdvance] = useState(
     config.advance.mode !== "either"
@@ -128,10 +139,16 @@ function PromptRenderer({
     return () => window.removeEventListener("keydown", onKey);
   }, [canAdvance, config.advance.mode, finish]);
 
+  // The schema's default is the app's word, not the author's: it follows the reader's
+  // language. Anything the author typed is content and is shown as stored.
+  const authored =
+    config.advance.mode === "timed" ? null : config.advance.label;
   const label =
     config.advance.mode === "timed"
       ? null
-      : (config.advance.label ?? "Continue");
+      : !authored || authored === DEFAULT_ADVANCE_LABEL
+        ? t("common.continue")
+        : authored;
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 px-6 text-center">
@@ -148,7 +165,9 @@ function PromptRenderer({
       </div>
       {label && (
         <Button onClick={finish} disabled={!canAdvance} aria-label={label}>
-          {canAdvance || waitS <= 0 ? label : `${label} in ${waitS} s`}
+          {canAdvance || waitS <= 0
+            ? label
+            : t("prompt.wait", { label, seconds: waitS })}
         </Button>
       )}
       {config.footnote && (

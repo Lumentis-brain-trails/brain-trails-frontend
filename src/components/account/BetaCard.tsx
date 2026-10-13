@@ -14,11 +14,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { ApplicationForm } from "@/lib/application";
 import { toApplicationPayload } from "@/lib/application";
 import { BETA_APPLY_HASH } from "@/lib/betaPrompt";
-import { useTaxonomies, labelFor } from "@/lib/taxonomies";
+import { useErrorMessage } from "@/lib/errorMessage";
+import { OTHER, useOptionLabel, useTaxonomies } from "@/lib/taxonomies";
 import { ApplicationStep } from "@/components/application/ApplicationStep";
 import { ListField } from "@/components/form/ListField";
 import { useToast } from "@/components/Toast";
@@ -37,13 +38,6 @@ export interface ApplicationData extends Record<string, unknown> {
   intended_use: string | null;
   intended_use_other: string | null;
 }
-
-const DECISIONS: Record<string, string> = {
-  pending: "We have your answers. Nothing to do.",
-  accepted: "You are in the beta.",
-  waitlisted: "On the waiting list - we write as soon as there is room.",
-  rejected: "Not this round.",
-};
 
 /** Form values from the stored row; empty strings where nothing was answered. */
 function toForm(data: ApplicationData): ApplicationForm {
@@ -74,6 +68,8 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
   const queryClient = useQueryClient();
   const lists = useTaxonomies();
   const t = useTranslations("beta");
+  const optionLabel = useOptionLabel();
+  const errorMessage = useErrorMessage();
   const card = useRef<HTMLDivElement>(null);
   // Arriving from the report prompt opens the form. The card only mounts once the
   // application has loaded, in the browser, so reading the hash here cannot mismatch a
@@ -99,7 +95,7 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
         intended_use_other: wantsBeta && useOther ? useOther : null,
       }),
     onSuccess: async () => {
-      toast("success", "Saved.");
+      toast("success", t("saved"));
       setEditing(false);
       await queryClient.invalidateQueries({ queryKey: ["me-application"] });
     },
@@ -111,23 +107,22 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
 
   if (!data) return null;
 
+  // A decision this build has no sentence for reads as "we have your answers", which is
+  // true of every state the board can put an application in.
+  const statusKey = `status.${data.decision}`;
+  const status = t.has(statusKey as never)
+    ? t(statusKey as never)
+    : t("status.pending");
+
   return (
     <Card ref={card} className="scroll-mt-6">
-      <SectionTitle>Beta programme</SectionTitle>
+      <SectionTitle>{t("cardTitle")}</SectionTitle>
       <p className="mt-2 text-pretty text-ink-2">
-        {data.wants_beta
-          ? (DECISIONS[data.decision] ?? DECISIONS.pending)
-          : "You are not on the list."}
+        {data.wants_beta ? status : t("notOnList")}
       </p>
       {save.error && (
         <div className="mt-4">
-          <ErrorBanner
-            message={
-              save.error instanceof ApiRequestError
-                ? save.error.error.message
-                : "Could not save."
-            }
-          />
+          <ErrorBanner message={errorMessage(save.error)} />
         </div>
       )}
 
@@ -143,25 +138,25 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
                 setEditing(true);
               }}
             />
-            <span>I would like to be a beta tester.</span>
+            <span>{t("wantsBeta")}</span>
           </label>
 
           {wantsBeta && !editing && (
             <KeyValue
-              label="How you expect to use it"
+              label={t("intendedUse")}
               value={
                 data.intended_use
-                  ? data.intended_use === "other"
-                    ? (data.intended_use_other ?? "Other")
-                    : labelFor(data.intended_use)
-                  : "Not said"
+                  ? data.intended_use === OTHER
+                    ? (data.intended_use_other ?? optionLabel(OTHER))
+                    : optionLabel(data.intended_use, "intended_use")
+                  : t("notSaid")
               }
             />
           )}
 
           {wantsBeta && editing && (
             <ListField
-              label="How do you expect to use it?"
+              label={t("intendedUseQuestion")}
               options={lists.data?.intended_use}
               value={use}
               field={{
@@ -172,7 +167,7 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
                 value: useOther,
                 onChange: (e) => setUseOther(e.target.value),
               }}
-              placeholder="Not sure yet"
+              placeholder={t("notSureYet")}
             />
           )}
         </div>
@@ -183,7 +178,7 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
           <ApplicationStep
             initial={toForm(data)}
             onDone={(values) => save.mutate(values)}
-            submitLabel={save.isPending ? "Saving…" : "Save"}
+            submitLabel={save.isPending ? t("saving") : t("save")}
             busy={save.isPending}
           />
           <div className="mt-3">
@@ -194,7 +189,7 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
                 setEditing(false);
               }}
             >
-              Cancel
+              {t("cancel")}
             </Button>
           </div>
         </div>
@@ -202,7 +197,7 @@ export function BetaCard({ data }: { data: ApplicationData | undefined }) {
         <div className="mt-6">
           {data.wants_beta ? (
             <Button variant="secondary" onClick={() => setEditing(true)}>
-              Edit your answers
+              {t("edit")}
             </Button>
           ) : (
             <Button
