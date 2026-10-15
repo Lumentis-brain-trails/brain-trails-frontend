@@ -1814,6 +1814,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Usage
+         * @description Append the caller's UI events (204); 422 `usage_rejected` names the first bad one.
+         *
+         *     `at` is kept when it lies within the last 24 hours, otherwise the server's clock is
+         *     used. Events are attributed to the caller and to no workspace: UI events describe
+         *     navigation, and the workspace a page shows is the server's to record (T2 adds it).
+         */
+        post: operations["post_usage_usage_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces": {
         parameters: {
             query?: never;
@@ -4264,6 +4288,31 @@ export interface components {
              * Format: uuid
              */
             recording_id: string;
+        };
+        /**
+         * UsageBatchIn
+         * @description What the frontend flushes at once.
+         */
+        UsageBatchIn: {
+            /** Events */
+            events: components["schemas"]["UsageEventIn"][];
+        };
+        /**
+         * UsageEventIn
+         * @description One UI event: its name, when it happened, and categories describing it.
+         *
+         *     `props` values are categories or numbers (a route pattern such as `/protocols/[id]`,
+         *     never the concrete path with the id).
+         */
+        UsageEventIn: {
+            /** At */
+            at?: string | null;
+            /** Event */
+            event: string;
+            /** Props */
+            props?: {
+                [key: string]: string | number | boolean | null;
+            };
         };
         /**
          * UsageOut
@@ -7166,6 +7215,37 @@ export interface operations {
                     "application/json": {
                         [key: string]: string[];
                     };
+                };
+            };
+        };
+    };
+    post_usage_usage_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UsageBatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

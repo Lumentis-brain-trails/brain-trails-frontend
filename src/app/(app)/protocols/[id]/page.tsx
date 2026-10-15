@@ -15,6 +15,7 @@ import {
   isPlayable,
 } from "@/lib/protocol/catalog";
 import { useOfficialTexts } from "@/lib/protocol/official";
+import { trackFeature } from "@/lib/usage";
 import {
   Button,
   buttonClass,
@@ -176,7 +177,11 @@ export default function ProtocolPage({
           </p>
         </div>
         {playable ? (
-          <Link href={`/protocols/${p.id}/run`} className={buttonClass()}>
+          <Link
+            href={`/protocols/${p.id}/run`}
+            onClick={() => trackFeature("protocol.play")}
+            className={buttonClass()}
+          >
             {t("play")}
           </Link>
         ) : (

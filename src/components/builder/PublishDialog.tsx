@@ -21,6 +21,7 @@ import { ApiRequestError, api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
 import type { Finding } from "@/lib/builder/findings";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
+import { trackFeature } from "@/lib/usage";
 import { MEDIA_TAGS, type MediaTag } from "@/lib/types";
 
 export function PublishDialog({
@@ -135,7 +136,14 @@ export function PublishDialog({
           <Button variant="ghost" onClick={onClose}>
             {t("cancel")}
           </Button>
-          <Button onClick={() => publish.mutate()} disabled={publish.isPending}>
+          <Button
+            onClick={() => {
+              // the attempt: the server records the publication that succeeds
+              trackFeature("builder.publish");
+              publish.mutate();
+            }}
+            disabled={publish.isPending}
+          >
             {protocol.current_version === null
               ? t("publish")
               : t("publish_version", { version: protocol.current_version + 1 })}

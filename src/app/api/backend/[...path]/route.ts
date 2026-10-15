@@ -24,6 +24,8 @@ const ALLOWED_PREFIXES = [
   "workspaces",
   // the caller's own brain landscape (backend V3-0016); a recording's is under recordings/
   "landscape",
+  // the browser's batched page views and feature uses (backend V4-0007)
+  "usage",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];
