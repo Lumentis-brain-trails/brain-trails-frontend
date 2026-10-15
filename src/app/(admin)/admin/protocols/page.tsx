@@ -10,9 +10,11 @@
  * the content is ready.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ApiRequestError, api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { useErrorMessage } from "@/lib/errorMessage";
 import { useToast } from "@/components/Toast";
 import {
   Button,
@@ -33,6 +35,9 @@ function minutes(seconds: number | null): string {
 }
 
 export default function AdminProtocolsPage() {
+  const t = useTranslations("admin.protocols");
+  const tShared = useTranslations("admin.shared");
+  const errorMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -48,7 +53,10 @@ export default function AdminProtocolsPage() {
     mutationFn: ({ id, access }: { id: string; access: "open" | "locked" }) =>
       api.patch(`admin/protocols/${id}/access`, { access }),
     onSuccess: async (_data, { access }) => {
-      toast("success", access === "locked" ? "Locked." : "Unlocked.");
+      toast(
+        "success",
+        access === "locked" ? t("toast.locked") : t("toast.unlocked")
+      );
       await queryClient.invalidateQueries({ queryKey: ["admin-protocols"] });
     },
   });
@@ -60,15 +68,11 @@ export default function AdminProtocolsPage() {
     <main className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">Catalog locks</h1>
-          <p className="mt-2 text-pretty text-ink-2">
-            A locked protocol is still listed — people see what is coming — but
-            it cannot be started. Changes take effect at once; a run already
-            under way finishes.
-          </p>
+          <h1 className="type-title">{t("title")}</h1>
+          <p className="mt-2 text-pretty text-ink-2">{t("intro")}</p>
         </div>
         <Link href="/admin" className={buttonClass("secondary")}>
-          Back to admin
+          {tShared("backToAdmin")}
         </Link>
       </div>
 
@@ -77,8 +81,8 @@ export default function AdminProtocolsPage() {
           <ErrorBanner
             message={
               setAccess.error instanceof ApiRequestError
-                ? setAccess.error.error.message
-                : "Could not change the lock."
+                ? errorMessage(setAccess.error)
+                : t("changeFailed")
             }
           />
         </div>
@@ -86,8 +90,8 @@ export default function AdminProtocolsPage() {
 
       <SectionTitle>
         {catalog.isLoading
-          ? "Official protocols"
-          : `${open} of ${items.length} can be started`}
+          ? t("official")
+          : t("startable", { open, total: items.length })}
       </SectionTitle>
       <Card inset>
         {catalog.isLoading && (
@@ -97,7 +101,7 @@ export default function AdminProtocolsPage() {
           </div>
         )}
         {!catalog.isLoading && items.length === 0 && (
-          <p className="px-5 py-4 text-ink-3">No official protocols yet.</p>
+          <p className="px-5 py-4 text-ink-3">{t("empty")}</p>
         )}
         {items.map((item) => {
           const locked = item.access === "locked";
@@ -113,7 +117,7 @@ export default function AdminProtocolsPage() {
                   <span className="truncate font-medium">{item.title}</span>
                   {locked && (
                     <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[12px] text-ink-3">
-                      locked
+                      {t("locked")}
                     </span>
                   )}
                 </span>
@@ -132,7 +136,7 @@ export default function AdminProtocolsPage() {
                   })
                 }
               >
-                {busy ? "…" : locked ? "Unlock" : "Lock"}
+                {busy ? "…" : locked ? t("unlock") : t("lock")}
               </Button>
             </div>
           );

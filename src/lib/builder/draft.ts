@@ -166,25 +166,46 @@ function blocksIn(node: TreeNode): number {
   return 1;
 }
 
-/** A node's label for the timeline; groups say what they hold. */
-export function labelOf(node: TreeNode): string {
+/**
+ * What a group with no name of its own is called on the timeline. A group is stored
+ * without a label, so these words are drawn, never saved: the caller passes them in the
+ * reader's language (`builder.unnamedGroup`, `builder.unnamedLoop`).
+ */
+export interface GroupNames {
+  /** A plain group: a sequence. */
+  group: string;
+  /** A group that repeats: a loop. */
+  loop: string;
+}
+
+const GROUP_NAMES: GroupNames = { group: "Group", loop: "Group (repeats)" };
+
+/**
+ * A node's label for the timeline; groups say what they hold. `names` words the groups
+ * nobody named; without it they read in English.
+ */
+export function labelOf(
+  node: TreeNode,
+  names: GroupNames = GROUP_NAMES
+): string {
   if (node.type === "block")
     return typeof node.label === "string" ? node.label : node.kind;
   if (node.label) return node.label;
-  return node.type === "loop" ? "Group (repeats)" : "Group";
+  return node.type === "loop" ? names.loop : names.group;
 }
 
-/** The root's children as clips, in order. */
+/** The root's children as clips, in order; `names` as in `labelOf`. */
 export function clips(
   tree: ProtocolTree,
-  media: Record<string, BinMedia> = {}
+  media: Record<string, BinMedia> = {},
+  names: GroupNames = GROUP_NAMES
 ): Clip[] {
   return tree.root.children.map((node, index) => ({
     index,
     node,
     count: blocksIn(node),
     seconds: clipSeconds(node, media),
-    label: labelOf(node),
+    label: labelOf(node, names),
     variable:
       node.type !== "block"
         ? true
@@ -375,9 +396,8 @@ export function setGroupRepeat(
   return node;
 }
 
-/** The structural blocks the bin offers, with a config that already validates. */
 /**
- * One thing the bin offers. Several items may share a kind (the arrows task alone and
+ * One thing the bin offers, with a config that already validates. Several items may share a kind (the arrows task alone and
  * with cues; the game with and without its beacon), so an item is found by `id`.
  * `group` decides its tab: a task records what the participant does, an element never
  * asks for anything - the same line the backend draws around the blocks it scores.
@@ -390,6 +410,13 @@ export interface PaletteItem {
   hint?: string;
   group: "element" | "task";
   config: Record<string, unknown>;
+  /**
+   * The settings in `config` that hold words the participant reads, by the name their
+   * translation has under `builder.palette.<id>.text`. `usePaletteText` writes them in
+   * the author's language before the block is made; the English in `config` is what a
+   * caller without a translator gets.
+   */
+  text?: Record<string, string[]>;
 }
 
 export function paletteItem(id: string): PaletteItem | undefined {
@@ -408,6 +435,7 @@ export const ELEMENTS: PaletteItem[] = [
       ],
       advance: { mode: "key", label: "Continue" },
     },
+    text: { line: ["lines", "0", "text"], continue: ["advance", "label"] },
   },
   {
     id: "fixation",
@@ -604,7 +632,10 @@ export function blockForMedia(tree: ProtocolTree, item: BinMedia): BlockNode {
   } as BlockNode;
 }
 
-/** A block for one of the structural elements. */
+/**
+ * A block for one of the bin's elements. Its name and starting words are the item's:
+ * pass the item through `usePaletteText` first to make it in the author's language.
+ */
 export function blockForElement(
   tree: ProtocolTree,
   element: PaletteItem

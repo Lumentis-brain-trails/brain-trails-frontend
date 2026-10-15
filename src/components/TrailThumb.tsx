@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { useChartTheme } from "@/lib/theme";
 import { downsample, fitToBox } from "@/lib/thumb";
@@ -26,6 +27,7 @@ const WIDTH = 3.4;
  * a stand-in shape.
  */
 export function TrailThumb({ recording }: { recording: Recording }) {
+  const t = useTranslations("recordings.trail");
   const theme = useChartTheme();
   const ready = recording.status === "done";
   const analysis = useQuery({
@@ -48,14 +50,14 @@ export function TrailThumb({ recording }: { recording: Recording }) {
         <span className="type-caption flex items-center gap-2 text-ink-3">
           {busy && <Spinner />}
           {recording.status === "failed"
-            ? "No trail: processing failed"
+            ? t("thumb.failed")
             : recording.status === "empty"
-              ? "No trail: no EEG was recorded"
+              ? t("thumb.empty")
               : recording.status === "capturing"
-                ? "Recording in progress"
+                ? t("thumb.capturing")
                 : busy
-                  ? "Drawing the trail…"
-                  : "Trail unavailable"}
+                  ? t("thumb.drawing")
+                  : t("thumb.unavailable")}
         </span>
       </div>
     );
@@ -87,7 +89,7 @@ export function TrailThumb({ recording }: { recording: Recording }) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-full w-full"
         role="img"
-        aria-label={`Trail of ${recording.title}`}
+        aria-label={t("thumbAria", { title: recording.title })}
       >
         {nodes.map((n, i) => {
           const p = map(n);

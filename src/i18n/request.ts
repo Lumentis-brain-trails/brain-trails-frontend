@@ -1,17 +1,27 @@
 /**
  * Where next-intl finds the locale and the messages for a request.
  *
- * English is the only locale until sprint S26 (plan V3, "Internationalisation"), so
- * there is no locale in the URL and nothing to negotiate: every request gets `en`.
- * Every new string still goes through a key in `messages/en.json`, which is what turns
- * a later translation into a new file instead of a rewrite. S26 replaces the constant
- * with `users.locale` -> `Accept-Language` -> `en`.
+ * No locale in the URL: the language is the reader's preference, resolved by
+ * `resolveLocale` (the `bt-locale` cookie, then `Accept-Language`, then English). Every
+ * string goes through a key in `messages/<locale>.json`, so a new language is a new file
+ * plus one entry in `LOCALES`; `messages.test.ts` holds the files to the same keys.
+ *
+ * Reading the cookie makes every route render per request. That is the price of a
+ * language without a URL segment, and nothing here was cached across readers anyway:
+ * the pages fetch their data from the browser.
  */
+import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
+import { LOCALE_COOKIE, resolveLocale } from "./locales";
 
-export const DEFAULT_LOCALE = "en";
-
-export default getRequestConfig(async () => ({
-  locale: DEFAULT_LOCALE,
-  messages: (await import(`../../messages/${DEFAULT_LOCALE}.json`)).default,
-}));
+export default getRequestConfig(async () => {
+  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const locale = resolveLocale(
+    cookieStore.get(LOCALE_COOKIE)?.value,
+    headerList.get("accept-language")
+  );
+  return {
+    locale,
+    messages: (await import(`../../messages/${locale}.json`)).default,
+  };
+});

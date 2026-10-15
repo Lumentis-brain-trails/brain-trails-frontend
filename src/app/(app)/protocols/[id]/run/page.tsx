@@ -14,6 +14,12 @@
  * forms and the session is closed; the backend queues the analysis. An upload that fails
  * keeps the files in memory and offers a retry.
  *
+ * An official protocol is shown in the reader's language (`lib/protocol/official.ts`):
+ * the title, the warning and consent text, the outline, the labels on the result
+ * screen, and - through the runner's `officialSlug` - what each block puts on screen.
+ * That is display only: the plan resolved and posted here, the summary and every event
+ * keep the stored English, whatever language the run was read in.
+ *
  * Deferred (Alessio, 2026-09-19): writing the capture to disk as it arrives, automatic
  * Bluetooth reconnection and media preload - see the S16 sprint notes.
  */
@@ -43,7 +49,8 @@ import {
 } from "@/components/run/HeadbandPreflight";
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useUploadErrorMessage } from "@/lib/upload";
 import { useFocusMode } from "@/lib/focus";
 import {
   BluetoothMuse,
@@ -60,6 +67,7 @@ import type { PhaseSummary } from "@/lib/protocol/metrics";
 import { resultTitles } from "@/lib/protocol/results";
 import { devToolsAllowed } from "@/lib/env";
 import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
+import { officialSlug, useOfficialTexts } from "@/lib/protocol/official";
 import {
   type StimulusSessionStart,
   finishSession,
@@ -92,13 +100,6 @@ interface Ending {
   files: CaptureFiles | null;
 }
 
-const errorText = (e: unknown) =>
-  e instanceof ApiRequestError
-    ? e.error.message
-    : e instanceof Error
-      ? e.message
-      : String(e);
-
 export default function RunProtocolPage({
   params,
 }: {
@@ -107,22 +108,34 @@ export default function RunProtocolPage({
   const { id: protocolId } = use(params);
   const router = useRouter();
   const t = useTranslations("run.upload");
+  // An API error reads through the catalogue (its code, else the server's own
+  // message) and a failed upload to storage by its code; anything else thrown here is
+  // a diagnostic and is shown as it is.
+  const errorText = useUploadErrorMessage();
 
   const protocol = useQuery({
     queryKey: ["protocol", protocolId, "run"],
     queryFn: () => api.get<ProtocolDetail>(`protocols/${protocolId}`),
     staleTime: Infinity,
   });
+  const official = useOfficialTexts();
+  // Null for a protocol somebody wrote: every text of theirs is shown as stored.
+  const slug = officialSlug(protocol.data);
+  // What the pages before and after the run read; `protocol.data` stays as stored.
+  const shown = useMemo(
+    () => (protocol.data ? official.detail(protocol.data) : undefined),
+    [official, protocol.data]
+  );
   const manifest = useMemo<ConsentManifest>(() => {
     const raw = (protocol.data?.definition ?? {}) as {
       manifest?: Partial<ConsentManifest>;
     };
-    return {
+    return official.manifest(slug, {
       content_warning: raw.manifest?.content_warning ?? null,
       requires_consent: raw.manifest?.requires_consent ?? false,
       consent_text: raw.manifest?.consent_text ?? null,
-    };
-  }, [protocol.data]);
+    });
+  }, [official, protocol.data, slug]);
 
   const transport = useSyncExternalStore(
     () => () => {},
@@ -191,7 +204,7 @@ export default function RunProtocolPage({
     } finally {
       setStarting(false);
     }
-  }, [muse, protocol.data, protocolId]);
+  }, [errorText, muse, protocol.data, protocolId]);
 
   const save = useCallback(async () => {
     const end = ending.current;
@@ -214,7 +227,7 @@ export default function RunProtocolPage({
       setError(errorText(e));
       setPhase("failed");
     }
-  }, [session]);
+  }, [errorText, session]);
 
   const close = useCallback(
     async (
@@ -295,7 +308,7 @@ export default function RunProtocolPage({
   }, [close, sink]);
 
   if (protocol.isPending) return <Spinner />;
-  if (protocol.isError || !protocol.data)
+  if (protocol.isError || !protocol.data || !shown)
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <ErrorBanner message={errorText(protocol.error)} />
@@ -308,7 +321,7 @@ export default function RunProtocolPage({
         {needsConsentGate(manifest) ? (
           <ConsentGate
             manifest={manifest}
-            title={protocol.data.title}
+            title={shown.title}
             onAccept={() => setPhase("preflight")}
             onDecline={() => router.push(`/protocols/${protocolId}`)}
           />
@@ -321,12 +334,12 @@ export default function RunProtocolPage({
   if (phase === "preflight")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="type-title mb-1">{protocol.data.title}</h1>
+        <h1 className="type-title mb-1">{shown.title}</h1>
         {/* a one-block protocol named after its block would say its title twice */}
         <p className="mb-6 text-ink-2">
-          {protocol.data.outline.length > 1
-            ? protocol.data.outline.map((s) => s.label).join(" → ")
-            : protocol.data.summary}
+          {shown.outline.length > 1
+            ? shown.outline.map((s) => s.label).join(" → ")
+            : shown.summary}
         </p>
         {error && (
           <div className="mb-6">
@@ -358,6 +371,7 @@ export default function RunProtocolPage({
         ) : (
           <ProtocolRunner
             protocol={plan}
+            officialSlug={slug}
             warningShown={needsConsentGate(manifest)}
             seed={session?.seed ?? 1}
             sink={sink}
@@ -370,7 +384,14 @@ export default function RunProtocolPage({
     );
 
   const done = outcome?.aborted === false;
-  const titles = resultTitles(results, plan);
+  // Named for the reader; `plan`, already posted, keeps its stored labels.
+  const titles = resultTitles(
+    results,
+    plan && {
+      ...plan,
+      steps: plan.steps.map((step) => official.step(slug, step)),
+    }
+  );
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="type-title mb-4">{done ? t("complete") : t("stopped")}</h1>
@@ -405,14 +426,7 @@ export default function RunProtocolPage({
         return (
           <Card key={result.stepId} className="mb-4">
             <h2 className="type-subhead mb-3">{titles[result.stepId]}</h2>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-3">
-              <Stat label="Hits" value={pct(summary.hitRate)} />
-              <Stat label="Misses" value={pct(summary.omissionRate)} />
-              <Stat label="False docks" value={pct(summary.commissionRate)} />
-              <Stat label="Median RT" value={ms(summary.medianRtMs)} />
-              <Stat label="RT variability" value={ms(summary.rtMadMs)} />
-              <Stat label="Criterion" value={num(summary.criterion)} />
-            </dl>
+            <PhaseStats summary={summary} />
           </Card>
         );
       })}
@@ -440,6 +454,21 @@ export default function RunProtocolPage({
 function Skip({ onDone }: { onDone: () => void }) {
   useEffect(onDone, [onDone]);
   return <Spinner />;
+}
+
+/** A go/no-go block's scores, named from `run.results`. */
+function PhaseStats({ summary }: { summary: Partial<PhaseSummary> }) {
+  const t = useTranslations("run.results");
+  return (
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-3">
+      <Stat label={t("hits")} value={pct(summary.hitRate)} />
+      <Stat label={t("misses")} value={pct(summary.omissionRate)} />
+      <Stat label={t("falseDocks")} value={pct(summary.commissionRate)} />
+      <Stat label={t("medianRt")} value={ms(summary.medianRtMs)} />
+      <Stat label={t("rtVariability")} value={ms(summary.rtMadMs)} />
+      <Stat label={t("criterion")} value={num(summary.criterion)} />
+    </dl>
+  );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

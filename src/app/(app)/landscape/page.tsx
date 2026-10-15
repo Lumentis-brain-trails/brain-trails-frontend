@@ -13,6 +13,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import { useEffect } from "react";
 import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
 import {
@@ -31,6 +32,7 @@ const POLL_MS = 5000;
 
 export default function BrainLandscapePage() {
   const t = useTranslations("landscape");
+  const locale = useFormatLocale();
   const landscape = useQuery({
     queryKey: ["my-landscape"],
     queryFn: () => api.get<BrainLandscape>("landscape"),
@@ -64,7 +66,7 @@ export default function BrainLandscapePage() {
             {t("meta", {
               n: data.n_recordings,
               windows: data.n_windows,
-              date: new Date(data.built_at).toLocaleString(undefined, {
+              date: new Date(data.built_at).toLocaleString(locale, {
                 dateStyle: "medium",
                 timeStyle: "short",
               }),

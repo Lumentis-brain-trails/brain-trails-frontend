@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { useState } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import messages from "../../../messages/en.json";
+import italian from "../../../messages/it.json";
 import blocks from "../../../schemas/blocks.schema.json";
 import { BlockInspector } from "./BlockInspector";
 import type { JsonSchema } from "@/lib/builder/fields";
@@ -60,6 +61,31 @@ describe("BlockInspector", () => {
       screen.getByRole("option", { name: "After a fixed time" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Duration (s)")).toHaveValue(30);
+  });
+
+  test("the kind and its settings read in the author's language", () => {
+    render(
+      <NextIntlClientProvider
+        locale="it"
+        messages={italian as unknown as typeof messages}
+      >
+        <BlockInspector
+          block={REST}
+          kindSchemas={KIND_SCHEMAS}
+          onChange={() => {}}
+          onDelete={() => {}}
+          onDuplicate={() => {}}
+        />
+      </NextIntlClientProvider>
+    );
+    expect(screen.getByText("Pausa")).toBeInTheDocument();
+    expect(screen.getByLabelText("La pausa termina")).toHaveValue("timed");
+    expect(
+      screen.getByRole("option", { name: "Dopo un tempo fisso" })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Durata (s)")).toHaveValue(30);
+    // the block's own name is content: it stays as its author wrote it
+    expect(screen.getByDisplayValue("Break")).toBeInTheDocument();
   });
 
   test("every setting says what it is for, behind an info button", () => {

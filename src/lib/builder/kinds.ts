@@ -5,7 +5,17 @@
  * this one table, so a kind is recognised by the same name, colour and picture wherever
  * it appears (Alessio, 2026-09-20: "i task devo riuscire a riconoscerli intuitivamente").
  * The wire name (`go-no-go`) stays out of the interface.
+ *
+ * The colour and the family are facts of the kind and live here. The words are read in
+ * the reader's language from the catalogue (`builder.kinds.<kind>`, `builder.palette.<id>`)
+ * through the two hooks at the bottom; the English `label`/`hint` in the tables are what
+ * a caller without a translator gets, and the fallback for a key nobody wrote yet.
  */
+
+import { useTranslations } from "next-intl";
+import { useCallback } from "react";
+import type { PaletteItem } from "@/lib/builder/draft";
+import { setAtPath } from "@/lib/builder/fields";
 
 export interface KindIdentity {
   /** What an author calls it. */
@@ -139,4 +149,70 @@ const UNKNOWN: KindIdentity = {
 /** A kind's identity; an unknown kind is a grey "Block" named after its wire name. */
 export function identityOf(kind: string): KindIdentity {
   return KIND_IDENTITY[kind] ?? { ...UNKNOWN, label: kind };
+}
+
+/** What a kind is called and what the participant experiences, in the reader's language. */
+export interface KindText {
+  label: string;
+  hint: string;
+}
+
+/**
+ * `const kindText = useKindText(); kindText("go-no-go").label` inside a component.
+ *
+ * Reads `builder.kinds.<kind>` and falls back, word by word, to `identityOf`: a kind
+ * the catalogue does not know keeps its English name, and a kind this app does not know
+ * at all is still named after its wire name. A function rather than one kind's text,
+ * because the bin and the timeline name many kinds in one render.
+ */
+export function useKindText(): (kind: string) => KindText {
+  const t = useTranslations("builder.kinds");
+  return useCallback(
+    (kind: string) => {
+      const fallback = identityOf(kind);
+      const read = (word: "label" | "hint") => {
+        const key = `${kind}.${word}`;
+        // an unknown wire name may hold a dot, which the catalogue reads as nesting
+        return kind !== "" && !kind.includes(".") && t.has(key as never)
+          ? t(key as never)
+          : fallback[word];
+      };
+      return { label: read("label"), hint: read("hint") };
+    },
+    [t]
+  );
+}
+
+/**
+ * `const localise = usePaletteText(); localise(item)` inside a component: one of the
+ * bin's items (`ELEMENTS`) in the reader's language.
+ *
+ * The copy carries the translated `label` and `hint` (`builder.palette.<id>`) and, for
+ * an item that declares `text`, the translated starting words written into its config.
+ * A block made from it (`blockForElement`) is therefore named and worded in the
+ * language its author was reading when it was added; that is content from then on, and
+ * a stored block is never translated again. Anything without a key keeps the table's
+ * English, and the item itself is not mutated.
+ */
+export function usePaletteText(): (item: PaletteItem) => PaletteItem {
+  const t = useTranslations("builder.palette");
+  return useCallback(
+    (item: PaletteItem) => {
+      const read = (key: string): string | undefined =>
+        t.has(key as never) ? t(key as never) : undefined;
+      let config = item.config;
+      for (const [name, path] of Object.entries(item.text ?? {})) {
+        const words = read(`${item.id}.text.${name}`);
+        if (words !== undefined) config = setAtPath(config, path, words);
+      }
+      const hint = read(`${item.id}.hint`) ?? item.hint;
+      return {
+        ...item,
+        label: read(`${item.id}.label`) ?? item.label,
+        ...(hint !== undefined ? { hint } : {}),
+        config,
+      };
+    },
+    [t]
+  );
 }

@@ -10,8 +10,14 @@
  *
  * The stop control and the motion notice live here rather than in any task, because the
  * spec requires them to be reachable at all times - including mid-frame inside a canvas.
+ *
+ * An official protocol is read in the participant's language (`officialSlug`): the
+ * runner hands each task a copy of its step with the catalogue's words, and shows the
+ * label and the notice from the same source. Only what is rendered is a copy - the
+ * step that names markers and the plan the host posted are the stored ones.
  */
 
+import { useTranslations } from "next-intl";
 import {
   useCallback,
   useEffect,
@@ -30,6 +36,7 @@ import {
   UI_UNCERTAINTY_MS,
   timingMeta,
 } from "@/lib/protocol/marker";
+import { useOfficialTexts } from "@/lib/protocol/official";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { hash32 } from "@/lib/protocol/rng";
 import { useLatest } from "./kinds/shared";
@@ -81,6 +88,11 @@ export interface ProtocolRunnerProps {
   sink: MarkerSink;
   anchor?: ClockAnchor;
   /**
+   * The protocol's slug when it is an official one (`officialSlug(detail)`); absent or
+   * null for a protocol somebody wrote, whose words are shown as stored.
+   */
+  officialSlug?: string | null;
+  /**
    * The host already showed the content warning (the run page's consent gate, S18), so
    * the runner does not show it a second time. It still opens with the motion notice
    * when a step moves things on screen, because that choice is made here.
@@ -97,10 +109,13 @@ export function ProtocolRunner({
   seed,
   sink,
   anchor,
+  officialSlug = null,
   warningShown = false,
   onFinish,
   onExit,
 }: ProtocolRunnerProps) {
+  const t = useTranslations("run.runner");
+  const official = useOfficialTexts();
   // Something to say before the first block: a warning nobody has shown yet, or the
   // motion choice for a protocol that moves things on screen.
   const movesOnScreen = useMemo(
@@ -412,13 +427,35 @@ export function ProtocolRunner({
     [seed, step]
   );
 
+  /*
+   * What the participant reads of this step: its label and config in their language
+   * when the protocol is official, the step itself otherwise. Made once per step, here
+   * and nowhere else - a kind keeps timers on its config (an instruction's lines), so a
+   * copy made on every render would restart them each time the host re-renders. `step`
+   * stays the stored one for everything that is recorded: `protocolMeta`, the start and
+   * end markers, the results.
+   */
+  const shownStep = useMemo(
+    () => (step ? official.step(officialSlug, step) : step),
+    [official, officialSlug, step]
+  );
+
   if (screen === "warning") {
     return (
       <Shell onStop={() => onExit("user")}>
         <div className="flex h-full flex-col items-center justify-center gap-6 px-6 text-center">
-          <h1 className="type-title">{protocol.title}</h1>
+          <h1 className="type-title">
+            {official.title(officialSlug, protocol.title)}
+          </h1>
           {protocol.contentWarning && !warningShown && (
-            <p className="max-w-xl text-ink-2">{protocol.contentWarning}</p>
+            <p className="max-w-xl text-ink-2">
+              {
+                official.manifest(officialSlug, {
+                  content_warning: protocol.contentWarning,
+                  consent_text: null,
+                }).content_warning
+              }
+            </p>
           )}
           {movesOnScreen && (
             <label className="flex items-center gap-2 text-[14px] text-ink-2">
@@ -427,29 +464,26 @@ export function ProtocolRunner({
                 checked={reducedMotion}
                 onChange={(event) => setMotionOverride(event.target.checked)}
               />
-              Reduce motion
+              {t("reduceMotion")}
             </label>
           )}
-          <Button onClick={() => setScreen("running")}>Begin</Button>
-          <p className="type-caption text-ink-3">
-            This is not a medical assessment or diagnosis. You can stop at any
-            time.
-          </p>
+          <Button onClick={() => setScreen("running")}>{t("begin")}</Button>
+          <p className="type-caption text-ink-3">{t("disclaimer")}</p>
         </div>
       </Shell>
     );
   }
 
-  if (!step) return null;
+  if (!step || !shownStep) return null;
 
   const kind = getTaskKind(step.kind);
   const Renderer = kind.Renderer;
 
   return (
-    <Shell onStop={() => setScreen("confirm-exit")} label={step.label}>
+    <Shell onStop={() => setScreen("confirm-exit")} label={shownStep.label}>
       <Renderer
         key={step.id}
-        config={step.config as never}
+        config={shownStep.config as never}
         stepId={step.id}
         phase={step.phase ?? step.id}
         seed={stepSeed}
@@ -460,16 +494,14 @@ export function ProtocolRunner({
       {screen === "confirm-exit" && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-(--scrim)">
           <div className="enter-pop max-w-sm rounded-[var(--radius-sheet)] border border-hairline bg-surface p-6 text-center shadow-(--shadow-sheet)">
-            <h2 className="type-heading mb-2">Stop this session?</h2>
-            <p className="mb-5 text-[14px] text-ink-2">
-              What you have done so far is kept. You cannot resume this run.
-            </p>
+            <h2 className="type-heading mb-2">{t("stopTitle")}</h2>
+            <p className="mb-5 text-[14px] text-ink-2">{t("stopBody")}</p>
             <div className="flex justify-center gap-3">
               <Button variant="ghost" onClick={() => setScreen("running")}>
-                Keep going
+                {t("keepGoing")}
               </Button>
               <Button variant="danger" onClick={abort}>
-                Stop session
+                {t("stopSession")}
               </Button>
             </div>
           </div>
@@ -488,6 +520,7 @@ function Shell({
   onStop: () => void;
   label?: string;
 }) {
+  const t = useTranslations("run.runner");
   return (
     <div
       data-theme="dark"
@@ -496,7 +529,7 @@ function Shell({
       <div className="flex items-center justify-between px-6 py-3">
         <span className="text-[14px] text-ink-2">{label ?? ""}</span>
         <Button variant="ghost" onClick={onStop}>
-          Stop
+          {t("stop")}
         </Button>
       </div>
       <div className="min-h-0 flex-1">{children}</div>

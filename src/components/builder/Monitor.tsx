@@ -16,7 +16,7 @@ import { Button } from "@/components/ui";
 import { api } from "@/lib/api";
 import type { Media } from "@/lib/types";
 import { type BinMedia, type Clip, formatClock } from "@/lib/builder/draft";
-import { identityOf } from "@/lib/builder/kinds";
+import { identityOf, useKindText } from "@/lib/builder/kinds";
 
 /** The words a block puts on screen, when it is a block of words. */
 function wordsOf(kind: string, config: Record<string, unknown>): string | null {
@@ -51,6 +51,7 @@ export function Monitor({
   onSplit?: (atS: number) => void;
 }) {
   const t = useTranslations("builder.monitor");
+  const kindText = useKindText();
   const player = useRef<HTMLVideoElement>(null);
   const shownConfig = (
     clip?.node.type === "block" ? clip.node.config : {}
@@ -85,7 +86,7 @@ export function Monitor({
   const start = typeof config.start_s === "number" ? config.start_s : 0;
   const end = typeof config.end_s === "number" ? config.end_s : undefined;
   const trimmed = start > 0 || end !== undefined;
-  const identity = identityOf(kind);
+  const identity = { ...identityOf(kind), ...kindText(kind) };
 
   return (
     <div className="flex flex-col gap-2">

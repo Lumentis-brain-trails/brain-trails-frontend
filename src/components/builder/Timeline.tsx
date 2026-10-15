@@ -25,7 +25,7 @@ import type { Clip } from "@/lib/builder/draft";
 import { formatClock } from "@/lib/builder/draft";
 import { KindCover } from "@/components/builder/KindCover";
 import { cn } from "@/components/ui";
-import { identityOf } from "@/lib/builder/kinds";
+import { identityOf, useKindText } from "@/lib/builder/kinds";
 
 /** What a drag carries: a new block from the bin, or a clip being moved. */
 export const DRAG_TYPE = "application/x-brain-trails-clip";
@@ -235,6 +235,8 @@ function ClipCard({
   const isGroup = clip.node.type !== "block";
   const kind = clip.node.type === "block" ? clip.node.kind : null;
   const width = clipWidth(clip, zoom);
+  const kindText = useKindText();
+  const kindLabel = kind ? kindText(kind).label : null;
 
   return (
     <div
@@ -277,11 +279,9 @@ function ClipCard({
             {clip.label}
           </span>
           {/* a block still called after its kind would say the same word twice */}
-          {(!kind || identityOf(kind).label !== clip.label) && (
+          {(!kind || kindLabel !== clip.label) && (
             <span className="type-caption block truncate text-ink-3">
-              {kind
-                ? identityOf(kind).label
-                : t("group_blocks", { count: clip.count })}
+              {kind ? kindLabel : t("group_blocks", { count: clip.count })}
             </span>
           )}
         </span>

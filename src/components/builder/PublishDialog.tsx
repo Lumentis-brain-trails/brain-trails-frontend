@@ -18,9 +18,10 @@ import { Sheet } from "@/components/Sheet";
 import { FindingsList } from "@/components/builder/Findings";
 import { Button, ErrorBanner } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import type { Finding } from "@/lib/builder/findings";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
-import { MEDIA_TAGS, MEDIA_TAG_LABELS, type MediaTag } from "@/lib/types";
+import { MEDIA_TAGS, type MediaTag } from "@/lib/types";
 
 export function PublishDialog({
   protocol,
@@ -38,6 +39,8 @@ export function PublishDialog({
   onPublished: (next: ProtocolDetail) => void;
 }) {
   const t = useTranslations("builder.publish");
+  const tTags = useTranslations("protocols.tags");
+  const errorMessage = useErrorMessage();
   const [title, setTitle] = useState(protocol.title);
   const [summary, setSummary] = useState(protocol.summary ?? "");
   const [description, setDescription] = useState(protocol.description ?? "");
@@ -107,7 +110,7 @@ export function PublishDialog({
                     )
                   }
                 />
-                {MEDIA_TAG_LABELS[tag]}
+                {tTags(`${tag}.title`)}
               </label>
             ))}
           </div>
@@ -120,7 +123,7 @@ export function PublishDialog({
                 issues.length > 0
                   ? t("invalid")
                   : publish.error instanceof ApiRequestError
-                    ? publish.error.error.message
+                    ? errorMessage(publish.error)
                     : t("failed")
               }
             />

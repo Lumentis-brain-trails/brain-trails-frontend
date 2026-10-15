@@ -11,9 +11,12 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { type Resolver, useForm, useWatch } from "react-hook-form";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
+import { useValidationMessage } from "@/lib/validationMessage";
 import {
   type ProfileForm,
   profileSchema,
@@ -96,6 +99,9 @@ export function ProfileCard({
   const toast = useToast();
   const queryClient = useQueryClient();
   const lists = useTaxonomies();
+  const t = useTranslations("account.profile");
+  const errorMessage = useErrorMessage();
+  const fieldError = useValidationMessage();
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema) as unknown as Resolver<ProfileForm>,
     defaultValues: toForm(data) as ProfileForm,
@@ -110,7 +116,7 @@ export function ProfileCard({
     mutationFn: (values: ProfileForm) =>
       api.put("auth/me/profile", toProfilePayload(values)),
     onSuccess: async () => {
-      toast("success", "Profile saved.");
+      toast("success", t("saved"));
       await queryClient.invalidateQueries({ queryKey: ["me-profile"] });
     },
   });
@@ -126,27 +132,16 @@ export function ProfileCard({
     field: form.register(name),
     otherField: form.register(`${name}_other` as keyof ProfileForm & string),
     value: chosen[LIST_FIELDS.indexOf(name)] as string | undefined,
-    error: errors[name]?.message,
+    error: fieldError(errors[name]?.message),
   });
 
   return (
     <Card>
-      <SectionTitle>Your profile</SectionTitle>
-      {missing && (
-        <p className="mt-2 text-pretty text-ink-2">
-          We need the first four answers before your first recording: they are
-          what makes an EEG readable afterwards. The rest is optional, always.
-        </p>
-      )}
+      <SectionTitle>{t("title")}</SectionTitle>
+      {missing && <p className="mt-2 text-pretty text-ink-2">{t("missing")}</p>}
       {save.error && (
         <div className="mt-4">
-          <ErrorBanner
-            message={
-              save.error instanceof ApiRequestError
-                ? save.error.error.message
-                : "Could not save."
-            }
-          />
+          <ErrorBanner message={errorMessage(save.error)} />
         </div>
       )}
       <form
@@ -155,10 +150,16 @@ export function ProfileCard({
         onSubmit={form.handleSubmit((values) => save.mutate(values))}
       >
         <section className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name" error={errors.full_name?.message}>
+          <Field
+            label={t("fields.fullName")}
+            error={fieldError(errors.full_name?.message)}
+          >
             <Input autoComplete="name" {...form.register("full_name")} />
           </Field>
-          <Field label="Year of birth" error={errors.birth_year?.message}>
+          <Field
+            label={t("fields.birthYear")}
+            error={fieldError(errors.birth_year?.message)}
+          >
             <Input
               type="number"
               inputMode="numeric"
@@ -166,27 +167,32 @@ export function ProfileCard({
             />
           </Field>
           <ListField
-            {...listProps("sex_at_birth", "Sex at birth")}
+            {...listProps("sex_at_birth", t("fields.sexAtBirth"))}
             otherField={undefined}
-            info="A variable in the analysis, asked as it is recorded at birth. Your gender is the next question and is yours to describe."
-            placeholder="Select"
+            info={t("fields.sexAtBirthInfo")}
+            placeholder={t("select")}
           />
           <ListField
-            {...listProps("handedness", "Handedness")}
+            {...listProps("handedness", t("fields.handedness"))}
             otherField={undefined}
-            info="Which hand you write with changes where activity appears on the scalp, so this one genuinely matters."
-            placeholder="Select"
+            info={t("fields.handednessInfo")}
+            placeholder={t("select")}
           />
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2">
-          <ListField {...listProps("gender", "Gender")} />
-          <ListField {...listProps("education_level", "Education")} />
-          <ListField {...listProps("occupation", "Occupation")} />
-          <Field label="Native languages" hint="Comma separated.">
+          <ListField {...listProps("gender", t("fields.gender"))} />
+          <ListField
+            {...listProps("education_level", t("fields.educationLevel"))}
+          />
+          <ListField {...listProps("occupation", t("fields.occupation"))} />
+          <Field
+            label={t("fields.nativeLanguages")}
+            hint={t("fields.nativeLanguagesHint")}
+          >
             <Input {...form.register("native_languages")} />
           </Field>
-          <Field label="Years of musical training">
+          <Field label={t("fields.musicalTrainingYears")}>
             <Input
               type="number"
               inputMode="numeric"
@@ -194,17 +200,20 @@ export function ProfileCard({
             />
           </Field>
           <ListField
-            {...listProps("meditation_practice", "Meditation practice")}
+            {...listProps(
+              "meditation_practice",
+              t("fields.meditationPractice")
+            )}
             otherField={undefined}
           />
-          <Field label="Coffee per day (cups)">
+          <Field label={t("fields.caffeineCupsPerDay")}>
             <Input
               type="number"
               inputMode="numeric"
               {...form.register("caffeine_cups_per_day")}
             />
           </Field>
-          <Field label="Average sleep (hours)">
+          <Field label={t("fields.avgSleepHours")}>
             <Input
               type="number"
               step="0.5"
@@ -213,37 +222,39 @@ export function ProfileCard({
             />
           </Field>
           <ListField
-            {...listProps("nicotine_use", "Nicotine")}
+            {...listProps("nicotine_use", t("fields.nicotineUse"))}
             otherField={undefined}
           />
           <ListField
-            {...listProps("alcohol_use", "Alcohol")}
+            {...listProps("alcohol_use", t("fields.alcoholUse"))}
             otherField={undefined}
           />
           <ListField
-            {...listProps("vision_correction", "Vision correction")}
+            {...listProps("vision_correction", t("fields.visionCorrection"))}
             otherField={undefined}
           />
-          <ListField {...listProps("hearing_issues", "Hearing")} />
+          <ListField
+            {...listProps("hearing_issues", t("fields.hearingIssues"))}
+          />
         </section>
 
         <section className="space-y-4">
-          <Field label="Medications">
+          <Field label={t("fields.medications")}>
             <Input {...form.register("medications")} />
           </Field>
-          <Field label="Neurological conditions">
+          <Field label={t("fields.neurologicalConditions")}>
             <Input {...form.register("neurological_conditions")} />
           </Field>
-          <Field label="Psychiatric conditions">
+          <Field label={t("fields.psychiatricConditions")}>
             <Input {...form.register("psychiatric_conditions")} />
           </Field>
-          <Field label="Notes">
+          <Field label={t("fields.notes")}>
             <Textarea rows={3} {...form.register("notes")} />
           </Field>
         </section>
 
         <Button type="submit" disabled={save.isPending}>
-          {save.isPending ? "Saving…" : "Save profile"}
+          {save.isPending ? t("saving") : t("save")}
         </Button>
       </form>
     </Card>

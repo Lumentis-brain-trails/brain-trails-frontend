@@ -1,11 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
+import { useRecordingTitle } from "@/lib/protocol/official";
 import type { Recording } from "@/lib/types";
 import { TrailThumb } from "@/components/TrailThumb";
 import { UploadDialog } from "@/components/UploadDialog";
@@ -27,6 +30,10 @@ const RECENT = 4;
  * week at a glance, and the latest trails drawn from their own data.
  */
 export default function HomePage() {
+  const t = useTranslations("home");
+  // A run of an official protocol is titled after it: shown in the reader's language.
+  const titleOf = useRecordingTitle();
+  const locale = useFormatLocale();
   const [showUpload, setShowUpload] = useState(false);
   const workspace = useCurrentWorkspace();
   const recordings = useQuery({
@@ -47,7 +54,7 @@ export default function HomePage() {
   // "This week" is fixed when the page opens, not re-evaluated every render.
   const [weekAgo] = useState(() => Date.now() - WEEK_MS);
   const thisWeek = list.filter((r) => +new Date(r.created_at) >= weekAgo);
-  const today = new Date().toLocaleDateString(undefined, {
+  const today = new Date().toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -60,7 +67,7 @@ export default function HomePage() {
           {today}
         </p>
         <h1 className="type-display mt-2 text-[clamp(2.25rem,4.5vw,3rem)]">
-          Welcome back.
+          {t("welcome")}
         </h1>
       </header>
 
@@ -72,51 +79,48 @@ export default function HomePage() {
           />
           <div>
             <h2 className="type-heading text-[26px] tracking-[-0.02em]">
-              Start a new trail
+              {t("start.title")}
             </h2>
-            <p className="mt-2 text-ink-2">
-              Wear the band, pick a protocol, press play. Free recording is one
-              too.
-            </p>
+            <p className="mt-2 text-ink-2">{t("start.text")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/protocols" className={buttonClass("primary", "lg")}>
               <span className="h-2 w-2 rounded-full bg-danger" aria-hidden />
-              Record
+              {t("start.record")}
             </Link>
             <Link href="/library" className={buttonClass("secondary", "lg")}>
-              Pick a stimulus
+              {t("start.pick")}
             </Link>
             <Button variant="ghost" onClick={() => setShowUpload(true)}>
-              <Icon name="plus" /> Upload a file
+              <Icon name="plus" /> {t("start.upload")}
             </Button>
           </div>
         </Card>
 
         <Card className="flex flex-col p-7">
-          <h2 className="type-eyebrow text-ink-3">This week</h2>
+          <h2 className="type-eyebrow text-ink-3">{t("week.title")}</h2>
           <dl className="mt-5 flex flex-1 flex-col justify-between gap-4">
-            <WeekRow label="Sessions" value={thisWeek.length} />
+            <WeekRow label={t("week.sessions")} value={thisWeek.length} />
             <WeekRow
-              label="Signal recorded"
+              label={t("week.signal")}
               value={formatDuration(
                 thisWeek.reduce((a, r) => a + (r.duration_s ?? 0), 0)
               )}
             />
-            <WeekRow label="All sessions" value={list.length} last />
+            <WeekRow label={t("week.all")} value={list.length} last />
           </dl>
         </Card>
       </div>
 
       <section className="mt-12">
         <div className="mb-5 flex items-end justify-between gap-4">
-          <h2 className="type-heading text-[22px]">Recent trails</h2>
+          <h2 className="type-heading text-[22px]">{t("recent.title")}</h2>
           {list.length > RECENT && (
             <Link
               href="/recordings"
               className="text-[14px] font-medium text-ink-2 hover:text-ink"
             >
-              All recordings
+              {t("recent.all")}
             </Link>
           )}
         </div>
@@ -130,17 +134,17 @@ export default function HomePage() {
         )}
         {recordings.isError && (
           <Card>
-            <p className="text-ink-2">Could not load recordings.</p>
+            <p className="text-ink-2">{t("recent.loadFailed")}</p>
           </Card>
         )}
         {recordings.isSuccess && list.length === 0 && (
           <Card inset>
             <EmptyState
-              title="No trails yet."
-              text="Play a protocol or upload a Muse file: its trail appears here."
+              title={t("recent.emptyTitle")}
+              text={t("recent.emptyText")}
               action={
                 <Link href="/protocols" className={buttonClass()}>
-                  Record your first session
+                  {t("recent.emptyAction")}
                 </Link>
               }
             />
@@ -154,12 +158,15 @@ export default function HomePage() {
                   href={`/recordings/${r.id}`}
                   className="pressable group block"
                 >
-                  <TrailThumb recording={r} />
+                  <TrailThumb recording={{ ...r, title: titleOf(r) }} />
                   <p className="mt-3 truncate font-semibold group-hover:underline">
-                    {r.title}
+                    {titleOf(r)}
                   </p>
                   <p className="type-caption mt-0.5 text-ink-3">
-                    {formatDate(r.created_at)} · {formatDuration(r.duration_s)}
+                    {t("recent.meta", {
+                      date: formatDate(r.created_at, locale),
+                      duration: formatDuration(r.duration_s),
+                    })}
                   </p>
                 </Link>
               </li>

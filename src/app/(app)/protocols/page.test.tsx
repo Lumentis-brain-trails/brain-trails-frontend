@@ -1,6 +1,9 @@
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
+import { IntlEn } from "@/i18n/testing";
+import italian from "../../../../messages/it.json";
 import type { ProtocolCard } from "@/lib/protocol/catalog";
 import ProtocolsPage from "./page";
 
@@ -45,9 +48,11 @@ function renderPage() {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={client}>
-      <ProtocolsPage />
-    </QueryClientProvider>
+    <IntlEn>
+      <QueryClientProvider client={client}>
+        <ProtocolsPage />
+      </QueryClientProvider>
+    </IntlEn>
   );
 }
 
@@ -191,4 +196,58 @@ test("survives an API that predates tags and access", async () => {
   expect(await screen.findByText("Signal Navigator")).toBeTruthy();
   expect(screen.queryByText("No protocols yet")).toBeNull();
   expect(screen.queryByText(/Beta testers get them first/)).toBeNull();
+});
+
+test("an official protocol reads in Italian; a person's copy of it stays as stored", async () => {
+  // The catalogue owns the official protocols' words, by slug; what a person made -
+  // their copy included - is theirs, and is shown the way it is stored.
+  const stored = {
+    slug: "resting-baseline",
+    title: "Resting baseline",
+    summary: "One minute eyes open, one minute eyes closed.",
+  };
+  get.mockImplementation((path?: string) =>
+    Promise.resolve(
+      (path ?? "").includes("mine=true")
+        ? [card({ ...stored, visibility: "workspace", mine: true })]
+        : [
+            card(stored),
+            card({
+              slug: "signal-navigator",
+              title: "Signal Navigator",
+              content_warning: "stored warning",
+            }),
+          ]
+    )
+  );
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <NextIntlClientProvider locale="it" messages={italian}>
+      <QueryClientProvider client={client}>
+        <ProtocolsPage />
+      </QueryClientProvider>
+    </NextIntlClientProvider>
+  );
+
+  const texts = italian.official;
+  const officialRow = await screen.findByRole("region", {
+    name: italian.protocols.catalog.rows.official.title,
+  });
+  // sorted by the title on the card: "Baseline a riposo" before "Signal Navigator"
+  expect(
+    Array.from(officialRow.querySelectorAll("h3")).map((h) => h.textContent)
+  ).toEqual([texts["resting-baseline"].title, "Signal Navigator"]);
+  expect(officialRow.textContent).toContain(texts["resting-baseline"].summary);
+  expect(officialRow.textContent).toContain(
+    texts["signal-navigator"].contentWarning
+  );
+  expect(officialRow.textContent).not.toContain("stored warning");
+
+  const mine = await screen.findByRole("region", {
+    name: italian.protocols.catalog.rows.mine.title,
+  });
+  expect(mine.querySelector("h3")?.textContent).toBe("Resting baseline");
+  expect(mine.textContent).toContain(stored.summary);
 });

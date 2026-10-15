@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- The app speaks Italian, all of it (backend ADR V3-0018). The language follows the
+  browser on a first visit and can be switched between English and Italiano from the
+  account page and from the footer of the entry screens; it applies at once, without a
+  reload, and is kept on that browser (`bt-locale` cookie) and on the account
+  (`PUT /auth/me/locale`), so it follows the person and their emails. Every string is a
+  key in the catalogue, in both languages - the staff app and the privacy note included
+  (about 1,150 new keys beside the 420 that existed) - and so is the content of the
+  official protocols: titles, descriptions, block names and the instructions of a run
+  are resolved by protocol and block where they are shown, while the stored trees, the
+  posted plan and the event labels stay as they were. Only what a person creates by
+  hand is shown as stored. A test holds the two catalogues to the same keys, arguments
+  and tags and formats every message; another holds the official templates to their
+  keys; the inline-text lint covers the whole app. Dates follow the chosen language in
+  the browser's regional form (`useFormatLocale`). Field errors on the entry forms are
+  authored sentences instead of zod's generated ones.
+
 - The trail picture is readable again. It is framed on the path instead of on the
   whole Ball Mapper layout, which is three times wider than any trail drawn on it -
   the trail used to occupy under a third of the picture, and the bulk of its windows

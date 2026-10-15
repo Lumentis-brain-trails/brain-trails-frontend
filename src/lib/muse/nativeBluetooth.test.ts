@@ -211,9 +211,17 @@ describe("BluetoothMuse over the native bridge", () => {
       }
     );
     const muse = new BluetoothMuse(nativeBluetooth(fake.backend));
-    await expect(muse.connect()).rejects.toThrow(
+    const failed = muse.connect();
+    await expect(failed).rejects.toThrow(
       'Bluetooth failed at "subscribe to EEG TP9" (Characteristic is not notifiable)'
     );
+    // the same facts as data, which is what the screen translates
+    await expect(failed).rejects.toMatchObject({
+      step: "subscribe",
+      stream: "EEG TP9",
+      detail: "Characteristic is not notifiable",
+      refusal: null,
+    });
   });
 
   test("closing the chooser stays a NotFoundError", async () => {

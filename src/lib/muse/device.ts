@@ -175,6 +175,78 @@ function defaultBluetooth(): BluetoothProvider {
   return isNativeShell() ? loadNativeBluetooth : navigator.bluetooth;
 }
 
+/**
+ * Where `connect()` stood when it failed, as a stable code.
+ *
+ * The code is what the UI translates (`device.errors.failedAt.<step>`); the English
+ * words in `STEP_WORDS` only build the `Error` message, which is for logs and tests.
+ */
+export type ConnectStep =
+  | "loadBluetooth"
+  | "chooseHeadband"
+  | "openLink"
+  | "findService"
+  | "findControl"
+  | "detectModel"
+  | "subscribe"
+  | "sendStart";
+
+/** Why the driver itself gave up, when it was not the browser that rejected. */
+export type ConnectRefusal = "noGatt" | "noDataStream";
+
+const STEP_WORDS: Record<ConnectStep, string> = {
+  loadBluetooth: "load Bluetooth",
+  chooseHeadband: "choose a headband",
+  openLink: "open the link",
+  findService: "find the Muse service",
+  findControl: "find the control characteristic",
+  detectModel: "detect the model",
+  subscribe: "subscribe to",
+  sendStart: "send the start commands",
+};
+
+/** A stop the driver decided on; carries the code the UI translates. */
+class Refusal extends Error {
+  constructor(
+    readonly code: ConnectRefusal,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * What `BluetoothMuse.connect()` rejects with, except for a closed chooser.
+ *
+ * `message` is the English sentence it has always been (`Bluetooth failed at "..."
+ * (...)`), kept for logs. The fields are the same facts as data, so the screen that
+ * shows the failure can say it in the reader's language: `step` (and `stream`, the
+ * stream being subscribed to when `step` is `subscribe`), the browser's own `detail`,
+ * which is shown as given, and `refusal` when the driver stopped on its own.
+ */
+export class MuseConnectError extends Error {
+  readonly step: ConnectStep;
+  readonly stream: string | null;
+  readonly detail: string;
+  readonly refusal: ConnectRefusal | null;
+
+  constructor(
+    at: { step: ConnectStep; stream: string | null },
+    detail: string,
+    cause: unknown
+  ) {
+    const stage = at.stream
+      ? `${STEP_WORDS[at.step]} ${at.stream}`
+      : STEP_WORDS[at.step];
+    super(`Bluetooth failed at "${stage}" (${detail})`, { cause });
+    this.name = "MuseConnectError";
+    this.step = at.step;
+    this.stream = at.stream;
+    this.detail = detail;
+    this.refusal = cause instanceof Refusal ? cause.code : null;
+  }
+}
+
 /** Tiny typed emitter shared by both drivers. */
 class Emitter {
   private listeners: { [K in keyof MuseListeners]: Set<MuseListeners[K]> } = {
@@ -212,7 +284,10 @@ export class BluetoothMuse implements MuseDevice {
   name = "Muse";
   model: MuseModel = "muse-2";
   /** What `connect()` was doing, so a failure can say where it stopped. */
-  private stage = "";
+  private stage: { step: ConnectStep; stream: string | null } = {
+    step: "loadBluetooth",
+    stream: null,
+  };
 
   constructor(
     private readonly bluetooth: BluetoothProvider = defaultBluetooth()
@@ -226,11 +301,11 @@ export class BluetoothMuse implements MuseDevice {
   }
 
   /**
-   * Pair and start streaming. A failure is rethrown as an `Error` naming the
-   * step that failed: browsers disagree on what they reject with (some reject
-   * with a bare string), and "could not connect" alone cannot be acted on. A
-   * closed chooser stays a `NotFoundError`, which the UI reads as "nothing
-   * selected".
+   * Pair and start streaming. A failure is rethrown as a `MuseConnectError`
+   * naming the step that failed: browsers disagree on what they reject with
+   * (some reject with a bare string), and "could not connect" alone cannot be
+   * acted on. A closed chooser stays a `NotFoundError`, which the UI reads as
+   * "nothing selected".
    */
   async connect(): Promise<void> {
     try {
@@ -241,7 +316,7 @@ export class BluetoothMuse implements MuseDevice {
         name?: unknown;
         message?: unknown;
       };
-      if (this.stage === "choose a headband" && name === "NotFoundError")
+      if (this.stage.step === "chooseHeadband" && name === "NotFoundError")
         throw err;
       const detail =
         typeof err === "string"
@@ -249,14 +324,17 @@ export class BluetoothMuse implements MuseDevice {
           : typeof message === "string"
             ? `${String(name ?? "Error")}: ${message}`
             : JSON.stringify(err);
-      throw new Error(`Bluetooth failed at "${this.stage}" (${detail})`, {
-        cause: err,
-      });
+      throw new MuseConnectError(this.stage, detail, err);
     }
   }
 
+  /** Note the step `connect()` is entering; `stream` only when subscribing. */
+  private at(step: ConnectStep, stream: string | null = null): void {
+    this.stage = { step, stream };
+  }
+
   private async pairAndStart(): Promise<void> {
-    this.stage = "load Bluetooth";
+    this.at("loadBluetooth");
     // The chooser only lists headbands. Athena firmware does not always put the
     // service in its advertisement, so the name is accepted as well and the
     // service is requested explicitly for the bands matched that way.
@@ -264,21 +342,21 @@ export class BluetoothMuse implements MuseDevice {
       typeof this.bluetooth === "function"
         ? await this.bluetooth()
         : this.bluetooth;
-    this.stage = "choose a headband";
+    this.at("chooseHeadband");
     this.device = await chooseHeadband(bluetooth);
     this.name = this.device.name ?? "Muse";
     const gatt = this.device.gatt;
-    if (!gatt) throw new Error("This device does not expose GATT");
+    if (!gatt) throw new Refusal("noGatt", "This device does not expose GATT");
     this.device.addEventListener("gattserverdisconnected", () =>
       this.emitter.emit("disconnected")
     );
-    this.stage = "open the link";
+    this.at("openLink");
     const server = await gatt.connect();
-    this.stage = "find the Muse service";
+    this.at("findService");
     const service = await server.getPrimaryService(MUSE_SERVICE);
-    this.stage = "find the control characteristic";
+    this.at("findControl");
     this.control = await service.getCharacteristic(CONTROL_CHARACTERISTIC);
-    this.stage = "detect the model";
+    this.at("detectModel");
 
     // Only the Athena carries the multiplexed data characteristic; on the older
     // bands asking for it is how we learn it is not there.
@@ -337,7 +415,7 @@ export class BluetoothMuse implements MuseDevice {
 
     const eegClock = new CounterClock();
     for (const channel of EEG_CHANNELS) {
-      this.stage = `subscribe to EEG ${channel}`;
+      this.at("subscribe", `EEG ${channel}`);
       const characteristic = await service.getCharacteristic(
         EEG_CHARACTERISTICS[channel]
       );
@@ -358,7 +436,7 @@ export class BluetoothMuse implements MuseDevice {
       [GYROSCOPE_CHARACTERISTIC, "gyro", GYROSCOPE_SCALE],
     ] as const) {
       const clock = new CounterClock(IMU_SAMPLES_PER_PACKET, true);
-      this.stage = `subscribe to ${kind}`;
+      this.at("subscribe", kind);
       const characteristic = await service.getCharacteristic(uuid);
       this.listen(characteristic, (value, hostMs) => {
         const { counter, samples } = decodeImuPacket(value, scale);
@@ -373,7 +451,7 @@ export class BluetoothMuse implements MuseDevice {
     }
     for (const channel of PPG_CHANNELS) {
       const clock = new CounterClock(PPG_SAMPLES_PER_PACKET, true);
-      this.stage = `subscribe to PPG ${channel}`;
+      this.at("subscribe", `PPG ${channel}`);
       const characteristic = await service.getCharacteristic(
         PPG_CHARACTERISTICS[channel]
       );
@@ -388,7 +466,7 @@ export class BluetoothMuse implements MuseDevice {
       await characteristic.startNotifications();
       this.subscriptions.push(characteristic);
     }
-    this.stage = "subscribe to telemetry";
+    this.at("subscribe", "telemetry");
     const telemetry = await service.getCharacteristic(TELEMETRY_CHARACTERISTIC);
     this.listen(telemetry, (value) =>
       this.emitter.emit("telemetry", decodeTelemetry(value))
@@ -396,7 +474,7 @@ export class BluetoothMuse implements MuseDevice {
     await telemetry.startNotifications();
     this.subscriptions.push(telemetry);
 
-    this.stage = "send the start commands";
+    this.at("sendStart");
     for (const command of START_SEQUENCE) await this.send(command);
   }
 
@@ -470,9 +548,12 @@ export class BluetoothMuse implements MuseDevice {
       }
     }
     if (subscribed === 0)
-      throw new Error("This Muse would not start its data stream");
+      throw new Refusal(
+        "noDataStream",
+        "This Muse would not start its data stream"
+      );
 
-    this.stage = "send the start commands";
+    this.at("sendStart");
     for (const step of ATHENA_START_SEQUENCE) {
       await this.send(step.command);
       await wait(step.waitMs);

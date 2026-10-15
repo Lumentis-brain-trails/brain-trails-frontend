@@ -15,7 +15,11 @@ export type MuseModel = "muse-2" | "athena" | "simulated";
 
 export interface ModelProfile {
   id: MuseModel;
-  /** Shown in the device card and written into the session header. */
+  /**
+   * The generation's name in English, written into the session header. A screen that
+   * shows it reads `device.models.<id>` from the catalogue instead, falling back to
+   * this.
+   */
   label: string;
   /**
    * Microvolts beyond which a sample sits at an ADC rail. The Muse 2 spans

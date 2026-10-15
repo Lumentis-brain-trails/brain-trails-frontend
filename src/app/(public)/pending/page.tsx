@@ -6,37 +6,25 @@
  * Three outcomes reach this page. `approved` is the normal one now: the account is open
  * and waiting for the address to be confirmed. `active` means the environment asks for
  * no confirmation. `pending` is the closed-beta shape, where an admin still decides.
+ *
+ * The words for each live in the catalogue under `public.pending.<outcome>`; what stays
+ * here is the mark's tone, which is not language.
  */
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-const OUTCOMES = {
-  approved: {
-    title: "Check your email.",
-    body:
-      "We sent you a link to confirm your address. Open it and you are in - it stays " +
-      "good for 24 hours. If it does not arrive, look in your spam folder.",
-    tone: "accent",
-  },
-  active: {
-    title: "Your account is open.",
-    body: "Sign in with the email and password you just chose.",
-    tone: "ok",
-  },
-  pending: {
-    title: "Registration received.",
-    body:
-      "An administrator will review it. Once approved you can sign in with the email " +
-      "and password you chose.",
-    tone: "warn",
-  },
+const TONES = {
+  approved: "accent",
+  active: "ok",
+  pending: "warn",
 } as const;
 
-type Outcome = keyof typeof OUTCOMES;
+type Outcome = keyof typeof TONES;
 
 function isOutcome(value: string | null): value is Outcome {
-  return value !== null && value in OUTCOMES;
+  return value !== null && value in TONES;
 }
 
 function Mark({ tone }: { tone: "accent" | "ok" | "warn" }) {
@@ -85,19 +73,19 @@ function Mark({ tone }: { tone: "accent" | "ok" | "warn" }) {
 }
 
 function Outcome() {
+  const t = useTranslations("public.pending");
   const status = useSearchParams().get("status");
-  const { title, body, tone } =
-    OUTCOMES[isOutcome(status) ? status : "pending"];
+  const outcome: Outcome = isOutcome(status) ? status : "pending";
   return (
     <div className="enter-up max-w-md">
-      <Mark tone={tone} />
-      <h1 className="type-title">{title}</h1>
-      <p className="mt-4 text-pretty text-ink-2">{body}</p>
+      <Mark tone={TONES[outcome]} />
+      <h1 className="type-title">{t(`${outcome}.title`)}</h1>
+      <p className="mt-4 text-pretty text-ink-2">{t(`${outcome}.body`)}</p>
       <Link
         href="/login"
         className="pressable mt-8 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[16px] font-semibold text-on-accent hover:bg-accent-hover"
       >
-        Go to sign in
+        {t("signIn")}
       </Link>
     </div>
   );
