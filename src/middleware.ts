@@ -25,5 +25,7 @@ export const config = {
     "/protocols",
     "/protocols/:path*",
     "/admin/:path*",
+    "/console/:path*",
+    "/run/:path*",
   ],
 };
