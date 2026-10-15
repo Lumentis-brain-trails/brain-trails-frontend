@@ -33,6 +33,9 @@ describe("middleware", () => {
       "/protocols",
       "/protocols/:path*",
       "/admin/:path*",
+      // the operator console and the participant's window (V3-0007)
+      "/console/:path*",
+      "/run/:path*",
     ]);
   });
 });
