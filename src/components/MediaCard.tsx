@@ -1,17 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef } from "react";
 import type { Media } from "@/lib/types";
 import { Icon, cn } from "@/components/ui";
-
-const KIND_LABEL: Record<Media["kind"], string> = {
-  video: "Video",
-  audio: "Audio",
-  text: "Text",
-  quiz: "Quiz",
-  game: "Game",
-};
 
 /** Cover stand-in for items without an image: a stable hue per slug, so a card is recognisable. */
 function hueOf(slug: string): number {
@@ -35,8 +28,9 @@ function formatDuration(seconds: number | null | undefined): string | null {
  *
  * `onOpen` makes the tile a button instead of a link: "My media" opens its own viewer
  * (watch it back, delete it) rather than sending the reader to a protocol page.
- * `lockedNote` says why it cannot be opened - the catalog locks items behind the beta,
- * "My media" locks an upload the server has not finished checking.
+ * `lockedNote` says why it cannot be opened - the catalog locks items behind the beta
+ * (the default, "Beta testers only" in the reader's language), "My media" locks an
+ * upload the server has not finished checking. The caller passes it already translated.
  *
  * A locked item is a different thing and looks like one: desaturated, badged with a
  * padlock, and not a link at all. Rendering it as a disabled anchor would leave it
@@ -46,7 +40,7 @@ function formatDuration(seconds: number | null | undefined): string | null {
 export function MediaCard({
   item,
   locked = false,
-  lockedNote = "Beta testers only",
+  lockedNote,
   onOpen,
 }: {
   item: Media;
@@ -54,6 +48,11 @@ export function MediaCard({
   lockedNote?: string;
   onOpen?: () => void;
 }) {
+  const t = useTranslations("media.card");
+  const note = lockedNote ?? t("betaOnly");
+  // The kind is a code from the API: one this catalogue has no word for shows no badge
+  // text, as an unknown kind did before the words moved here.
+  const kindKey = `kinds.${item.kind}`;
   const preview = useRef<HTMLVideoElement>(null);
   const duration = formatDuration(
     item.duration_s ?? item.manifest.expected_duration_s
@@ -100,16 +99,16 @@ export function MediaCard({
       )}
       {locked ? (
         <span className="material-glass absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-ink">
-          <Icon name="lock" className="h-3 w-3" /> Locked
+          <Icon name="lock" className="h-3 w-3" /> {t("locked")}
         </span>
       ) : (
         <span className="material-glass absolute top-2 left-2 rounded-full px-2 py-0.5 text-[11px] font-semibold text-ink">
-          {KIND_LABEL[item.kind]}
+          {t.has(kindKey as never) ? t(kindKey as never) : null}
         </span>
       )}
       {item.mine && !locked && (
         <span className="material-glass absolute top-2 right-2 rounded-full px-2 py-0.5 text-[11px] font-semibold text-ink">
-          Yours
+          {t("yours")}
         </span>
       )}
     </div>
@@ -128,7 +127,7 @@ export function MediaCard({
 
   const caption = (
     <p className="type-caption truncate text-ink-3">
-      {[duration, warning ? "Content warning" : null]
+      {[duration, warning ? t("contentWarning") : null]
         .filter(Boolean)
         .join(" · ") || " "}
     </p>
@@ -139,11 +138,11 @@ export function MediaCard({
       <div
         className="w-full"
         aria-disabled="true"
-        aria-label={`${item.title} — ${lockedNote}`}
+        aria-label={t("lockedLabel", { title: item.title, note })}
       >
         {cover}
         {title}
-        <p className="type-caption truncate text-ink-3">{lockedNote}</p>
+        <p className="type-caption truncate text-ink-3">{note}</p>
       </div>
     );
   }
@@ -158,7 +157,7 @@ export function MediaCard({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`Open ${item.title}`}
+        aria-label={t("open", { title: item.title })}
         className="pressable group block w-full text-left focus-visible:outline-none"
         {...hover}
       >

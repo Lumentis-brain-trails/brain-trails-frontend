@@ -159,4 +159,24 @@ describe("BFF proxy", () => {
       "http://localhost:8000/fair"
     );
   });
+  // The usage log's batches (backend V4-0007): a beacon carries the cookie and a JSON
+  // body, and the 204 must come back without one.
+  test("forwards a usage batch with its token and answers 204", async () => {
+    cookieValue = "jwt";
+    fetchSpy.mockImplementationOnce(
+      async () => new Response(null, { status: 204 })
+    );
+    const body = JSON.stringify({ events: [{ event: "page.viewed" }] });
+    const req = new NextRequest("http://localhost/api/backend/usage", {
+      method: "POST",
+      body,
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await POST(req, ctx(["usage"]));
+    expect(res.status).toBe(204);
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(String(url)).toBe("http://localhost:8000/usage");
+    expect(init.headers.Authorization).toBe("Bearer jwt");
+    expect(new TextDecoder().decode(init.body)).toBe(body);
+  });
 });

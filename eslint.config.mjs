@@ -4,27 +4,21 @@ import nextTs from "eslint-config-next/typescript";
 import i18next from "eslint-plugin-i18next";
 
 /**
- * Surfaces built from sprint S13 on (plan V3): user-visible text there must come from
- * `messages/*.json` through next-intl, never be written inline. Add every new
- * directory here when it is created; older pages move in as they are rewritten.
+ * Where user-visible text must come from `messages/*.json` through next-intl, never be
+ * written inline: everything a person can open. An inline word here is a word that
+ * stays English for an Italian reader.
  */
-const TRANSLATED_SURFACES = [
-  "src/app/(app)/run/**",
-  "src/app/(app)/my/**",
-  "src/app/(app)/console/**",
-  "src/app/(app)/experiments/**",
-  "src/components/run/**",
-  "src/components/console/**",
-  "src/components/experiments/**",
-  "src/components/application/**",
-  "src/components/builder/**",
-];
+const TRANSLATED_SURFACES = ["src/app/**", "src/components/**"];
+
+/** Not screens: the BFF routes speak JSON to the client, and tests quote the copy. */
+const UNTRANSLATED = ["src/app/api/**", "**/*.test.{ts,tsx}"];
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
     files: TRANSLATED_SURFACES.map((glob) => `${glob}/*.{ts,tsx}`),
+    ignores: UNTRANSLATED,
     ...i18next.configs["flat/recommended"],
   },
   // Override default ignores of eslint-config-next.

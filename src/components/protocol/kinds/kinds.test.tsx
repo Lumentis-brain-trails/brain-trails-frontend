@@ -443,15 +443,17 @@ describe("breathing", () => {
     const labels: string[] = [];
     const results: TaskResult[] = [];
     const view = () => (
-      <Renderer
-        config={config as never}
-        stepId="s1"
-        phase="s1"
-        seed={1}
-        emit={(draft) => labels.push(draft.label)}
-        onComplete={(r) => results.push(r)}
-        reducedMotion={false}
-      />
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Renderer
+          config={config as never}
+          stepId="s1"
+          phase="s1"
+          seed={1}
+          emit={(draft) => labels.push(draft.label)}
+          onComplete={(r) => results.push(r)}
+          reducedMotion={false}
+        />
+      </NextIntlClientProvider>
     );
     const { rerender } = render(view());
     for (let i = 0; i < 10; i++) {

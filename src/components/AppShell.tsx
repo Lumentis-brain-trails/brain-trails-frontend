@@ -15,19 +15,30 @@ import {
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
 import { Logo } from "@/components/Logo";
-import { cn, Icon, type IconName } from "@/components/ui";
+import { BRAND, cn, Icon, type IconName } from "@/components/ui";
 import { type ConsentData } from "@/components/account/PrivacyCard";
 import { PolicyUpdateGate } from "@/components/PolicyUpdateGate";
 
-type Section = { href: string; label: string; icon: IconName };
+/** A section's name, as a key of `shell.nav` in the message catalogue. */
+type SectionKey =
+  | "home"
+  | "protocols"
+  | "media"
+  | "recordings"
+  | "landscape"
+  | "account"
+  | "admin";
+
+/** The words are not here: a module has no locale, so the rail resolves `key`. */
+type Section = { href: string; key: SectionKey; icon: IconName };
 
 /** Where the work happens, in the order a session goes: pick, record, read. */
 const MAIN: Section[] = [
-  { href: "/home", label: "Home", icon: "home" },
-  { href: "/protocols", label: "Protocols", icon: "protocol" },
-  { href: "/media", label: "My media", icon: "library" },
-  { href: "/recordings", label: "Recordings", icon: "recordings" },
-  { href: "/landscape", label: "Brain Landscape", icon: "graph" },
+  { href: "/home", key: "home", icon: "home" },
+  { href: "/protocols", key: "protocols", icon: "protocol" },
+  { href: "/media", key: "media", icon: "library" },
+  { href: "/recordings", key: "recordings", icon: "recordings" },
+  { href: "/landscape", key: "landscape", icon: "graph" },
 ];
 
 /**
@@ -49,6 +60,7 @@ export function isCurrentSection(pathname: string, href: string): boolean {
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const t = useTranslations("shell");
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
 
@@ -84,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="app-topbar material-glass fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-hairline px-4 md:hidden">
         <button
           type="button"
-          aria-label="Open navigation"
+          aria-label={t("openNavigation")}
           aria-expanded={open}
           onClick={() => {
             setOpenedAt(pathname);
@@ -98,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           href="/home"
           className="type-heading flex items-center gap-2 text-[17px]"
         >
-          Braintrails
+          {BRAND}
         </Link>
         <span className="w-10" aria-hidden />
       </header>
@@ -106,7 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {open && (
         <button
           type="button"
-          aria-label="Close navigation"
+          aria-label={t("closeNavigation")}
           onClick={() => setOpen(false)}
           className="enter-fade fixed inset-0 z-40 bg-(--scrim) md:hidden"
         />
@@ -145,7 +157,8 @@ function useLandscapeRedrawn(): boolean {
 function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
   const router = useRouter();
   const theme = useTheme();
-  const t = useTranslations("landscape");
+  const t = useTranslations("shell");
+  const tLandscape = useTranslations("landscape");
   const redrawn = useLandscapeRedrawn();
   const me = useQuery({
     queryKey: ["me"],
@@ -154,16 +167,16 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
     retry: false,
   });
   const secondary: Section[] = [
-    { href: "/account", label: "Account", icon: "person" },
+    { href: "/account", key: "account", icon: "person" },
     ...(me.data?.role === "admin"
-      ? [{ href: "/admin", label: "Admin", icon: "shield" as const }]
+      ? [{ href: "/admin", key: "admin", icon: "shield" } as const]
       : []),
   ];
   const next = theme === "dark" ? "light" : "dark";
 
   return (
     <aside
-      aria-label="Sections"
+      aria-label={t("sections")}
       data-open={open}
       className={cn(
         "app-sidebar fixed inset-y-0 left-0 z-50 isolate flex w-16 flex-col items-center gap-1 py-3",
@@ -176,7 +189,7 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
       >
         <Logo size={38} />
         <span className="reveal type-heading absolute left-12 text-[18px] whitespace-nowrap">
-          Braintrails
+          {BRAND}
         </span>
       </Link>
 
@@ -185,9 +198,12 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
           <RailLink
             key={s.href}
             section={s}
+            label={t(`nav.${s.key}`)}
             current={isCurrentSection(pathname, s.href)}
             mark={
-              s.href === "/landscape" && redrawn ? t("sidebarRedrawn") : null
+              s.href === "/landscape" && redrawn
+                ? tLandscape("sidebarRedrawn")
+                : null
             }
           />
         ))}
@@ -195,11 +211,12 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
 
       <div className="my-2 h-px w-8 bg-hairline" aria-hidden />
 
-      <nav aria-label="You" className="flex flex-col items-center gap-1">
+      <nav aria-label={t("you")} className="flex flex-col items-center gap-1">
         {secondary.map((s) => (
           <RailLink
             key={s.href}
             section={s}
+            label={t(`nav.${s.key}`)}
             current={isCurrentSection(pathname, s.href)}
           />
         ))}
@@ -208,12 +225,12 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
       <div className="mt-auto flex flex-col items-center gap-1">
         <RailButton
           icon={theme === "dark" ? "sun" : "moon"}
-          label={theme === "dark" ? "Light appearance" : "Dark appearance"}
+          label={theme === "dark" ? t("lightAppearance") : t("darkAppearance")}
           onClick={() => setTheme(next)}
         />
         <RailButton
           icon="signout"
-          label="Sign out"
+          label={t("signOut")}
           onClick={async () => {
             await api.logout();
             router.push("/login");
@@ -244,10 +261,13 @@ const LABEL =
 
 function RailLink({
   section,
+  label,
   current,
   mark = null,
 }: {
   section: Section;
+  /** The section's name in the reader's language. */
+  label: string;
   current: boolean;
   /** Something new behind the link: a dot on the icon, the words after the label. */
   mark?: string | null;
@@ -256,7 +276,7 @@ function RailLink({
     <Link
       href={section.href}
       aria-current={current ? "page" : undefined}
-      aria-label={mark ? `${section.label} · ${mark}` : undefined}
+      aria-label={mark ? `${label} · ${mark}` : undefined}
       className={cn(
         ITEM,
         current
@@ -277,7 +297,7 @@ function RailLink({
           current ? "text-ink" : "text-ink-2 group-hover/item:text-ink"
         )}
       >
-        {section.label}
+        {label}
         {mark && (
           <span
             aria-hidden

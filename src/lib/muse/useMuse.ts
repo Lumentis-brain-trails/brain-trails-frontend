@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CapturePreamble, RawCapture } from "./capture";
 import type { MuseDevice } from "./device";
+import { type MuseFailure, failureOf } from "./failure";
 import { MODEL_PROFILES, type MuseModel } from "./models";
 import {
   CONTROL_CHARACTERISTIC,
@@ -36,7 +37,13 @@ export type MuseStatus = "idle" | "connecting" | "connected" | "error";
 
 export interface MuseState {
   status: MuseStatus;
+  /** The last connection failure in English, for logs; the UI shows `failure`. */
   error: string | null;
+  /**
+   * The same failure as a stable code, which the screen translates
+   * (`useMuseFailureMessage`). Null whenever `error` is.
+   */
+  failure: MuseFailure | null;
   deviceName: string | null;
   /** Which generation is connected; drives the rail threshold and the labels. */
   model: MuseModel;
@@ -124,6 +131,7 @@ export function useMuse(createDevice: () => MuseDevice) {
   const [state, setState] = useState<MuseState>({
     status: "idle",
     error: null,
+    failure: null,
     deviceName: null,
     model: "muse-2",
     batteryPercent: null,
@@ -161,7 +169,12 @@ export function useMuse(createDevice: () => MuseDevice) {
 
   const connect = useCallback(async () => {
     if (deviceRef.current) return;
-    setState((s) => ({ ...s, status: "connecting", error: null }));
+    setState((s) => ({
+      ...s,
+      status: "connecting",
+      error: null,
+      failure: null,
+    }));
     const device = createDevice();
     deviceRef.current = device;
     for (const ring of Object.values(rings)) ring.clear();
@@ -247,7 +260,12 @@ export function useMuse(createDevice: () => MuseDevice) {
           : typeof text === "string" && text
             ? text
             : `Could not connect (${String(err)}).`;
-      setState((s) => ({ ...s, status: "error", error: message }));
+      setState((s) => ({
+        ...s,
+        status: "error",
+        error: message,
+        failure: failureOf(err),
+      }));
     }
   }, [createDevice, rings, teardown]);
 

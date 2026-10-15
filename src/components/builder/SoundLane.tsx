@@ -213,7 +213,7 @@ export function SoundLane({
               />
             </svg>
             <span className="truncate">
-              {cue.label ?? item?.title ?? "Sound"}
+              {cue.label ?? item?.title ?? t("unnamed")}
             </span>
             {cue.loop && (
               <svg aria-hidden viewBox="0 0 16 16" className="h-3 w-3 shrink-0">

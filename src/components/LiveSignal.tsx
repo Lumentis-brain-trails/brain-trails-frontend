@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
@@ -29,6 +30,7 @@ export function LiveSignal({
   /** Plot height in CSS pixels; the width follows the container. */
   height?: number;
 }) {
+  const t = useTranslations("signals.live");
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
   const theme = useChartTheme();
@@ -117,7 +119,7 @@ export function LiveSignal({
           </span>
         ))}
         <span className="type-caption ml-auto text-ink-3">
-          last {WINDOW_S} s · {SAMPLE_RATE_HZ} Hz
+          {t("caption", { seconds: WINDOW_S, rate: SAMPLE_RATE_HZ })}
         </span>
       </div>
     </div>

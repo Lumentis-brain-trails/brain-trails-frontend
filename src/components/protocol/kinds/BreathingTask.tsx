@@ -11,23 +11,16 @@
  * and a linear progress bar carry it. Removing the pacing would remove the exercise.
  */
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type BreathingConfig,
-  type BreathingSegment,
   breathingConfigSchema,
   breathingDurationMs,
   planBreathing,
 } from "@/lib/protocol/breathing";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
 import { useLatest } from "./shared";
-
-const PHASE_WORD: Record<BreathingSegment["phase"], string> = {
-  inhale: "Breathe in",
-  hold: "Hold",
-  exhale: "Breathe out",
-  rule: "",
-};
 
 function BreathingRenderer({
   config,
@@ -36,6 +29,7 @@ function BreathingRenderer({
   stepId,
   reducedMotion,
 }: TaskContext<BreathingConfig>) {
+  const t = useTranslations("kinds.breathing");
   const segments = useMemo(() => planBreathing(config), [config]);
   const totalMs = useMemo(() => breathingDurationMs(config), [config]);
   const [index, setIndex] = useState(-1);
@@ -87,6 +81,13 @@ function BreathingRenderer({
 
   const current = index >= 0 ? segments[index] : null;
   const isRule = current?.phase === "rule";
+  // The word that paces the breath; a rule line shows the author's text instead.
+  const phaseWord =
+    current === null
+      ? t("settle")
+      : current.phase === "rule"
+        ? ""
+        : t(current.phase);
   const scale =
     current?.phase === "inhale" ? 1 : current?.phase === "hold" ? 1 : 0.55;
 
@@ -108,7 +109,7 @@ function BreathingRenderer({
             }
           />
           <p aria-live="polite" className="type-title">
-            {current ? PHASE_WORD[current.phase] : "Settle"}
+            {phaseWord}
           </p>
           {reducedMotion && current && (
             <div className="h-1 w-40 overflow-hidden rounded-full bg-surface-3">

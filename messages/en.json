@@ -7,7 +7,12 @@
     "forbidden_path": "This part of the service is not available from the app.",
     "not_found": "This could not be found. It may have been deleted.",
     "rate_limited": "Too many attempts. Wait a minute and try again.",
-    "conflict": "This changed somewhere else. Reload to see the latest version."
+    "conflict": "This changed somewhere else. Reload to see the latest version.",
+    "email_taken": "An account with this email already exists.",
+    "consent_required": "Consent to data processing is required.",
+    "invalid_token": "The verification link is invalid or expired.",
+    "invalid_state": "This account is not awaiting verification.",
+    "mail_failed": "The verification email could not be sent. Try again in a moment."
   },
   "application": {
     "step": "Application",
@@ -52,7 +57,15 @@
     "continue": "Continue"
   },
   "auth": {
-    "waitlisted": "Your application is on the waiting list. We will write to you as soon as there is room."
+    "waitlisted": "Your application is on the waiting list. We will write to you as soon as there is room.",
+    "status": {
+      "account_pending": "Your registration is still awaiting admin review.",
+      "account_rejected": "Your registration was not approved.",
+      "account_waitlisted": "Your application is on the waiting list. We will write to you as soon as there is room.",
+      "email_not_verified": "Your account is approved but the email is not verified yet. Ask an administrator for the link.",
+      "invalid_credentials": "Wrong email or password.",
+      "rate_limited": "Too many attempts. Wait a minute and retry."
+    }
   },
   "run": {
     "preflight": {
@@ -101,6 +114,24 @@
       "accept": "Continue",
       "decline": "Back",
       "required": "Tick the box to continue."
+    },
+    "runner": {
+      "reduceMotion": "Reduce motion",
+      "begin": "Begin",
+      "disclaimer": "This is not a medical assessment or diagnosis. You can stop at any time.",
+      "stop": "Stop",
+      "stopTitle": "Stop this session?",
+      "stopBody": "What you have done so far is kept. You cannot resume this run.",
+      "keepGoing": "Keep going",
+      "stopSession": "Stop session"
+    },
+    "results": {
+      "hits": "Hits",
+      "misses": "Misses",
+      "falseDocks": "False docks",
+      "medianRt": "Median RT",
+      "rtVariability": "RT variability",
+      "criterion": "Criterion"
     }
   },
   "signals": {
@@ -131,6 +162,28 @@
       },
       "reference_label": "Fpz",
       "reference": "Reference, centre of the forehead"
+    },
+    "diagram": {
+      "label": "Headband: TP9 {TP9}, AF7 {AF7}, AF8 {AF8}, TP10 {TP10}",
+      "levels": {
+        "unknown": "unknown",
+        "good": "good",
+        "noisy": "noisy",
+        "saturated": "saturated",
+        "flat": "flat"
+      },
+      "caption": "front view · wearer's left is on the left"
+    },
+    "live": {
+      "caption": "last {seconds} s · {rate} Hz"
+    },
+    "preview": {
+      "stage": "Signal stage",
+      "cleaned": "Cleaned",
+      "standardized": "Standardized",
+      "range": "{start}–{end} s",
+      "windowStart": "Window start",
+      "unavailable": "Signal not available."
     }
   },
   "kinds": {
@@ -258,6 +311,25 @@
       "how_sure": "How sure are you?",
       "guessing": "Guessing",
       "certain": "Certain"
+    },
+    "video": {
+      "error": "This video could not be played.",
+      "play": "Play",
+      "playLabel": "Play the video"
+    },
+    "goNoGo": {
+      "area": "Signal Navigator stimulus area",
+      "progress": "Trial {n} of {total}",
+      "dock": "Dock"
+    },
+    "prompt": {
+      "wait": "{label} in {seconds} s"
+    },
+    "breathing": {
+      "settle": "Settle",
+      "inhale": "Breathe in",
+      "hold": "Hold",
+      "exhale": "Breathe out"
     }
   },
   "builder": {
@@ -321,11 +393,11 @@
       "title": "Timeline",
       "empty": "Drag media or an element here, or double-click it.",
       "insert_at": "Insert at position {position}",
-      "blocks": "{count} blocks",
+      "blocks": "{count, plural, one {# block} other {# blocks}}",
       "total": "Total {time}",
-      "group_blocks": "Group · {count} blocks",
-      "errors": "{count} errors",
-      "warnings": "{count} warnings"
+      "group_blocks": "Group · {count, plural, one {# block} other {# blocks}}",
+      "errors": "{count, plural, one {# error} other {# errors}}",
+      "warnings": "{count, plural, one {# warning} other {# warnings}}"
     },
     "bin": {
       "title": "Bin",
@@ -405,20 +477,677 @@
       "volume": "Volume",
       "fade": "Fade in and out (seconds)",
       "remove": "Remove sound",
-      "note": "Sounds play over the blocks instead of taking a turn. For a sound that must be time-locked to the EEG, use an audio block instead."
+      "note": "Sounds play over the blocks instead of taking a turn. For a sound that must be time-locked to the EEG, use an audio block instead.",
+      "unnamed": "Sound"
     },
     "fix_before_preview": "Fix these before previewing:",
     "fix_before_publish": "Fix these before publishing:",
     "finding_block": "Block {n}: {label}",
     "finding_row": "row {n}",
-    "finding_protocol": "Protocol"
+    "finding_protocol": "Protocol",
+    "unnamedGroup": "Group",
+    "unnamedLoop": "Group (repeats)",
+    "previewMissingMedia": "One of the media in this protocol could not be loaded - it may have been deleted. Replace it and try again.",
+    "previewLoading": "Loading the media…",
+    "previewFailed": "This protocol cannot be previewed.",
+    "findingText": {
+      "required": "\"{name}\" is required.",
+      "empty": "\"{name}\" cannot be empty.",
+      "oneOf": "\"{name}\" must be one of {options}.",
+      "unknownKind": "Unknown block kind \"{kind}\"."
+    },
+    "kinds": {
+      "video": {
+        "label": "Video",
+        "hint": "Plays a video full screen."
+      },
+      "audio": {
+        "label": "Sound",
+        "hint": "Plays a sound on a dark screen."
+      },
+      "text": {
+        "label": "Reading",
+        "hint": "A text the participant reads at their own pace."
+      },
+      "image-sequence": {
+        "label": "Image sequence",
+        "hint": "Images shown one after another, each with its own marker."
+      },
+      "go-no-go": {
+        "label": "Signal Navigator",
+        "hint": "The go/no-go game: dock the cargo, let the debris pass."
+      },
+      "breathing": {
+        "label": "Paced breathing",
+        "hint": "A circle that grows and shrinks to breathe with."
+      },
+      "quiz": {
+        "label": "Quiz",
+        "hint": "Questions with right and wrong answers."
+      },
+      "flanker": {
+        "label": "Arrows (flanker)",
+        "hint": "Which way does the middle arrow point? The arrows around it may disagree. With cues it is the Attention Network Test."
+      },
+      "n-back": {
+        "label": "Letter memory (n-back)",
+        "hint": "Letters one at a time: press when this one is the letter from a few steps ago."
+      },
+      "coding": {
+        "label": "Symbol coding",
+        "hint": "Match symbols to digits against the clock: how many in ninety seconds."
+      },
+      "heartbeat": {
+        "label": "Heartbeat counting",
+        "hint": "Count your own heartbeats between two tones, without touching your pulse."
+      },
+      "baseline": {
+        "label": "Resting baseline",
+        "hint": "Sitting still, eyes open or closed: what every other block is compared to."
+      },
+      "rest": {
+        "label": "Rest",
+        "hint": "A break between blocks, timed or until the participant continues."
+      },
+      "fixation": {
+        "label": "Fixation cross",
+        "hint": "A cross to look at, to settle the eyes before a stimulus."
+      },
+      "countdown": {
+        "label": "Countdown",
+        "hint": "3, 2, 1 before the next block."
+      },
+      "questionnaire": {
+        "label": "Questionnaire",
+        "hint": "Asks how the participant feels (SAM) or your own questions."
+      },
+      "instructions": {
+        "label": "Instructions",
+        "hint": "Text on screen that explains what comes next."
+      },
+      "prompt": {
+        "label": "Prompt",
+        "hint": "A short line on screen, then on with the run."
+      }
+    },
+    "palette": {
+      "instructions": {
+        "label": "Instructions",
+        "text": {
+          "line": "Tell the participant what happens next.",
+          "continue": "Continue"
+        }
+      },
+      "fixation": {
+        "label": "Fixation cross"
+      },
+      "baseline": {
+        "label": "Resting baseline"
+      },
+      "rest": {
+        "label": "Rest"
+      },
+      "countdown": {
+        "label": "Countdown"
+      },
+      "questionnaire": {
+        "label": "How do you feel? (SAM)"
+      },
+      "go-no-go": {
+        "label": "Signal Navigator"
+      },
+      "breathing": {
+        "label": "Paced breathing"
+      },
+      "go-no-go-cued": {
+        "label": "Signal Navigator, with beacon",
+        "hint": "A green or red beacon comes first and changes the rule."
+      },
+      "flanker": {
+        "label": "Arrows (flanker)"
+      },
+      "flanker-ant": {
+        "label": "Attention networks",
+        "hint": "The arrows task with warning and location cues: alerting, orienting, conflict."
+      },
+      "n-back": {
+        "label": "Letter memory (2-back)"
+      },
+      "n-back-self-paced": {
+        "label": "Self-paced n-back",
+        "hint": "The same letters, but each one stays until the participant presses Continue."
+      },
+      "coding": {
+        "label": "Symbol coding"
+      },
+      "heartbeat": {
+        "label": "Heartbeat counting"
+      }
+    },
+    "fields": {
+      "common": {
+        "markers": {
+          "label": "Event names",
+          "help": "The name this moment gets in the recording's event timeline. Change it only if your analysis expects a specific name."
+        },
+        "lines/text": {
+          "label": "Text",
+          "help": "What the participant reads. A new line in the box is a new line on screen."
+        },
+        "lines/holdMs": {
+          "label": "Stays on screen (ms)",
+          "help": "How long this line is shown before the next one. 1000 ms is one second."
+        },
+        "lines/marker": {
+          "label": "Event name",
+          "help": "The name this moment gets in the recording's event timeline. Change it only if your analysis expects a specific name."
+        },
+        "lines": {
+          "label": "Lines of text",
+          "help": "Shown one after another, in this order."
+        },
+        "advance": {
+          "label": "Moving on"
+        },
+        "advance/mode": {
+          "label": "The block ends",
+          "help": "After a fixed time, when the participant presses the button, or whichever comes first.",
+          "options": {
+            "timed": "After a fixed time",
+            "key": "When the participant continues",
+            "either": "Button, or a time limit"
+          }
+        },
+        "advance/label": {
+          "label": "Button text",
+          "help": "What the button that moves on says, for example Continue or Start."
+        },
+        "advance/ms": {
+          "label": "Duration (ms)",
+          "help": "How long the block lasts when it ends on its own."
+        },
+        "advance/minMs": {
+          "label": "Button appears after (ms)",
+          "help": "The button is disabled until then, so nobody skips the text without reading it."
+        },
+        "advance/maxMs": {
+          "label": "Moves on by itself after (ms)",
+          "help": "A time limit for a participant who never presses the button."
+        },
+        "footnote": {
+          "label": "Small print",
+          "help": "A quiet line under the text, for a reminder like 'you can stop at any time'."
+        },
+        "markers/*": {
+          "help": "The name this moment gets in the recording's event timeline. Change it only if your analysis expects a specific name."
+        }
+      },
+      "video": {
+        "allowPause": {
+          "label": "The participant can pause",
+          "help": "Off keeps every participant on the same timeline, which is what you want when comparing them."
+        },
+        "endOn": {
+          "label": "The block ends",
+          "help": "When the video finishes, or after a fixed time even if the video is longer.",
+          "options": {
+            "ended": "When the video ends",
+            "duration": "After a fixed time"
+          }
+        },
+        "durationMs": {
+          "label": "Fixed time (ms)",
+          "help": "Only used when the block ends after a fixed time."
+        },
+        "start_s": {
+          "label": "Start at (s)",
+          "help": "Play from this second of the video instead of its beginning. Splitting a clip on the timeline fills this in."
+        },
+        "end_s": {
+          "label": "Stop at (s)",
+          "help": "Stop at this second of the video instead of its end."
+        },
+        "cues": {
+          "label": "Moments to mark",
+          "help": "Points in the video you want to find again in the recording: a jump scare, a scene change. Each becomes an event on the timeline."
+        },
+        "cues/atS": {
+          "label": "At (s)",
+          "help": "Seconds from the start of the video."
+        },
+        "cues/label": {
+          "label": "Name",
+          "help": "How the event is called in the timeline."
+        },
+        "cues/note": {
+          "label": "Note",
+          "help": "For you; the participant never sees it."
+        }
+      },
+      "audio": {
+        "volume": {
+          "label": "Volume",
+          "help": "From 0 (silent) to 1 (the file's own level)."
+        },
+        "start_s": {
+          "label": "Start at (s)",
+          "help": "Skip the beginning of the file: play from this second."
+        },
+        "end_s": {
+          "label": "Stop at (s)",
+          "help": "Cut the end of the file: stop at this second."
+        }
+      },
+      "text": {
+        "body": {
+          "label": "Text",
+          "help": "What the participant reads."
+        },
+        "min_s": {
+          "label": "Shortest reading time (s)",
+          "help": "Continue is disabled until then, so the text is actually read."
+        }
+      },
+      "baseline": {
+        "eyes": {
+          "label": "Eyes",
+          "help": "Eyes closed gives the strongest alpha rhythm and is the reference the review page compares every block to. Eyes open is closer to how the other blocks are done.",
+          "options": {
+            "open": "Open",
+            "closed": "Closed"
+          }
+        },
+        "duration_s": {
+          "label": "Duration (s)",
+          "help": "One to two minutes is usual. Under 30 s is too short to be a stable reference."
+        },
+        "end_tone": {
+          "label": "Play a tone at the end",
+          "help": "So a participant with closed eyes knows when to open them."
+        }
+      },
+      "rest": {
+        "mode": {
+          "label": "The break ends",
+          "help": "After a fixed time, or when the participant feels ready.",
+          "options": {
+            "timed": "After a fixed time",
+            "self_paced": "When the participant continues"
+          }
+        },
+        "duration_s": {
+          "label": "Duration (s)",
+          "help": "Used when the break ends after a fixed time."
+        },
+        "message": {
+          "label": "Message",
+          "help": "What the screen says during the break."
+        }
+      },
+      "fixation": {
+        "duration_s": {
+          "label": "Duration (s)",
+          "help": "How long the cross stays. One second or two before a stimulus is usual."
+        }
+      },
+      "countdown": {
+        "from": {
+          "label": "Count from",
+          "help": "3 shows 3, 2, 1 - one number per second."
+        }
+      },
+      "flanker": {
+        "n": {
+          "label": "Trials",
+          "help": "How many rows of arrows. 96 takes about three minutes; with cues use a multiple of 8 so every combination comes up equally often."
+        },
+        "congruentRatio": {
+          "label": "Share of agreeing rows",
+          "help": "The fraction of rows whose outer arrows point the same way as the middle one, from 0 to 1. At 0.5 the disagreement cannot be predicted."
+        },
+        "cues": {
+          "label": "Cues before the row",
+          "help": "Leave empty for the plain arrows task. With cues the row appears above or below the cross and a brief asterisk may come first: this is the Attention Network Test. Use all four for its three scores.",
+          "options": {
+            "none": "No cue",
+            "center": "At the cross (when, not where)",
+            "double": "Above and below (when, not where)",
+            "spatial": "Where the row will appear"
+          }
+        },
+        "practice": {
+          "label": "This is a practice round",
+          "help": "Marks every trial as practice: played, never scored."
+        },
+        "feedback": {
+          "label": "Say right or wrong",
+          "help": "Shows Correct, Wrong side or Too slow after each row. Use it for practice; in the real block it changes how people respond."
+        },
+        "maxRun": {
+          "label": "Longest streak",
+          "help": "The most rows of the same type in a row."
+        },
+        "cueMs": {
+          "label": "Cue stays on (ms)",
+          "help": "100 ms is the standard: long enough to see, too short to look at."
+        },
+        "cueTargetMs": {
+          "label": "Cue to row (ms)",
+          "help": "The quiet gap between the cue going off and the row appearing."
+        },
+        "stimulusMs": {
+          "label": "Time to answer (ms)",
+          "help": "The row stays up until an answer or this long, then counts as too slow."
+        },
+        "itiMs": {
+          "label": "Pause between rows (ms)",
+          "help": "Shortest and longest time on the cross between two rows. Varying it stops people answering to the rhythm."
+        }
+      },
+      "n-back": {
+        "pace": {
+          "label": "Pace",
+          "help": "Fixed: every letter gets the same time, answered or not - the standard n-back. Self-paced: each letter stays until the participant presses Continue, with Match before it; it takes away the time pressure and records how long each letter was kept.",
+          "options": {
+            "fixed": "Fixed",
+            "self": "Self-paced"
+          }
+        },
+        "n": {
+          "label": "Letters",
+          "help": "How many letters are shown. 60 takes two and a half minutes."
+        },
+        "load": {
+          "label": "How far back",
+          "help": "1: is it the same as the previous letter? 2: the same as the one before that? 3 is hard for most people. Compare blocks of different loads to see effort rise."
+        },
+        "matchRatio": {
+          "label": "Share of matches",
+          "help": "The fraction of letters that repeat the one from that far back, from 0 to 1. About 0.3 is standard."
+        },
+        "lureRatio": {
+          "label": "Share of near misses",
+          "help": "Letters that repeat one step off: they feel like a match and must be let go. They tell remembering the order from merely recognising a recent letter. 0 turns them off."
+        },
+        "practice": {
+          "label": "This is a practice round",
+          "help": "Marks every trial as practice: played, never scored."
+        },
+        "stimulusMs": {
+          "label": "Letter stays on (ms)",
+          "help": "The letter disappears after this long; the answer can still come."
+        },
+        "isiMs": {
+          "label": "Blank after the letter (ms)",
+          "help": "The pace is fixed: every letter gets its time plus this blank, answered or not."
+        },
+        "gapMs": {
+          "label": "Blank after Continue (ms)",
+          "help": "A short blank between letters, so two equal letters in a row read as two."
+        }
+      },
+      "coding": {
+        "duration_s": {
+          "label": "Length (seconds)",
+          "help": "How long the participant keeps matching. 90 seconds is the standard; the score is how many they get right in that time."
+        },
+        "practice": {
+          "label": "This is a practice round",
+          "help": "Marks every answer as practice: played, never scored."
+        },
+        "pairs": {
+          "label": "Symbols in the key",
+          "help": "How many symbol-digit pairs to look up, from 2 to 9. Nine is the standard; fewer makes it easier to memorise and less of a speed test."
+        },
+        "itiMs": {
+          "label": "Pause between symbols (ms)",
+          "help": "A brief blank after each answer, so two identical-looking moments are not mistaken for one."
+        }
+      },
+      "heartbeat": {
+        "intervals_s": {
+          "label": "Counting rounds (seconds each)",
+          "help": "One number per round. Use different lengths, or people multiply a guessed heart rate by the time. The headband's pulse sensor counts the real beats."
+        },
+        "shuffle": {
+          "label": "Rounds in a random order",
+          "help": "A different order each session, so the lengths cannot be learned."
+        },
+        "confidence": {
+          "label": "Ask how sure they are",
+          "help": "After each round. How well confidence follows accuracy is its own measure, and the more telling one in anxiety."
+        },
+        "ready_s": {
+          "label": "Get-ready time (seconds)",
+          "help": "How long the instruction is shown before the starting tone."
+        }
+      },
+      "breathing": {
+        "cycles": {
+          "label": "Breaths",
+          "help": "How many full in-and-out cycles."
+        },
+        "inhaleMs": {
+          "label": "Breathe in (ms)",
+          "help": "How long the circle grows. 4500 ms with the same out is about 6.5 breaths a minute."
+        },
+        "holdMs": {
+          "label": "Hold (ms)",
+          "help": "A pause between in and out. Leave empty for none."
+        },
+        "exhaleMs": {
+          "label": "Breathe out (ms)",
+          "help": "How long the circle shrinks."
+        },
+        "lines": {
+          "label": "Text after the breaths",
+          "help": "Optional lines shown one after another once the last breath ends, in place of the circle. To tell the participant what comes next, an Instructions block after this one is clearer."
+        }
+      },
+      "go-no-go": {
+        "variant": {
+          "label": "Version",
+          "help": "Simple: dock the blue cargo, let the orange debris pass. With a beacon: a green or red light comes first and changes the rule, which is harder.",
+          "options": {
+            "simple": "Simple",
+            "cued": "With a beacon"
+          }
+        },
+        "n": {
+          "label": "Objects",
+          "help": "How many objects cross the screen. 100 takes about two minutes."
+        },
+        "goRatio": {
+          "label": "Share of cargo",
+          "help": "The fraction of objects to dock, from 0 to 1. Around 0.7 makes docking a habit, which is what makes holding back hard."
+        },
+        "validGoRatio": {
+          "label": "Share of green beacon + cargo",
+          "help": "The fraction of trials where the participant should dock, from 0 to 1."
+        },
+        "practice": {
+          "label": "Practice round first",
+          "help": "A few unscored objects before the real ones."
+        },
+        "travelMs": {
+          "label": "Crossing time (ms)",
+          "help": "How long an object takes to cross the screen: a shortest and a longest time, picked at random between the two. Shorter is harder."
+        },
+        "itiMs": {
+          "label": "Pause between objects (ms)",
+          "help": "Shortest and longest empty time between two objects."
+        },
+        "cueMs": {
+          "label": "Beacon stays on (ms)",
+          "help": "Shortest and longest time the beacon is lit."
+        },
+        "cueTargetMs": {
+          "label": "Beacon to object (ms)",
+          "help": "Shortest and longest wait between the beacon and the object."
+        },
+        "maxRun": {
+          "label": "Most cargo in a row",
+          "help": "Keeps the random order from producing long streaks that make the task predictable."
+        },
+        "maxNogoRun": {
+          "label": "Most debris in a row",
+          "help": "Same, for the objects to let pass."
+        },
+        "maxCueRun": {
+          "label": "Most same beacons in a row",
+          "help": "Limits streaks of the same beacon colour."
+        },
+        "maxOutcomeRun": {
+          "label": "Most same answers in a row",
+          "help": "Limits streaks of trials with the same right answer."
+        },
+        "nogoMix": {
+          "label": "Kinds of 'hold' trials",
+          "help": "How the trials where the participant must not dock are split. The three shares add up to 1."
+        },
+        "nogoMix/redCargo": {
+          "label": "Red beacon + cargo"
+        },
+        "nogoMix/greenDebris": {
+          "label": "Green beacon + debris"
+        },
+        "nogoMix/redDebris": {
+          "label": "Red beacon + debris"
+        }
+      },
+      "image-sequence": {
+        "items": {
+          "label": "Images",
+          "help": "Shown in this order, or shuffled."
+        },
+        "items/id": {
+          "label": "Name",
+          "help": "How this image is called in the timeline."
+        },
+        "items/src": {
+          "label": "Image address",
+          "help": "The URL of the image."
+        },
+        "items/class": {
+          "label": "Category",
+          "help": "A group the image belongs to (faces, houses), for comparing categories later."
+        },
+        "items/durationMs": {
+          "label": "Shown for (ms)"
+        },
+        "isiMs": {
+          "label": "Gap between images (ms)",
+          "help": "Empty screen between two images."
+        },
+        "jitterMs": {
+          "label": "Random extra gap (ms)",
+          "help": "Up to this much is added to each gap, so the rhythm is not predictable."
+        },
+        "loops": {
+          "label": "Times through the list"
+        },
+        "shuffle": {
+          "label": "Shuffle the order",
+          "help": "A different order per participant, the same for the same participant and seed."
+        }
+      },
+      "questionnaire": {
+        "instrument": {
+          "label": "Questionnaire",
+          "help": "SAM asks how pleasant and how activated the participant feels, with pictures. VAS is a single slider. NASA-TLX measures workload. Custom uses your own questions below.",
+          "options": {
+            "sam": "SAM - how do you feel (pictures)",
+            "vas": "VAS - one slider",
+            "nasa_tlx": "NASA-TLX - workload",
+            "custom": "Custom - your questions"
+          }
+        },
+        "prompt": {
+          "label": "Question on top",
+          "help": "Shown above the scales, for example 'How did the video make you feel?'"
+        },
+        "items": {
+          "label": "Your questions",
+          "help": "Only used by the Custom questionnaire."
+        },
+        "items/id": {
+          "label": "Short name",
+          "help": "How the answer is called in the exported data."
+        },
+        "items/text": {
+          "label": "Question"
+        },
+        "items/type": {
+          "label": "Answer with",
+          "options": {
+            "likert": "Points on a scale",
+            "slider": "A slider",
+            "choice": "One of several choices"
+          }
+        },
+        "items/points": {
+          "label": "Points on the scale",
+          "help": "5 or 7 is usual."
+        },
+        "items/min": {
+          "label": "Lowest value"
+        },
+        "items/max": {
+          "label": "Highest value"
+        },
+        "items/anchors": {
+          "label": "Words at the two ends",
+          "help": "For example 'Not at all' and 'Extremely'."
+        },
+        "items/choices": {
+          "label": "Choices"
+        }
+      },
+      "quiz": {
+        "scenes": {
+          "label": "Questions"
+        },
+        "scenes/prompt": {
+          "label": "Question"
+        },
+        "scenes/choices": {
+          "label": "Answers"
+        },
+        "scenes/correct": {
+          "label": "Right answer (number)",
+          "help": "The position of the right answer in the list, starting from 0."
+        },
+        "feedback": {
+          "label": "Say if the answer was right",
+          "help": "Off keeps the participant from learning during the quiz."
+        }
+      }
+    }
   },
   "beta": {
     "apply": "Apply for beta testing",
     "promptTitle": "Want to try what comes next?",
     "promptText": "Brain Trails is in a closed beta. Beta testers get new protocols and features first, for free, and we ask them what they think. Applying takes a few questions.",
     "promptLater": "Not now",
-    "promptLaterHint": "You can apply any time from your account."
+    "promptLaterHint": "You can apply any time from your account.",
+    "cardTitle": "Beta programme",
+    "status": {
+      "pending": "We have your answers. Nothing to do.",
+      "accepted": "You are in the beta.",
+      "waitlisted": "On the waiting list - we write as soon as there is room.",
+      "rejected": "Not this round."
+    },
+    "notOnList": "You are not on the list.",
+    "wantsBeta": "I would like to be a beta tester.",
+    "intendedUse": "How you expect to use it",
+    "intendedUseQuestion": "How do you expect to use it?",
+    "notSaid": "Not said",
+    "notSureYet": "Not sure yet",
+    "saved": "Saved.",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "edit": "Edit your answers"
   },
   "compare": {
     "title": "Compare two blocks",
@@ -578,5 +1307,1786 @@
     "redrawn": "The map's geometry was redrawn with your latest recording: places on it compare within this version, not with earlier ones.",
     "epoch": "Geometry version {epoch}",
     "sidebarRedrawn": "Redrawn"
+  },
+  "language": {
+    "title": "Language",
+    "label": "App language",
+    "hint": "Kept on your account and on this browser."
+  },
+  "meta": {
+    "description": "Turn an EEG recording into a trail through brain-state space. A LuMentis research prototype."
+  },
+  "media": {
+    "page": {
+      "title": "My media",
+      "intro": "Videos and sounds you uploaded. Open one to watch it back; a video plays as a protocol from its card.",
+      "upload": "Upload",
+      "loadError": "Your media could not be loaded.",
+      "empty": {
+        "title": "Nothing uploaded yet",
+        "text": "Upload a video or a sound to build protocols with."
+      },
+      "lockedNote": {
+        "failed": "Refused",
+        "processing": "Being checked"
+      },
+      "checking": "Checking the file…",
+      "refused": "The file was refused.",
+      "createProtocol": "Create a protocol"
+    },
+    "refusals": {
+      "unreadable": "The file could not be read.",
+      "no_video_stream": "The file has no video in it.",
+      "no_audio_stream": "The file has no audio in it.",
+      "unsupported_video_codec": "Browsers cannot play this video format. Export it as H.264 (MP4) or VP9 (WebM).",
+      "unsupported_audio_codec": "Browsers cannot play this audio format. Export it as AAC, MP3 or Opus.",
+      "transcode_failed": "The file could not be converted for the browser. Export it as H.264 (MP4) or AAC (M4A) and upload it again.",
+      "no_duration": "The file has no length.",
+      "probe_error": "The check failed. Try uploading it again."
+    },
+    "share": {
+      "action": "Share with the community",
+      "inCommunity": "In the community",
+      "inReview": "In review",
+      "notAccepted": "Not accepted",
+      "dialog": {
+        "title": "Share with the community",
+        "body": "“{title}” goes to us for a look first. Once accepted, everyone in the community can play it.",
+        "rights": "I made this file or have the right to share it publicly.",
+        "ask": "Ask to publish",
+        "cancel": "Cancel"
+      }
+    },
+    "card": {
+      "kinds": {
+        "video": "Video",
+        "audio": "Audio",
+        "text": "Text",
+        "quiz": "Quiz",
+        "game": "Game"
+      },
+      "locked": "Locked",
+      "yours": "Yours",
+      "betaOnly": "Beta testers only",
+      "contentWarning": "Content warning",
+      "lockedLabel": "{title} — {note}",
+      "open": "Open {title}"
+    },
+    "upload": {
+      "title": "Upload a video or audio",
+      "chooseFile": "Choose a file first.",
+      "needTitle": "Give it a title.",
+      "tooLarge": "File exceeds {max} MB.",
+      "done": "Uploaded. It is checked in the background and appears when ready.",
+      "drop": "Drop an MP4, WebM or MOV here",
+      "choose": "or click to choose",
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "What is it?",
+        "description": "Description",
+        "descriptionHint": "Optional.",
+        "descriptionPlaceholder": "Anything worth remembering about this clip."
+      },
+      "cancel": "Cancel",
+      "uploading": "Uploading…",
+      "add": "Add to library"
+    },
+    "viewer": {
+      "fallbackTitle": "Your media",
+      "loadError": "This item could not be loaded.",
+      "noVideoFile": "This video has no file yet.",
+      "noAudioFile": "This sound has no file yet.",
+      "nothingToWatch": "This item is played inside a protocol; there is nothing to watch here.",
+      "length": "Length",
+      "uploaded": "Uploaded",
+      "shared": "Shared",
+      "sharedValue": {
+        "inReview": "In review",
+        "onlyYou": "Only you",
+        "community": "In the community"
+      },
+      "confirm": {
+        "archive": "{count, plural, one {A protocol plays this item: it leaves your media but keeps playing there, and your past sessions are unaffected.} other {# protocols play this item: it leaves your media but keeps playing there, and your past sessions are unaffected.}}",
+        "delete": "This deletes the file for good. Your past sessions are unaffected.",
+        "archiveIt": "Archive it",
+        "deleteIt": "Delete it",
+        "keep": "Keep it"
+      },
+      "cancelRequest": "Cancel the request",
+      "takeBack": "Take it back",
+      "delete": "Delete",
+      "takeBackNote": "Taking it back keeps it out of the community; protocols you already shared go on playing it.",
+      "toast": {
+        "archived": "Archived: the protocols that play it keep it.",
+        "deleted": "Deleted.",
+        "takenBack": "Taken back: it is yours alone again.",
+        "done": "Done."
+      }
+    }
+  },
+  "protocols": {
+    "catalog": {
+      "title": "Protocols",
+      "intro": "Pick what to play while you record. Your EEG runs alongside it.",
+      "new": "New protocol",
+      "loadError": "The catalog could not be loaded. Reload the page, or sign in again.",
+      "empty": {
+        "title": "No protocols yet",
+        "text": "Upload a video in My media and turn it into a protocol, or ask an admin to publish the official ones.",
+        "action": "Go to My media"
+      },
+      "rows": {
+        "official": {
+          "title": "Official",
+          "hint": "Built and checked by the Brain Trails team."
+        },
+        "mine": {
+          "title": "Yours",
+          "hint": "Private to your workspace, drafts included."
+        },
+        "community": {
+          "title": "Community",
+          "hint": "Shared by other people, reviewed before they appear."
+        }
+      },
+      "lockedNote": "Locked protocols are part of the programme but not open yet. Beta testers get them first."
+    },
+    "tags": {
+      "attention": {
+        "title": "Attention",
+        "hint": "Hold a target, ignore the rest, and stop a response you already started."
+      },
+      "anxiety": {
+        "title": "Anxiety",
+        "hint": "Settle the body, then watch what the signal does with it."
+      },
+      "cognitive_decline": {
+        "title": "Cognitive Decline",
+        "hint": "Memory, speed and flexibility, measured the same way each time."
+      }
+    },
+    "card": {
+      "locked": "Locked",
+      "official": "Official",
+      "community": "Community",
+      "draft": "Draft",
+      "yours": "Yours",
+      "betaOnly": "Beta testers only",
+      "lockedLabel": "{title} — locked, available to beta testers"
+    },
+    "kindWords": {
+      "instructions": "Instructions",
+      "prompt": "Instructions",
+      "fixation": "Fixation cross",
+      "baseline": "Resting baseline",
+      "rest": "Rest",
+      "countdown": "Countdown",
+      "video": "Video",
+      "audio": "Sound",
+      "text": "Reading",
+      "questionnaire": "Questionnaire",
+      "quiz": "Quiz",
+      "breathing": "Paced breathing",
+      "go-no-go": "Go/no-go game",
+      "flanker": "Arrows game",
+      "n-back": "Letter memory game",
+      "coding": "Symbol coding",
+      "heartbeat": "Heartbeat counting",
+      "image-sequence": "Images",
+      "group": "Group"
+    },
+    "detail": {
+      "notFound": "This protocol is not in your catalog.",
+      "back": "Back to protocols",
+      "visibility": {
+        "official": "Official",
+        "community": "Community",
+        "workspace": "Your workspace"
+      },
+      "version": "version {version}",
+      "draftNotPublished": "draft, not published",
+      "waitingForReview": "waiting for review",
+      "play": "Play",
+      "locked": "Locked",
+      "notPublished": "Not published",
+      "lockedHint": "Not open yet: beta testers get this first",
+      "warning": {
+        "title": "Before you start",
+        "stop": "You can stop at any point."
+      },
+      "outline": {
+        "title": "What happens",
+        "step": "— {kind}{repeated, select, yes { ×{count}} other {}}{timed, select, yes {, {duration}} other {}}",
+        "note": "You wear the headband throughout; the recording starts and stops with the session."
+      },
+      "duration": "Duration",
+      "added": "Added",
+      "yours": {
+        "title": "Your protocol",
+        "unpublished": "Publish it to play it. Publishing checks it first.",
+        "changed": "The draft has changes that are not published yet.",
+        "published": "Published. Sessions keep the version they ran."
+      },
+      "actions": {
+        "edit": "Edit",
+        "publish": "Publish",
+        "check": "Check",
+        "share": "Share with the community",
+        "delete": "Delete",
+        "copy": "Make a copy to edit"
+      },
+      "confirmDelete": "Delete “{title}”?",
+      "toast": {
+        "published": "Published: it is ready to play.",
+        "sentForReview": "Sent for review: it appears in Community once approved.",
+        "shared": "Shared with the community.",
+        "archived": "Archived: your past sessions keep it.",
+        "deleted": "Deleted."
+      },
+      "findings": {
+        "ok": "No problems found · {duration}"
+      }
+    }
+  },
+  "account": {
+    "title": "Account",
+    "access": {
+      "title": "Access",
+      "email": "Email",
+      "role": "Role",
+      "roleAdmin": "Administrator",
+      "roleParticipant": "Participant",
+      "memberSince": "Member since"
+    },
+    "profile": {
+      "title": "Your profile",
+      "missing": "We need the first four answers before your first recording: they are what makes an EEG readable afterwards. The rest is optional, always.",
+      "saved": "Profile saved.",
+      "save": "Save profile",
+      "saving": "Saving…",
+      "select": "Select",
+      "fields": {
+        "fullName": "Full name",
+        "birthYear": "Year of birth",
+        "sexAtBirth": "Sex at birth",
+        "sexAtBirthInfo": "A variable in the analysis, asked as it is recorded at birth. Your gender is the next question and is yours to describe.",
+        "handedness": "Handedness",
+        "handednessInfo": "Which hand you write with changes where activity appears on the scalp, so this one genuinely matters.",
+        "gender": "Gender",
+        "educationLevel": "Education",
+        "occupation": "Occupation",
+        "nativeLanguages": "Native languages",
+        "nativeLanguagesHint": "Comma separated.",
+        "musicalTrainingYears": "Years of musical training",
+        "meditationPractice": "Meditation practice",
+        "caffeineCupsPerDay": "Coffee per day (cups)",
+        "avgSleepHours": "Average sleep (hours)",
+        "nicotineUse": "Nicotine",
+        "alcoholUse": "Alcohol",
+        "visionCorrection": "Vision correction",
+        "hearingIssues": "Hearing",
+        "medications": "Medications",
+        "neurologicalConditions": "Neurological conditions",
+        "psychiatricConditions": "Psychiatric conditions",
+        "notes": "Notes"
+      }
+    },
+    "privacy": {
+      "title": "Privacy and consent",
+      "processing": "Processing your recordings",
+      "agreed": "Agreed on {date} · version {version}",
+      "research": "Contribute my data to broader research.",
+      "researchAgreed": "Agreed on {date} · version {version}. Untick to withdraw: we stop using your data for research from then on, though we cannot undo research already done.",
+      "researchOptional": "Optional. Your results, your recordings and everything else work exactly the same either way.",
+      "thanks": "Thank you - you are contributing.",
+      "withdrawn": "Withdrawn.",
+      "contact": "Read the <note>privacy note<hidden> (opens in a new tab)</hidden></note>, or write to <address>{email}</address>. You can export or delete everything below."
+    },
+    "data": {
+      "title": "Your data",
+      "export": "Export everything",
+      "exportHint": "Profile, recordings and one-hour links to the files, as JSON.",
+      "delete": "Delete account",
+      "deleteHint": "Removes every recording, analysis and stored file."
+    },
+    "delete": {
+      "title": "Delete your account?",
+      "text": "This erases your account, every recording and every stored file. There is no way back. Confirm with your password.",
+      "password": "Password",
+      "keep": "Keep my account",
+      "confirm": "Delete everything",
+      "deleting": "Deleting…",
+      "done": "Your account and data were deleted."
+    }
+  },
+  "taxonomies": {
+    "option": {
+      "female": "Female",
+      "male": "Male",
+      "intersex": "Intersex",
+      "prefer_not_to_say": "Prefer not to say",
+      "woman": "Woman",
+      "man": "Man",
+      "non_binary": "Non-binary",
+      "left": "Left-handed",
+      "right": "Right-handed",
+      "ambidextrous": "Ambidextrous",
+      "primary": "Primary school",
+      "secondary": "Secondary school",
+      "vocational": "Vocational training",
+      "bachelor": "Bachelor's degree",
+      "master": "Master's degree",
+      "doctorate": "Doctorate",
+      "student": "Student",
+      "healthcare": "Healthcare",
+      "research_academia": "Research or academia",
+      "education": "Education",
+      "engineering_it": "Engineering or IT",
+      "arts_media": "Arts or media",
+      "business_admin": "Business or administration",
+      "trades": "Skilled trades",
+      "service": "Service work",
+      "retired": "Retired",
+      "not_working": "Not working right now",
+      "none": "None",
+      "tried": "Tried it",
+      "former": "Used to",
+      "occasional": "Occasionally",
+      "weekly": "Weekly",
+      "daily": "Daily",
+      "glasses": "Glasses",
+      "contacts": "Contact lenses",
+      "surgery": "Corrective surgery",
+      "tinnitus": "Tinnitus",
+      "hearing_loss": "Hearing loss",
+      "personal": "For myself",
+      "patients": "With patients or clients",
+      "research": "In research",
+      "teaching": "In teaching",
+      "other": "Other"
+    },
+    "byList": {
+      "education_level": {
+        "none": "None"
+      },
+      "meditation_practice": {
+        "none": "None"
+      },
+      "nicotine_use": {
+        "none": "None"
+      },
+      "alcohol_use": {
+        "none": "None"
+      },
+      "vision_correction": {
+        "none": "None"
+      },
+      "hearing_issues": {
+        "none": "None"
+      }
+    }
+  },
+  "home": {
+    "welcome": "Welcome back.",
+    "start": {
+      "title": "Start a new trail",
+      "text": "Wear the band, pick a protocol, press play. Free recording is one too.",
+      "record": "Record",
+      "pick": "Pick a stimulus",
+      "upload": "Upload a file"
+    },
+    "week": {
+      "title": "This week",
+      "sessions": "Sessions",
+      "signal": "Signal recorded",
+      "all": "All sessions"
+    },
+    "recent": {
+      "title": "Recent trails",
+      "all": "All recordings",
+      "loadFailed": "Could not load recordings.",
+      "emptyTitle": "No trails yet.",
+      "emptyText": "Play a protocol or upload a Muse file: its trail appears here.",
+      "emptyAction": "Record your first session",
+      "meta": "{date} · {duration}"
+    }
+  },
+  "recordings": {
+    "status": {
+      "done": "Ready",
+      "processing": "Processing",
+      "running": "Running",
+      "queued": "Queued",
+      "uploaded": "Uploaded",
+      "capturing": "Recording",
+      "empty": "No EEG",
+      "failed": "Failed"
+    },
+    "tasks": {
+      "rest_eyes_open": "rest eyes open",
+      "rest_eyes_closed": "rest eyes closed",
+      "meditation": "meditation",
+      "breathing_exercise": "breathing exercise",
+      "mental_arithmetic": "mental arithmetic",
+      "reading": "reading",
+      "music_listening": "music listening",
+      "memory_recall": "memory recall",
+      "motor_imagery": "motor imagery",
+      "video_watching": "video watching"
+    },
+    "list": {
+      "title": "Recordings",
+      "subtitle": "Every session, one trail.",
+      "new": "New recording",
+      "stats": {
+        "sessions": "Sessions",
+        "signal": "Signal collected",
+        "last": "Last upload"
+      },
+      "loadFailed": "Could not load recordings.",
+      "emptyTitle": "No recordings yet.",
+      "emptyText": "Upload a Muse EEG file to see your first trail.",
+      "emptyAction": "Upload your first recording",
+      "noTask": "No task",
+      "meta": "{task} · {duration} · {date}"
+    },
+    "report": {
+      "back": "Recordings",
+      "noProtocol": "No protocol",
+      "subtitle": "{protocol} · {duration} · {date}",
+      "live": "LIVE",
+      "processing": {
+        "title": "Processing your recording",
+        "text": "Cleaning, embedding and projecting. This page updates by itself.",
+        "textAttempt": "Cleaning, embedding and projecting · attempt {n}. This page updates by itself."
+      },
+      "empty": "No EEG was recorded in this session: it ended before the headband sent any data.",
+      "capturing": "This session is still recording, or was closed before it finished. It is closed automatically after three hours.",
+      "failed": "Processing failed.",
+      "retry": "Retry",
+      "waiting": "Waiting for the first windows, about four seconds of signal…",
+      "details": {
+        "summary": "Signal and technical details",
+        "cleaner": "Cleaner",
+        "embedder": "Embedder",
+        "window": "Window",
+        "step": "Step",
+        "points": "Points",
+        "regions": "Regions"
+      },
+      "actions": {
+        "title": "Actions",
+        "reprocessClassic": "Reprocess with classic cleaner",
+        "reprocessRaw": "Reprocess without cleaning",
+        "download": "Download raw file",
+        "delete": "Delete recording"
+      },
+      "delete": {
+        "title": "Delete this recording?",
+        "text": "The file, the analyses and the trail are removed for good. This cannot be undone.",
+        "keep": "Keep",
+        "confirm": "Delete",
+        "deleting": "Deleting…"
+      },
+      "toasts": {
+        "reprocessing": "Reprocessing started.",
+        "deleted": "Recording deleted.",
+        "requestFailed": "Request failed.",
+        "deleteFailed": "Could not delete."
+      }
+    },
+    "upload": {
+      "title": "New recording",
+      "drop": "Drop a Muse file here",
+      "dropHint": "Mind Monitor .csv or .edf, up to 50 MB. Goes straight to storage.",
+      "chosen": "{size} · click to change",
+      "fieldTitle": "Title",
+      "titlePlaceholder": "Morning meditation",
+      "cleaning": "Cleaning",
+      "cleaningClassic": "Classic (filters + repair)",
+      "cleaningNone": "None (raw standardized)",
+      "task": "Task",
+      "taskNone": "Not specified",
+      "progress": "Uploading {progress}%",
+      "registering": "Registering the recording…",
+      "cancel": "Cancel",
+      "submit": "Upload",
+      "submitting": "Uploading…",
+      "done": "Upload complete. Processing started.",
+      "errors": {
+        "noFile": "Choose a .csv or .edf file first.",
+        "noTitle": "Give the recording a title.",
+        "tooLarge": "File exceeds {max} MB.",
+        "storage_failed": "storage upload failed ({status})",
+        "network": "network error while uploading to storage"
+      }
+    },
+    "session": {
+      "title": "Session recorded",
+      "duration": "Duration",
+      "samples": "Samples",
+      "samplesValue": "{count} · {missing} missing",
+      "packetsLost": "Packets lost",
+      "clock": "Clock",
+      "clockValue": "{rate} Hz · drift {drift} ppm",
+      "headband": "Headband",
+      "otherSensors": "Other sensors",
+      "sensorsNone": "none",
+      "sensorsMotion": "{motion} motion",
+      "sensorsMotionPpg": "{motion} motion · {ppg} PPG samples",
+      "rawCapture": "Raw capture",
+      "rawValue": "{count} packets · {size}",
+      "rawNone": "none (simulated)",
+      "jitter": "Arrival jitter",
+      "jitterValue": "{ms} ms RMS",
+      "gaps": "Missing samples are interpolated by the pipeline and listed as gaps on the recording.",
+      "discard": "Discard",
+      "upload": "Upload and analyze",
+      "uploading": "Uploading…",
+      "done": "Session uploaded. Processing started.",
+      "captureSkipped": "The raw Bluetooth capture was too large to upload and was not kept.",
+      "tooLarge": "Session exceeds {max} MB."
+    },
+    "trail": {
+      "aria": "Trail of the recording, from the first window to the last, on the session's energy landscape",
+      "thumbAria": "Trail of {title}",
+      "thumb": {
+        "failed": "No trail: processing failed",
+        "empty": "No trail: no EEG was recorded",
+        "capturing": "Recording in progress",
+        "drawing": "Drawing the trail…",
+        "unavailable": "Trail unavailable"
+      }
+    }
+  },
+  "device": {
+    "errors": {
+      "noneSelected": "No headband selected.",
+      "connectFailed": "Could not connect ({detail}).",
+      "failedAt": {
+        "loadBluetooth": "Bluetooth failed at \"load Bluetooth\" ({detail})",
+        "chooseHeadband": "Bluetooth failed at \"choose a headband\" ({detail})",
+        "openLink": "Bluetooth failed at \"open the link\" ({detail})",
+        "findService": "Bluetooth failed at \"find the Muse service\" ({detail})",
+        "findControl": "Bluetooth failed at \"find the control characteristic\" ({detail})",
+        "detectModel": "Bluetooth failed at \"detect the model\" ({detail})",
+        "subscribe": "Bluetooth failed at \"subscribe to {stream}\" ({detail})",
+        "sendStart": "Bluetooth failed at \"send the start commands\" ({detail})"
+      },
+      "refusals": {
+        "noGatt": "Error: This device does not expose GATT",
+        "noDataStream": "Error: This Muse would not start its data stream"
+      }
+    },
+    "models": {
+      "muse-2": "Muse 2 / Muse S",
+      "athena": "Muse S Athena",
+      "simulated": "Simulated headband"
+    }
+  },
+  "common": {
+    "close": "Close",
+    "back": "Back",
+    "infoAbout": "About: {label}",
+    "infoAboutSetting": "About this setting",
+    "loadingOptions": "Loading the options…",
+    "preferNotToAnswer": "Prefer not to answer",
+    "otherPleaseSay": "{label}: please say",
+    "validation": {
+      "email": "Invalid email address",
+      "passwordTooShort": "At least {min} characters.",
+      "passwordTooLong": "At most {max} characters.",
+      "fullName": "Enter your full name.",
+      "birthYear": "Enter a valid year of birth.",
+      "choose": "Choose an option.",
+      "minAge": "Brain Trails is for people aged {age} and over."
+    }
+  },
+  "public": {
+    "landing": {
+      "tagline": "Wear the band, pick a stimulus, watch your trail take shape.",
+      "signIn": "Sign in",
+      "createAccount": "Create an account"
+    },
+    "footer": {
+      "nonClinical": "Non-clinical prototype",
+      "privacy": "privacy"
+    },
+    "login": {
+      "title": "Welcome back.",
+      "subtitle": "Your trails are where you left them.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "newHere": "New here? <link>Create an account</link>"
+    },
+    "pending": {
+      "approved": {
+        "title": "Check your email.",
+        "body": "We sent you a link to confirm your address. Open it and you are in - it stays good for 24 hours. If it does not arrive, look in your spam folder."
+      },
+      "active": {
+        "title": "Your account is open.",
+        "body": "Sign in with the email and password you just chose."
+      },
+      "pending": {
+        "title": "Registration received.",
+        "body": "An administrator will review it. Once approved you can sign in with the email and password you chose."
+      },
+      "signIn": "Go to sign in"
+    },
+    "verify": {
+      "working": "Verifying your email…",
+      "title": "Email verified.",
+      "text": "Your account is active.",
+      "signIn": "Sign in",
+      "missingToken": "Missing verification token."
+    },
+    "register": {
+      "title": "Create your account.",
+      "intro": "Three short steps. Four questions about you, and the rest later.",
+      "progress": "Progress",
+      "steps": {
+        "account": "Account",
+        "you": "You",
+        "consent": "Consent"
+      },
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least {min} characters.",
+      "continue": "Continue",
+      "back": "Back",
+      "alreadyRegistered": "Already registered? <link>Sign in</link>",
+      "about": {
+        "title": "A little about you.",
+        "text": "Four questions. They are the ones an EEG cannot be read without - which hand you write with changes where activity shows up on the scalp. Everything else can wait."
+      },
+      "fullName": "Full name",
+      "birthYear": "Year of birth",
+      "sexAtBirth": "Sex at birth",
+      "sexAtBirthInfo": "A variable in the analysis, asked as it is recorded at birth. Your gender is yours to describe, on the account page.",
+      "handedness": "Handedness",
+      "select": "Select",
+      "fair": {
+        "label": "I would like to try the headband at the stand.",
+        "hint": "You do not have to wait here. We email you when your turn is about five minutes away, so go and see the rest."
+      },
+      "consent": {
+        "core": "Lumentis will collect and process my EEG recordings, exercise responses and related technical information to provide my results, metrics, visualizations and reports; to maintain and secure the service; to assess signal quality and troubleshoot; and to evaluate and improve the accuracy and reliability of the features provided through it. Recordings are held under a pseudonymous identifier and stored in Frankfurt, Germany. <link>Read the privacy note<hidden> (opens in a new tab)</hidden></link>.",
+        "version": "Version {version}",
+        "coreTick": "I have read the privacy note and I consent.",
+        "research": "Lumentis may also keep and use my pseudonymised recordings, derived features and responses for broader scientific research beyond running and improving this service - including work on mental health, neurology and cognitive science, and developing and validating future methods and models.",
+        "researchTick": "I agree to contribute my data to broader research.",
+        "researchHint": "Optional, and separate from the consent above. Saying no changes nothing about your account or your results, and you can change your mind on the account page at any time.",
+        "newsletterTick": "Send me occasional news about Brain Trails.",
+        "newsletterHint": "A few emails, no more. Unsubscribe whenever you like from your account page."
+      },
+      "create": "Create account",
+      "creating": "Creating…"
+    }
+  },
+  "shell": {
+    "nav": {
+      "home": "Home",
+      "protocols": "Protocols",
+      "media": "My media",
+      "recordings": "Recordings",
+      "landscape": "Brain Landscape",
+      "account": "Account",
+      "admin": "Admin"
+    },
+    "sections": "Sections",
+    "you": "You",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "lightAppearance": "Light appearance",
+    "darkAppearance": "Dark appearance",
+    "signOut": "Sign out",
+    "error": {
+      "title": "Something went wrong.",
+      "text": "You can try again or go back home.",
+      "retry": "Try again",
+      "home": "Home"
+    },
+    "notFound": {
+      "title": "This page does not exist.",
+      "home": "Back home"
+    },
+    "policyUpdate": {
+      "title": "The privacy note has changed",
+      "text": "We have published a new version of the note that explains what happens to your recordings and your data. Before you carry on, please read it and tell us you agree.",
+      "versions": "You agreed to version {agreed}. The current one is {current}.",
+      "readNote": "Read the privacy note<hidden> (opens in a new tab)</hidden>",
+      "agree": "I have read it and I agree",
+      "saving": "Saving…",
+      "decline": "Would rather not agree? Write to {email} and we will export or delete everything we hold for you."
+    }
+  },
+  "privacy": {
+    "metaTitle": "Privacy",
+    "eyebrow": "Privacy note · v{version}",
+    "title": "What happens to your data.",
+    "draft": "<strong>Brain Trails is a non-clinical research prototype, and this note is a draft published pending legal review.</strong> It describes what the system actually does today. It will be replaced by a reviewed policy, and we will tell you when that happens.",
+    "intro": "Protecting the privacy of the people who use Brain Trails matters to us more than anything else we do with this prototype — we are asking you for recordings of your brain, and we do not take that lightly. We are making every effort to keep your data secure and to bring this note fully in line with the law that applies to it. We have tried hard to describe only what is true today rather than what we intend to build, and where something is not built yet, this note says so.",
+    "sections": {
+      "whatItIs": {
+        "title": "1. What Brain Trails is, and is not",
+        "p1": "Brain Trails is provided for informational and wellness purposes. Unless Lumentis Analytics Inc. says otherwise in writing, it is not a medical device and is not intended to diagnose, treat, cure, prevent or monitor any disease or medical condition. It does not provide medical advice.",
+        "p2": "Do not make medical decisions based on it. Talk to a qualified health-care professional about symptoms, diagnosis or treatment."
+      },
+      "whoWeAre": {
+        "title": "2. Who we are",
+        "p1": "Lumentis Analytics Inc. is responsible for the personal information processed through Brain Trails.",
+        "addressee": "Lumentis Analytics Inc., Attn: Privacy Officer",
+        "postalAddress": "329 Howe Street, Unit 272, Vancouver, British Columbia V6C 3N2, Canada"
+      },
+      "collect": {
+        "title": "3. What we collect",
+        "p1": "<strong>Your account.</strong> Your email address, your password (stored only as a hash, never as text we can read), and an account identifier we generate.",
+        "p2": "<strong>What you tell us about yourself.</strong> Your name, year of birth and handedness, and — if you choose to give them — details such as sex at birth, sleep, caffeine, medications, and neurological or psychiatric conditions. Several of these are health-related and sensitive. Only the few that make a recording interpretable are required, none of them at sign-up, and the rest are offered and never demanded.",
+        "p3": "<strong>Your recordings.</strong> The EEG captured during a session, signal-quality and device information, your responses and timings during an exercise, and everything derived from them: features, metrics, projections, visualisations and reports.",
+        "p4": "EEG recordings and what we derive from them may be sensitive personal information. Depending on the context they may be treated as health-related or biometric information.",
+        "p5": "<strong>Technical information.</strong> Ordinary server logs, browser and device type, IP address, and the session cookie that keeps you signed in."
+      },
+      "use": {
+        "title": "4. What we do with it",
+        "p1": "We use it to run the service: to keep your account, to receive and process your recordings, to compute the analyses and reports you asked for, to show you your history, to keep the service secure and working, and to answer you when you write to us.",
+        "p2": "<strong>Improving Brain Trails itself.</strong> We use recordings and derived data to check and improve the accuracy and reliability of what Brain Trails does — whether a reading is sound, whether a metric behaves, why something failed. This is part of running the service you are using.",
+        "p3": "<strong>Broader research — only if you say yes.</strong> Separately, and only with the optional consent you can give at sign-up and change at any time on your account page, we may keep and use your pseudonymised recordings and derived data for scientific research going beyond running and improving this service. Saying no changes nothing about your account, your recordings or your results. If you withdraw, we stop using your data for research from that point; we cannot undo research already done, or recover data that has been irreversibly anonymised.",
+        "p4": "We do not sell your personal information, your recordings or anything derived from them, and we do not use them for advertising or behavioural tracking of any kind."
+      },
+      "consent": {
+        "title": "5. Consent",
+        "p1": "We ask for two things separately. The first is consent to process your recordings and account data in order to provide Brain Trails at all — without it there is no service to give you. The second is the optional research consent above.",
+        "p2": "You can withdraw the optional one at any time from your account page. You can withdraw the first by deleting your account, also from your account page, or by writing to us. Withdrawing does not undo processing already carried out."
+      },
+      "pseudonymised": {
+        "title": "6. Pseudonymised is not anonymous",
+        "p1": "Your recordings and everything derived from them are stored against a randomly generated identifier rather than your name or your email, and the files themselves carry no identifying detail in their names or their contents. Your identity lives in a separate database.",
+        "p2": "That is a real protection, and it is not anonymity. While we can reconnect an identifier to you — and through our own account system, we can — the data is still personal information, and this note treats it as such throughout. We will not describe anything as anonymous unless it has been processed so that a person is no longer reasonably identifiable from it."
+      },
+      "storage": {
+        "title": "7. Where it is stored",
+        "p1": "Lumentis Analytics Inc. is a Canadian company. Recordings, files and the application database are stored in Frankfurt, Germany. The application itself is served by Vercel, whose network is global, so requests may be handled outside that region even though the data at rest is not.",
+        "p2": "Authorised Lumentis personnel may access the data from Canada and Italy, where necessary to run, maintain and support the service."
+      },
+      "security": {
+        "title": "8. Security",
+        "p1": "Some of what protects your data comes from the platforms we build on, by default and without us configuring anything:",
+        "platforms": {
+          "1": "Files are encrypted at rest. Amazon S3 applies AES-256 server-side encryption to every new object as a baseline that cannot be switched off (<link>AWS documents this</link>).",
+          "2": "The database is encrypted at rest and reached over TLS; see <link>Neon’s security overview</link>.",
+          "3": "Traffic between your browser and us travels over HTTPS."
+        },
+        "p2": "And some of it is our own doing:",
+        "own": {
+          "1": "Passwords are stored only as Argon2 hashes. We cannot read them.",
+          "2": "Your files are never public. They are reached through links that are generated for one file and expire within minutes.",
+          "3": "Access to the systems holding recordings is limited to the small number of people who run the service.",
+          "4": "Identity is kept in a different place from the recordings, as described in section 6."
+        },
+        "p3": "Linking to those pages tells you what our providers do; it is not a claim that everything on our side is configured perfectly. No system is completely secure, and we cannot promise that yours will never be breached. What we can promise is that we will investigate anything we suspect and tell you where the law requires it — and, for something this sensitive, where it does not but you would obviously want to know."
+      },
+      "retention": {
+        "title": "9. Keeping it, and deleting it",
+        "p1": "We keep your account and your recordings while your account exists and this prototype is running. We have not set a fixed retention period yet and we are not going to invent one here: you can export or delete everything yourself, at any time, from your account page.",
+        "p2": "Because this is a prototype, data may also be removed when we reset an environment. We will give you notice before doing that deliberately.",
+        "p3": "<strong>When you delete your account</strong>, we delete your personal information: your recordings and the files behind them, the analyses and reports derived from them, your profile — including any health-related answers you gave — and the account itself.",
+        "p4": "One narrow exception. We keep a minimal record that consent was given and later withdrawn or deleted, so that we can show we asked properly and honoured your request. That record contains no EEG data, no health information, no name and no email address — only an account identifier, which version of this note was agreed to, and when. Once your account is deleted, that identifier no longer points to anything we hold.",
+        "p5": "Backups are not edited by hand. Copies of data held in backups disappear as those backups expire on their normal cycle."
+      },
+      "disclosure": {
+        "title": "10. Who else sees it",
+        "p1": "We do not sell your personal information and we do not share it for advertising. It is disclosed only to the providers who host and run the service on our behalf under contract — today our cloud storage, database, hosting and email providers — to professional advisers where genuinely necessary, where the law or a valid legal process requires it, to protect people from harm, in connection with a business transaction subject to privacy law, and to anyone you ask us to share it with."
+      },
+      "rights": {
+        "title": "11. Your rights",
+        "p1": "Two of these you can exercise yourself, right now, from your account page: <strong>export everything</strong> we hold about you, and <strong>delete your account</strong>. You can also grant or withdraw the optional research consent there.",
+        "p2": "For anything else — access, correction, restricting or objecting to particular processing, or asking what we have disclosed — write to <email>{privacyEmail}</email>. A person reads that address. We may need to confirm who you are before we act.",
+        "p3": "If you are not satisfied with how we have handled something, you can complain to the Office of the Privacy Commissioner of Canada, or to the Office of the Information and Privacy Commissioner for British Columbia."
+      },
+      "cookies": {
+        "title": "12. Cookies",
+        "p1": "We use one cookie, to keep you signed in, and browser storage for small preferences such as whether you chose the light or the dark theme. No advertising cookies, no third-party analytics, no tracking pixels. If you block the session cookie you will not be able to sign in.",
+        "p2": "A session cookie or a stored identifier does not make your recordings anonymous. If an identifier lets us find your data, that data is still personal information."
+      },
+      "age": {
+        "title": "13. Age",
+        "p1": "Brain Trails is for people aged 18 and over. We do not knowingly open accounts for anyone younger. If you believe someone under 18 has created an account, write to us and we will delete it."
+      },
+      "otherServices": {
+        "title": "14. Other services",
+        "p1": "Brain Trails works with a Muse EEG headband, which is made and supported by another company under its own privacy policy. The same goes for the infrastructure providers named above. We encourage you to read their notices."
+      },
+      "changes": {
+        "title": "15. Changes to this note",
+        "p1": "When we change this note in a way that matters, we will publish a new version and ask you to read and agree to it the next time you sign in. The version is at the top of this page and is recorded against your account when you agree, so there is always a record of what you actually agreed to."
+      },
+      "contact": {
+        "title": "16. Contact",
+        "p1": "Questions, requests or complaints: <email>{privacyEmail}</email>, or Lumentis Analytics Inc., Attn: Privacy Officer, 329 Howe Street, Unit 272, Vancouver, British Columbia V6C 3N2, Canada."
+      }
+    }
+  },
+  "admin": {
+    "shared": {
+      "backToAdmin": "Back to admin"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "active": "Active",
+      "rejected": "Rejected"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "intro": "Participants and input statistics across the prototype.",
+      "links": {
+        "fair": "The stand",
+        "protocols": "Catalog locks",
+        "review": "Publication review",
+        "applications": "Review applications"
+      },
+      "loadFailed": "Could not load statistics.",
+      "stats": {
+        "active": "Active participants",
+        "pending": "Pending review",
+        "rejected": "{count, plural, other {# rejected}}",
+        "recordings": "Recordings",
+        "liveSessions": "{count, plural, one {# live session} other {# live sessions}}",
+        "minutes": "Minutes of signal",
+        "failedJobs": "{count, plural, one {# failed job} other {# failed jobs}}"
+      },
+      "byTask": {
+        "title": "Recordings by task",
+        "empty": "No recordings yet."
+      },
+      "uploads": {
+        "title": "Uploads, last 14 days",
+        "empty": "No uploads yet.",
+        "aria": "Uploads per day"
+      },
+      "valueOf": "{label}: {value}",
+      "participants": {
+        "title": "Participants",
+        "participant": "Participant",
+        "status": "Status",
+        "recordings": "Recordings",
+        "minutes": "Minutes",
+        "lastActivity": "Last activity",
+        "allApplications": "All applications"
+      }
+    },
+    "applications": {
+      "title": "Applications",
+      "intro": "Who joins the beta, and in which cohort.",
+      "decision": "Decision",
+      "tabs": {
+        "pending": "Pending",
+        "waitlisted": "Waitlisted",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "Nothing pending.",
+        "waitlisted": "Nothing waitlisted.",
+        "accepted": "Nothing accepted.",
+        "rejected": "Nothing rejected."
+      },
+      "forbidden": "Admin role required.",
+      "profile": "Profile",
+      "cohort": "Cohort",
+      "allProfiles": "All profiles",
+      "allCohorts": "All cohorts",
+      "profiles": {
+        "private": "Private",
+        "therapist": "Therapist",
+        "lab_lead": "Lab lead",
+        "lab_member": "Lab member"
+      },
+      "meta": "{profile} · {email} · applied {date}{inCohort, select, yes { · {cohort}} other {}}",
+      "answers": {
+        "labels": {
+          "registration_no": "Registration no.",
+          "headband": "Headband",
+          "device": "Device",
+          "expected_subjects": "Expected subjects"
+        },
+        "webBluetooth": "Web Bluetooth",
+        "bluetoothUnknown": "Not reported",
+        "bluetoothYes": "Yes",
+        "bluetoothNo": "No - cannot pair here"
+      },
+      "verification": {
+        "manual": "Manual mail mode: send this verification link to the applicant.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "reissue": "Generate a fresh verification link"
+      },
+      "cohorts": {
+        "title": "Cohorts",
+        "empty": "No cohort yet. Create one to build the sample on purpose.",
+        "counts": "{accepted}{hasTarget, select, yes { / {target}} other {}} accepted · {waitlisted} waitlisted",
+        "new": "New cohort",
+        "anyProfile": "Any",
+        "target": "Target",
+        "add": "Add"
+      },
+      "decide": {
+        "noCohort": "No cohort",
+        "note": "Note (admins only)",
+        "accept": "Accept",
+        "waitlist": "Waitlist",
+        "reject": "Reject"
+      }
+    },
+    "fair": {
+      "title": "The stand",
+      "intro": "While the stand is open, registration asks whether someone would like to try the headband. They can then walk away: calling them sends an email saying their turn is about five minutes off.",
+      "open": "The stand is open.",
+      "closed": "The stand is closed.",
+      "openHint": "New registrations are being asked the question.",
+      "closedHint": "Closing does not empty the queue — people already in it keep their turn.",
+      "openAction": "Open the stand",
+      "closeAction": "Close the stand",
+      "stats": {
+        "waiting": "Waiting",
+        "called": "Called",
+        "done": "Done",
+        "declined": "Not any more"
+      },
+      "states": {
+        "done": "done",
+        "declined": "not any more"
+      },
+      "conversion": "{converted} of {tried} who tried the headband asked to be beta testers ({percent}%).",
+      "wantsBeta": "Asked to be a beta tester",
+      "queue": "In the queue",
+      "nobody": "Nobody is waiting.",
+      "calledAgo": "called{when, select, now { just now} minutes { {n} min ago} hours { {n} h ago} other {}}",
+      "signedUp": "{email} · signed up {when, select, now {just now} minutes {{n} min ago} hours {{n} h ago} other {}}",
+      "call": "Call",
+      "callAgain": "Call again",
+      "done": "Done",
+      "gone": "Gone",
+      "seenTo": "Seen to",
+      "toast": {
+        "emailed": "Emailed {email}.",
+        "done": "Marked done.",
+        "declined": "Taken off the queue."
+      }
+    },
+    "protocols": {
+      "title": "Catalog locks",
+      "intro": "A locked protocol is still listed — people see what is coming — but it cannot be started. Changes take effect at once; a run already under way finishes.",
+      "changeFailed": "Could not change the lock.",
+      "official": "Official protocols",
+      "startable": "{open} of {total} can be started",
+      "empty": "No official protocols yet.",
+      "locked": "locked",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "toast": {
+        "locked": "Locked.",
+        "unlocked": "Unlocked."
+      }
+    },
+    "review": {
+      "title": "Review",
+      "intro": "Protocols and items people asked to share with the community.",
+      "loadFailed": "The queue could not be loaded.",
+      "empty": "Nothing to review.",
+      "protocols": "Protocols",
+      "media": "Media",
+      "approve": "Approve",
+      "refuse": "Refuse",
+      "hide": "Hide",
+      "meta": "version {version}{timed, select, yes { · {duration}} other {}}{tagged, select, yes { · {tags}} other {}}",
+      "contentWarning": "Content warning: {warning}"
+    },
+    "probe": {
+      "fps": "fps {fps}",
+      "dropped": "dropped {count}",
+      "onset": "onset p95 {p95} ms (max {max}, n {count})"
+    }
+  },
+  "official": {
+    "attention-networks": {
+      "title": "Attention Networks",
+      "summary": "The arrows game with warning flashes: alerting, orienting and conflict, separately.",
+      "description": "The Attention Network Test. A flash may warn you that the arrows are coming, or show you where; the arrows may agree or not. Comparing those cases gives three scores: how much a warning helps, how much knowing the place helps, and what conflict costs. Two rounds of four minutes.",
+      "contentWarning": "Arrows and brief flashes appear on the screen for about eight minutes, and you answer quickly. You can stop at any time.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "First you rest, then two rounds of a game with arrows."
+              },
+              "1": {
+                "text": "About twelve minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        },
+        "rule": {
+          "label": "The rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Keep your eyes on the cross.\nA row of arrows will appear above or below it."
+              },
+              "1": {
+                "text": "Which way does the MIDDLE arrow point?\nPress the left or right arrow key, or tap the side."
+              },
+              "2": {
+                "text": "Sometimes a star flashes first. It tells you the arrows are coming,\nand sometimes where. Keep looking at the cross."
+              },
+              "3": {
+                "text": "A short practice first. It will tell you how you did."
+              }
+            },
+            "advance": {
+              "label": "Practise"
+            }
+          }
+        },
+        "practice": {
+          "label": "Practice"
+        },
+        "ready": {
+          "label": "For real",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "That was practice.\nNow two rounds of four minutes, with a break between."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "networks_a": {
+          "label": "Round one"
+        },
+        "break": {
+          "label": "Break",
+          "config": {
+            "message": "Rest your eyes. Round two starts by itself."
+          }
+        },
+        "networks_b": {
+          "label": "Round two"
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "All done."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "breath-pacing": {
+      "title": "Breath Pacing",
+      "summary": "Five minutes of slow breathing, six breaths a minute, between two rests.",
+      "description": "Breathe in for four seconds and out for six, following a circle. Rest before and after with your eyes closed, and say how you feel each time, so the change has two ends. With a headband that has a pulse sensor your heart rate is measured along.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "First you rest, then you breathe with a circle for five minutes."
+              },
+              "1": {
+                "text": "About nine minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        },
+        "mood_before": {
+          "label": "How do you feel?",
+          "config": {
+            "prompt": "Think of how you feel right now."
+          }
+        },
+        "rule": {
+          "label": "The pace",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Breathe in as the circle grows,\nout as it shrinks."
+              },
+              "1": {
+                "text": "Out is longer than in. Let it be easy:\nif you feel light-headed, breathe normally."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "paced": {
+          "label": "Breathe with the circle"
+        },
+        "eyes_closed_after": {
+          "label": "Eyes closed, again"
+        },
+        "mood_after": {
+          "label": "And now?",
+          "config": {
+            "prompt": "Think of how you feel now."
+          }
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "All done."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "emotion-video": {
+      "title": "Emotion video",
+      "summary": "Short film clips in random order, each followed by how it made you feel.",
+      "description": "A resting baseline, then cleared film clips in an order drawn for this session, each followed by a rest and a Self-Assessment Manikin, then a closing baseline.",
+      "contentWarning": "This protocol shows short film clips chosen to evoke emotions, some of them unpleasant. You can stop at any time.",
+      "blocks": {
+        "baseline_pre": {
+          "label": "Resting baseline"
+        },
+        "clip_video": {
+          "label": "Clip"
+        },
+        "clip_rating": {
+          "label": "How did it feel?",
+          "config": {
+            "prompt": "Think of how you felt while watching the clip."
+          }
+        },
+        "baseline_post": {
+          "label": "Resting baseline"
+        }
+      },
+      "groups": {
+        "clips": {
+          "label": "Clips"
+        }
+      }
+    },
+    "flanker-control": {
+      "title": "Flanker Control",
+      "summary": "Which way does the middle arrow point, when the ones around it disagree?",
+      "description": "A row of five arrows, answered as fast as you can. When the outer arrows point the other way you slow down and slip more often: that cost is how hard your attention works to shut out what is next to the target, and your brain's response to a slip is measured too.",
+      "contentWarning": "Arrows flash on the screen for about four minutes, and you answer quickly. You can stop at any time.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "First you rest, then a quick game with arrows."
+              },
+              "1": {
+                "text": "About seven minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        },
+        "rule": {
+          "label": "The rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "A row of arrows will appear."
+              },
+              "1": {
+                "text": "Which way does the MIDDLE arrow point?\nPress the left or right arrow key, or tap the side."
+              },
+              "2": {
+                "text": "The other arrows may point the other way. Ignore them.\nBe fast, but be right."
+              },
+              "3": {
+                "text": "A short practice first. It will tell you how you did."
+              }
+            },
+            "advance": {
+              "label": "Practise"
+            }
+          }
+        },
+        "practice": {
+          "label": "Practice"
+        },
+        "ready": {
+          "label": "For real",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "That was practice.\nNow about four minutes, without the hints."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "arrows": {
+          "label": "Middle arrow"
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "All done."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "free-recording": {
+      "title": "Free recording",
+      "summary": "Record your EEG with nothing on screen, for as long as you like.",
+      "description": "No stimulus: the headband records while you rest, read or meditate, and you stop when you are done. The simplest way to see your own trail.",
+      "blocks": {
+        "free_recording": {
+          "label": "Free recording"
+        }
+      }
+    },
+    "interoceptive-focus": {
+      "title": "Interoceptive Focus",
+      "summary": "Count your own heartbeats between two tones, without touching your pulse.",
+      "description": "Four rounds of silent counting, then how many and how sure. The headband's pulse sensor counts the real beats, so you see how closely you feel your own heart - and whether your confidence follows your accuracy, which is the more telling part.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "First you rest, then you listen for your own heartbeat, four times."
+              },
+              "1": {
+                "text": "About seven minutes in all. Sit comfortably, hands resting, sound on."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        },
+        "mood_before": {
+          "label": "How do you feel?",
+          "config": {
+            "prompt": "Think of how you feel right now."
+          }
+        },
+        "rule": {
+          "label": "The rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Between two tones, silently count your heartbeats."
+              },
+              "1": {
+                "text": "Do not touch your wrist or neck. Just feel.\nCount only the beats you really feel. Do not guess."
+              },
+              "2": {
+                "text": "Then type how many. Feeling few or none is a normal answer."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "counting": {
+          "label": "Count your heartbeats"
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "All done."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "processing-speed": {
+      "title": "Processing Speed",
+      "summary": "Match symbols to numbers against the clock, twice for ninety seconds.",
+      "description": "A table pairs nine symbols with nine digits; a symbol appears and you press its digit, as many as you can. One of the most sensitive short measures of mental speed there is: it moves with sleep, age and fatigue. The table changes each round.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "A short rest, then two rounds of matching symbols to numbers against the clock."
+              },
+              "1": {
+                "text": "About six minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_open": {
+          "label": "Eyes open"
+        },
+        "rule": {
+          "label": "The rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "A table at the top pairs each symbol with a number."
+              },
+              "1": {
+                "text": "A symbol appears in the middle.\nPress its number, on the keyboard or on the screen."
+              },
+              "2": {
+                "text": "As many as you can, without mistakes. A short practice first."
+              }
+            },
+            "advance": {
+              "label": "Practise"
+            }
+          }
+        },
+        "practice": {
+          "label": "Practice"
+        },
+        "ready": {
+          "label": "For real",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Now ninety seconds. The table has changed.\nGo as fast as you can while staying right."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "coding_a": {
+          "label": "Round one"
+        },
+        "break": {
+          "label": "Break",
+          "config": {
+            "message": "Shake out your hands. One more round, with a new table."
+          }
+        },
+        "coding_b": {
+          "label": "Round two"
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "All done."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "resting-baseline": {
+      "title": "Resting baseline",
+      "summary": "One minute eyes open, one minute eyes closed.",
+      "description": "The reference every other session is compared with: two minutes at rest, first with your eyes open on a cross, then closed until a tone tells you to open them.",
+      "blocks": {
+        "intro": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Sit comfortably and let your shoulders drop."
+              },
+              "1": {
+                "text": "First, one minute with your eyes open on a cross.\nThen one minute with your eyes closed."
+              },
+              "2": {
+                "text": "Keep still and relax your face and jaw."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_open": {
+          "label": "Eyes open"
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        }
+      }
+    },
+    "signal-navigator": {
+      "title": "Signal Navigator",
+      "summary": "A go/no-go attention game with paced breathing.",
+      "description": "Dock the cargo and let the debris pass. Paced breathing first, then two rounds of the game: it measures how well you hold a rule and withhold a response.",
+      "contentWarning": "Objects move across the screen for about five minutes. A reduced-motion mode is available, and you can stop at any time.",
+      "blocks": {
+        "arrival": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Cargo will cross your screen."
+              },
+              "1": {
+                "text": "Press Dock for blue cargo.\nLet debris pass."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "settle": {
+          "label": "Settle"
+        },
+        "challenge_a": {
+          "label": "Dock the cargo"
+        },
+        "reset": {
+          "label": "Pause and plan"
+        },
+        "rule": {
+          "label": "The rule for the next route",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Notice the urge to rush."
+              },
+              "1": {
+                "text": "For the next route:\nBeacon first, cargo second."
+              },
+              "2": {
+                "text": "Green beacon + blue cargo\nDock."
+              },
+              "3": {
+                "text": "Anything else\nHold."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "challenge_b": {
+          "label": "Wait for the signal"
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Route complete."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "sustained-focus": {
+      "title": "Sustained Focus",
+      "summary": "Six unbroken minutes of go/no-go, with resting baselines and a mood check.",
+      "description": "Rest with your eyes closed, practise, then dock cargo for six minutes while rare debris asks you to hold back. Built to be measured: enough trials to see your brain's response to withholding and to a slip, and long enough to see focus drift.",
+      "contentWarning": "Objects move across the screen for about six minutes without a break. A reduced-motion mode is available, and you can stop at any time.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "First you rest, then one long route."
+              },
+              "1": {
+                "text": "About nine minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        },
+        "eyes_open": {
+          "label": "Eyes open"
+        },
+        "mood_before": {
+          "label": "How do you feel?",
+          "config": {
+            "prompt": "Think of how you feel right now."
+          }
+        },
+        "rule": {
+          "label": "The rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Cargo will cross your screen."
+              },
+              "1": {
+                "text": "Press Dock for blue cargo.\nLet debris pass."
+              },
+              "2": {
+                "text": "A short practice first."
+              }
+            },
+            "advance": {
+              "label": "Practise"
+            }
+          }
+        },
+        "practice": {
+          "label": "Practice"
+        },
+        "ready": {
+          "label": "The long route",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "That was practice.\nThe route ahead is about six minutes."
+              },
+              "1": {
+                "text": "Most of it is cargo.\nStay ready for the debris."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "focus": {
+          "label": "Hold your focus"
+        },
+        "mood_after": {
+          "label": "And now?",
+          "config": {
+            "prompt": "Think of how you feel now that the route is over."
+          }
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Route complete."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "working-memory-span": {
+      "title": "Working Memory Span",
+      "summary": "Letters one at a time: is this the one from one step back? From two?",
+      "description": "The n-back. Easy first, then harder: you keep the last letters in mind and update them at every new one. Frontal theta rises with the load, which is exactly where a headband listens, and you rate how hard it felt at the end.",
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "First you rest, then a memory game with letters, easy and then harder."
+              },
+              "1": {
+                "text": "About nine minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "eyes_closed": {
+          "label": "Eyes closed"
+        },
+        "rule_1": {
+          "label": "The easy rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Letters appear one at a time."
+              },
+              "1": {
+                "text": "Press Match (or the space bar) when a letter\nis the SAME AS THE ONE JUST BEFORE it."
+              },
+              "2": {
+                "text": "Otherwise do nothing. A short practice first."
+              }
+            },
+            "advance": {
+              "label": "Practise"
+            }
+          }
+        },
+        "practice": {
+          "label": "Practice"
+        },
+        "one_back": {
+          "label": "One back"
+        },
+        "rule_2": {
+          "label": "The harder rule",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Now press Match when a letter is the same\nas the one TWO BEFORE it."
+              },
+              "1": {
+                "text": "B ... K ... B  is a match.\nB ... B is not. It is meant to be hard."
+              }
+            },
+            "advance": {
+              "label": "Begin"
+            }
+          }
+        },
+        "two_back": {
+          "label": "Two back"
+        },
+        "effort": {
+          "label": "How hard was it?",
+          "config": {
+            "prompt": "Think of the last round, two back."
+          }
+        },
+        "outro": {
+          "label": "Return",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "All done."
+              },
+              "1": {
+                "text": "Rest for a moment."
+              }
+            },
+            "footnote": "This is not a medical test or diagnosis."
+          }
+        }
+      }
+    },
+    "coming-task-switching": {
+      "title": "Task Switching",
+      "summary": "Coming soon.",
+      "blocks": {
+        "free_recording": {
+          "label": "Free recording"
+        }
+      }
+    },
+    "coming-attentional-blink": {
+      "title": "Attentional Blink",
+      "summary": "Coming soon.",
+      "blocks": {
+        "free_recording": {
+          "label": "Free recording"
+        }
+      }
+    },
+    "coming-threat-detection": {
+      "title": "Threat Detection",
+      "summary": "Coming soon.",
+      "blocks": {
+        "free_recording": {
+          "label": "Free recording"
+        }
+      }
+    },
+    "coming-visual-oddballs": {
+      "title": "Visual Oddballs",
+      "summary": "Coming soon.",
+      "blocks": {
+        "free_recording": {
+          "label": "Free recording"
+        }
+      }
+    },
+    "coming-paired-associates": {
+      "title": "Paired Associates",
+      "summary": "Coming soon.",
+      "blocks": {
+        "free_recording": {
+          "label": "Free recording"
+        }
+      }
+    }
   }
 }

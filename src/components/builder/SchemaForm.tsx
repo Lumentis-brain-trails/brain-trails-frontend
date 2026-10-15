@@ -35,7 +35,11 @@ import {
   type Field,
   type JsonSchema,
 } from "@/lib/builder/fields";
-import { type PresentedField, present } from "@/lib/builder/fieldDocs";
+import {
+  type PresentedField,
+  present,
+  useFieldWords,
+} from "@/lib/builder/fieldDocs";
 
 /**
  * Which kind's words to use, and whether the advanced settings are open. A context
@@ -76,10 +80,11 @@ export function SchemaForm({
   kind,
 }: SchemaFormProps) {
   const t = useTranslations("builder.form");
+  const words = useFieldWords();
   const [open, setOpen] = useState(false);
   const described = describeFields(schema, value);
   const fields: PresentedField[] = kind
-    ? present(kind, described)
+    ? present(kind, described, words)
     : described.map((field) => ({ ...field, advanced: false }));
   const set: SetAt = (path, next) =>
     onChange(path.length === 0 ? next : setAtPath(value ?? {}, path, next));
@@ -345,6 +350,7 @@ function ListControl({
   const full = field.max !== undefined && rows.length >= field.max;
   const label = field.required ? `${field.label} *` : field.label;
   const presentation = useContext(Presentation);
+  const words = useFieldWords();
   /** A row's fields, in the kind's words; its advanced ones show with the form's. */
   const rowFields = (row: unknown): Field[] => {
     const described = describeFields(field.itemSchema ?? {}, row);
@@ -352,6 +358,7 @@ function ListControl({
     return present(
       presentation.kind,
       described,
+      words,
       field.path.filter((segment) => !/^\d+$/.test(segment))
     ).filter((sub) => presentation.advanced || !sub.advanced || sub.required);
   };

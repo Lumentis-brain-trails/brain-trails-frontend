@@ -21,7 +21,7 @@ import { KindCover } from "@/components/builder/KindCover";
 import { Button, Field as FieldShell, Input } from "@/components/ui";
 import { SchemaForm } from "@/components/builder/SchemaForm";
 import type { JsonSchema } from "@/lib/builder/fields";
-import { identityOf } from "@/lib/builder/kinds";
+import { useKindText } from "@/lib/builder/kinds";
 import type { BlockNode } from "@/lib/protocol/tree";
 
 export interface BlockInspectorProps {
@@ -55,7 +55,7 @@ export function BlockInspector({
 }: BlockInspectorProps) {
   const t = useTranslations("builder.inspector");
   const schema = kindSchemas[block.kind];
-  const identity = identityOf(block.kind);
+  const identity = useKindText()(block.kind);
   // open when the block already uses one of them, so nothing set is ever out of sight
   const [around, setAround] = useState(
     () =>

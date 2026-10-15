@@ -577,6 +577,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/me/locale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put My Locale
+         * @description Remember the language the caller chose, on the account.
+         *
+         *     The frontend keeps the choice in a cookie so a page renders in it at once; this is
+         *     what makes it follow the person to another browser, and what the mailer reads. An
+         *     unsupported language is a 422 from the schema, never a stored value.
+         */
+        put: operations["put_my_locale_auth_me_locale_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me/profile": {
         parameters: {
             query?: never;
@@ -1790,6 +1814,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Usage
+         * @description Append the caller's UI events (204); 422 `usage_rejected` names the first bad one.
+         *
+         *     `at` is kept when it lies within the last 24 hours, otherwise the server's clock is
+         *     used. Events are attributed to the caller and to no workspace: UI events describe
+         *     navigation, and the workspace a page shows is the server's to record (T2 adds it).
+         */
+        post: operations["post_usage_usage_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces": {
         parameters: {
             query?: never;
@@ -2573,8 +2621,6 @@ export interface components {
                 library_publish: boolean;
                 /** @description Media bin: audio, image sets, text, questionnaires; probe; quotas (S17). */
                 library_v2: boolean;
-                /** @description Locales other than English on client-facing surfaces (S26). */
-                locales: boolean;
                 /** @description TOTP enforced for anyone who can see another person's data (S26). */
                 mfa_required: boolean;
                 /** @description Protocol model, runtime, official templates, protocol from media (S18). */
@@ -3100,6 +3146,17 @@ export interface components {
             median_rt_ms: number | null;
             /** N */
             n: number;
+        };
+        /**
+         * LocaleIn
+         * @description The language to remember for the caller (`PUT /auth/me/locale`).
+         */
+        LocaleIn: {
+            /**
+             * Locale
+             * @enum {string}
+             */
+            locale: "en" | "it";
         };
         /**
          * LoginIn
@@ -3845,6 +3902,9 @@ export interface components {
          *     `wants_beta` is an intention, not an admission: the admin board still decides who is
          *     let in and when. `intended_use` is the one question worth asking at the door, because
          *     it is what the board sorts on.
+         *
+         *     `locale` is the language of the form the person filled in, when the client knows it:
+         *     the account's first mail is written in it. Left out, the account has no language yet.
          */
         RegisterIn: {
             application?: components["schemas"]["ApplicationIn"] | null;
@@ -3859,6 +3919,8 @@ export interface components {
             intended_use?: string | null;
             /** Intended Use Other */
             intended_use_other?: string | null;
+            /** Locale */
+            locale?: ("en" | "it") | null;
             /**
              * Newsletter
              * @default false
@@ -4228,6 +4290,31 @@ export interface components {
             recording_id: string;
         };
         /**
+         * UsageBatchIn
+         * @description What the frontend flushes at once.
+         */
+        UsageBatchIn: {
+            /** Events */
+            events: components["schemas"]["UsageEventIn"][];
+        };
+        /**
+         * UsageEventIn
+         * @description One UI event: its name, when it happened, and categories describing it.
+         *
+         *     `props` values are categories or numbers (a route pattern such as `/protocols/[id]`,
+         *     never the concrete path with the id).
+         */
+        UsageEventIn: {
+            /** At */
+            at?: string | null;
+            /** Event */
+            event: string;
+            /** Props */
+            props?: {
+                [key: string]: string | number | boolean | null;
+            };
+        };
+        /**
          * UsageOut
          * @description The protocols whose published versions play an item.
          */
@@ -4242,6 +4329,9 @@ export interface components {
          *     `beta` says whether the account is in the beta programme - an accepted application,
          *     whichever door let it in - so the account page can say so and the admin's user list
          *     can show who is in without opening the board.
+         *
+         *     `locale` is the language the person chose, null until they choose one: a client
+         *     adopts it when set and otherwise follows the browser.
          */
         UserOut: {
             /**
@@ -4263,6 +4353,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Locale */
+            locale?: string | null;
             /** Role */
             role: string;
             /** Status */
@@ -5230,6 +5322,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    put_my_locale_auth_me_locale_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocaleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -7090,6 +7215,37 @@ export interface operations {
                     "application/json": {
                         [key: string]: string[];
                     };
+                };
+            };
+        };
+    };
+    post_usage_usage_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UsageBatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

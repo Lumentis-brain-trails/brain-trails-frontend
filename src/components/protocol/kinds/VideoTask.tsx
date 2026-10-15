@@ -16,6 +16,7 @@
  * `onset_precision: "coarse"` rather than quietly implying a precision they do not have.
  */
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import {
@@ -87,6 +88,7 @@ function VideoRenderer({
   onComplete,
   stepId,
 }: TaskContext<VideoConfig>) {
+  const t = useTranslations("kinds");
   const videoRef = useRef<VideoWithFrameCallback>(null);
   const firedRef = useRef(new Set<number>());
   const doneRef = useRef(false);
@@ -353,15 +355,13 @@ function VideoRenderer({
     <div className="relative flex h-full items-center justify-center bg-black">
       {error !== null ? (
         <div className="flex flex-col items-center gap-4 px-6 text-center">
-          <p className="text-sm text-red-400">
-            This video could not be played.
-          </p>
+          <p className="text-sm text-red-400">{t("video.error")}</p>
           <Button
             onClick={() =>
               finish({ error: "media", media_error_code: error || null })
             }
           >
-            Continue
+            {t("common.continue")}
           </Button>
         </div>
       ) : (
@@ -384,8 +384,8 @@ function VideoRenderer({
           />
           {blocked && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Button onClick={play} aria-label="Play the video">
-                Play
+              <Button onClick={play} aria-label={t("video.playLabel")}>
+                {t("video.play")}
               </Button>
             </div>
           )}

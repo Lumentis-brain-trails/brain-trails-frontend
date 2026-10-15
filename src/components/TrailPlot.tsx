@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useChartTheme } from "@/lib/theme";
 import { fitToBox } from "@/lib/thumb";
@@ -63,6 +64,7 @@ export function TrailPlot({
   analysis: Analysis;
   height?: number;
 }) {
+  const t = useTranslations("recordings.trail");
   const theme = useChartTheme();
   const landscape = analysis.landscape;
 
@@ -101,7 +103,7 @@ export function TrailPlot({
       style={{ height }}
       className="w-full"
       role="img"
-      aria-label="Trail of the recording, from the first window to the last, on the session's energy landscape"
+      aria-label={t("aria")}
     >
       <defs>
         <radialGradient id={GRADIENT_ID}>

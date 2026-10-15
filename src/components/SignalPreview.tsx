@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
@@ -23,6 +24,7 @@ export function SignalPreview({
   recordingId: string;
   durationS: number;
 }) {
+  const t = useTranslations("signals.preview");
   const [start, setStart] = useState(0);
   const [stage, setStage] = useState<"std" | "clean">("clean");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,7 +74,7 @@ export function SignalPreview({
           {
             stroke: theme.ink3,
             values: (_u: uPlot, ticks: number[]) =>
-              ticks.map((t) => `${Math.round(t)} s`),
+              ticks.map((tick) => `${Math.round(tick)} s`),
             grid: { stroke: theme.hairline, width: 1 },
             ticks: { stroke: theme.hairline, width: 1 },
             font: "11px -apple-system, system-ui",
@@ -101,17 +103,18 @@ export function SignalPreview({
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Segmented
-          label="Signal stage"
+          label={t("stage")}
           value={stage}
           onChange={setStage}
           options={[
-            { value: "clean", label: "Cleaned" },
-            { value: "std", label: "Standardized" },
+            { value: "clean", label: t("cleaned") },
+            { value: "std", label: t("standardized") },
           ]}
         />
         <div className="flex items-center gap-3">
           <span className="type-caption text-ink-3 tabular-nums">
-            {start}–{end} s
+            {/* as text, not numbers: a long recording must not gain separators */}
+            {t("range", { start: String(start), end: String(end) })}
           </span>
           <input
             type="range"
@@ -119,14 +122,14 @@ export function SignalPreview({
             max={maxStart}
             value={start}
             onChange={(e) => setStart(Number(e.target.value))}
-            aria-label="Window start"
+            aria-label={t("windowStart")}
             className="w-40 accent-(--accent)"
           />
         </div>
       </div>
       {signal.isLoading && <Skeleton className="h-[260px]" />}
       {signal.isError && (
-        <p className="text-[14px] text-ink-3">Signal not available.</p>
+        <p className="text-[14px] text-ink-3">{t("unavailable")}</p>
       )}
       <div
         ref={containerRef}

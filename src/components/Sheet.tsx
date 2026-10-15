@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { cn } from "@/components/ui";
 
@@ -22,6 +23,7 @@ export function Sheet({
   dismissible?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("common");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,7 +68,7 @@ export function Sheet({
               type="button"
               data-close
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("close")}
               className="pressable -mt-1 -mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-ink-2 hover:bg-surface-3"
             >
               <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden>

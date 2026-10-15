@@ -1,16 +1,21 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use } from "react";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import {
   type ProtocolDetail,
   type ValidationResult,
   formatMinutes,
   isPlayable,
 } from "@/lib/protocol/catalog";
+import { useOfficialTexts } from "@/lib/protocol/official";
+import { trackFeature } from "@/lib/usage";
 import {
   Button,
   buttonClass,
@@ -21,35 +26,6 @@ import {
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 
-const KIND_WORDS: Record<string, string> = {
-  instructions: "Instructions",
-  prompt: "Instructions",
-  fixation: "Fixation cross",
-  baseline: "Resting baseline",
-  rest: "Rest",
-  countdown: "Countdown",
-  video: "Video",
-  audio: "Sound",
-  text: "Reading",
-  questionnaire: "Questionnaire",
-  quiz: "Quiz",
-  breathing: "Paced breathing",
-  "go-no-go": "Go/no-go game",
-  flanker: "Arrows game",
-  "n-back": "Letter memory game",
-  coding: "Symbol coding",
-  heartbeat: "Heartbeat counting",
-  "image-sequence": "Images",
-  group: "Group",
-};
-
-const errorText = (e: unknown) =>
-  e instanceof ApiRequestError
-    ? e.error.message
-    : e instanceof Error
-      ? e.message
-      : String(e);
-
 /**
  * A protocol's page (V3-0004, S16-S18): what it does, how long it takes, the blocks in
  * plain words, the content warning - then Play, which goes through consent and the
@@ -58,6 +34,13 @@ const errorText = (e: unknown) =>
  * For its author it is also where a draft is checked and published (the timeline
  * builder is S19): Publish validates and freezes the draft as the next version, and the
  * errors and warnings come back here.
+ *
+ * The outline names each block in plain words (`protocols.kindWords.<kind>`); a kind
+ * the catalogue does not know yet is shown by its code rather than left blank.
+ *
+ * An official protocol's own words - title, description, warning, the outline's labels -
+ * come from the catalogue in the reader's language (`lib/protocol/official.ts`); a
+ * protocol somebody wrote is shown as stored.
  */
 export default function ProtocolPage({
   params,
@@ -65,6 +48,11 @@ export default function ProtocolPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const t = useTranslations("protocols.detail");
+  const tKinds = useTranslations("protocols.kindWords");
+  const locale = useFormatLocale();
+  const errorMessage = useErrorMessage();
+  const official = useOfficialTexts();
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -84,7 +72,7 @@ export default function ProtocolPage({
   const publish = useMutation({
     mutationFn: () => api.post<ProtocolDetail>(`protocols/${id}/publish`, {}),
     onSuccess: () => {
-      toast("success", "Published: it is ready to play.");
+      toast("success", t("toast.published"));
       refresh();
     },
     onError: () => check.mutate(),
@@ -99,8 +87,8 @@ export default function ProtocolPage({
       toast(
         "success",
         p.review_state === "pending"
-          ? "Sent for review: it appears in Community once approved."
-          : "Shared with the community."
+          ? t("toast.sentForReview")
+          : t("toast.shared")
       );
       refresh();
     },
@@ -110,9 +98,7 @@ export default function ProtocolPage({
     onSuccess: (r) => {
       toast(
         "success",
-        r.status === "archived"
-          ? "Archived: your past sessions keep it."
-          : "Deleted."
+        r.status === "archived" ? t("toast.archived") : t("toast.deleted")
       );
       void queryClient.invalidateQueries({ queryKey: ["protocols"] });
       router.push("/protocols");
@@ -130,16 +116,16 @@ export default function ProtocolPage({
   if (item.isError || !item.data)
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <ErrorBanner message="This protocol is not in your catalog." />
+        <ErrorBanner message={t("notFound")} />
         <div className="mt-6">
           <Link href="/protocols" className={buttonClass("secondary")}>
-            Back to protocols
+            {t("back")}
           </Link>
         </div>
       </main>
     );
 
-  const p = item.data;
+  const p = official.detail(item.data);
   const locked = p.access === "locked";
   const playable = isPlayable(p);
   const draftChanged =
@@ -175,29 +161,32 @@ export default function ProtocolPage({
         <div>
           <h1 className="type-title">{p.title}</h1>
           <p className="type-caption mt-1 text-ink-3">
-            {p.visibility === "official"
-              ? "Official"
-              : p.visibility === "public"
-                ? "Community"
-                : "Your workspace"}
-            {p.current_version
-              ? ` · version ${p.current_version}`
-              : " · draft, not published"}
-            {p.review_state === "pending" && " · waiting for review"}
+            {[
+              p.visibility === "official"
+                ? t("visibility.official")
+                : p.visibility === "public"
+                  ? t("visibility.community")
+                  : t("visibility.workspace"),
+              p.current_version
+                ? t("version", { version: p.current_version })
+                : t("draftNotPublished"),
+              p.review_state === "pending" ? t("waitingForReview") : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
         {playable ? (
-          <Link href={`/protocols/${p.id}/run`} className={buttonClass()}>
-            Play
+          <Link
+            href={`/protocols/${p.id}/run`}
+            onClick={() => trackFeature("protocol.play")}
+            className={buttonClass()}
+          >
+            {t("play")}
           </Link>
         ) : (
-          <Button
-            disabled
-            title={
-              locked ? "Not open yet: beta testers get this first" : undefined
-            }
-          >
-            {locked ? "Locked" : "Not published"}
+          <Button disabled title={locked ? t("lockedHint") : undefined}>
+            {locked ? t("locked") : t("notPublished")}
           </Button>
         )}
       </header>
@@ -210,63 +199,64 @@ export default function ProtocolPage({
 
       {p.content_warning && (
         <Card className="mt-6 border-warn/40 bg-warn-soft">
-          <h2 className="text-[15px] font-semibold">Before you start</h2>
+          <h2 className="text-[15px] font-semibold">{t("warning.title")}</h2>
           <p className="mt-1 text-ink-2">{p.content_warning}</p>
-          <p className="type-caption mt-2 text-ink-3">
-            You can stop at any point.
-          </p>
+          <p className="type-caption mt-2 text-ink-3">{t("warning.stop")}</p>
         </Card>
       )}
 
       {p.outline.length > 0 && (
         <Card className="mt-6">
-          <h2 className="text-[15px] font-semibold">What happens</h2>
+          <h2 className="text-[15px] font-semibold">{t("outline.title")}</h2>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-ink-2">
             {p.outline.map((step, i) => (
               <li key={i}>
                 {step.label}
                 <span className="text-ink-3">
-                  {" — "}
-                  {KIND_WORDS[step.kind] ?? step.kind}
-                  {step.count > 1 && ` ×${step.count}`}
-                  {step.duration_s ? `, ${formatMinutes(step.duration_s)}` : ""}
+                  {" "}
+                  {t("outline.step", {
+                    kind: tKinds.has(step.kind as never)
+                      ? tKinds(step.kind as never)
+                      : step.kind,
+                    repeated: step.count > 1 ? "yes" : "no",
+                    count: step.count,
+                    timed: step.duration_s ? "yes" : "no",
+                    duration: formatMinutes(step.duration_s) ?? "",
+                  })}
                 </span>
               </li>
             ))}
           </ol>
-          <p className="type-caption mt-3 text-ink-3">
-            You wear the headband throughout; the recording starts and stops
-            with the session.
-          </p>
+          <p className="type-caption mt-3 text-ink-3">{t("outline.note")}</p>
         </Card>
       )}
 
       <Card className="mt-6" inset>
         <KeyValue
-          label="Duration"
+          label={t("duration")}
           value={formatMinutes(p.est_duration_s) ?? "–"}
         />
         <KeyValue
-          label="Added"
-          value={new Date(p.created_at).toLocaleDateString()}
+          label={t("added")}
+          value={new Date(p.created_at).toLocaleDateString(locale)}
         />
       </Card>
 
       {p.mine && (
         <Card className="mt-6 space-y-4">
           <div>
-            <h2 className="text-[15px] font-semibold">Your protocol</h2>
+            <h2 className="text-[15px] font-semibold">{t("yours.title")}</h2>
             <p className="type-caption mt-1 text-ink-3">
               {p.current_version === null
-                ? "Publish it to play it. Publishing checks it first."
+                ? t("yours.unpublished")
                 : draftChanged
-                  ? "The draft has changes that are not published yet."
-                  : "Published. Sessions keep the version they ran."}
+                  ? t("yours.changed")
+                  : t("yours.published")}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/protocols/${p.id}/edit`} className={buttonClass()}>
-              Edit
+              {t("actions.edit")}
             </Link>
             {(p.current_version === null || draftChanged) && (
               <Button
@@ -274,7 +264,7 @@ export default function ProtocolPage({
                 onClick={() => publish.mutate()}
                 disabled={publish.isPending}
               >
-                Publish
+                {t("actions.publish")}
               </Button>
             )}
             <Button
@@ -282,7 +272,7 @@ export default function ProtocolPage({
               onClick={() => check.mutate()}
               disabled={check.isPending}
             >
-              Check
+              {t("actions.check")}
             </Button>
             {p.visibility === "workspace" &&
               p.current_version !== null &&
@@ -292,16 +282,17 @@ export default function ProtocolPage({
                   onClick={() => share.mutate()}
                   disabled={share.isPending}
                 >
-                  Share with the community
+                  {t("actions.share")}
                 </Button>
               )}
             <Button
               variant="ghost"
               onClick={() => {
-                if (window.confirm(`Delete “${p.title}”?`)) remove.mutate();
+                if (window.confirm(t("confirmDelete", { title: p.title })))
+                  remove.mutate();
               }}
             >
-              Delete
+              {t("actions.delete")}
             </Button>
           </div>
           {report && <Findings report={report} />}
@@ -311,25 +302,30 @@ export default function ProtocolPage({
       {!p.mine && p.current_version !== null && (
         <div className="mt-6">
           <Button variant="secondary" onClick={() => duplicate.mutate()}>
-            Make a copy to edit
+            {t("actions.copy")}
           </Button>
         </div>
       )}
 
       {mutationError && (
         <div className="mt-4">
-          <ErrorBanner message={errorText(mutationError)} />
+          <ErrorBanner message={errorMessage(mutationError)} />
         </div>
       )}
     </main>
   );
 }
 
+/**
+ * What the check found. The findings themselves are the server's sentences
+ * (`ValidationOut`), shown as they come; only the all-clear line is the app's own.
+ */
 function Findings({ report }: { report: ValidationResult }) {
+  const t = useTranslations("protocols.detail.findings");
   if (report.ok && report.warnings.length === 0)
     return (
       <p className="type-caption text-ok">
-        No problems found · {formatMinutes(report.est_duration_s)}
+        {t("ok", { duration: formatMinutes(report.est_duration_s) ?? "" })}
       </p>
     );
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { type EegChannel } from "@/lib/muse/protocol";
 import type { ChannelQuality, QualityLevel } from "@/lib/muse/quality";
 
@@ -14,6 +15,7 @@ export function HeadbandDiagram({
 }: {
   quality: Record<EegChannel, ChannelQuality>;
 }) {
+  const t = useTranslations("signals.diagram");
   const fill = (level: QualityLevel) =>
     level === "good"
       ? "var(--color-ok)"
@@ -39,7 +41,12 @@ export function HeadbandDiagram({
     <svg
       viewBox="0 0 240 200"
       role="img"
-      aria-label={`Headband: ${sensors.map((s) => `${s.id} ${quality[s.id].level}`).join(", ")}`}
+      aria-label={t("label", {
+        TP9: t(`levels.${quality.TP9.level}`),
+        AF7: t(`levels.${quality.AF7.level}`),
+        AF8: t(`levels.${quality.AF8.level}`),
+        TP10: t(`levels.${quality.TP10.level}`),
+      })}
       className="h-auto w-full max-w-[260px]"
     >
       {/* head */}
@@ -105,7 +112,7 @@ export function HeadbandDiagram({
         fontSize="11"
         fill="var(--color-ink-3)"
       >
-        front view · wearer&apos;s left is on the left
+        {t("caption")}
       </text>
     </svg>
   );

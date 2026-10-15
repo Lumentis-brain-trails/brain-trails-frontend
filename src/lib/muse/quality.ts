@@ -15,7 +15,11 @@ export interface ChannelQuality {
   level: QualityLevel;
   /** Standard deviation of the window in microvolts (null when unknown). */
   stdUv: number | null;
-  /** Short human hint shown under the light. */
+  /**
+   * The level in English words, for logs and tests. Not what the screen shows: the
+   * text under a light comes from the catalogue by `level` (`signals.hints.<level>`),
+   * so it reads in the person's language.
+   */
   hint: string;
 }
 
