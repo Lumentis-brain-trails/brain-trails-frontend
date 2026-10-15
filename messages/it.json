@@ -123,7 +123,8 @@
       "stopTitle": "Fermare questa sessione?",
       "stopBody": "Quello che hai fatto finora viene conservato. Non puoi riprendere questa sessione.",
       "keepGoing": "Continua",
-      "stopSession": "Ferma la sessione"
+      "stopSession": "Ferma la sessione",
+      "paused": "Una breve pausa. La sessione riprende tra poco."
     },
     "results": {
       "hits": "Bersagli colti",
@@ -1507,6 +1508,7 @@
       "draftNotPublished": "bozza, non pubblicata",
       "waitingForReview": "in attesa di revisione",
       "play": "Avvia",
+      "runWithConsole": "Avvia con la console",
       "locked": "Bloccato",
       "notPublished": "Non pubblicato",
       "lockedHint": "Non ancora aperto: i beta tester lo ricevono per primi",
@@ -3087,6 +3089,66 @@
           "label": "Registrazione libera"
         }
       }
+    }
+  },
+  "console": {
+    "title": "Console dell'operatore",
+    "unavailable": "La console dell'operatore non è ancora disponibile qui.",
+    "noProtocol": "Apri la console dalla pagina di un protocollo.",
+    "backToProtocols": "Torna ai protocolli",
+    "unsupported": "Questo browser non può collegare due finestre. Usa Chrome o Edge su un computer.",
+    "openParticipantFirst": "Apri lo schermo del partecipante prima di iniziare.",
+    "syncing": "Sincronizzazione con la fascia…",
+    "headband": "{name} · batteria {battery}",
+    "headbandLost": "Fascia disconnessa",
+    "participantGone": "Lo schermo del partecipante è stato chiuso. Ferma la sessione per conservare quanto registrato.",
+    "stopAndSave": "Ferma e salva",
+    "participant": {
+      "title": "Schermo del partecipante",
+      "intro": "Aprilo, trascinalo sul secondo schermo e lì fai clic su Schermo intero. Il partecipante vede il protocollo e nient'altro.",
+      "open": "Apri lo schermo del partecipante",
+      "connected": "Collegato",
+      "notConnected": "Non ancora aperto",
+      "waiting": "In attesa che l'operatore inizi…",
+      "ended": "La sessione è terminata. Grazie.",
+      "unsupported": "Questo browser non può collegarsi alla console."
+    },
+    "commands": {
+      "title": "Comandi",
+      "pause": "Pausa",
+      "resume": "Riprendi",
+      "endBlock": "Termina blocco",
+      "skipBlock": "Salta blocco",
+      "flag": "Segna questo momento",
+      "abort": "Termina sessione",
+      "abortConfirm": "Sì, termina la sessione",
+      "abortCancel": "Continua",
+      "pausePending": "La pausa inizia quando finisce questo blocco.",
+      "messageLabel": "Messaggio al partecipante",
+      "messagePlaceholder": "Compare sul suo schermo per qualche secondo",
+      "send": "Invia"
+    },
+    "plan": {
+      "title": "Piano",
+      "notStarted": "Non iniziato",
+      "running": "In corso",
+      "paused": "In pausa",
+      "pausePending": "In pausa dopo questo blocco",
+      "waitingForParticipant": "In attesa che il partecipante inizi"
+    },
+    "notes": {
+      "title": "Note",
+      "label": "Nota",
+      "placeholder": "Datata da quando inizi a scrivere",
+      "hint": "⌘/Ctrl + Invio salva",
+      "save": "Salva nota",
+      "saved": "{count, plural, one {# nota salvata} other {# note salvate}}",
+      "failed": "Non è stato possibile salvare la nota. Riprova."
+    },
+    "events": {
+      "title": "Eventi",
+      "none": "Ancora nessun evento.",
+      "seconds": "{s} s"
     }
   }
 }

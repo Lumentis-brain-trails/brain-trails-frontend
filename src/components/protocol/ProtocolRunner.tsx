@@ -15,6 +15,11 @@
  * runner hands each task a copy of its step with the catalogue's words, and shows the
  * label and the notice from the same source. Only what is rendered is a copy - the
  * step that names markers and the plan the host posted are the stored ones.
+ *
+ * An operator's console drives the run through `commands` (backend V3-0007): the runner
+ * applies each command at its safe point (`SAFE_POINTS`) and logs every one, applied or
+ * not, as an `operator_command` event. A pause holds the run between blocks; ending or
+ * skipping a block closes it now, with `ended_by: "operator"` on its `block_end`.
  */
 
 import { useTranslations } from "next-intl";
@@ -30,6 +35,15 @@ import {
 import { TimingProbeOverlay } from "@/components/TimingProbeOverlay";
 import { Button } from "@/components/ui";
 import { type ClockAnchor, runAnchor } from "@/lib/protocol/clock";
+import {
+  type CommandOutcome,
+  type CommandPort,
+  MESSAGE_SHOWN_MS,
+  OPERATOR_COMMAND_EVENT,
+  type OperatorCommand,
+  type RunnerState,
+  SAFE_POINTS,
+} from "@/lib/protocol/commands";
 import {
   type Marker,
   type MarkerDraft,
@@ -98,8 +112,12 @@ export interface ProtocolRunnerProps {
    * when a step moves things on screen, because that choice is made here.
    */
   warningShown?: boolean;
+  /** Commands from an operator's console (V3-0007); absent for a self-run session. */
+  commands?: CommandPort;
+  /** Told the runner's state after every change, for a console to show. */
+  onState?: (state: RunnerState) => void;
   onFinish: (results: TaskResult[], markers: readonly Marker[]) => void;
-  onExit: (reason: "user" | "error") => void;
+  onExit: (reason: "user" | "operator" | "error") => void;
 }
 
 type Screen = "warning" | "running" | "confirm-exit";
@@ -111,6 +129,8 @@ export function ProtocolRunner({
   anchor,
   officialSlug = null,
   warningShown = false,
+  commands,
+  onState,
   onFinish,
   onExit,
 }: ProtocolRunnerProps) {
@@ -142,6 +162,7 @@ export function ProtocolRunner({
    */
   const onFinishRef = useLatest(onFinish);
   const onExitRef = useLatest(onExit);
+  const onStateRef = useLatest(onState);
 
   const resultsRef = useRef<TaskResult[]>([]);
   const finishedRef = useRef(false);
@@ -348,8 +369,46 @@ export function ProtocolRunner({
       .finally(() => onFinishRef.current(resultsRef.current, sink.all()));
   }, [emitRun, onFinishRef, protocol.endMarker, sink, stopSounds]);
 
-  const onComplete = useCallback(
-    (result: TaskResult) => {
+  /*
+   * Operator commands (V3-0007). A pause asked for mid-block waits for the block to end
+   * (`pausePendingRef`); the run then holds before the next block (`hold`) until
+   * `resume`. Refs mirror the state so two commands in the same tick see each other.
+   */
+  const [hold, setHold] = useState<{ next: number; since: number } | null>(
+    null
+  );
+  const holdRef = useRef(hold);
+  const [pausePending, setPausePending] = useState(false);
+  const pausePendingRef = useRef(false);
+  const [message, setMessage] = useState<{ id: string; text: string } | null>(
+    null
+  );
+  const seenCommandsRef = useRef(new Set<string>());
+  // The step already completed: a kind's own timer may fire in the tick between an
+  // operator ending its block and the block unmounting, and must not advance twice.
+  const doneStepRef = useRef<number | null>(null);
+
+  const holdBefore = useCallback(
+    (next: number) => {
+      const now = performance.now();
+      emitRun(
+        {
+          label: "run_paused",
+          kind: "system",
+          meta: { next_step_id: protocol.steps[next]?.id ?? null },
+        },
+        now
+      );
+      holdRef.current = { next, since: now };
+      setHold(holdRef.current);
+    },
+    [emitRun, protocol.steps]
+  );
+
+  const completeStep = useCallback(
+    (result: TaskResult, endMeta: Record<string, unknown> = {}) => {
+      if (doneStepRef.current === stepIndex) return;
+      doneStepRef.current = stepIndex;
       resultsRef.current = [...resultsRef.current, result];
       if (step?.endMarker)
         emitForStep({ label: step.endMarker, kind: "stage" });
@@ -361,6 +420,7 @@ export function ProtocolRunner({
             kind: "stage",
             meta: {
               duration: Math.round(now - blockStartRef.current) / 1000,
+              ...endMeta,
             },
           },
           now
@@ -369,28 +429,180 @@ export function ProtocolRunner({
       }
       void sink.flush();
 
-      if (stepIndex + 1 >= protocol.steps.length) finish();
-      else setStepIndex((i) => i + 1);
+      const next = stepIndex + 1;
+      if (next >= protocol.steps.length) finish();
+      else if (pausePendingRef.current) {
+        pausePendingRef.current = false;
+        setPausePending(false);
+        holdBefore(next);
+      } else setStepIndex(next);
     },
-    [emitForStep, finish, protocol.steps.length, sink, step, stepIndex]
+    [
+      emitForStep,
+      finish,
+      holdBefore,
+      protocol.steps.length,
+      sink,
+      step,
+      stepIndex,
+    ]
   );
 
-  const abort = useCallback(() => {
-    if (finishedRef.current) return;
-    finishedRef.current = true;
-    stopSounds();
-    emitRun({
-      label: "run_aborted",
-      kind: "system",
-      meta: {
-        step_id: step?.id ?? null,
-        step_index: stepIndex,
-        reason: "user",
-      },
+  const onComplete = useCallback(
+    (result: TaskResult) => completeStep(result),
+    [completeStep]
+  );
+
+  const abort = useCallback(
+    (reason: "user" | "operator") => {
+      if (finishedRef.current) return;
+      finishedRef.current = true;
+      stopSounds();
+      emitRun({
+        label: "run_aborted",
+        kind: "system",
+        meta: {
+          step_id: step?.id ?? null,
+          step_index: stepIndex,
+          reason,
+        },
+      });
+      closedRef.current = true;
+      void sink.flush().finally(() => onExitRef.current(reason));
+    },
+    [emitRun, onExitRef, sink, stopSounds, step, stepIndex]
+  );
+
+  /**
+   * Apply one command and log it. Read through a ref by the subscription, so it always
+   * sees the current step without resubscribing on every render.
+   */
+  const handleCommand = (command: OperatorCommand) => {
+    if (finishedRef.current || seenCommandsRef.current.has(command.id)) return;
+    seenCommandsRef.current.add(command.id);
+    if (!anchorRef.current) {
+      // Not begun: there is no run clock to log on, and only stopping means anything.
+      if (command.type === "abort") {
+        finishedRef.current = true;
+        onExitRef.current("operator");
+      }
+      return;
+    }
+    const log = (
+      outcome: CommandOutcome,
+      extra: Record<string, unknown> = {}
+    ) =>
+      emitRun({
+        label: OPERATOR_COMMAND_EVENT,
+        kind: "system",
+        meta: {
+          command: command.type,
+          command_id: command.id,
+          source: command.source,
+          // not `outcome`: on a marker that word is a trial's score
+          effect: outcome,
+          safe_point: SAFE_POINTS[command.type],
+          step_id: step?.id ?? null,
+          step_index: stepIndex,
+          ...(command.text ? { text: command.text } : {}),
+          ...extra,
+        },
+      });
+    const held = holdRef.current;
+    switch (command.type) {
+      case "pause":
+        if (held || pausePendingRef.current || !step) return log("ignored");
+        pausePendingRef.current = true;
+        setPausePending(true);
+        return log("deferred");
+      case "resume": {
+        if (held) {
+          log("applied");
+          const now = performance.now();
+          emitRun(
+            {
+              label: "run_resumed",
+              kind: "system",
+              meta: { paused_ms: Math.round(now - held.since) },
+            },
+            now
+          );
+          holdRef.current = null;
+          setHold(null);
+          setStepIndex(held.next);
+          return;
+        }
+        if (pausePendingRef.current) {
+          // asked again before the block ended: the pause never happens
+          pausePendingRef.current = false;
+          setPausePending(false);
+          return log("applied", { cancelled: "pause" });
+        }
+        return log("ignored");
+      }
+      case "end_block":
+      case "skip_block": {
+        if (held || !step) return log("ignored");
+        const how = {
+          ended_by: "operator",
+          ...(command.type === "skip_block" ? { skipped: true } : {}),
+        };
+        log(
+          "applied",
+          lastTrialRef.current === null
+            ? {}
+            : { trial_in_flight: lastTrialRef.current }
+        );
+        completeStep(
+          { stepId: step.id, taskKind: step.kind, summary: how },
+          how
+        );
+        return;
+      }
+      case "message":
+        if (!command.text) return log("ignored");
+        setMessage({ id: command.id, text: command.text });
+        return log("applied");
+      case "flag":
+        return log("applied");
+      case "abort":
+        log("applied");
+        abort("operator");
+        return;
+    }
+  };
+  const handleCommandRef = useLatest(handleCommand);
+  useEffect(
+    () => commands?.subscribe((command) => handleCommandRef.current(command)),
+    [commands, handleCommandRef]
+  );
+
+  // An operator's message stays a short while, then leaves the stage to the block.
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), MESSAGE_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  const status: RunnerState["status"] =
+    screen === "warning" ? "warning" : hold ? "paused" : "running";
+  const messageText = message?.text ?? null;
+  useEffect(() => {
+    onStateRef.current?.({
+      status,
+      stepIndex,
+      stepId: protocol.steps[stepIndex]?.id ?? null,
+      pausePending,
+      message: messageText,
     });
-    closedRef.current = true;
-    void sink.flush().finally(() => onExitRef.current("user"));
-  }, [emitRun, onExitRef, sink, stopSounds, step, stepIndex]);
+  }, [
+    messageText,
+    onStateRef,
+    pausePending,
+    protocol.steps,
+    status,
+    stepIndex,
+  ]);
 
   // The prompt's edges, on the run's timeline. An abort leaves it open: the run closes
   // with `run_aborted`, not a dismissal.
@@ -480,17 +692,36 @@ export function ProtocolRunner({
   const Renderer = kind.Renderer;
 
   return (
-    <Shell onStop={() => setScreen("confirm-exit")} label={shownStep.label}>
-      <Renderer
-        key={step.id}
-        config={shownStep.config as never}
-        stepId={step.id}
-        phase={step.phase ?? step.id}
-        seed={stepSeed}
-        emit={emitForStep}
-        onComplete={onComplete}
-        reducedMotion={reducedMotion}
-      />
+    <Shell
+      onStop={() => setScreen("confirm-exit")}
+      label={hold ? undefined : shownStep.label}
+    >
+      {hold ? (
+        <div className="flex h-full items-center justify-center px-6 text-center">
+          <p className="type-heading text-ink-2">{t("paused")}</p>
+        </div>
+      ) : (
+        <Renderer
+          key={step.id}
+          config={shownStep.config as never}
+          stepId={step.id}
+          phase={step.phase ?? step.id}
+          seed={stepSeed}
+          emit={emitForStep}
+          onComplete={onComplete}
+          reducedMotion={reducedMotion}
+        />
+      )}
+      {message && (
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-x-0 top-16 z-40 flex justify-center px-6"
+        >
+          <p className="max-w-xl rounded-[var(--radius-card)] bg-surface-2/90 px-5 py-3 text-center text-[16px] text-ink">
+            {message.text}
+          </p>
+        </div>
+      )}
       {screen === "confirm-exit" && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-(--scrim)">
           <div className="enter-pop max-w-sm rounded-[var(--radius-sheet)] border border-hairline bg-surface p-6 text-center shadow-(--shadow-sheet)">
@@ -500,7 +731,7 @@ export function ProtocolRunner({
               <Button variant="ghost" onClick={() => setScreen("running")}>
                 {t("keepGoing")}
               </Button>
-              <Button variant="danger" onClick={abort}>
+              <Button variant="danger" onClick={() => abort("user")}>
                 {t("stopSession")}
               </Button>
             </div>
