@@ -2031,6 +2031,103 @@
       "decline": "Would rather not agree? Write to {email} and we will export or delete everything we hold for you."
     }
   },
+  "workspaces": {
+    "switcher": {
+      "label": "Workspace: {name}. Change workspace",
+      "title": "Work in",
+      "kindAndSeat": "{kind} · {seat}",
+      "pending": "Waiting for approval",
+      "rejected": "Not approved",
+      "request": "Request a clinic or a laboratory"
+    },
+    "kinds": {
+      "personal": "Personal",
+      "practice": "Clinic",
+      "lab": "Laboratory"
+    },
+    "editions": {
+      "personal": "Your own recordings",
+      "therapy": "Therapy",
+      "research": "Research"
+    },
+    "seats": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    }
+  },
+  "organisationRequest": {
+    "title": "Request a clinic or a laboratory",
+    "intro": "An organisation is a shared workspace: colleagues build protocols together and each keeps the people they work with. We approve every request by hand during the beta.",
+    "unavailable": "Organisations are not available here yet.",
+    "kind": "Kind",
+    "practiceHint": "For therapists, alone or in a team. Each therapist sees only the patients they care for.",
+    "labHint": "For a research group. Owners and admins see the whole laboratory's recordings.",
+    "name": "Name",
+    "nameHint": "As your colleagues will see it, for example the name of the practice.",
+    "submit": "Send the request",
+    "sent": "Request sent. You will find it below, and in the workspace menu once approved.",
+    "yours": "Your requests",
+    "none": "No requests yet.",
+    "requestedOn": "{kind} · requested on {date}",
+    "status": {
+      "pending": "Waiting for approval",
+      "active": "Approved",
+      "rejected": "Not approved",
+      "archived": "Closed"
+    }
+  },
+  "people": {
+    "title": "People of {name}",
+    "intro": {
+      "therapy": "Everyone with a seat shares the clinic's protocols and media. Patients are not shared that way: each therapist sees only the people they care for.",
+      "research": "Everyone with a seat shares the laboratory's protocols and media. Owners and admins see every recording of the laboratory."
+    },
+    "personal": {
+      "title": "This is your personal workspace",
+      "text": "Only you work here. Switch to a clinic or a laboratory to see its people."
+    },
+    "members": {
+      "title": "Seats",
+      "you": "you",
+      "since": "Since {date}",
+      "seatOf": "Seat of {email}",
+      "remove": "Remove",
+      "removeConfirm": "Remove {email}? Their seat ends now, and so does their access to the people they cared for here.",
+      "leave": "Leave",
+      "leaveConfirm": "Leave {name}? You will need a new invitation to come back."
+    },
+    "secrecy": {
+      "therapy": "A seat gives no access to a patient's recordings. Only the patient's carers read them, owners included.",
+      "research": "Members see the laboratory's library; recordings are read by owners and admins, and by members through their studies."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "email": "Email",
+      "seat": "Seat",
+      "send": "Invite",
+      "sent": "Invitation sent. The link is good for 14 days.",
+      "manual": "This environment sends no email. Pass this link on yourself:",
+      "none": "No open invitations.",
+      "expires": "{seat} · open until {date}",
+      "revoke": "Revoke"
+    }
+  },
+  "join": {
+    "missingToken": "This link has no invitation in it. Open the link from the email again.",
+    "loading": "Opening the invitation…",
+    "offer": "An invitation for {email}, as {seat}.",
+    "signIn": "Sign in to accept",
+    "register": "No account yet? Register with {email}",
+    "expires": "The link is good until {date}.",
+    "accept": "Join {name}",
+    "otherAccount": "You are signed in as {current}, but this invitation is for {invited}. Sign out and sign in with that address.",
+    "closed": {
+      "accepted": "This invitation has already been accepted.",
+      "revoked": "This invitation was withdrawn. Ask for a new one.",
+      "expired": "This invitation has expired. Ask for a new one."
+    }
+  },
   "privacy": {
     "metaTitle": "Privacy",
     "eyebrow": "Privacy note · v{version}",
@@ -3116,103 +3213,6 @@
           "label": "Free recording"
         }
       }
-    }
-  },
-  "workspaces": {
-    "switcher": {
-      "label": "Workspace: {name}. Change workspace",
-      "title": "Work in",
-      "kindAndSeat": "{kind} · {seat}",
-      "pending": "Waiting for approval",
-      "rejected": "Not approved",
-      "request": "Request a clinic or a laboratory"
-    },
-    "kinds": {
-      "personal": "Personal",
-      "practice": "Clinic",
-      "lab": "Laboratory"
-    },
-    "editions": {
-      "personal": "Your own recordings",
-      "therapy": "Therapy",
-      "research": "Research"
-    },
-    "seats": {
-      "owner": "Owner",
-      "admin": "Admin",
-      "member": "Member"
-    }
-  },
-  "organisationRequest": {
-    "title": "Request a clinic or a laboratory",
-    "intro": "An organisation is a shared workspace: colleagues build protocols together and each keeps the people they work with. We approve every request by hand during the beta.",
-    "unavailable": "Organisations are not available here yet.",
-    "kind": "Kind",
-    "practiceHint": "For therapists, alone or in a team. Each therapist sees only the patients they care for.",
-    "labHint": "For a research group. Owners and admins see the whole laboratory's recordings.",
-    "name": "Name",
-    "nameHint": "As your colleagues will see it, for example the name of the practice.",
-    "submit": "Send the request",
-    "sent": "Request sent. You will find it below, and in the workspace menu once approved.",
-    "yours": "Your requests",
-    "none": "No requests yet.",
-    "requestedOn": "{kind} · requested on {date}",
-    "status": {
-      "pending": "Waiting for approval",
-      "active": "Approved",
-      "rejected": "Not approved",
-      "archived": "Closed"
-    }
-  },
-  "people": {
-    "title": "People of {name}",
-    "intro": {
-      "therapy": "Everyone with a seat shares the clinic's protocols and media. Patients are not shared that way: each therapist sees only the people they care for.",
-      "research": "Everyone with a seat shares the laboratory's protocols and media. Owners and admins see every recording of the laboratory."
-    },
-    "personal": {
-      "title": "This is your personal workspace",
-      "text": "Only you work here. Switch to a clinic or a laboratory to see its people."
-    },
-    "members": {
-      "title": "Seats",
-      "you": "you",
-      "since": "Since {date}",
-      "seatOf": "Seat of {email}",
-      "remove": "Remove",
-      "removeConfirm": "Remove {email}? Their seat ends now, and so does their access to the people they cared for here.",
-      "leave": "Leave",
-      "leaveConfirm": "Leave {name}? You will need a new invitation to come back."
-    },
-    "secrecy": {
-      "therapy": "A seat gives no access to a patient's recordings. Only the patient's carers read them, owners included.",
-      "research": "Members see the laboratory's library; recordings are read by owners and admins, and by members through their studies."
-    },
-    "invitations": {
-      "title": "Invitations",
-      "email": "Email",
-      "seat": "Seat",
-      "send": "Invite",
-      "sent": "Invitation sent. The link is good for 14 days.",
-      "manual": "This environment sends no email. Pass this link on yourself:",
-      "none": "No open invitations.",
-      "expires": "{seat} · open until {date}",
-      "revoke": "Revoke"
-    }
-  },
-  "join": {
-    "missingToken": "This link has no invitation in it. Open the link from the email again.",
-    "loading": "Opening the invitation…",
-    "offer": "An invitation for {email}, as {seat}.",
-    "signIn": "Sign in to accept",
-    "register": "No account yet? Register with {email}",
-    "expires": "The link is good until {date}.",
-    "accept": "Join {name}",
-    "otherAccount": "You are signed in as {current}, but this invitation is for {invited}. Sign out and sign in with that address.",
-    "closed": {
-      "accepted": "This invitation has already been accepted.",
-      "revoked": "This invitation was withdrawn. Ask for a new one.",
-      "expired": "This invitation has expired. Ask for a new one."
     }
   }
 }

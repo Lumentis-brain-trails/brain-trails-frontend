@@ -22,6 +22,8 @@ describe("middleware", () => {
   test("guards only the authenticated areas", () => {
     expect(config.matcher).toEqual([
       "/home",
+      "/people",
+      "/organisations/:path*",
       "/account",
       "/library",
       "/library/:path*",
@@ -33,8 +35,6 @@ describe("middleware", () => {
       "/protocols",
       "/protocols/:path*",
       "/admin/:path*",
-      "/people",
-      "/organisations/:path*",
     ]);
   });
 });
