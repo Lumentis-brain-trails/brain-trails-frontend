@@ -1,0 +1,27 @@
+/**
+ * Signing out, and in: the query cache goes with the account.
+ *
+ * Every answer the app fetched lives in React Query's cache for a while (`["me"]` for a
+ * minute). On a shared computer - a clinic's tablet, a family laptop - the next person to
+ * sign in must not see the previous one's patients, sessions or name even for a moment,
+ * so the cache is emptied whenever the account changes: at sign-out, and at sign-in in
+ * case the previous session simply expired.
+ */
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+import { api } from "@/lib/api";
+
+/** `signOut(to)`: end the session, forget every cached answer, go to `to`. */
+export function useSignOut(): (to?: string) => Promise<void> {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  return useCallback(
+    async (to = "/login") => {
+      await api.logout();
+      queryClient.clear();
+      router.push(to);
+    },
+    [queryClient, router]
+  );
+}

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useState } from "react";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
 import { useFeature } from "@/lib/features";
@@ -27,6 +27,8 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { AssignDialog } from "@/components/subjects/AssignDialog";
+import { useCurrentWorkspace } from "@/lib/workspace";
 
 /**
  * A protocol's page (V3-0004, S16-S18): what it does, how long it takes, the blocks in
@@ -61,6 +63,17 @@ export default function ProtocolPage({
   const queryClient = useQueryClient();
   const toast = useToast();
   const consoleOn = useFeature("console");
+  // Assigning it to a patient or participant (backend T3), from an organisation only.
+  const workspace = useCurrentWorkspace();
+  const assignmentsOn = useFeature("assignments");
+  const multi = useFeature("workspaces_multi");
+  const assignOn =
+    assignmentsOn &&
+    multi &&
+    workspace !== undefined &&
+    workspace.kind !== "personal";
+  const [assigning, setAssigning] = useState(false);
+  const tAssign = useTranslations("assignments");
   const item = useQuery({
     queryKey: ["protocol", id],
     queryFn: () => api.get<ProtocolDetail>(`protocols/${id}`),
@@ -202,6 +215,11 @@ export default function ProtocolPage({
                 {t("runWithConsole")}
               </Button>
             )}
+            {assignOn && (
+              <Button variant="secondary" onClick={() => setAssigning(true)}>
+                {tAssign("fromProtocol")}
+              </Button>
+            )}
             <Link
               href={`/protocols/${p.id}/run`}
               onClick={() => trackFeature("protocol.play")}
@@ -209,6 +227,14 @@ export default function ProtocolPage({
             >
               {t("play")}
             </Link>
+            {assigning && workspace && (
+              <AssignDialog
+                workspaceId={workspace.id}
+                protocolId={p.id}
+                onClose={() => setAssigning(false)}
+                onDone={() => toast("success", tAssign("done"))}
+              />
+            )}
           </div>
         ) : (
           <Button disabled title={locked ? t("lockedHint") : undefined}>

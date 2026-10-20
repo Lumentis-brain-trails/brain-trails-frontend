@@ -21,7 +21,25 @@
     "personal_workspace": "Nel tuo spazio personale non ci sono altre persone.",
     "sole_owner": "Sei l'unico titolare di un'organizzazione. Affidala a un altro titolare prima di eliminare il tuo account.",
     "self_approval": "Una richiesta fatta da te la decide un altro amministratore.",
-    "email_not_verified": "Prima conferma il tuo indirizzo email: apri il link che ti abbiamo inviato, poi riprova."
+    "email_not_verified": "Prima conferma il tuo indirizzo email: apri il link che ti abbiamo inviato, poi riprova.",
+    "client_account": "Questo account vede solo le sessioni che gli sono state assegnate.",
+    "consent_not_attested": "Attesta il consenso di questa persona prima di registrarla.",
+    "code_taken": "Qui c'è già un'altra persona con questo codice.",
+    "display_name_not_allowed": "Un laboratorio conosce i partecipanti solo per codice.",
+    "lab_by_study": "In un laboratorio sono gli studi a decidere chi vede chi.",
+    "not_member": "Solo un membro di questa organizzazione può avere in carico qualcuno.",
+    "already_client": "Questa persona ha già un suo account.",
+    "archived": "La scheda di questa persona è archiviata. Ripristinala prima.",
+    "assignment_closed": "Questa assegnazione è conclusa.",
+    "assignment_mismatch": "Questa assegnazione riguarda un altro protocollo.",
+    "upload_only": "Le tue sessioni vengono registrate su questo computer e caricate alla fine.",
+    "adult_required": "Gli account sono per maggiorenni. La tua clinica può registrarti anche senza.",
+    "client_only": "Accedi, o registrati con questo indirizzo, poi accetta l'invito.",
+    "not_published": "Pubblica questo protocollo prima di usarlo.",
+    "no_workspace": "Questo account non ha uno spazio di lavoro suo.",
+    "assignment_full": "Tutte le sessioni di questa assegnazione sono già in corso. Concludi o ferma prima l'altra.",
+    "staff_not_client": "Un membro di questa organizzazione non può esserne paziente o partecipante.",
+    "session_closed": "Questa sessione è già terminata."
   },
   "application": {
     "step": "Candidatura",
@@ -2006,7 +2024,10 @@
       "landscape": "Paesaggio cerebrale",
       "account": "Account",
       "admin": "Admin",
-      "people": "Persone"
+      "people": "Persone",
+      "patients": "Pazienti",
+      "participants": "Partecipanti",
+      "my": "Le mie sessioni"
     },
     "sections": "Sezioni",
     "you": "Tu",
@@ -2130,6 +2151,16 @@
       "accepted": "Questo invito è già stato accettato.",
       "revoked": "Questo invito è stato ritirato. Chiedine uno nuovo.",
       "expired": "Questo invito è scaduto. Chiedine uno nuovo."
+    },
+    "client": {
+      "offer": "{name} ti invita a svolgere le tue sessioni con Brain Trails. Vedrai solo ciò che ti assegna.",
+      "address": "L'invito è per {email}.",
+      "password": "Scegli una password",
+      "passwordHint": "Almeno 10 caratteri.",
+      "adult": "Ho almeno 18 anni",
+      "create": "Crea il mio account",
+      "signIn": "Ho già un account: accedi",
+      "accept": "Accetta"
     }
   },
   "privacy": {
@@ -3279,6 +3310,206 @@
       "title": "Eventi",
       "none": "Ancora nessun evento.",
       "seconds": "{s} s"
+    }
+  },
+  "subjects": {
+    "patients": {
+      "title": "Pazienti",
+      "intro": "Le persone che hai in carico. Un paziente lo vedono solo i suoi terapeuti; titolari e amministratori vedono l'elenco.",
+      "new": "Nuovo paziente",
+      "empty": "Ancora nessun paziente",
+      "emptyText": "Aggiungi un paziente per assegnargli protocolli e registrare sessioni con lui.",
+      "one": "Paziente",
+      "who": "Chi viene registrato?"
+    },
+    "participants": {
+      "title": "Partecipanti",
+      "intro": "Le persone che questo laboratorio registra, conosciute per codice.",
+      "new": "Nuovo partecipante",
+      "empty": "Ancora nessun partecipante",
+      "emptyText": "Aggiungi un partecipante per assegnargli protocolli e registrare sessioni con lui.",
+      "one": "Partecipante",
+      "who": "Chi viene registrato?"
+    },
+    "search": "Cerca per codice o nome",
+    "view": {
+      "label": "Mostra",
+      "mine": "I miei",
+      "all": "Elenco completo"
+    },
+    "showArchived": "Archiviati",
+    "rosterRow": "Solo elenco: codice e terapeuti",
+    "noCarer": "Senza terapeuta",
+    "noConsent": "Consenso non attestato",
+    "hasAccount": "Ha un account",
+    "archivedBadge": "Archiviato",
+    "sessions": "{count, plural, =0 {Nessuna sessione} one {# sessione} other {# sessioni}}",
+    "lastSession": "l'ultima il {date}",
+    "openAssignments": "{count, plural, =0 {niente assegnato} one {# assegnato} other {# assegnati}}",
+    "carersList": "In carico a: {names}",
+    "form": {
+      "code": "Codice",
+      "codeHint": "Se lo lasci vuoto, ne scegliamo uno noi.",
+      "name": "Nome",
+      "nameHint": "Lo vedono solo i terapeuti che lo hanno in carico.",
+      "birthYear": "Anno di nascita",
+      "sex": "Sesso alla nascita",
+      "handedness": "Mano dominante",
+      "language": "Lingua delle sue email e delle sue schermate",
+      "consent": "Il modulo di consenso è stato firmato",
+      "consentHint": "Lo attesti tu; data e nome vengono conservati.",
+      "consentVersion": "Versione del modulo",
+      "create": "Aggiungi",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "none": "Non indicato",
+      "sexes": {
+        "female": "Femmina",
+        "male": "Maschio",
+        "intersex": "Intersex",
+        "prefer_not_to_say": "Preferisce non dirlo"
+      },
+      "hands": {
+        "right": "Destra",
+        "left": "Sinistra",
+        "ambidextrous": "Ambidestra"
+      },
+      "languages": {
+        "en": "English",
+        "it": "Italiano"
+      }
+    },
+    "page": {
+      "code": "Codice {code}",
+      "since": "Aggiunto il {date}",
+      "details": "Dati",
+      "edit": "Modifica",
+      "consentOn": "Consenso attestato il {date} (modulo {version})",
+      "consentMissing": "Consenso non ancora attestato: finché non lo è, non si può registrare.",
+      "rosterTitle": "Vedi questa persona nell'elenco",
+      "rosterText": "Il suo codice e chi la segue, nient'altro. Per leggere le sue sessioni o registrarla, aggiungiti tra i terapeuti: la modifica resta registrata.",
+      "noCarerTitle": "Nessuno segue questa persona",
+      "noCarerText": "Il suo terapeuta se n'è andato. Affidala a qualcuno aggiungendo un terapeuta.",
+      "archive": "Archivia",
+      "archiveConfirm": "Archiviare {name}? Le assegnazioni aperte vengono annullate; le sessioni restano.",
+      "restore": "Ripristina",
+      "record": "Registra una sessione"
+    },
+    "care": {
+      "title": "Chi la segue",
+      "you": "tu",
+      "add": "Aggiungi un terapeuta",
+      "choose": "Scegli un membro",
+      "addButton": "Aggiungi",
+      "remove": "Togli",
+      "removeConfirm": "Togliere {email}? Non vedrà più questa persona.",
+      "audited": "Ogni modifica di chi la segue resta registrata ed è visibile ai terapeuti.",
+      "nobodyElse": "Tutti i membri seguono già questa persona."
+    },
+    "sessionsCard": {
+      "title": "Sessioni",
+      "none": "Ancora nessuna sessione.",
+      "status": {
+        "running": "In corso",
+        "done": "Completata",
+        "aborted": "Interrotta"
+      },
+      "assigned": "assegnata"
+    },
+    "invite": {
+      "title": "Il suo account",
+      "text": "Invitala per email: vedrà solo ciò che le assegni, con Play e le sessioni passate. Niente sentiero, niente metriche, niente note.",
+      "email": "La sua email",
+      "send": "Invita",
+      "sent": "Invito inviato. Il link resta valido 14 giorni.",
+      "manual": "Questo ambiente non invia email. Passale tu questo link:",
+      "has": "Ha un suo account e vede ciò che le assegni."
+    }
+  },
+  "assignments": {
+    "title": "Assegnato",
+    "none": "Niente di assegnato.",
+    "assign": "Assegna un protocollo",
+    "dialogTitle": "Assegna un protocollo",
+    "protocol": "Protocollo",
+    "chooseProtocol": "Scegli un protocollo",
+    "subject": "A",
+    "chooseSubject": "Scegli una persona",
+    "runs": "Volte",
+    "unlimited": "Tutte le volte che vuole",
+    "due": "Entro il",
+    "dueHint": "Se ha un account, il giorno prima riceve un promemoria per email.",
+    "note": "Una nota per lei o lui",
+    "noteHint": "La vede sulla sua scheda.",
+    "submit": "Assegna",
+    "cancel": "Annulla",
+    "done": "Assegnato.",
+    "runsOf": "{done} di {allowed} volte",
+    "runsDone": "{done, plural, =0 {non ancora svolto} one {svolto una volta} other {svolto # volte}}",
+    "dueOn": "entro il {date}",
+    "late": "in ritardo",
+    "closed": {
+      "completed": "Completata",
+      "cancelled": "Annullata"
+    },
+    "cancelAssignment": "Annulla",
+    "cancelConfirm": "Annullare questa assegnazione? Sparisce dal suo elenco.",
+    "reminder": "promemoria programmato",
+    "fromProtocol": "Assegna",
+    "noSubjects": "Ancora nessuno a cui assegnarlo: aggiungi prima un paziente o un partecipante."
+  },
+  "picker": {
+    "title": "Chi viene registrato?",
+    "myself": "Io (il mio spazio personale)",
+    "noConsent": "{name} (consenso non attestato)",
+    "intro": "La sessione di un'altra persona viene registrata in questa organizzazione e la leggono solo i suoi terapeuti.",
+    "countsTowards": "Conta questa sessione nella sua assegnazione ({left, plural, =0 {nessuna rimasta} one {ne resta #} other {ne restano #}})",
+    "countsOpen": "Conta questa sessione nella sua assegnazione",
+    "stray": "La persona scelta non è tra i tuoi pazienti o partecipanti in questo spazio di lavoro. Passa al suo spazio, oppure registra te stesso.",
+    "myselfInstead": "Registra me"
+  },
+  "my": {
+    "brand": "Le tue sessioni",
+    "nav": {
+      "home": "Le mie sessioni",
+      "account": "Account",
+      "signOut": "Esci",
+      "app": "Torna all'app"
+    },
+    "title": "Le tue sessioni",
+    "intro": "Ciò che la tua clinica o il tuo laboratorio ti ha assegnato. Trova un momento tranquillo, indossa la fascia, premi Play.",
+    "empty": "Niente da fare per ora",
+    "emptyText": "Quando ti viene assegnato qualcosa, lo trovi qui.",
+    "from": "Da {name}",
+    "duration": "Circa {minutes, plural, one {# minuto} other {# minuti}}",
+    "due": "Entro il {date}",
+    "late": "La data è passata: puoi farla comunque.",
+    "left": "{left, plural, one {Ne resta #} other {Ne restano #}}",
+    "play": "Play",
+    "needs": "Ti servono la fascia e Chrome su un computer.",
+    "past": "Sessioni passate",
+    "pastNone": "Ancora nessuna.",
+    "status": {
+      "running": "Interrotta a metà",
+      "done": "Completata",
+      "aborted": "Interrotta"
+    },
+    "run": {
+      "saved": "Salvata. Grazie!",
+      "back": "Torna alle tue sessioni"
+    },
+    "account": {
+      "title": "Account",
+      "email": "Email",
+      "delete": "Elimina il mio account",
+      "deleteHint": "Il tuo account sparisce; ciò che la tua clinica o il tuo laboratorio ha registrato resta a loro. Chiedi a loro di eliminarlo.",
+      "deleteTitle": "Eliminare il tuo account?",
+      "deleteText": "Non potrai più accedere. Le tue sessioni le conserva l'organizzazione che le ha registrate.",
+      "password": "La tua password",
+      "keep": "Tienilo",
+      "confirm": "Elimina",
+      "deleting": "Elimino…",
+      "done": "Il tuo account è stato eliminato."
     }
   }
 }
