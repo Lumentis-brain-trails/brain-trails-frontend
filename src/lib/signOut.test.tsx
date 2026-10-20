@@ -23,3 +23,18 @@ test("signing out forgets every cached answer before going on", async () => {
   await result.current("/");
   expect(push).toHaveBeenLastCalledWith("/");
 });
+
+test("a failed sign-out still forgets the cache and leaves", async () => {
+  push.mockClear();
+  logout.mockRejectedValueOnce(new TypeError("network"));
+  const client = new QueryClient();
+  client.setQueryData(["subjects"], [{ display_name: "Maria" }]);
+  const { result } = renderHook(() => useSignOut(), {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  });
+  await expect(result.current()).rejects.toThrow("network");
+  expect(client.getQueryData(["subjects"])).toBeUndefined();
+  expect(push).toHaveBeenCalledWith("/login");
+});

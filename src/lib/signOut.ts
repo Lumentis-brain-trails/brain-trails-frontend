@@ -12,15 +12,23 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { api } from "@/lib/api";
 
-/** `signOut(to)`: end the session, forget every cached answer, go to `to`. */
+/**
+ * `signOut(to)`: end the session, forget every cached answer, go to `to`.
+ *
+ * The cache is emptied and the page left even when the sign-out call fails (its error
+ * still reaches the caller): what was on screen must not outlive the attempt to leave.
+ */
 export function useSignOut(): (to?: string) => Promise<void> {
   const queryClient = useQueryClient();
   const router = useRouter();
   return useCallback(
     async (to = "/login") => {
-      await api.logout();
-      queryClient.clear();
-      router.push(to);
+      try {
+        await api.logout();
+      } finally {
+        queryClient.clear();
+        router.push(to);
+      }
     },
     [queryClient, router]
   );

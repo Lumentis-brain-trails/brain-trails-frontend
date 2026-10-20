@@ -28,7 +28,6 @@ import {
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { AssignDialog } from "@/components/subjects/AssignDialog";
-import { useCurrentWorkspace } from "@/lib/workspace";
 
 /**
  * A protocol's page (V3-0004, S16-S18): what it does, how long it takes, the blocks in
@@ -63,7 +62,8 @@ export default function ProtocolPage({
   const queryClient = useQueryClient();
   const toast = useToast();
   const consoleOn = useFeature("console");
-  // Assigning it to a patient or participant (backend T3), from an organisation only.
+  // The workspace being worked in: where a copy is filed, and - in an organisation -
+  // whom it can be assigned to (backend T3).
   const workspace = useCurrentWorkspace();
   const assignmentsOn = useFeature("assignments");
   const multi = useFeature("workspaces_multi");
@@ -96,8 +96,7 @@ export default function ProtocolPage({
     onError: () => check.mutate(),
   });
   // The copy goes to the library being worked in, a clinic's included; before that
-  // workspace is known the API would file it in the personal one.
-  const workspace = useCurrentWorkspace();
+  // workspace is known the API would file it in the personal one (`workspace` above).
   const duplicate = useMutation({
     mutationFn: () =>
       api.post<ProtocolDetail>(
