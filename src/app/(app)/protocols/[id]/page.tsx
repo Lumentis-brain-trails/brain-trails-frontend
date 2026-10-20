@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useFeature } from "@/lib/features";
 import {
   type ProtocolDetail,
   type ValidationResult,
@@ -30,6 +31,8 @@ import { useToast } from "@/components/Toast";
  * A protocol's page (V3-0004, S16-S18): what it does, how long it takes, the blocks in
  * plain words, the content warning - then Play, which goes through consent and the
  * headband pre-flight to the run. A locked protocol is shown but cannot be played.
+ * With the `console` flag, "Run with console" opens the operator console instead
+ * (backend V3-0007): a fresh run key names the channel to the participant's window.
  *
  * For its author it is also where a draft is checked and published (the timeline
  * builder is S19): Publish validates and freezes the draft as the next version, and the
@@ -56,6 +59,7 @@ export default function ProtocolPage({
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const consoleOn = useFeature("console");
   const item = useQuery({
     queryKey: ["protocol", id],
     queryFn: () => api.get<ProtocolDetail>(`protocols/${id}`),
@@ -177,13 +181,27 @@ export default function ProtocolPage({
           </p>
         </div>
         {playable ? (
-          <Link
-            href={`/protocols/${p.id}/run`}
-            onClick={() => trackFeature("protocol.play")}
-            className={buttonClass()}
-          >
-            {t("play")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {consoleOn && (
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  router.push(
+                    `/console/${crypto.randomUUID()}?protocol=${encodeURIComponent(p.id)}`
+                  )
+                }
+              >
+                {t("runWithConsole")}
+              </Button>
+            )}
+            <Link
+              href={`/protocols/${p.id}/run`}
+              onClick={() => trackFeature("protocol.play")}
+              className={buttonClass()}
+            >
+              {t("play")}
+            </Link>
+          </div>
         ) : (
           <Button disabled title={locked ? t("lockedHint") : undefined}>
             {locked ? t("locked") : t("notPublished")}

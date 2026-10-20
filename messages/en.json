@@ -123,7 +123,8 @@
       "stopTitle": "Stop this session?",
       "stopBody": "What you have done so far is kept. You cannot resume this run.",
       "keepGoing": "Keep going",
-      "stopSession": "Stop session"
+      "stopSession": "Stop session",
+      "paused": "A short pause. The session continues in a moment."
     },
     "results": {
       "hits": "Hits",
@@ -1507,6 +1508,7 @@
       "draftNotPublished": "draft, not published",
       "waitingForReview": "waiting for review",
       "play": "Play",
+      "runWithConsole": "Run with console",
       "locked": "Locked",
       "notPublished": "Not published",
       "lockedHint": "Not open yet: beta testers get this first",
@@ -3087,6 +3089,68 @@
           "label": "Free recording"
         }
       }
+    }
+  },
+  "console": {
+    "title": "Operator console",
+    "unavailable": "The operator console is not available here yet.",
+    "noProtocol": "Open the console from a protocol's page.",
+    "backToProtocols": "Back to protocols",
+    "unsupported": "This browser cannot connect two windows. Use Chrome or Edge on a computer.",
+    "openParticipantFirst": "Open the participant's screen before starting.",
+    "syncing": "Syncing with the headband…",
+    "headband": "{name} · battery {battery}",
+    "headbandLost": "Headband disconnected",
+    "participantGone": "The participant's screen was closed or reloaded, and the run cannot continue there. Stop the session to keep what was recorded.",
+    "stopAndSave": "Stop and save",
+    "participant": {
+      "title": "Participant's screen",
+      "intro": "Open it, drag it to the second display and click Full screen there. The participant sees the protocol and nothing else.",
+      "open": "Open participant's screen",
+      "connected": "Connected",
+      "notConnected": "Not open yet",
+      "waiting": "Waiting for the operator to start…",
+      "ended": "The session has ended. Thank you.",
+      "unsupported": "This browser cannot connect to the console.",
+      "detached": "This session cannot continue in this window. The operator will stop it."
+    },
+    "commands": {
+      "title": "Commands",
+      "pause": "Pause",
+      "resume": "Resume",
+      "endBlock": "End block",
+      "skipBlock": "Skip block",
+      "flag": "Flag this moment",
+      "abort": "End session",
+      "abortConfirm": "Yes, end the session",
+      "abortCancel": "Keep going",
+      "pausePending": "The pause starts when this block ends.",
+      "messageLabel": "Message to the participant",
+      "messagePlaceholder": "Shown on their screen for a few seconds",
+      "send": "Send"
+    },
+    "plan": {
+      "title": "Plan",
+      "notStarted": "Not started",
+      "running": "Running",
+      "paused": "Paused",
+      "pausePending": "Pausing after this block",
+      "waitingForParticipant": "Waiting for the participant to begin",
+      "lost": "Participant's screen lost"
+    },
+    "notes": {
+      "title": "Notes",
+      "label": "Note",
+      "placeholder": "Timed from when you start typing",
+      "hint": "⌘/Ctrl + Enter saves",
+      "save": "Save note",
+      "saved": "{count, plural, one {# note saved} other {# notes saved}}",
+      "failed": "The note could not be saved. Try again."
+    },
+    "events": {
+      "title": "Events",
+      "none": "No events yet.",
+      "seconds": "{s} s"
     }
   }
 }
