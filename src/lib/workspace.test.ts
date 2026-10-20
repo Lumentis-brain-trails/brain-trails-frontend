@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type Workspace,
   editionOf,
@@ -6,9 +9,31 @@ import {
   managesMembers,
   SELECTED_WORKSPACE_KEY,
   pickCurrent,
+  resetPinnedWorkspace,
+  useCurrentWorkspace,
+  useReloadOnWorkspaceChange,
+  useSelectedWorkspaceId,
   seatOf,
   selectWorkspace,
 } from "./workspace";
+
+const responses: Record<string, unknown> = {};
+vi.mock("@/lib/api", () => ({
+  api: { get: async (path: string) => responses[path] },
+}));
+
+function wrapper({ children }: { children: ReactNode }) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return createElement(QueryClientProvider, { client }, children);
+}
+
+beforeEach(() => {
+  window.localStorage.clear();
+  resetPinnedWorkspace();
+});
+afterEach(() => vi.restoreAllMocks());
 
 function ws(
   id: string,
@@ -97,5 +122,62 @@ describe("selectWorkspace", () => {
     window.removeEventListener("bt-workspace-change", heard);
     expect(window.localStorage.getItem(SELECTED_WORKSPACE_KEY)).toBe("c");
     expect(heard).toHaveBeenCalledOnce();
+  });
+});
+
+describe("a tab keeps the workspace it loaded with", () => {
+  it("does not follow a choice another tab wrote", () => {
+    window.localStorage.setItem(SELECTED_WORKSPACE_KEY, "c");
+    const { result, rerender } = renderHook(() => useSelectedWorkspaceId());
+    expect(result.current).toBe("c");
+    window.localStorage.setItem(SELECTED_WORKSPACE_KEY, "other");
+    rerender();
+    expect(result.current).toBe("c");
+  });
+
+  it("follows its own switch", () => {
+    const { result } = renderHook(() => useSelectedWorkspaceId());
+    selectWorkspace("c");
+    return waitFor(() => expect(result.current).toBe("c"));
+  });
+
+  it("reloads when another tab switches, and not for other keys", () => {
+    const reload = vi.fn();
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      ...window.location,
+      reload,
+    });
+    const { unmount } = renderHook(() => useReloadOnWorkspaceChange());
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "bt-theme", newValue: "dark" })
+    );
+    expect(reload).not.toHaveBeenCalled();
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: SELECTED_WORKSPACE_KEY,
+        oldValue: "p",
+        newValue: "c",
+      })
+    );
+    expect(reload).toHaveBeenCalledOnce();
+    unmount();
+  });
+});
+
+describe("useCurrentWorkspace", () => {
+  it("is the saved clinic while organisations are on", async () => {
+    responses.workspaces = [PERSONAL, CLINIC];
+    responses.config = { features: { workspaces_multi: true } };
+    selectWorkspace("c");
+    const { result } = renderHook(() => useCurrentWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current?.id).toBe("c"));
+  });
+
+  it("ignores the saved choice when organisations are off", async () => {
+    responses.workspaces = [PERSONAL, CLINIC];
+    responses.config = { features: { workspaces_multi: false } };
+    selectWorkspace("c");
+    const { result } = renderHook(() => useCurrentWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current?.id).toBe("p"));
   });
 });

@@ -10,7 +10,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import messages from "../../messages/en.json";
 import { AppShell, isCurrentSection, sectionsFor } from "./AppShell";
-import { SELECTED_WORKSPACE_KEY } from "@/lib/workspace";
+import { SELECTED_WORKSPACE_KEY, resetPinnedWorkspace } from "@/lib/workspace";
 import { LANDSCAPE_SEEN_KEY } from "@/lib/landscapeStatus";
 
 const pathname = vi.fn(() => "/");
@@ -71,6 +71,7 @@ function renderAt(path: string) {
 afterEach(cleanup);
 beforeEach(() => {
   window.localStorage.clear();
+  resetPinnedWorkspace();
   document.documentElement.dataset.theme = "light";
 });
 

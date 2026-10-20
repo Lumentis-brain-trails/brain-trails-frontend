@@ -15,7 +15,11 @@ import {
 import { useFeature } from "@/lib/features";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
-import { type Edition, useEdition } from "@/lib/workspace";
+import {
+  type Edition,
+  useEdition,
+  useReloadOnWorkspaceChange,
+} from "@/lib/workspace";
 import { Logo } from "@/components/Logo";
 import { BRAND, cn, Icon, type IconName } from "@/components/ui";
 import { type ConsentData } from "@/components/account/PrivacyCard";
@@ -85,6 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("shell");
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
+  useReloadOnWorkspaceChange();
 
   // Whether this account still agrees to the note as published (V3-0011). Deliberately
   // fails open: while this is loading, or if the call fails, the app renders as usual.

@@ -19,7 +19,9 @@
     "wrong_account": "Questo invito è stato inviato a un altro indirizzo. Accedi con quello.",
     "invitation_closed": "Questo invito non è più valido. Chiedine uno nuovo.",
     "personal_workspace": "Nel tuo spazio personale non ci sono altre persone.",
-    "sole_owner": "Sei l'unico titolare di un'organizzazione. Affidala a un altro titolare prima di eliminare il tuo account."
+    "sole_owner": "Sei l'unico titolare di un'organizzazione. Affidala a un altro titolare prima di eliminare il tuo account.",
+    "self_approval": "Una richiesta fatta da te la decide un altro amministratore.",
+    "email_not_verified": "Prima conferma il tuo indirizzo email: apri il link che ti abbiamo inviato, poi riprova."
   },
   "application": {
     "step": "Candidatura",

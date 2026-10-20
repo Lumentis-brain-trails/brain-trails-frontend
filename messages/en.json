@@ -19,7 +19,9 @@
     "wrong_account": "This invitation was sent to another address. Sign in with that one.",
     "invitation_closed": "This invitation is no longer open. Ask for a new one.",
     "personal_workspace": "Your personal workspace has no other people.",
-    "sole_owner": "You are the only owner of an organisation. Hand it to another owner before deleting your account."
+    "sole_owner": "You are the only owner of an organisation. Hand it to another owner before deleting your account.",
+    "self_approval": "Another admin decides on a request you made yourself.",
+    "email_not_verified": "Confirm your email address first: open the link we sent you, then try again."
   },
   "application": {
     "step": "Application",

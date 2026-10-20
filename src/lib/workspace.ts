@@ -6,16 +6,22 @@
  * wants with `?workspace=`. An account has its personal workspace and, with
  * `workspaces_multi` on, the clinics and laboratories it holds a seat in. The switcher
  * chooses one; the choice is this browser's (localStorage), and anything it no longer
- * names - a seat given up, a request still pending - falls back to the personal one.
+ * names - a seat given up, a request still pending - falls back to the personal one, as
+ * does everything while the flag is off.
+ *
+ * **A tab keeps the workspace it loaded with.** The choice is read once per page load and
+ * changed only by `selectWorkspace` in that tab. A switch in another tab reloads this one
+ * (`useReloadOnWorkspaceChange`, mounted by the shell) instead of retargeting it in
+ * place: a protocol being saved in one tab must never land in another tab's library.
  *
  * The **edition** is the kind of the current workspace: the shell, the navigation and
  * the words are chosen from it, never from a second set of pages.
  */
 import { useQuery } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
-import type { AppConfig } from "@/lib/features";
+import { type AppConfig, useFeature } from "@/lib/features";
 
 export type Workspace = components["schemas"]["WorkspaceOut"];
 
@@ -82,7 +88,10 @@ export function managesMembers(workspace: Workspace | undefined): boolean {
   return seat === "owner" || seat === "admin";
 }
 
-function readSelected(): string | null {
+/** This tab's choice: read from storage once, then changed only here. */
+let pinned: { id: string | null } | undefined;
+
+function readStored(): string | null {
   try {
     return window.localStorage.getItem(SELECTED_WORKSPACE_KEY);
   } catch {
@@ -90,17 +99,19 @@ function readSelected(): string | null {
   }
 }
 
-function subscribeSelected(onChange: () => void): () => void {
-  window.addEventListener(CHANGE_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(CHANGE_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
+function readSelected(): string | null {
+  pinned ??= { id: readStored() };
+  return pinned.id;
 }
 
-/** Choose the workspace to work in, in this browser; every open hook follows. */
+function subscribeSelected(onChange: () => void): () => void {
+  window.addEventListener(CHANGE_EVENT, onChange);
+  return () => window.removeEventListener(CHANGE_EVENT, onChange);
+}
+
+/** Choose the workspace to work in, in this browser; every open hook of this tab follows. */
 export function selectWorkspace(id: string): void {
+  pinned = { id };
   try {
     window.localStorage.setItem(SELECTED_WORKSPACE_KEY, id);
   } catch {
@@ -109,15 +120,43 @@ export function selectWorkspace(id: string): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
+/** Forget this tab's pinned choice (tests; a real tab forgets it by reloading). */
+export function resetPinnedWorkspace(): void {
+  pinned = undefined;
+}
+
+/**
+ * Reload this tab when another tab switches workspace. The `storage` event fires only in
+ * the *other* tabs, so the tab that switched is untouched (it navigates on its own). A
+ * page with unsaved work keeps its `beforeunload` prompt; if the person stays, the tab
+ * still works in the workspace it loaded with, never in the new one.
+ */
+export function useReloadOnWorkspaceChange(): void {
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SELECTED_WORKSPACE_KEY && e.newValue !== e.oldValue)
+        window.location.reload();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+}
+
 /** The id the switcher last chose, or null (server render, nothing chosen yet). */
 export function useSelectedWorkspaceId(): string | null {
   return useSyncExternalStore(subscribeSelected, readSelected, () => null);
 }
 
-/** The workspace lists are scoped to, or undefined while it loads. */
+/**
+ * The workspace lists are scoped to, or undefined while it loads. With
+ * `workspaces_multi` off the saved choice is ignored: the personal workspace, always, so
+ * an environment that turns the flag off cannot leave anyone working in a clinic
+ * without the switcher to leave it.
+ */
 export function useCurrentWorkspace(): Workspace | undefined {
   const selected = useSelectedWorkspaceId();
-  return pickCurrent(useWorkspaces().data, selected);
+  const multi = useFeature("workspaces_multi");
+  return pickCurrent(useWorkspaces().data, multi ? selected : null);
 }
 
 /** The current workspace's edition; `personal` while loading. */
