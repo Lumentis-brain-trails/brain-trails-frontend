@@ -7,6 +7,9 @@
  * Publish): a finding says which block, which setting, and what to change, and clicking
  * it selects the block so the inspector shows the field. Paths are the server's
  * (`root/<clip>/config/<field>`), read by `locate`.
+ *
+ * What a finding says is the server's English as it arrives, or, for a finding the
+ * builder made itself, that sentence in the reader's language (`finding.text`).
  */
 
 import { useTranslations } from "next-intl";
@@ -37,6 +40,12 @@ export function FindingsList({
     ];
     return { clip, text: parts.join(" · ") };
   };
+  const say = (finding: Finding) => {
+    const key = finding.text ? `findingText.${finding.text.key}` : null;
+    return key && finding.text && t.has(key as never)
+      ? t(key as never, finding.text.values as never)
+      : finding.message;
+  };
   return (
     <ul className="space-y-1 text-[14px]">
       {errors.map((finding, index) => {
@@ -57,7 +66,7 @@ export function FindingsList({
           <li key={`e${index}`} className="text-danger">
             {head}
             <span className="text-ink-3"> — </span>
-            {finding.message}
+            {say(finding)}
           </li>
         );
       })}
@@ -67,7 +76,7 @@ export function FindingsList({
           <li key={`w${index}`} className="text-warn">
             <span className="font-medium">{text}</span>
             <span className="text-ink-3"> — </span>
-            {finding.message}
+            {say(finding)}
           </li>
         );
       })}

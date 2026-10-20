@@ -12,6 +12,7 @@
  * error that no amount of careful scheduling can recover.
  */
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type ImageSequenceConfig,
@@ -33,6 +34,7 @@ function ImageSequenceRenderer({
   stepId,
   seed,
 }: TaskContext<ImageSequenceConfig>) {
+  const t = useTranslations("kinds.common");
   const planned = useMemo(
     () => planImageSequence(config, mulberry32(seed)),
     [config, seed]
@@ -122,7 +124,7 @@ function ImageSequenceRenderer({
 
   return (
     <div className="flex h-full items-center justify-center bg-black">
-      {!ready && <p className="text-[14px] text-ink-2">Loading&hellip;</p>}
+      {!ready && <p className="text-[14px] text-ink-2">{t("loading")}</p>}
       {ready && item && (
         // eslint-disable-next-line @next/next/no-img-element
         <img

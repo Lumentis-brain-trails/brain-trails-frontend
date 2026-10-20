@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
@@ -16,11 +17,14 @@ const manrope = Manrope({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: { default: "Brain Trails", template: "%s · Brain Trails" },
-  description:
-    "Turn an EEG recording into a trail through brain-state space. A LuMentis research prototype.",
-};
+/** The description search engines and link previews show, in the reader's language. */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: { default: "Brain Trails", template: "%s · Brain Trails" },
+    description: t("description"),
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [
@@ -39,12 +43,14 @@ export const viewport: Viewport = {
  * that attribute, which the server cannot know.
  *
  * `NextIntlClientProvider` hands client components the locale and messages that
- * `src/i18n/request.ts` resolved for this request (English only until sprint S26).
+ * `src/i18n/request.ts` resolved for this request; `lang` follows it, so screen readers
+ * and the browser's own translation offer read the page in the right language.
  */
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`h-full ${manrope.variable}`}
       suppressHydrationWarning
     >

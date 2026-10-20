@@ -63,6 +63,7 @@ import {
 } from "@/lib/builder/draft";
 import { checkTree } from "@/lib/builder/findings";
 import { useHistory } from "@/lib/builder/history";
+import { usePaletteText } from "@/lib/builder/kinds";
 import { KIND_SCHEMAS } from "@/lib/builder/schemas";
 import type { ProtocolDetail, ValidationResult } from "@/lib/protocol/catalog";
 import { bindMedia, mediaIds } from "@/lib/protocol/media";
@@ -185,7 +186,17 @@ export default function BuilderPage({
 
   const tree = history.present;
   const mediaById = useMediaIndex();
-  const clips = useMemo(() => clipsOf(tree, mediaById), [mediaById, tree]);
+  // A group nobody named is called "Group" in the reader's language; never stored.
+  const groupNames = useMemo(
+    () => ({ group: t("unnamedGroup"), loop: t("unnamedLoop") }),
+    [t]
+  );
+  const clips = useMemo(
+    () => clipsOf(tree, mediaById, groupNames),
+    [groupNames, mediaById, tree]
+  );
+  // An element is added under the name, and with the words, of the author's language.
+  const localise = usePaletteText();
 
   // What the last request carried, so a save is never repeated for an unchanged tree.
   const sentRef = useRef<ProtocolTree | null>(null);
@@ -260,6 +271,9 @@ export default function BuilderPage({
       if (sentRef.current === tree) return;
       if (unsaved) {
         if (!hasContent(tree)) return;
+        // Not before the workspace is known: without it the API files the protocol in
+        // the personal library, whichever workspace the person is working in.
+        if (workspace === undefined) return;
         sentRef.current = tree;
         createRef.current.mutate(tree);
         return;
@@ -268,7 +282,7 @@ export default function BuilderPage({
       saveRef.current.mutate(tree);
     }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [conflict, rev, tree, unsaved]);
+  }, [conflict, rev, tree, unsaved, workspace]);
 
   const check = useMutation({
     mutationFn: () =>
@@ -325,7 +339,11 @@ export default function BuilderPage({
         if (payload.from === "bin-element") {
           const element = ELEMENTS.find((e) => e.id === payload.value);
           return element
-            ? insertAt(current, index, blockForElement(current, element))
+            ? insertAt(
+                current,
+                index,
+                blockForElement(current, localise(element))
+              )
             : current;
         }
         const item = mediaById[String(payload.value)];
@@ -335,7 +353,7 @@ export default function BuilderPage({
       });
       setSelected([index]);
     },
-    [edit, mediaById]
+    [edit, localise, mediaById]
   );
 
   const addMedia = useCallback(
@@ -359,11 +377,11 @@ export default function BuilderPage({
         insertAt(
           current,
           current.root.children.length,
-          blockForElement(current, element)
+          blockForElement(current, localise(element))
         )
       );
     },
-    [edit]
+    [edit, localise]
   );
 
   const removeSelected = useCallback(() => {
@@ -820,12 +838,12 @@ function Preview({
       return resolvePlan(tree, 1, {
         id: "preview",
         version: 0,
-        title: "Preview",
+        title: t("preview"),
       });
     } catch {
       return null;
     }
-  }, [tree]);
+  }, [t, tree]);
   const ids = useMemo(() => (plan ? mediaIds(plan) : []), [plan]);
   const { media, missing } = usePreviewMedia(ids);
   const bound = useMemo(() => {
@@ -847,18 +865,14 @@ function Preview({
   );
 
   if (!plan || plan.steps.length === 0) return notice(t("preview_empty"));
-  if (missing)
-    return notice(
-      "One of the media in this protocol could not be loaded - it may have been deleted. Replace it and try again."
-    );
+  if (missing) return notice(t("previewMissingMedia"));
   if (!bound)
     return (
       <div className="fixed inset-0 z-100 flex items-center justify-center bg-black text-white/70">
-        Loading the media…
+        {t("previewLoading")}
       </div>
     );
-  if (!bound.plan)
-    return notice(bound.error ?? "This protocol cannot be previewed.");
+  if (!bound.plan) return notice(bound.error ?? t("previewFailed"));
 
   return (
     <div className="fixed inset-0 z-100 bg-black">

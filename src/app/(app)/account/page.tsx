@@ -1,9 +1,12 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import type { UserInfo } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
 import {
@@ -11,6 +14,7 @@ import {
   ProfileCard,
 } from "@/components/account/ProfileCard";
 import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
+import { LanguageCard } from "@/components/account/LanguageCard";
 import {
   type ConsentData,
   PrivacyCard,
@@ -31,6 +35,9 @@ import { useToast } from "@/components/Toast";
 export default function AccountPage() {
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations("account");
+  const locale = useFormatLocale();
+  const errorMessage = useErrorMessage();
   const [confirm, setConfirm] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -62,35 +69,34 @@ export default function AccountPage() {
     mutationFn: () => api.delete("auth/me", { password }),
     onSuccess: async () => {
       await api.logout();
-      toast("success", "Your account and data were deleted.");
+      toast("success", t("delete.done"));
       router.push("/");
     },
-    onError: (e) =>
-      setError(
-        e instanceof ApiRequestError ? e.error.message : "Request failed."
-      ),
+    onError: (e) => setError(errorMessage(e)),
   });
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="type-title mb-8">Account</h1>
+      <h1 className="type-title mb-8">{t("title")}</h1>
       <div className="space-y-8">
         <section>
-          <SectionTitle>Access</SectionTitle>
+          <SectionTitle>{t("access.title")}</SectionTitle>
           <Card inset>
             {me.data ? (
               <>
-                <KeyValue label="Email" value={me.data.email} />
+                <KeyValue label={t("access.email")} value={me.data.email} />
                 <KeyValue
-                  label="Role"
+                  label={t("access.role")}
                   value={
-                    me.data.role === "admin" ? "Administrator" : "Participant"
+                    me.data.role === "admin"
+                      ? t("access.roleAdmin")
+                      : t("access.roleParticipant")
                   }
                 />
                 <KeyValue
-                  label="Member since"
+                  label={t("access.memberSince")}
                   value={new Date(me.data.created_at).toLocaleDateString(
-                    undefined,
+                    locale,
                     { dateStyle: "long" }
                   )}
                 />
@@ -102,6 +108,10 @@ export default function AccountPage() {
               </div>
             )}
           </Card>
+        </section>
+
+        <section>
+          <LanguageCard />
         </section>
 
         <section>
@@ -126,7 +136,7 @@ export default function AccountPage() {
         </section>
 
         <section>
-          <SectionTitle>Your data</SectionTitle>
+          <SectionTitle>{t("data.title")}</SectionTitle>
           <Card inset>
             <a
               href="/api/backend/auth/me/export"
@@ -134,9 +144,9 @@ export default function AccountPage() {
               className="pressable flex items-center justify-between gap-3 border-b border-hairline px-5 py-3.5 hover:bg-surface-2"
             >
               <span>
-                <span className="block">Export everything</span>
+                <span className="block">{t("data.export")}</span>
                 <span className="type-caption text-ink-3">
-                  Profile, recordings and one-hour links to the files, as JSON.
+                  {t("data.exportHint")}
                 </span>
               </span>
               <Icon name="download" className="text-ink-3" />
@@ -147,9 +157,9 @@ export default function AccountPage() {
               className="pressable flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left text-danger hover:bg-surface-2"
             >
               <span>
-                <span className="block">Delete account</span>
+                <span className="block">{t("data.delete")}</span>
                 <span className="type-caption text-ink-3">
-                  Removes every recording, analysis and stored file.
+                  {t("data.deleteHint")}
                 </span>
               </span>
               <Icon name="trash" className="text-ink-3" />
@@ -159,14 +169,11 @@ export default function AccountPage() {
       </div>
 
       {confirm && (
-        <Sheet title="Delete your account?" onClose={() => setConfirm(false)}>
+        <Sheet title={t("delete.title")} onClose={() => setConfirm(false)}>
           <div className="space-y-4">
-            <p className="text-ink-2">
-              This erases your account, every recording and every stored file.
-              There is no way back. Confirm with your password.
-            </p>
+            <p className="text-ink-2">{t("delete.text")}</p>
             {error && <ErrorBanner message={error} />}
-            <Field label="Password">
+            <Field label={t("delete.password")}>
               <Input
                 type="password"
                 autoComplete="current-password"
@@ -176,14 +183,14 @@ export default function AccountPage() {
             </Field>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" onClick={() => setConfirm(false)}>
-                Keep my account
+                {t("delete.keep")}
               </Button>
               <Button
                 variant="danger"
                 disabled={!password || erase.isPending}
                 onClick={() => erase.mutate()}
               >
-                {erase.isPending ? "Deleting…" : "Delete everything"}
+                {erase.isPending ? t("delete.deleting") : t("delete.confirm")}
               </Button>
             </div>
           </div>

@@ -1,12 +1,13 @@
 version: 2
+# PRs open to beta (decision 0013 v2): dev is rebuilt by integrate and never takes merges.
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: monthly
-    target-branch: dev
+    target-branch: beta
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
-    target-branch: dev
+    target-branch: beta

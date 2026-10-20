@@ -137,6 +137,18 @@ describe("BFF proxy", () => {
     );
   });
 
+  test("allows opening an invitation link", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/backend/invitations/lookup",
+      { method: "POST", body: JSON.stringify({ token: "t".repeat(32) }) }
+    );
+    const res = await POST(req, ctx(["invitations", "lookup"]));
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(
+      "http://localhost:8000/invitations/lookup"
+    );
+  });
+
   // Left off the allow-list once, and every closed-list menu in the app rendered
   // disabled with no way to tell why: the registration form needs these before anyone
   // has an account, so they cannot ride on an authenticated path.
@@ -158,5 +170,25 @@ describe("BFF proxy", () => {
     expect(String(fetchSpy.mock.calls[0][0])).toBe(
       "http://localhost:8000/fair"
     );
+  });
+  // The usage log's batches (backend V4-0007): a beacon carries the cookie and a JSON
+  // body, and the 204 must come back without one.
+  test("forwards a usage batch with its token and answers 204", async () => {
+    cookieValue = "jwt";
+    fetchSpy.mockImplementationOnce(
+      async () => new Response(null, { status: 204 })
+    );
+    const body = JSON.stringify({ events: [{ event: "page.viewed" }] });
+    const req = new NextRequest("http://localhost/api/backend/usage", {
+      method: "POST",
+      body,
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await POST(req, ctx(["usage"]));
+    expect(res.status).toBe(204);
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(String(url)).toBe("http://localhost:8000/usage");
+    expect(init.headers.Authorization).toBe("Bearer jwt");
+    expect(new TextDecoder().decode(init.body)).toBe(body);
   });
 });

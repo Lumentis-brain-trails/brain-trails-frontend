@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
-"""Claude Code PreToolUse hook: no merge into beta or main, no merge on a red CI, no push.
+"""Claude Code PreToolUse hook: no merge into main, reviewed merges only into beta, no push.
 
-Claude never merges into `beta` or `main`, never pushes to `dev`, `beta` or `main`, and
-never merges anything on a red or pending CI.
+Claude never merges into `main`, merges into `beta` only what the coordinating session
+has reviewed, never pushes to `dev`, `beta` or `main`, and never merges anything on a red
+or pending CI.
 
 The repository is private on GitHub's free plan, so branch protection is not available
 server-side (the API answers 403). This hook enforces working method 0013 (v2) where the
 work actually happens: in Claude Code sessions. It reads the tool call from stdin and, for
 a Bash command, blocks (exit 2, reason on stderr, which Claude sees) when:
 
-- the command merges a pull request into `beta` or `main` of a code repository - only the
-  owner does, by hand (the wiki's `main` is not an environment: its PRs merge on green);
+- the command merges a pull request into `main` of a code repository - only the owner
+  does, by hand (the wiki's `main` is not an environment: its PRs merge on green);
+- the command merges a pull request into `beta` of a code repository that has not passed
+  review: its head commit must carry a green `review` status (set by the coordinating
+  session after the pre-merge review, so a commit pushed after the review drops it), and
+  the merge must keep a merge commit (`--merge`; no squash, rebase, `--auto`, `--admin`)
+  - decision 0013, amendment 2026-10-20;
 - the command merges any other pull request whose checks are not all green, or cannot be
   read;
 - the command merges through `gh api .../pulls/N/merge`, which would skip both checks;
@@ -33,8 +39,15 @@ import subprocess
 import sys
 
 PROTECTED = ("dev", "beta", "main")
-OWNER_MERGES = ("beta", "main")
+OWNER_MERGES = ("main",)
 """Bases only the owner merges into, by hand (decision 0013, v2)."""
+REVIEWED_MERGES = ("beta",)
+"""Bases Claude may merge into once the PR passed review (decision 0013, amended 2026-10-20)."""
+REVIEW_CONTEXT = "review"
+"""The commit status the coordinating session sets on a PR's head after its review."""
+FORBIDDEN_MERGE_FLAGS = {"--squash", "-s", "--rebase", "-r", "--auto", "--admin"}
+"""A squash or rebase drops beta's history, `--auto` merges later without the guard, and
+`--admin` skips requirements."""
 CODE_REPOS = ("brain-trails-backend", "brain-trails-frontend")
 """Where `beta` and `main` are environments. A PR whose repository cannot be read counts."""
 GREEN = {"SUCCESS", "SKIPPED", "NEUTRAL"}
@@ -228,21 +241,43 @@ def repo_name(pr: dict[str, object]) -> str | None:
     return parts[4].lower() if len(parts) > 4 else None
 
 
-def merge_verdict(pr: dict[str, object]) -> str | None:
+def merge_verdict(pr: dict[str, object], flags: list[str] | None = None) -> str | None:
     """Why a merge of `pr` must not happen, or None when it may.
 
-    The owner-only rule binds the code repositories, where `beta` and `main` deploy; an
-    unreadable repository is treated as one of them. The green-CI rule binds everywhere.
+    The owner-only rule binds `main` of the code repositories, where it deploys prod; an
+    unreadable repository is treated as one of them. `beta` of a code repository takes a
+    merge only after review (a green `review` status on the head) and only as a merge
+    commit. The green-CI rule binds everywhere. `flags` are the `gh pr merge` options.
     """
     number = pr.get("number")
     base = pr.get("baseRefName")
     repo = repo_name(pr)
-    if base in OWNER_MERGES and (repo is None or repo in CODE_REPOS):
+    code = repo is None or repo in CODE_REPOS
+    if base in OWNER_MERGES and code:
         return (
-            f"PR #{number} goes into `{base}`: only the owner merges into beta and main, by "
-            "hand (decision 0013, v2). Leave it open; `integrate` puts it in dev."
+            f"PR #{number} goes into `{base}`: only the owner merges into main, by hand "
+            "(decision 0013, v2). Tell him it is ready; he merges it with a merge commit."
         )
     checks = pr.get("statusCheckRollup") or []
+    if base in REVIEWED_MERGES and code:
+        used = [f for f in (flags or []) if f.split("=", 1)[0] in FORBIDDEN_MERGE_FLAGS]
+        if used or ("--merge" not in (flags or []) and "-m" not in (flags or [])):
+            return (
+                f"PR #{number} goes into `{base}`: merge it with `--merge` only (a merge "
+                f"commit), never {', '.join(used) or 'a squash or rebase'} (decision 0013)."
+            )
+        reviewed = [
+            c
+            for c in (checks if isinstance(checks, list) else [])
+            if (c.get("context") or c.get("name")) == REVIEW_CONTEXT
+        ]
+        if not reviewed or (reviewed[0].get("state") or reviewed[0].get("conclusion")) not in GREEN:
+            return (
+                f"PR #{number} goes into `{base}` and its head has no green `{REVIEW_CONTEXT}` "
+                "status: it has not passed the pre-merge review, or a commit came after it. "
+                "Review it, set the status on the head, then merge (decision 0013, amended "
+                "2026-10-20)."
+            )
     if not isinstance(checks, list) or not checks:
         return f"PR #{number} has no CI checks yet; wait for `ci` to run."
     bad = []
@@ -259,7 +294,7 @@ def merge_verdict(pr: dict[str, object]) -> str | None:
 
 
 def check_merge(words: list[str], env: dict[str, str]) -> None:
-    """Allow `gh pr merge` only outside beta and main, and only on an all-green CI."""
+    """Allow `gh pr merge` never into main, into beta only after review, and on green CI."""
     target, repo = parse_merge(words)
     cmd = ["gh", "pr", "view", "--json", "number,statusCheckRollup,baseRefName,url"]
     if target:
@@ -271,7 +306,8 @@ def check_merge(words: list[str], env: dict[str, str]) -> None:
         pr = json.loads(out.stdout)
     except Exception as exc:
         block(f"could not read the PR ({exc}); merge only what the guard can check.")
-    reason = merge_verdict(pr)
+    flags = [w for w in words[words.index("merge") + 1 :] if w.startswith("-")]
+    reason = merge_verdict(pr, flags)
     if reason:
         block(reason)
 

@@ -18,7 +18,7 @@ Closes #<issue>
 
 - [ ] PR title is a valid Conventional Commit (it becomes the squash commit)
 - [ ] tests added or updated; coverage thresholds still pass
-- [ ] English JSDoc on new/changed exported code; UI copy in English
+- [ ] English JSDoc on new/changed exported code; UI copy as keys in `messages/en.json` and `messages/it.json`
 - [ ] ADR added/amended if a decision changed
 - [ ] no secrets or personal data in the diff; BFF allow-list respected
 - [ ] wiki PR opened (or "no wiki impact" above)

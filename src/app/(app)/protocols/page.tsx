@@ -1,16 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ApiRequestError, api } from "@/lib/api";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import { type ProtocolCard as Card } from "@/lib/protocol/catalog";
-import {
-  MEDIA_TAGS,
-  MEDIA_TAG_HINTS,
-  MEDIA_TAG_LABELS,
-  type MediaTag,
-} from "@/lib/types";
+import { CATALOG_QUERY, useOfficialTexts } from "@/lib/protocol/official";
+import { MEDIA_TAGS, type MediaTag } from "@/lib/types";
 import { ProtocolCard } from "@/components/ProtocolCard";
 import {
   EmptyState,
@@ -30,9 +27,10 @@ type Row = { key: string; title: string; hint: string; items: Card[] };
  * the catalog.
  */
 function NewProtocolButton() {
+  const t = useTranslations("protocols.catalog");
   return (
     <Link href="/protocols/new/edit" className={buttonClass()}>
-      <Icon name="plus" /> New protocol
+      <Icon name="plus" /> {t("new")}
     </Link>
   );
 }
@@ -48,15 +46,14 @@ function NewProtocolButton() {
  * ready) and the caller's own protocols, drafts included.
  */
 export default function ProtocolsPage() {
+  const t = useTranslations("protocols.catalog");
+  const tTags = useTranslations("protocols.tags");
   const workspace = useCurrentWorkspace();
   // a bad request or an expired session will not become valid on retry: fail fast
   const retry = (count: number, error: Error) =>
     error instanceof ApiRequestError && error.status < 500 ? false : count < 2;
-  const catalog = useQuery({
-    queryKey: ["protocols", "catalog"],
-    queryFn: () => api.get<Card[]>("protocols?include_locked=true&limit=100"),
-    retry,
-  });
+  const official = useOfficialTexts();
+  const catalog = useQuery({ ...CATALOG_QUERY, retry });
   const mine = useQuery({
     queryKey: ["protocols", "mine", workspace?.id],
     queryFn: () =>
@@ -70,10 +67,13 @@ export default function ProtocolsPage() {
   const tagsOf = (p: Card) => p.tags ?? [];
   const locked = (p: Card) => p.access === "locked";
 
-  /** Runnable first inside a row, so the one thing a reader can actually start leads. */
+  /**
+   * Runnable first inside a row, so the one thing a reader can actually start leads;
+   * then by the title the card shows, which for an official protocol is the reader's.
+   */
   const openFirst = (a: Card, b: Card) =>
     locked(a) === locked(b)
-      ? a.title.localeCompare(b.title)
+      ? official.card(a).title.localeCompare(official.card(b).title)
       : locked(a)
         ? 1
         : -1;
@@ -82,28 +82,28 @@ export default function ProtocolsPage() {
     ? [
         {
           key: "official",
-          title: "Official",
-          hint: "Built and checked by the Brain Trails team.",
+          title: t("rows.official.title"),
+          hint: t("rows.official.hint"),
           items: items
             .filter((i) => i.visibility === "official" && !locked(i))
             .sort(openFirst),
         },
         {
           key: "mine",
-          title: "Yours",
-          hint: "Private to your workspace, drafts included.",
+          title: t("rows.mine.title"),
+          hint: t("rows.mine.hint"),
           items: (mine.data ?? []).filter((i) => i.visibility === "workspace"),
         },
         {
           key: "community",
-          title: "Community",
-          hint: "Shared by other people, reviewed before they appear.",
+          title: t("rows.community.title"),
+          hint: t("rows.community.hint"),
           items: items.filter((i) => i.visibility === "public"),
         },
         ...MEDIA_TAGS.map((tag: MediaTag) => ({
           key: tag,
-          title: MEDIA_TAG_LABELS[tag],
-          hint: MEDIA_TAG_HINTS[tag],
+          title: tTags(`${tag}.title`),
+          hint: tTags(`${tag}.hint`),
           items: items.filter((i) => tagsOf(i).includes(tag)).sort(openFirst),
         })),
       ].filter((row) => row.items.length > 0)
@@ -113,10 +113,8 @@ export default function ProtocolsPage() {
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">Protocols</h1>
-          <p className="mt-1 text-ink-2">
-            Pick what to play while you record. Your EEG runs alongside it.
-          </p>
+          <h1 className="type-title">{t("title")}</h1>
+          <p className="mt-1 text-ink-2">{t("intro")}</p>
         </div>
         <NewProtocolButton />
       </header>
@@ -132,17 +130,15 @@ export default function ProtocolsPage() {
         </div>
       )}
 
-      {catalog.isError && (
-        <ErrorBanner message="The catalog could not be loaded. Reload the page, or sign in again." />
-      )}
+      {catalog.isError && <ErrorBanner message={t("loadError")} />}
 
       {items && rows.length === 0 && (
         <EmptyState
-          title="No protocols yet"
-          text="Upload a video in My media and turn it into a protocol, or ask an admin to publish the official ones."
+          title={t("empty.title")}
+          text={t("empty.text")}
           action={
             <Link href="/media" className={buttonClass()}>
-              Go to My media
+              {t("empty.action")}
             </Link>
           }
         />
@@ -163,10 +159,7 @@ export default function ProtocolsPage() {
       </div>
 
       {rows.some((row) => row.items.some(locked)) && (
-        <p className="type-caption mt-10 text-ink-3">
-          Locked protocols are part of the programme but not open yet. Beta
-          testers get them first.
-        </p>
+        <p className="type-caption mt-10 text-ink-3">{t("lockedNote")}</p>
       )}
     </main>
   );

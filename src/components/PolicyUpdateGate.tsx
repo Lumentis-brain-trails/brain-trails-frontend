@@ -18,13 +18,20 @@
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { ApiRequestError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import type { ConsentData } from "@/components/account/PrivacyCard";
 import { Button, Card, ErrorBanner, SectionTitle } from "@/components/ui";
 
+/** Where to write instead of agreeing; an address, so it is the same in every language. */
+const PRIVACY_EMAIL = "privacy@lumentis.ca";
+
 export function PolicyUpdateGate({ consent }: { consent: ConsentData }) {
   const router = useRouter();
+  const t = useTranslations("shell");
+  const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
 
   const agree = useMutation({
@@ -37,28 +44,20 @@ export function PolicyUpdateGate({ consent }: { consent: ConsentData }) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-6 py-16">
       <Card>
-        <SectionTitle>The privacy note has changed</SectionTitle>
+        <SectionTitle>{t("policyUpdate.title")}</SectionTitle>
         <div className="mt-4 space-y-4 text-pretty text-ink-2">
-          <p>
-            We have published a new version of the note that explains what
-            happens to your recordings and your data. Before you carry on,
-            please read it and tell us you agree.
-          </p>
+          <p>{t("policyUpdate.text")}</p>
           <p className="type-caption text-ink-3">
-            You agreed to version {consent.core_version}. The current one is{" "}
-            {consent.current_version}.
+            {t("policyUpdate.versions", {
+              agreed: consent.core_version,
+              current: consent.current_version,
+            })}
           </p>
         </div>
 
         {agree.error && (
           <div className="mt-4">
-            <ErrorBanner
-              message={
-                agree.error instanceof ApiRequestError
-                  ? agree.error.error.message
-                  : "Could not save. Try again."
-              }
-            />
+            <ErrorBanner message={errorMessage(agree.error)} />
           </div>
         )}
 
@@ -69,14 +68,17 @@ export function PolicyUpdateGate({ consent }: { consent: ConsentData }) {
             rel="noreferrer"
             className="font-semibold text-ink hover:underline"
           >
-            Read the privacy note
-            <span className="sr-only"> (opens in a new tab)</span>
+            {t.rich("policyUpdate.readNote", {
+              hidden: (chunks) => <span className="sr-only">{chunks}</span>,
+            })}
           </Link>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">
           <Button onClick={() => agree.mutate()} disabled={agree.isPending}>
-            {agree.isPending ? "Saving…" : "I have read it and I agree"}
+            {agree.isPending
+              ? t("policyUpdate.saving")
+              : t("policyUpdate.agree")}
           </Button>
           <Button
             variant="secondary"
@@ -85,13 +87,12 @@ export function PolicyUpdateGate({ consent }: { consent: ConsentData }) {
               router.push("/login");
             }}
           >
-            Sign out
+            {t("signOut")}
           </Button>
         </div>
 
         <p className="type-caption mt-6 text-ink-3">
-          Would rather not agree? Write to privacy@lumentis.ca and we will
-          export or delete everything we hold for you.
+          {t("policyUpdate.decline", { email: PRIVACY_EMAIL })}
         </p>
       </Card>
     </main>

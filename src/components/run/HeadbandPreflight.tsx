@@ -12,6 +12,7 @@
 import { useTranslations } from "next-intl";
 import { ContactLights } from "@/components/ContactLights";
 import { Button, Card, ErrorBanner, Segmented } from "@/components/ui";
+import { useMuseFailureMessage } from "@/lib/muse/failure";
 import type { useMuse } from "@/lib/muse/useMuse";
 
 export type HeadbandSource = "bluetooth" | "simulated" | "simulated-athena";
@@ -42,6 +43,7 @@ export function HeadbandPreflight({
   onBack,
 }: Props) {
   const t = useTranslations("run.preflight");
+  const describeFailure = useMuseFailureMessage();
   const connected = muse.status === "connected";
   const options: { value: HeadbandSource; label: string }[] = [
     { value: "bluetooth", label: t("bluetooth") },
@@ -70,7 +72,7 @@ export function HeadbandPreflight({
       {source === "bluetooth" && !bluetoothSupported && (
         <ErrorBanner message={t("unsupported")} />
       )}
-      {muse.error && <ErrorBanner message={muse.error} />}
+      {muse.failure && <ErrorBanner message={describeFailure(muse.failure)} />}
       {!connected ? (
         <Button
           onClick={() => void muse.connect()}

@@ -24,7 +24,7 @@ import { setDragPayload } from "@/components/builder/Timeline";
 import { Button, Icon, Skeleton, cn } from "@/components/ui";
 import { api } from "@/lib/api";
 import { ELEMENTS, formatClock } from "@/lib/builder/draft";
-import { identityOf } from "@/lib/builder/kinds";
+import { useKindText, usePaletteText } from "@/lib/builder/kinds";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import type { Media } from "@/lib/types";
 
@@ -40,6 +40,8 @@ export function Bin({
   onAddElement: (kind: string) => void;
 }) {
   const t = useTranslations("builder.bin");
+  const kindText = useKindText();
+  const localise = usePaletteText();
   const [tab, setTab] = useState<"media" | "elements" | "tasks">("media");
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -115,7 +117,7 @@ export function Bin({
                   {item.title}
                 </span>
                 <span className="type-caption block px-0.5 text-ink-3">
-                  {identityOf(item.kind).label}
+                  {kindText(item.kind).label}
                   {item.duration_s ? ` · ${formatClock(item.duration_s)}` : ""}
                 </span>
               </button>
@@ -142,27 +144,29 @@ export function Bin({
           {ELEMENTS.filter(
             (element) =>
               element.group === (tab === "tasks" ? "task" : "element")
-          ).map((element) => (
-            <button
-              key={element.id}
-              type="button"
-              draggable
-              onDragStart={(event) =>
-                setDragPayload(event, {
-                  from: "bin-element",
-                  value: element.id,
-                })
-              }
-              onDoubleClick={() => onAddElement(element.id)}
-              title={element.hint ?? identityOf(element.kind).hint}
-              className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-1.5 text-left hover:border-accent/50"
-            >
-              <KindCover kind={element.kind} />
-              <span className="mt-1.5 block px-0.5 text-[12px] leading-tight font-medium">
-                {element.label}
-              </span>
-            </button>
-          ))}
+          )
+            .map(localise)
+            .map((element) => (
+              <button
+                key={element.id}
+                type="button"
+                draggable
+                onDragStart={(event) =>
+                  setDragPayload(event, {
+                    from: "bin-element",
+                    value: element.id,
+                  })
+                }
+                onDoubleClick={() => onAddElement(element.id)}
+                title={element.hint ?? kindText(element.kind).hint}
+                className="block w-full cursor-grab rounded-[var(--radius-control)] border border-hairline bg-surface p-1.5 text-left hover:border-accent/50"
+              >
+                <KindCover kind={element.kind} />
+                <span className="mt-1.5 block px-0.5 text-[12px] leading-tight font-medium">
+                  {element.label}
+                </span>
+              </button>
+            ))}
         </div>
       )}
     </aside>

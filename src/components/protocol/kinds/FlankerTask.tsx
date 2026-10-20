@@ -26,6 +26,9 @@ import type { TaskContext, TaskKind } from "@/lib/protocol/types";
 import { RESPONSE_BUTTON, useChoiceRun, useResponseKeys } from "./choiceRun";
 import { FixationCross } from "./shared";
 
+/** The alerting cue of the Attention Network Test: a shape, not a word. */
+const CUE_GLYPH = "✱";
+
 const range = z.tuple([
   z.number().int().positive(),
   z.number().int().positive(),
@@ -109,7 +112,7 @@ function Slot({
         ].map((direction, i) => <Arrow key={i} direction={direction} />)
       ) : cue ? (
         <span className="text-4xl leading-none" aria-hidden>
-          ✱
+          {CUE_GLYPH}
         </span>
       ) : null}
     </div>

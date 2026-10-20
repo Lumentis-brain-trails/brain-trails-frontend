@@ -8,12 +8,19 @@
  * for the choice first - profile, credentials, headband, browser and whether it can
  * pair over Bluetooth - and decides in one gesture: accept, waitlist or reject, with a
  * cohort and a private note. Cohorts sit above the list with their targets, so the
- * sample is built on purpose. The staff app stays English (plan V3, S26).
+ * sample is built on purpose.
+ *
+ * What an applicant typed is shown as stored; what is a code with a closed set
+ * (profile, decision, headband) is shown in the reader's words, the headband in the
+ * very words of the form the applicant chose from (`application.headband`).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useFormatLocale } from "@/i18n/formatLocale";
 import { ApiRequestError, api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { useErrorMessage } from "@/lib/errorMessage";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   Button,
@@ -38,47 +45,76 @@ type BetaProfile = components["schemas"]["BetaProfile"];
 const TABS = ["pending", "waitlisted", "accepted", "rejected"] as const;
 type Tab = (typeof TABS)[number];
 
-const PROFILE_LABELS: Record<BetaProfile, string> = {
-  private: "Private",
-  therapist: "Therapist",
-  lab_lead: "Lab lead",
-  lab_member: "Lab member",
-};
-
-const ANSWER_LABELS: [keyof BoardRow["application"], string][] = [
-  ["organisation", "Organisation"],
-  ["role_title", "Role"],
-  ["registration_no", "Registration no."],
-  ["institution", "Institution"],
-  ["supervisor", "Supervisor"],
-  ["headband", "Headband"],
-  ["device", "Device"],
-  ["browser", "Browser"],
-  ["country", "Country"],
-  ["language", "Language"],
-  ["expected_subjects", "Expected subjects"],
+const PROFILES: BetaProfile[] = [
+  "private",
+  "therapist",
+  "lab_lead",
+  "lab_member",
 ];
 
+/**
+ * The words for a requested profile (`admin.applications.profiles`), or the code itself
+ * for one the catalogue has not learnt yet.
+ */
+function useProfileLabel(): (profile: string) => string {
+  const t = useTranslations("admin.applications.profiles");
+  return (profile) => (t.has(profile as never) ? t(profile as never) : profile);
+}
+
+/**
+ * The answers shown on a card, in order, and whose label each one takes: the
+ * application form's own (`form`, `application.<field>`) where that is already a short
+ * name, the board's (`board`, `admin.applications.answers.labels.<field>`) where the
+ * form asks a whole question.
+ */
+const ANSWERS = [
+  ["organisation", "form"],
+  ["role_title", "form"],
+  ["registration_no", "board"],
+  ["institution", "form"],
+  ["supervisor", "form"],
+  ["headband", "board"],
+  ["device", "board"],
+  ["browser", "form"],
+  ["country", "form"],
+  ["language", "form"],
+  ["expected_subjects", "board"],
+] as const satisfies readonly (readonly [
+  keyof BoardRow["application"],
+  "form" | "board",
+])[];
+
 function Answers({ application }: { application: BoardRow["application"] }) {
-  const rows = ANSWER_LABELS.filter(
+  const t = useTranslations("admin.applications.answers");
+  const tForm = useTranslations("application");
+  const rows = ANSWERS.filter(
     ([key]) => application[key] !== null && application[key] !== ""
   );
+  const value = (key: (typeof ANSWERS)[number][0]) => {
+    const stored = String(application[key]);
+    const headband = `headband.${stored}`;
+    return key === "headband" && tForm.has(headband as never)
+      ? tForm(headband as never)
+      : stored;
+  };
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-      {rows.map(([key, label]) => (
-        <div key={key} className="min-w-0">
-          <dt className="type-caption text-ink-3">{label}</dt>
-          <dd className="truncate text-[14px]">{String(application[key])}</dd>
+      {rows.map((row) => (
+        <div key={row[0]} className="min-w-0">
+          <dt className="type-caption text-ink-3">
+            {row[1] === "form" ? tForm(row[0]) : t(`labels.${row[0]}`)}
+          </dt>
+          <dd className="truncate text-[14px]">{value(row[0])}</dd>
         </div>
       ))}
       <div className="min-w-0">
-        <dt className="type-caption text-ink-3">Web Bluetooth</dt>
+        <dt className="type-caption text-ink-3">{t("webBluetooth")}</dt>
         <dd className="text-[14px]">
           {application.web_bluetooth === null
-            ? "Not reported"
+            ? t("bluetoothUnknown")
             : application.web_bluetooth
-              ? "Yes"
-              : "No - cannot pair here"}
+              ? t("bluetoothYes")
+              : t("bluetoothNo")}
         </dd>
       </div>
     </dl>
@@ -86,12 +122,11 @@ function Answers({ application }: { application: BoardRow["application"] }) {
 }
 
 function VerificationLink({ url }: { url: string }) {
+  const t = useTranslations("admin.applications.verification");
   const [copied, setCopied] = useState(false);
   return (
     <div className="enter-up mt-4 rounded-[var(--radius-control)] bg-warn-soft p-4">
-      <p className="type-caption mb-2 font-medium text-warn">
-        Manual mail mode: send this verification link to the applicant.
-      </p>
+      <p className="type-caption mb-2 font-medium text-warn">{t("manual")}</p>
       <div className="flex items-center gap-2">
         <code className="flex-1 overflow-x-auto font-mono text-[12px] whitespace-nowrap text-ink">
           {url}
@@ -105,7 +140,7 @@ function VerificationLink({ url }: { url: string }) {
           }}
         >
           <Icon name={copied ? "check" : "copy"} className="h-3.5 w-3.5" />
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("copied") : t("copy")}
         </Button>
       </div>
     </div>
@@ -113,6 +148,9 @@ function VerificationLink({ url }: { url: string }) {
 }
 
 function Cohorts({ cohorts }: { cohorts: Cohort[] }) {
+  const t = useTranslations("admin.applications");
+  const profileLabel = useProfileLabel();
+  const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [profile, setProfile] = useState<BetaProfile | "">("");
@@ -132,11 +170,9 @@ function Cohorts({ cohorts }: { cohorts: Cohort[] }) {
   });
   return (
     <Card>
-      <p className="type-subhead mb-4">Cohorts</p>
+      <p className="type-subhead mb-4">{t("cohorts.title")}</p>
       {cohorts.length === 0 && (
-        <p className="mb-4 text-ink-3">
-          No cohort yet. Create one to build the sample on purpose.
-        </p>
+        <p className="mb-4 text-ink-3">{t("cohorts.empty")}</p>
       )}
       <ul className="mb-5 space-y-2">
         {cohorts.map((c) => (
@@ -145,14 +181,17 @@ function Cohorts({ cohorts }: { cohorts: Cohort[] }) {
               {c.name}
               {c.profile && (
                 <span className="type-caption ml-2 text-ink-3">
-                  {PROFILE_LABELS[c.profile]}
+                  {profileLabel(c.profile)}
                 </span>
               )}
             </span>
             <span className="type-caption shrink-0 text-ink-2 tabular-nums">
-              {c.counts.accepted ?? 0}
-              {c.target !== null && ` / ${c.target}`} accepted ·{" "}
-              {c.counts.waitlisted ?? 0} waitlisted
+              {t("cohorts.counts", {
+                accepted: c.counts.accepted ?? 0,
+                hasTarget: c.target !== null ? "yes" : "no",
+                target: c.target ?? "",
+                waitlisted: c.counts.waitlisted ?? 0,
+              })}
             </span>
           </li>
         ))}
@@ -164,23 +203,23 @@ function Cohorts({ cohorts }: { cohorts: Cohort[] }) {
           if (name.trim()) create.mutate();
         }}
       >
-        <Field label="New cohort">
+        <Field label={t("cohorts.new")}>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Profile">
+        <Field label={t("profile")}>
           <Select
             value={profile}
             onChange={(e) => setProfile(e.target.value as BetaProfile | "")}
           >
-            <option value="">Any</option>
-            {Object.entries(PROFILE_LABELS).map(([value, label]) => (
+            <option value="">{t("cohorts.anyProfile")}</option>
+            {PROFILES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {profileLabel(value)}
               </option>
             ))}
           </Select>
         </Field>
-        <Field label="Target">
+        <Field label={t("cohorts.target")}>
           <Input
             type="number"
             inputMode="numeric"
@@ -190,12 +229,12 @@ function Cohorts({ cohorts }: { cohorts: Cohort[] }) {
           />
         </Field>
         <Button type="submit" variant="secondary" disabled={create.isPending}>
-          Add
+          {t("cohorts.add")}
         </Button>
       </form>
       {create.error instanceof ApiRequestError && (
         <div className="mt-3">
-          <ErrorBanner message={create.error.error.message} />
+          <ErrorBanner message={errorMessage(create.error)} />
         </div>
       )}
     </Card>
@@ -213,6 +252,8 @@ function Decide({
   onDecided: (data: ApprovalOut) => void;
   onError: (message: string) => void;
 }) {
+  const t = useTranslations("admin.applications");
+  const errorMessage = useErrorMessage();
   const [cohort, setCohort] = useState(row.cohort?.id ?? "");
   const [note, setNote] = useState(row.application.admin_note ?? "");
   const decide = useMutation({
@@ -223,17 +264,14 @@ function Decide({
         note: note || null,
       }),
     onSuccess: onDecided,
-    onError: (e) =>
-      onError(
-        e instanceof ApiRequestError ? e.error.message : "Request failed"
-      ),
+    onError: (e) => onError(errorMessage(e)),
   });
   const current = row.application.decision;
   return (
     <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_2fr]">
-      <Field label="Cohort">
+      <Field label={t("cohort")}>
         <Select value={cohort} onChange={(e) => setCohort(e.target.value)}>
-          <option value="">No cohort</option>
+          <option value="">{t("decide.noCohort")}</option>
           {cohorts.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -241,7 +279,7 @@ function Decide({
           ))}
         </Select>
       </Field>
-      <Field label="Note (admins only)">
+      <Field label={t("decide.note")}>
         <Textarea
           rows={1}
           value={note}
@@ -253,7 +291,7 @@ function Decide({
           onClick={() => decide.mutate("accept")}
           disabled={decide.isPending}
         >
-          Accept
+          {t("decide.accept")}
         </Button>
         {current !== "waitlisted" && (
           <Button
@@ -261,7 +299,7 @@ function Decide({
             onClick={() => decide.mutate("waitlist")}
             disabled={decide.isPending}
           >
-            Waitlist
+            {t("decide.waitlist")}
           </Button>
         )}
         {current !== "rejected" && (
@@ -270,7 +308,7 @@ function Decide({
             onClick={() => decide.mutate("reject")}
             disabled={decide.isPending}
           >
-            Reject
+            {t("decide.reject")}
           </Button>
         )}
       </div>
@@ -279,6 +317,10 @@ function Decide({
 }
 
 export default function AdminApplicationsPage() {
+  const t = useTranslations("admin.applications");
+  const profileLabel = useProfileLabel();
+  const errorMessage = useErrorMessage();
+  const locale = useFormatLocale();
   const [tab, setTab] = useState<Tab>("pending");
   const [profile, setProfile] = useState<BetaProfile | "">("");
   const [cohort, setCohort] = useState("");
@@ -315,10 +357,7 @@ export default function AdminApplicationsPage() {
         `admin/applications/${userId}/reissue-verification`
       ),
     onSuccess: decided,
-    onError: (e) =>
-      setError(
-        e instanceof ApiRequestError ? e.error.message : "Request failed"
-      ),
+    onError: (e) => setError(errorMessage(e)),
   });
 
   const forbidden =
@@ -328,49 +367,47 @@ export default function AdminApplicationsPage() {
     <main className="mx-auto max-w-4xl px-6 py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">Applications</h1>
-          <p className="mt-1 text-ink-2">
-            Who joins the beta, and in which cohort.
-          </p>
+          <h1 className="type-title">{t("title")}</h1>
+          <p className="mt-1 text-ink-2">{t("intro")}</p>
         </div>
         <Segmented
-          label="Decision"
+          label={t("decision")}
           size="md"
           value={tab}
           onChange={setTab}
-          options={TABS.map((t) => ({
-            value: t,
-            label: t.charAt(0).toUpperCase() + t.slice(1),
+          options={TABS.map((value) => ({
+            value,
+            label: t(`tabs.${value}`),
           }))}
         />
       </header>
 
       {forbidden ? (
-        <ErrorBanner message="Admin role required." />
+        <ErrorBanner message={t("forbidden")} />
       ) : (
         <div className="space-y-6">
           <Cohorts cohorts={cohorts.data ?? []} />
 
           <div className="flex flex-wrap gap-3">
-            <Field label="Profile">
+            <Field label={t("profile")}>
               <Select
                 value={profile}
                 onChange={(e) => setProfile(e.target.value as BetaProfile | "")}
               >
-                <option value="">All profiles</option>
-                {Object.entries(PROFILE_LABELS).map(([value, label]) => (
+                <option value="">{t("allProfiles")}</option>
+                {PROFILES.map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {profileLabel(value)}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Cohort">
+            <Field label={t("cohort")}>
               <Select
                 value={cohort}
                 onChange={(e) => setCohort(e.target.value)}
               >
-                <option value="">All cohorts</option>
+                <option value="">{t("allCohorts")}</option>
                 {(cohorts.data ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -389,7 +426,7 @@ export default function AdminApplicationsPage() {
           )}
           {board.data?.length === 0 && (
             <Card inset>
-              <EmptyState title={`Nothing ${tab}.`} />
+              <EmptyState title={t(`empty.${tab}`)} />
             </Card>
           )}
           <div className="stagger space-y-4">
@@ -401,13 +438,20 @@ export default function AdminApplicationsPage() {
                       {row.profile?.full_name ?? row.user.email}
                     </p>
                     <p className="type-caption mt-0.5 text-ink-3">
-                      {PROFILE_LABELS[row.application.requested_profile]} ·{" "}
-                      {row.user.email} · applied{" "}
-                      {new Date(row.application.created_at).toLocaleString(
-                        undefined,
-                        { dateStyle: "medium", timeStyle: "short" }
-                      )}
-                      {row.cohort && ` · ${row.cohort.name}`}
+                      {t("meta", {
+                        profile: profileLabel(
+                          row.application.requested_profile
+                        ),
+                        email: row.user.email,
+                        date: new Date(
+                          row.application.created_at
+                        ).toLocaleString(locale, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }),
+                        inCohort: row.cohort ? "yes" : "no",
+                        cohort: row.cohort?.name ?? "",
+                      })}
                     </p>
                   </div>
                   <StatusBadge status={row.user.status} />
@@ -434,7 +478,7 @@ export default function AdminApplicationsPage() {
                       onClick={() => reissue.mutate(row.user.id)}
                       disabled={reissue.isPending}
                     >
-                      Generate a fresh verification link
+                      {t("verification.reissue")}
                     </Button>
                   </div>
                 )}

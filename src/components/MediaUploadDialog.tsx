@@ -1,9 +1,15 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { api } from "@/lib/api";
-import { uploadToStorage, type Presign } from "@/lib/upload";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
+import {
+  type Presign,
+  uploadToStorage,
+  useUploadErrorMessage,
+} from "@/lib/upload";
 import type { Media } from "@/lib/types";
 import {
   Button,
@@ -43,6 +49,8 @@ function slugify(name: string): string {
  * probe. The sheet cannot be dismissed while the upload runs.
  */
 export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("media.upload");
+  const describe = useUploadErrorMessage();
   const queryClient = useQueryClient();
   const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -52,6 +60,9 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The library the item goes to: the current workspace's, a clinic's included. Until
+  // it is known the upload waits, rather than defaulting to the personal library.
+  const workspace = useCurrentWorkspace();
 
   const kind: "video" | "audio" = file?.type.startsWith("audio/")
     ? "audio"
@@ -73,17 +84,21 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Choose a file first.");
-      if (!title.trim()) throw new Error("Give it a title.");
-      const presign = await api.post<MediaPresign>("media/uploads", {
-        filename: file.name,
-      });
+      // Thrown already translated: `onError` shows the message as it is.
+      if (!file) throw new Error(t("chooseFile"));
+      if (!title.trim()) throw new Error(t("needTitle"));
+      const presign = await api.post<MediaPresign>(
+        inWorkspace("media/uploads", workspace),
+        {
+          filename: file.name,
+        }
+      );
       if (file.size > presign.max_mb * 1024 * 1024)
-        throw new Error(`File exceeds ${presign.max_mb} MB.`);
+        throw new Error(t("tooLarge", { max: presign.max_mb }));
       const duration = await readDuration(file);
       setProgress(0);
       await uploadToStorage(presign.source, file, setProgress);
-      return api.post<Media>("media", {
+      return api.post<Media>(inWorkspace("media", workspace), {
         kind,
         title: title.trim(),
         slug: slugify(title) || slugify(file.name),
@@ -94,15 +109,12 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["media"] });
-      toast(
-        "success",
-        "Uploaded. It is checked in the background and appears when ready."
-      );
+      toast("success", t("done"));
       onClose();
     },
     onError: (e: Error) => {
       setProgress(null);
-      setError(e.message);
+      setError(describe(e));
     },
   });
 
@@ -114,11 +126,7 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Sheet
-      title="Upload a video or audio"
-      onClose={onClose}
-      dismissible={!upload.isPending}
-    >
+    <Sheet title={t("title")} onClose={onClose} dismissible={!upload.isPending}>
       <div className="space-y-5">
         {error && <ErrorBanner message={error} />}
 
@@ -155,31 +163,32 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
             onChange={(e) => pick(e.target.files?.[0])}
           />
           <span className="text-[15px] font-medium">
-            {file ? file.name : "Drop an MP4, WebM or MOV here"}
+            {file ? file.name : t("drop")}
           </span>
           <span className="type-caption mt-1 text-ink-3">
-            {file
-              ? `${(file.size / 1024 / 1024).toFixed(1)} MB`
-              : "or click to choose"}
+            {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("choose")}
           </span>
         </div>
 
-        <Field label="Title">
+        <Field label={t("fields.title")}>
           <Input
             id="media-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="What is it?"
+            placeholder={t("fields.titlePlaceholder")}
           />
         </Field>
 
-        <Field label="Description" hint="Optional.">
+        <Field
+          label={t("fields.description")}
+          hint={t("fields.descriptionHint")}
+        >
           <Textarea
             id="media-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            placeholder="Anything worth remembering about this clip."
+            placeholder={t("fields.descriptionPlaceholder")}
           />
         </Field>
 
@@ -198,10 +207,13 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             disabled={upload.isPending}
           >
-            Cancel
+            {t("cancel")}
           </Button>
-          <Button onClick={() => upload.mutate()} disabled={upload.isPending}>
-            {upload.isPending ? "Uploading…" : "Add to library"}
+          <Button
+            onClick={() => upload.mutate()}
+            disabled={upload.isPending || workspace === undefined}
+          >
+            {upload.isPending ? t("uploading") : t("add")}
           </Button>
         </div>
       </div>

@@ -15,8 +15,12 @@
  * "Create a protocol" wraps one item in a protocol of baseline - the item - baseline
  * (V3-0004): everything is played through a protocol, so every session has a version, a
  * stored plan and block events. It opens the new draft, which its author publishes.
+ *
+ * Why a file was refused is a code from the probe (`probe.reason`), read through
+ * `media.refusals.<code>`; a code without a sentence falls back to a plain "refused".
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MediaCard } from "@/components/MediaCard";
@@ -33,25 +37,14 @@ import {
   cn,
 } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
+import { useErrorMessage } from "@/lib/errorMessage";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
 import type { Media } from "@/lib/types";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 
-const REFUSALS: Record<string, string> = {
-  unreadable: "The file could not be read.",
-  no_video_stream: "The file has no video in it.",
-  no_audio_stream: "The file has no audio in it.",
-  // Refusals of the probe before 2026-09-24 (V3-0003 amendment): such a file is now
-  // transcoded; the two messages stay for rows that failed under the old rule.
-  unsupported_video_codec:
-    "Browsers cannot play this video format. Export it as H.264 (MP4) or VP9 (WebM).",
-  unsupported_audio_codec:
-    "Browsers cannot play this audio format. Export it as AAC, MP3 or Opus.",
-  transcode_failed:
-    "The file could not be converted for the browser. Export it as H.264 (MP4) or AAC (M4A) and upload it again.",
-  no_duration: "The file has no length.",
-  probe_error: "The check failed. Try uploading it again.",
-};
+// `media.refusals` still carries `unsupported_video_codec` and `unsupported_audio_codec`,
+// refusals of the probe before 2026-09-24 (V3-0003 amendment): such a file is now
+// transcoded; the two messages stay for rows that failed under the old rule.
 
 const FILE_KINDS = new Set(["video", "audio"]);
 
@@ -79,14 +72,20 @@ function Tag({
 
 /** What the server is still doing with the file, or why it refused it. */
 function Standing({ item }: { item: Media }) {
+  const t = useTranslations("media.page");
+  const tRefusals = useTranslations("media.refusals");
   if (item.status === "processing")
-    return <p className="type-caption text-ink-3">Checking the file…</p>;
-  if (item.status === "failed")
+    return <p className="type-caption text-ink-3">{t("checking")}</p>;
+  if (item.status === "failed") {
+    const reason = String(item.probe.reason);
     return (
       <p className="type-caption text-danger">
-        {REFUSALS[String(item.probe.reason)] ?? "The file was refused."}
+        {tRefusals.has(reason as never)
+          ? tRefusals(reason as never)
+          : t("refused")}
       </p>
     );
+  }
   return null;
 }
 
@@ -96,6 +95,8 @@ function Standing({ item }: { item: Media }) {
  * refuses the request without the attestation).
  */
 function ShareDialog({ item, onClose }: { item: Media; onClose: () => void }) {
+  const t = useTranslations("media.share.dialog");
+  const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [rights, setRights] = useState(false);
   const file = FILE_KINDS.has(item.kind);
@@ -108,11 +109,8 @@ function ShareDialog({ item, onClose }: { item: Media; onClose: () => void }) {
     },
   });
   return (
-    <Sheet title="Share with the community" onClose={onClose}>
-      <p className="text-ink-2">
-        “{item.title}” goes to us for a look first. Once accepted, everyone in
-        the community can play it.
-      </p>
+    <Sheet title={t("title")} onClose={onClose}>
+      <p className="text-ink-2">{t("body", { title: item.title })}</p>
       {file && (
         <label className="mt-4 flex cursor-pointer items-start gap-2 text-[13px]">
           <input
@@ -121,7 +119,7 @@ function ShareDialog({ item, onClose }: { item: Media; onClose: () => void }) {
             onChange={(e) => setRights(e.target.checked)}
             className="mt-0.5 h-4 w-4 accent-(--accent)"
           />
-          I made this file or have the right to share it publicly.
+          {t("rights")}
         </label>
       )}
       <div className="mt-5 flex gap-2">
@@ -129,15 +127,15 @@ function ShareDialog({ item, onClose }: { item: Media; onClose: () => void }) {
           onClick={() => publish.mutate()}
           disabled={publish.isPending || (file && !rights)}
         >
-          Ask to publish
+          {t("ask")}
         </Button>
         <Button variant="ghost" onClick={onClose}>
-          Cancel
+          {t("cancel")}
         </Button>
       </div>
       {publish.error instanceof ApiRequestError && (
         <div className="mt-3">
-          <ErrorBanner message={publish.error.error.message} />
+          <ErrorBanner message={errorMessage(publish.error)} />
         </div>
       )}
     </Sheet>
@@ -146,20 +144,21 @@ function ShareDialog({ item, onClose }: { item: Media; onClose: () => void }) {
 
 /** Under the video: the offer to publish, then the tag it turns into. */
 function Share({ item }: { item: Media }) {
+  const t = useTranslations("media.share");
   const [asking, setAsking] = useState(false);
   if (item.status !== "ready") return null;
   if (item.visibility !== "workspace")
-    return <Tag tone="public">In the community</Tag>;
+    return <Tag tone="public">{t("inCommunity")}</Tag>;
   if (item.review_state === "pending")
-    return <Tag tone="review">In review</Tag>;
+    return <Tag tone="review">{t("inReview")}</Tag>;
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="secondary" onClick={() => setAsking(true)}>
-          Share with the community
+          {t("action")}
         </Button>
         {item.review_state === "refused" && (
-          <Tag tone="muted">Not accepted</Tag>
+          <Tag tone="muted">{t("notAccepted")}</Tag>
         )}
       </div>
       {asking && <ShareDialog item={item} onClose={() => setAsking(false)} />}
@@ -171,10 +170,17 @@ const WRAPPABLE = new Set(["video", "audio", "text"]);
 
 /** Turn one item into a protocol draft and open it (V3-0004 amendment). */
 function MakeProtocol({ item }: { item: Media }) {
+  const t = useTranslations("media.page");
+  const errorMessage = useErrorMessage();
   const router = useRouter();
+  // The protocol goes to the library being worked in, a clinic's included.
+  const workspace = useCurrentWorkspace();
   const create = useMutation({
     mutationFn: () =>
-      api.post<ProtocolDetail>(`protocols/from-media/${item.id}`, {}),
+      api.post<ProtocolDetail>(
+        inWorkspace(`protocols/from-media/${item.id}`, workspace),
+        {}
+      ),
     onSuccess: (protocol) => router.push(`/protocols/${protocol.id}`),
   });
   if (!WRAPPABLE.has(item.kind) || item.status !== "ready") return null;
@@ -184,19 +190,20 @@ function MakeProtocol({ item }: { item: Media }) {
         <Button
           size="sm"
           onClick={() => create.mutate()}
-          disabled={create.isPending}
+          disabled={create.isPending || workspace === undefined}
         >
-          Create a protocol
+          {t("createProtocol")}
         </Button>
       </div>
       {create.error instanceof ApiRequestError && (
-        <ErrorBanner message={create.error.error.message} />
+        <ErrorBanner message={errorMessage(create.error)} />
       )}
     </div>
   );
 }
 
 export default function MediaPage() {
+  const t = useTranslations("media.page");
   const [uploading, setUploading] = useState(false);
   const [watching, setWatching] = useState<string | null>(null);
   const workspace = useCurrentWorkspace();
@@ -212,25 +219,22 @@ export default function MediaPage() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="type-title">My media</h1>
-          <p className="mt-1 text-ink-2">
-            Videos and sounds you uploaded. Open one to watch it back; a video
-            plays as a protocol from its card.
-          </p>
+          <h1 className="type-title">{t("title")}</h1>
+          <p className="mt-1 text-ink-2">{t("intro")}</p>
         </div>
         <Button onClick={() => setUploading(true)}>
-          <Icon name="plus" /> Upload
+          <Icon name="plus" /> {t("upload")}
         </Button>
       </header>
       {mine.isPending && <Skeleton className="h-40" />}
-      {mine.isError && (
-        <ErrorBanner message="Your media could not be loaded." />
-      )}
+      {mine.isError && <ErrorBanner message={t("loadError")} />}
       {mine.data?.length === 0 && (
         <EmptyState
-          title="Nothing uploaded yet"
-          text="Upload a video or a sound to build protocols with."
-          action={<Button onClick={() => setUploading(true)}>Upload</Button>}
+          title={t("empty.title")}
+          text={t("empty.text")}
+          action={
+            <Button onClick={() => setUploading(true)}>{t("upload")}</Button>
+          }
         />
       )}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -240,7 +244,9 @@ export default function MediaPage() {
               item={item}
               locked={item.status !== "ready"}
               lockedNote={
-                item.status === "failed" ? "Refused" : "Being checked"
+                item.status === "failed"
+                  ? t("lockedNote.failed")
+                  : t("lockedNote.processing")
               }
               onOpen={
                 item.status === "ready" ? () => setWatching(item.id) : undefined

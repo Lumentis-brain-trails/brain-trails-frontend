@@ -5,7 +5,9 @@
  *
  * Shown before the headband pre-flight so nobody straps on a headband for a protocol
  * they would not agree to. The texts are protocol content (the author's words, from the
- * manifest) and shown as written; the chrome around them comes from `run.consent`.
+ * manifest) and shown as handed in: the host passes an official protocol's manifest and
+ * title through `lib/protocol/official.ts` first, and anyone else's as stored. The
+ * chrome around them comes from `run.consent`.
  * With neither a warning nor required consent there is nothing to show, and the host
  * should skip the gate - `needsConsentGate` says when.
  */

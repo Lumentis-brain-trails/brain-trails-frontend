@@ -13,6 +13,7 @@
  * thread took to get around to the handler, which is recovered accuracy on every RT.
  */
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import {
@@ -126,6 +127,8 @@ function GoNoGoRenderer({
   seed,
   reducedMotion,
 }: TaskContext<GoNoGoConfig>) {
+  // Read once per render and only by the markup below: the frame loop never touches it.
+  const t = useTranslations("kinds.goNoGo");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [progress, setProgress] = useState({ index: 0, total: config.n });
 
@@ -240,19 +243,21 @@ function GoNoGoRenderer({
         ref={canvasRef}
         className="min-h-0 w-full flex-1"
         role="img"
-        aria-label="Signal Navigator stimulus area"
+        aria-label={t("area")}
       />
       <div className="flex items-center justify-between gap-4 px-6 py-4">
         <span className="type-caption text-ink-3" aria-live="off">
-          Trial {Math.min(progress.index + 1, progress.total)} of{" "}
-          {progress.total}
+          {t("progress", {
+            n: Math.min(progress.index + 1, progress.total),
+            total: progress.total,
+          })}
         </span>
         <button
           type="button"
           onPointerDown={(event) => onPress(event.timeStamp)}
           className="pressable rounded-full bg-accent px-10 py-4 text-base font-semibold text-on-accent hover:bg-accent-hover"
         >
-          Dock
+          {t("dock")}
         </button>
       </div>
     </div>

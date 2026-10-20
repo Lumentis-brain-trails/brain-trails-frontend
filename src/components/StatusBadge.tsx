@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@/components/ui";
 
 type Tone = "ok" | "busy" | "wait" | "bad" | "muted";
@@ -17,21 +18,6 @@ const TONE: Record<string, Tone> = {
   rejected: "bad",
 };
 
-const LABEL: Record<string, string> = {
-  done: "Ready",
-  processing: "Processing",
-  running: "Running",
-  queued: "Queued",
-  uploaded: "Uploaded",
-  capturing: "Recording",
-  empty: "No EEG",
-  failed: "Failed",
-  pending: "Pending",
-  approved: "Approved",
-  active: "Active",
-  rejected: "Rejected",
-};
-
 const DOT: Record<Tone, string> = {
   ok: "bg-ok",
   busy: "bg-accent",
@@ -40,8 +26,16 @@ const DOT: Record<Tone, string> = {
   muted: "bg-ink-3",
 };
 
-/** Status as a dot + word. The dot pulses while something is in progress. */
+/**
+ * Status as a dot + word. The dot pulses while something is in progress.
+ *
+ * The word is the catalogue's: `recordings.status` for a recording or job status, then
+ * `admin.statuses` for an account status (the staff app is what shows those), and the
+ * raw status for one this component has never heard of.
+ */
 export function StatusBadge({ status }: { status: string }) {
+  const t = useTranslations("recordings.status");
+  const tAccount = useTranslations("admin.statuses");
   const tone = TONE[status] ?? "muted";
   const live = tone === "busy";
   return (
@@ -52,7 +46,11 @@ export function StatusBadge({ status }: { status: string }) {
       >
         {live && <span className="ping absolute inset-0 text-accent" />}
       </span>
-      {LABEL[status] ?? status}
+      {t.has(status as never)
+        ? t(status as never)
+        : tAccount.has(status as never)
+          ? tAccount(status as never)
+          : status}
     </span>
   );
 }

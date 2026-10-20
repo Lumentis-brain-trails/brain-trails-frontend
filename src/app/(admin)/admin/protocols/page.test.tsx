@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { IntlEn } from "@/i18n/testing";
 import AdminProtocolsPage from "./page";
 
 const get = vi.fn();
@@ -45,9 +46,11 @@ function renderPage() {
     defaultOptions: { queries: { retry: false } },
   });
   render(
-    <QueryClientProvider client={client}>
-      <AdminProtocolsPage />
-    </QueryClientProvider>
+    <IntlEn>
+      <QueryClientProvider client={client}>
+        <AdminProtocolsPage />
+      </QueryClientProvider>
+    </IntlEn>
   );
 }
 
