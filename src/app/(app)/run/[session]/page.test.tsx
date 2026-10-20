@@ -104,3 +104,24 @@ test("the participant's window runs what the console boots, and obeys its comman
   );
   console_.close();
 });
+
+test("a window opened after the run began says it cannot resume", async () => {
+  const console_ = new BroadcastChannel(channelName("run-3"));
+  console_.onmessage = (event) => {
+    if (event.data?.type === "hello")
+      console_.postMessage({ type: "detached" });
+  };
+  await act(async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Suspense fallback="loading">
+          <ParticipantRunPage params={Promise.resolve({ session: "run-3" })} />
+        </Suspense>
+      </NextIntlClientProvider>
+    );
+  });
+  expect(
+    await screen.findByText(messages.console.participant.detached)
+  ).toBeInTheDocument();
+  console_.close();
+});

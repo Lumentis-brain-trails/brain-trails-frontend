@@ -27,6 +27,13 @@ import type { Marker } from "@/lib/protocol/marker";
 import type { MarkerSink } from "@/lib/protocol/sink";
 import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
 
+/**
+ * How long the console waits, after asking the runner to stop because the headband
+ * dropped, for the runner to log and flush `run_aborted` and say `exited` before it
+ * closes the session anyway: a batch posted after the finish would be refused (409).
+ */
+export const EXIT_GRACE_MS = 3000;
+
 /** Everything the participant's window needs to run the protocol. */
 export interface RunBoot {
   sessionId: string;
@@ -45,7 +52,9 @@ export interface RunBoot {
 export type ConsoleMessage =
   | { type: "boot"; boot: RunBoot }
   | { type: "fit"; fit: TimelineFit; origin: number }
-  | { type: "command"; command: OperatorCommand };
+  | { type: "command"; command: OperatorCommand }
+  /** To a window that opened after the run began there: it cannot resume it. */
+  | { type: "detached" };
 
 /** What the participant's window sends. */
 export type RunMessage =

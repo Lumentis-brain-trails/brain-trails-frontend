@@ -3101,7 +3101,7 @@
     "syncing": "Sincronizzazione con la fascia…",
     "headband": "{name} · batteria {battery}",
     "headbandLost": "Fascia disconnessa",
-    "participantGone": "Lo schermo del partecipante è stato chiuso. Ferma la sessione per conservare quanto registrato.",
+    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato e la sessione non può continuare lì. Ferma la sessione per conservare quanto registrato.",
     "stopAndSave": "Ferma e salva",
     "participant": {
       "title": "Schermo del partecipante",
@@ -3111,7 +3111,8 @@
       "notConnected": "Non ancora aperto",
       "waiting": "In attesa che l'operatore inizi…",
       "ended": "La sessione è terminata. Grazie.",
-      "unsupported": "Questo browser non può collegarsi alla console."
+      "unsupported": "Questo browser non può collegarsi alla console.",
+      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà."
     },
     "commands": {
       "title": "Comandi",
@@ -3134,7 +3135,8 @@
       "running": "In corso",
       "paused": "In pausa",
       "pausePending": "In pausa dopo questo blocco",
-      "waitingForParticipant": "In attesa che il partecipante inizi"
+      "waitingForParticipant": "In attesa che il partecipante inizi",
+      "lost": "Schermo del partecipante perso"
     },
     "notes": {
       "title": "Note",

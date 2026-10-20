@@ -542,7 +542,9 @@ export function ProtocolRunner({
       }
       case "end_block":
       case "skip_block": {
-        if (held || !step) return log("ignored");
+        // already ended, by its own timer or an earlier command, in this same tick
+        if (held || !step || doneStepRef.current === stepIndex)
+          return log("ignored");
         const how = {
           ended_by: "operator",
           ...(command.type === "skip_block" ? { skipped: true } : {}),

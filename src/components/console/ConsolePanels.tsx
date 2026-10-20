@@ -31,9 +31,18 @@ export function CommandBar({
   const t = useTranslations("console.commands");
   const [text, setText] = useState("");
   const [confirmAbort, setConfirmAbort] = useState(false);
+  // The block an End or Skip was sent for: both stay off until the runner reports a
+  // different block, so a double click cannot end two.
+  const [endedIndex, setEndedIndex] = useState<number | null>(null);
   const paused = state?.status === "paused";
   const pending = state?.pausePending === true;
   const inBlock = state?.status === "running";
+  const ending = endedIndex !== null && state?.stepIndex === endedIndex;
+  const end = (type: "end_block" | "skip_block") => {
+    if (!state || ending) return;
+    setEndedIndex(state.stepIndex);
+    send(type);
+  };
 
   return (
     <Card>
@@ -54,15 +63,15 @@ export function CommandBar({
         )}
         <Button
           variant="secondary"
-          disabled={disabled || !inBlock}
-          onClick={() => send("end_block")}
+          disabled={disabled || !inBlock || ending}
+          onClick={() => end("end_block")}
         >
           {t("endBlock")}
         </Button>
         <Button
           variant="secondary"
-          disabled={disabled || !inBlock}
-          onClick={() => send("skip_block")}
+          disabled={disabled || !inBlock || ending}
+          onClick={() => end("skip_block")}
         >
           {t("skipBlock")}
         </Button>
@@ -135,14 +144,18 @@ export function CommandBar({
 export function PlanTimeline({
   labels,
   state,
+  lost = false,
 }: {
   labels: string[];
   state: RunnerState | null;
+  /** The participant's window is gone: the last state reported is not the run's. */
+  lost?: boolean;
 }) {
   const t = useTranslations("console.plan");
   const current = state?.stepIndex ?? -1;
-  const status =
-    state === null
+  const status = lost
+    ? t("lost")
+    : state === null
       ? t("notStarted")
       : state.status === "paused"
         ? t("paused")

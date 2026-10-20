@@ -62,6 +62,7 @@ export default function ParticipantRunPage({
   );
   const [run, setRun] = useState<Run | null>(null);
   const [ended, setEnded] = useState(false);
+  const [detached, setDetached] = useState(false);
 
   // Opened by an effect, not during render: React may render twice, and a channel
   // opened there would be closed by the first cleanup and used by the second mount.
@@ -71,7 +72,10 @@ export default function ParticipantRunPage({
     // The console's latest fit, already in this window's frame; read per marker.
     let fit: TimelineFit | null = null;
     const unsubscribe = channel.subscribe((message) => {
-      if (message.type === "fit") {
+      if (message.type === "detached") {
+        // this window opened after the run began: only the console can end it now
+        setDetached(true);
+      } else if (message.type === "fit") {
         fit = shiftFit(message.fit, message.origin, performance.timeOrigin);
       } else if (message.type === "boot") {
         const { boot } = message;
@@ -118,7 +122,7 @@ export default function ParticipantRunPage({
         className="flex min-h-dvh items-center justify-center bg-black px-6 text-center"
       >
         <p className={ended ? "type-heading text-ink-2" : "text-ink-2"}>
-          {ended ? t("ended") : t("waiting")}
+          {ended ? t("ended") : detached ? t("detached") : t("waiting")}
         </p>
       </main>
     );

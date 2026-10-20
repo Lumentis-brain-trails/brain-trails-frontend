@@ -3101,7 +3101,7 @@
     "syncing": "Syncing with the headband…",
     "headband": "{name} · battery {battery}",
     "headbandLost": "Headband disconnected",
-    "participantGone": "The participant's screen was closed. Stop the session to keep what was recorded.",
+    "participantGone": "The participant's screen was closed or reloaded, and the run cannot continue there. Stop the session to keep what was recorded.",
     "stopAndSave": "Stop and save",
     "participant": {
       "title": "Participant's screen",
@@ -3111,7 +3111,8 @@
       "notConnected": "Not open yet",
       "waiting": "Waiting for the operator to start…",
       "ended": "The session has ended. Thank you.",
-      "unsupported": "This browser cannot connect to the console."
+      "unsupported": "This browser cannot connect to the console.",
+      "detached": "This session cannot continue in this window. The operator will stop it."
     },
     "commands": {
       "title": "Commands",
@@ -3134,7 +3135,8 @@
       "running": "Running",
       "paused": "Paused",
       "pausePending": "Pausing after this block",
-      "waitingForParticipant": "Waiting for the participant to begin"
+      "waitingForParticipant": "Waiting for the participant to begin",
+      "lost": "Participant's screen lost"
     },
     "notes": {
       "title": "Notes",

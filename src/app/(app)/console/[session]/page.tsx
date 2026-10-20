@@ -59,6 +59,7 @@ import { api } from "@/lib/api";
 import {
   type ChannelMessage,
   type ConsoleChannel,
+  EXIT_GRACE_MS,
   openChannel,
 } from "@/lib/console/channel";
 import { saveLiveNote } from "@/lib/console/notes";
@@ -110,7 +111,12 @@ type Phase =
   | "saved"
   | "failed";
 
-type Participant = "closed" | "open" | "gone";
+/**
+ * The participant's window as the console knows it. `lost` is for good: once the run
+ * has started there, a window that closed or reloaded took the runner and its state with
+ * it, and a new window cannot pick the run up.
+ */
+type Participant = "closed" | "open" | "lost";
 
 interface Ending {
   summary: Record<string, unknown>;
@@ -213,6 +219,11 @@ function Console({
   const ending = useRef<Ending | null>(null);
   const closing = useRef(false);
   const syncStarted = useRef(0);
+  // The participant's window has the run: from here a reload cannot be recovered.
+  const booted = useRef(false);
+  // Why the run is ending, when the console decided it (the headband dropped).
+  const endReason = useRef<"dropped" | undefined>(undefined);
+  const dropHandled = useRef(false);
 
   // What the participant's window reports.
   // The channel lives in a ref: it is opened by an effect and only ever used from
@@ -283,10 +294,17 @@ function Console({
     onMessage.current = (message) => {
       switch (message.type) {
         case "hello":
+          if (booted.current) {
+            // a window opened or reloaded mid-run: it cannot resume, so say so there
+            // and keep offering stop-and-save here
+            channelRef.current?.post({ type: "detached" });
+            setParticipant("lost");
+            return;
+          }
           setParticipant("open");
           return;
         case "gone":
-          setParticipant("gone");
+          setParticipant(booted.current ? "lost" : "closed");
           return;
         case "state":
           setRunner(message.state);
@@ -312,7 +330,7 @@ function Console({
           return;
         case "exited":
           markers.current = message.markers;
-          void close({}, true);
+          void close({}, true, endReason.current);
           return;
       }
     };
@@ -391,6 +409,7 @@ function Console({
       }
       window.clearInterval(timer);
       setAnchor(eegAnchor(performance.now(), muse.readTimelineFit, first));
+      booted.current = true;
       channelRef.current?.post({
         type: "boot",
         boot: {
@@ -424,15 +443,35 @@ function Console({
     return () => window.clearInterval(timer);
   }, [muse, phase]);
 
-  // The headband dropping stops the run and keeps what was recorded, as on the run page.
+  /*
+   * The headband dropping stops the run and keeps what was recorded, as on the run page.
+   * The runner is asked to stop first and the session closes on its `exited`, so its
+   * `run_aborted` reaches a session that is still open; a runner that never answers is
+   * given EXIT_GRACE_MS. Handled once: the timers outlive re-renders on purpose.
+   */
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
   useEffect(() => {
     if (phase !== "running" || muse.status === "connected") return;
-    const timer = window.setTimeout(() => {
+    if (dropHandled.current) return;
+    dropHandled.current = true;
+    endReason.current = "dropped";
+    const reachable = participant === "open";
+    // deferred a tick: closing updates state, which an effect must not do inline
+    window.setTimeout(() => {
+      if (!reachable) {
+        void closeRef.current({}, true, "dropped");
+        return;
+      }
       send("abort");
-      void close({}, true, "dropped");
+      window.setTimeout(
+        () => void closeRef.current({}, true, "dropped"),
+        EXIT_GRACE_MS
+      );
     }, 0);
-    return () => window.clearTimeout(timer);
-  }, [close, muse.status, phase, send]);
+  }, [muse.status, participant, phase, send]);
 
   const sessionClock = useCallback(
     () => (anchor ? anchor.toSessionS(performance.now()) : null),
@@ -539,7 +578,7 @@ function Console({
             <span className="text-ink-2">{t("syncing")}</span>
           </Card>
         )}
-        {participant === "gone" && (
+        {participant === "lost" && (
           <div className="mb-6 space-y-3">
             <ErrorBanner message={t("participantGone")} />
             <Button variant="danger" onClick={() => void close({}, true)}>
@@ -548,7 +587,11 @@ function Console({
           </div>
         )}
         <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          <PlanTimeline labels={labels} state={runner} />
+          <PlanTimeline
+            labels={labels}
+            state={runner}
+            lost={participant === "lost"}
+          />
           <div className="space-y-6">
             <CommandBar
               state={runner}

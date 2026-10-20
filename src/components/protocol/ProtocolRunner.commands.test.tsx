@@ -279,6 +279,26 @@ describe("ProtocolRunner command port", () => {
     ]);
   });
 
+  test("a second End in the same tick ends nothing more and says so", async () => {
+    const { sink, port } = renderRunner();
+    // both arrive before the runner re-renders onto the next block
+    act(() => {
+      port.send({ id: "e1", type: "end_block", source: "console" });
+      port.send({ id: "e2", type: "end_block", source: "console" });
+    });
+    expect(screen.getByText("Step two")).toBeInTheDocument();
+    expect(sink.all().filter((m) => m.label === "block_end")).toHaveLength(1);
+    expect(
+      commandsOf(sink.all()).map((m) => [m.meta.command_id, m.meta.effect])
+    ).toEqual([
+      ["e1", "applied"],
+      ["e2", "ignored"],
+    ]);
+    // the second block runs its full course
+    await advance(900);
+    expect(screen.getByText("Step two")).toBeInTheDocument();
+  });
+
   test("a command delivered twice is applied once", () => {
     const { sink, port } = renderRunner();
     const command = {
