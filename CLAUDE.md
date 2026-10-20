@@ -81,14 +81,18 @@ npm run e2e                              # Playwright; needs the local backend (
 2. `integrate` rebuilds `dev` as `beta` + every open, non-draft PR to `beta` (oldest
    first) and pushes it; Vercel deploys dev from that push. Each PR gets an
    `integration` status: in dev, or left out because it conflicts with an older one.
-3. PRs to `beta` stay open: **only Alessio merges them, by hand**. Vercel deploys beta
-   on the merge.
+3. PRs to `beta` are merged **after the pre-merge review** (backend 0013, amendment
+   2026-10-20): the coordinating session reviews the diff and checks the PR on dev, sets
+   a green `review` commit status on the PR's head, and merges with `gh pr merge <n>
+--merge` (merge commit only). Alessio may merge reviewed PRs too. A commit pushed after
+   the review drops the status. Vercel deploys beta on the merge.
 4. `beta -> main`: Alessio opens it by hand and merges it **with a merge commit, never a
    squash**. Vercel deploys production on the merge.
 5. `vercel.json` deploys only `dev`, `beta` and `main` - no preview per PR: what a PR
    looks like next to the others is dev.
 6. `dev` belongs to `integrate`: never push to it, never merge into it. Claude never
-   merges into `beta` or `main`, and nobody merges on a red or running `ci`.
+   merges into `main`, merges into `beta` only a reviewed head as a merge commit, and
+   nobody merges on a red or running `ci`.
    `.claude/hooks/guard-git.py` enforces this in Claude Code sessions (it is a copy of
    the backend's - change both); `merge-watch` flags anyone else; the repository's
    rulesets protect `dev`, `beta` and `main` server-side (this repo is public).
