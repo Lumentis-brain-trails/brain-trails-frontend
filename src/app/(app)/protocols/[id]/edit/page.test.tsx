@@ -265,7 +265,15 @@ test("a new protocol is kept only once something is on its timeline", async () =
   const created = { ...protocol, id: "p2", draft_rev: 1 };
   post.mockResolvedValue(created);
   get.mockImplementation((path: string) =>
-    Promise.resolve(path === "protocols/p2" ? created : [])
+    Promise.resolve(
+      path === "protocols/p2"
+        ? created
+        : path === "workspaces"
+          ? [{ id: "w1", kind: "personal" }]
+          : path === "config"
+            ? { features: {} }
+            : []
+    )
   );
   await renderNewBuilder();
   expect(get).not.toHaveBeenCalledWith("protocols/new");
@@ -283,7 +291,8 @@ test("a new protocol is kept only once something is on its timeline", async () =
   });
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
   const [path, body] = post.mock.calls[0];
-  expect(path).toBe("protocols");
+  // filed in the workspace being worked in, never by the API's personal default
+  expect(path).toBe("protocols?workspace=w1");
   expect(
     (body as { draft: { root: { children: unknown[] } } }).draft.root.children
   ).toHaveLength(1);

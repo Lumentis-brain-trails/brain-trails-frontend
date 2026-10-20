@@ -271,6 +271,9 @@ export default function BuilderPage({
       if (sentRef.current === tree) return;
       if (unsaved) {
         if (!hasContent(tree)) return;
+        // Not before the workspace is known: without it the API files the protocol in
+        // the personal library, whichever workspace the person is working in.
+        if (workspace === undefined) return;
         sentRef.current = tree;
         createRef.current.mutate(tree);
         return;
@@ -279,7 +282,7 @@ export default function BuilderPage({
       saveRef.current.mutate(tree);
     }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [conflict, rev, tree, unsaved]);
+  }, [conflict, rev, tree, unsaved, workspace]);
 
   const check = useMutation({
     mutationFn: () =>

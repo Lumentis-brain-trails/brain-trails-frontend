@@ -15,7 +15,9 @@ vi.mock("@/lib/api", () => ({
     get: (p: string) =>
       p === "workspaces"
         ? Promise.resolve([{ id: "w1", kind: "personal" }])
-        : get(p),
+        : p === "config"
+          ? Promise.resolve({ features: {} })
+          : get(p),
   },
 }));
 

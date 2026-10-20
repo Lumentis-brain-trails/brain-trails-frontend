@@ -21,7 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useSyncExternalStore } from "react";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
-import { type AppConfig, useFeature } from "@/lib/features";
+import { type AppConfig, useAppConfig } from "@/lib/features";
 
 export type Workspace = components["schemas"]["WorkspaceOut"];
 
@@ -148,15 +148,35 @@ export function useSelectedWorkspaceId(): string | null {
 }
 
 /**
- * The workspace lists are scoped to, or undefined while it loads. With
- * `workspaces_multi` off the saved choice is ignored: the personal workspace, always, so
- * an environment that turns the flag off cannot leave anyone working in a clinic
+ * Whether the saved choice applies, from the environment's flags: `true` with
+ * `workspaces_multi` on, `false` with it off, `undefined` while `GET /config` has not
+ * answered. A failed `/config` keeps the saved choice: losing the flags must not move
+ * anyone out of the clinic they are working in.
+ */
+export function choiceApplies(config: {
+  data?: Pick<AppConfig, "features">;
+  isError: boolean;
+}): boolean | undefined {
+  if (config.data?.features)
+    return config.data.features.workspaces_multi === true;
+  return config.isError ? true : undefined;
+}
+
+/**
+ * The workspace lists are scoped to and saves go to, or undefined while it is not known
+ * yet - the workspaces, or the flags that say whether the saved choice applies. Callers
+ * gate reads with `enabled` and writes on it being defined: a save made before the flags
+ * answer would land in the personal workspace, the API's default. With
+ * `workspaces_multi` off the saved choice is ignored and the personal workspace is the
+ * answer, so an environment that turns the flag off cannot leave anyone in a clinic
  * without the switcher to leave it.
  */
 export function useCurrentWorkspace(): Workspace | undefined {
   const selected = useSelectedWorkspaceId();
-  const multi = useFeature("workspaces_multi");
-  return pickCurrent(useWorkspaces().data, multi ? selected : null);
+  const applies = choiceApplies(useAppConfig());
+  const workspaces = useWorkspaces().data;
+  if (applies === undefined) return undefined;
+  return pickCurrent(workspaces, applies ? selected : null);
 }
 
 /** The current workspace's edition; `personal` while loading. */
