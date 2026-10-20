@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { Suspense } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import messages from "../../../../../../messages/en.json";
+import { resetPinnedWorkspace, selectWorkspace } from "@/lib/workspace";
 import BuilderPage from "./page";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -309,4 +310,59 @@ test("a new protocol is kept only once something is on its timeline", async () =
   await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
   expect(put.mock.calls[0][0]).toBe("protocols/p2/draft");
   expect(put.mock.calls[0][2]).toEqual({ ifMatch: 1 });
+});
+
+test("the first save waits for /config, then files into the chosen clinic", async () => {
+  const created = { ...protocol, id: "p3", draft_rev: 1 };
+  post.mockResolvedValue(created);
+  let answer: (config: unknown) => void = () => {};
+  const config = new Promise((resolve) => (answer = resolve));
+  get.mockImplementation((path: string) =>
+    path === "config"
+      ? config
+      : Promise.resolve(
+          path === "protocols/p3"
+            ? created
+            : path === "workspaces"
+              ? [
+                  {
+                    id: "w1",
+                    kind: "personal",
+                    status: "active",
+                    relations: ["owner"],
+                  },
+                  {
+                    id: "c1",
+                    kind: "practice",
+                    status: "active",
+                    relations: ["member"],
+                  },
+                ]
+              : []
+        )
+  );
+  selectWorkspace("c1");
+  await renderNewBuilder();
+  await act(async () => {
+    drop(0, { from: "bin-element", value: "baseline" });
+  });
+  await act(async () => {
+    vi.advanceTimersByTime(3000);
+  });
+  // flags unknown: no workspace yet, so nothing is filed - not even in personal
+  expect(post).not.toHaveBeenCalled();
+
+  await act(async () => {
+    answer({ features: { workspaces_multi: true } });
+  });
+  await act(async () => {
+    vi.advanceTimersByTime(1600);
+  });
+  // the workspace arrives on a render after the flags; its autosave timer comes then
+  await act(async () => {
+    vi.advanceTimersByTime(1600);
+  });
+  await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+  expect(post.mock.calls[0][0]).toBe("protocols?workspace=c1");
+  resetPinnedWorkspace();
 });

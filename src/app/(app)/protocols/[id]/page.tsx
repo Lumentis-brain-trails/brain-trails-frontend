@@ -9,6 +9,7 @@ import { use } from "react";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
 import { useFeature } from "@/lib/features";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import {
   type ProtocolDetail,
   type ValidationResult,
@@ -81,8 +82,15 @@ export default function ProtocolPage({
     },
     onError: () => check.mutate(),
   });
+  // The copy goes to the library being worked in, a clinic's included; before that
+  // workspace is known the API would file it in the personal one.
+  const workspace = useCurrentWorkspace();
   const duplicate = useMutation({
-    mutationFn: () => api.post<ProtocolDetail>(`protocols/${id}/duplicate`, {}),
+    mutationFn: () =>
+      api.post<ProtocolDetail>(
+        inWorkspace(`protocols/${id}/duplicate`, workspace),
+        {}
+      ),
     onSuccess: (copy) => router.push(`/protocols/${copy.id}`),
   });
   const share = useMutation({
@@ -319,7 +327,11 @@ export default function ProtocolPage({
 
       {!p.mine && p.current_version !== null && (
         <div className="mt-6">
-          <Button variant="secondary" onClick={() => duplicate.mutate()}>
+          <Button
+            variant="secondary"
+            onClick={() => duplicate.mutate()}
+            disabled={duplicate.isPending || workspace === undefined}
+          >
             {t("actions.copy")}
           </Button>
         </div>
