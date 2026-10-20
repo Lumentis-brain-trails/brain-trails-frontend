@@ -84,7 +84,7 @@ npm run e2e                              # Playwright; needs the local backend (
 3. PRs to `beta` are merged **after the pre-merge review** (backend 0013, amendment
    2026-10-20): the coordinating session reviews the diff and checks the PR on dev, sets
    a green `review` commit status on the PR's head, and merges with `gh pr merge <n>
-   --merge` (merge commit only). Alessio may merge reviewed PRs too. A commit pushed after
+--merge` (merge commit only). Alessio may merge reviewed PRs too. A commit pushed after
    the review drops the status. Vercel deploys beta on the merge.
 4. `beta -> main`: Alessio opens it by hand and merges it **with a merge commit, never a
    squash**. Vercel deploys production on the merge.
