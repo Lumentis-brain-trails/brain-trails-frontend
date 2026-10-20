@@ -12,12 +12,19 @@ import {
   readSeenEpoch,
   subscribeSeenEpoch,
 } from "@/lib/landscapeStatus";
+import { useFeature } from "@/lib/features";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
+import {
+  type Edition,
+  useEdition,
+  useReloadOnWorkspaceChange,
+} from "@/lib/workspace";
 import { Logo } from "@/components/Logo";
 import { BRAND, cn, Icon, type IconName } from "@/components/ui";
 import { type ConsentData } from "@/components/account/PrivacyCard";
 import { PolicyUpdateGate } from "@/components/PolicyUpdateGate";
+import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 
 /** A section's name, as a key of `shell.nav` in the message catalogue. */
 type SectionKey =
@@ -26,6 +33,7 @@ type SectionKey =
   | "media"
   | "recordings"
   | "landscape"
+  | "people"
   | "account"
   | "admin";
 
@@ -40,6 +48,24 @@ const MAIN: Section[] = [
   { href: "/recordings", key: "recordings", icon: "recordings" },
   { href: "/landscape", key: "landscape", icon: "graph" },
 ];
+
+/**
+ * An organisation's rail (V4-0006): the same work, plus its people; the Brain Landscape
+ * is a person's own map and stays in the personal workspace. The therapy and research
+ * editions share these sections until their own pages arrive (T3, T6, T7).
+ */
+const ORGANISATION: Section[] = [
+  { href: "/home", key: "home", icon: "home" },
+  { href: "/protocols", key: "protocols", icon: "protocol" },
+  { href: "/media", key: "media", icon: "library" },
+  { href: "/recordings", key: "recordings", icon: "recordings" },
+  { href: "/people", key: "people", icon: "people" },
+];
+
+/** The sections an edition shows, in order (one place decides, V4-0006). */
+export function sectionsFor(edition: Edition): Section[] {
+  return edition === "personal" ? MAIN : ORGANISATION;
+}
 
 /**
  * A section owns its page and everything below it. A prefix match alone would
@@ -63,6 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("shell");
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
+  useReloadOnWorkspaceChange();
 
   // Whether this account still agrees to the note as published (V3-0011). Deliberately
   // fails open: while this is loading, or if the call fails, the app renders as usual.
@@ -160,6 +187,8 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
   const t = useTranslations("shell");
   const tLandscape = useTranslations("landscape");
   const redrawn = useLandscapeRedrawn();
+  const multi = useFeature("workspaces_multi");
+  const edition = useEdition();
   const me = useQuery({
     queryKey: ["me"],
     queryFn: () => api.get<UserInfo>("auth/me"),
@@ -193,8 +222,10 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
         </span>
       </Link>
 
+      {multi && <WorkspaceSwitcher />}
+
       <nav className="flex flex-col items-center gap-1">
-        {MAIN.map((s) => (
+        {sectionsFor(multi ? edition : "personal").map((s) => (
           <RailLink
             key={s.href}
             section={s}

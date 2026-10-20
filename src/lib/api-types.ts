@@ -416,6 +416,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Organisations
+         * @description Clinics and laboratories, oldest first; `?status=` defaults to `pending` (admin only).
+         *
+         *     Personal workspaces are never listed. Keyset-paged on `(created_at, id)`.
+         */
+        get: operations["list_organisations_admin_workspaces_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/workspaces/{workspace_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide
+         * @description Approve (the requester becomes owner) or reject a pending request (admin only).
+         *
+         *     404 for an unknown workspace, 409 `invalid_state` unless it is a pending request.
+         */
+        post: operations["decide_admin_workspaces__workspace_id__decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/annotations/{annotation_id}": {
         parameters: {
             query?: never;
@@ -702,6 +746,10 @@ export interface paths {
          *     Public on purpose: the sign-in and application screens are flag-dependent too, and
          *     nothing here is secret - the flag names are in the frontend bundle anyway. It reads
          *     settings only, so it costs no database query (decision 0014).
+         *
+         *     With `?workspace=` the flags are those of that workspace's kind (V4-0006): the
+         *     edition a shell mounts. That form needs a bearer token and one query, and answers
+         *     404 `not_found` for a workspace the caller holds no seat in.
          */
         get: operations["config_config_get"];
         put?: never;
@@ -752,6 +800,51 @@ export interface paths {
         get: operations["health_health_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept
+         * @description Take the seat the invitation offers; returns the workspace now joined.
+         *
+         *     410 `invitation_closed` (accepted, revoked or expired), 403 `wrong_account` when
+         *     signed in with another address, 409 `already_member`.
+         */
+        post: operations["accept_invitations_accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lookup Invitation
+         * @description What an invitation link offers and whether it is still open (unauthenticated).
+         *
+         *     404 `not_found` for a token no invitation was issued with.
+         */
+        post: operations["lookup_invitation_invitations_lookup_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1847,12 +1940,142 @@ export interface paths {
         };
         /**
          * List Workspaces
-         * @description Every workspace the caller holds a relation in, personal first, then by creation.
+         * @description Every workspace the caller holds a relation in, plus their open or refused requests.
+         *
+         *     Personal first, then by creation. Not paged: a person holds a handful of seats.
          */
         get: operations["list_workspaces_workspaces_get"];
         put?: never;
+        /**
+         * Request Organisation
+         * @description Ask for a clinic or a laboratory; it is `pending` until an admin decides.
+         *
+         *     409 `too_many_requests` with three requests already open.
+         */
+        post: operations["request_organisation_workspaces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Invitations
+         * @description The organisation's invitations, oldest first (owner or admin).
+         *
+         *     `?open=false` includes accepted, revoked and expired ones. Keyset-paged.
+         */
+        get: operations["list_invitations_workspaces__workspace_id__invitations_get"];
+        put?: never;
+        /**
+         * Create Invitation
+         * @description Invite someone to a seat and mail them a 14-day link (owner or admin).
+         *
+         *     A second invitation to the same address replaces the first. 409 `already_member`;
+         *     502 `mail_failed` when the provider refused the mail (nothing is kept).
+         */
+        post: operations["create_invitation_workspaces__workspace_id__invitations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/invitations/{invitation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Invitation
+         * @description Revoke an open invitation: its link stops working (owner or admin). Audited.
+         */
+        delete: operations["delete_invitation_workspaces__workspace_id__invitations__invitation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Leave Workspace
+         * @description Give up your own seat (any seat; the last owner hands over first, 409 `last_owner`).
+         */
+        post: operations["leave_workspace_workspaces__workspace_id__leave_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Members
+         * @description The organisation's staff, oldest seat first (any member of staff).
+         *
+         *     Every seat sees the others: a carer adds a colleague to a care team by name (T3).
+         *     Keyset-paged on `(since, user_id)` like every list.
+         */
+        get: operations["list_members_workspaces__workspace_id__members_get"];
+        put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/members/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Member
+         * @description Change someone's seat (owner or admin; only an owner touches an owner's seat).
+         *
+         *     Audited. 404 for someone without a seat here; 409 `last_owner` when it would leave
+         *     the organisation without an owner.
+         */
+        put: operations["set_member_workspaces__workspace_id__members__member_id__put"];
+        post?: never;
+        /**
+         * Remove Member
+         * @description Take a seat away (owner or admin; an owner's seat, owner only).
+         *
+         *     Their care relations in this organisation end with the seat; the subjects stay.
+         *     Audited, and logged as `member.removed`. 409 `last_owner` for the last owner.
+         */
+        delete: operations["remove_member_workspaces__workspace_id__members__member_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1872,6 +2095,36 @@ export interface components {
              * @enum {string}
              */
             access: "open" | "locked";
+        };
+        /**
+         * AdminWorkspaceRow
+         * @description One organisation as the queue shows it: who asked, when, what was decided.
+         */
+        AdminWorkspaceRow: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Region */
+            region: string;
+            /** Requested By */
+            requested_by: string | null;
+            /** Seats */
+            seats: number;
+            /** Status */
+            status: string;
         };
         /**
          * AnalysisOut
@@ -2601,7 +2854,7 @@ export interface components {
             env: string;
             /** Features */
             features: {
-                /** @description Assignments, reminders and the client shell (S22). */
+                /** @description Assignments, reminders and the client shell (V4 T3). */
                 assignments: boolean;
                 /** @description Registration is a beta application; admin board with cohorts (S15). */
                 beta_applications: boolean;
@@ -2631,11 +2884,13 @@ export interface components {
                 run_capture: boolean;
                 /** @description Studies, participants and arms (S24). */
                 studies: boolean;
-                /** @description Practices and labs, invitations, subjects (S22). */
+                /** @description Clinics and laboratories: requests, seats, invitations (V4 T2). */
                 workspaces_multi: boolean;
             };
             /** Version */
             version: string;
+            /** Workspace Kind */
+            workspace_kind?: string | null;
         };
         /**
          * ConsentIn
@@ -3071,6 +3326,99 @@ export interface components {
             n_scored: number;
         };
         /**
+         * InvitationCreated
+         * @description A new invitation; `link` only in manual-mailer mode, for an admin to pass on.
+         */
+        InvitationCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Link */
+            link?: string | null;
+            /** Relation */
+            relation: string;
+            /** State */
+            state: string;
+        };
+        /**
+         * InvitationIn
+         * @description Whom to invite, and to which seat.
+         */
+        InvitationIn: {
+            /** Email */
+            email: string;
+            /**
+             * Relation
+             * @default member
+             * @enum {string}
+             */
+            relation: "admin" | "member";
+        };
+        /**
+         * InvitationOut
+         * @description An invitation as its organisation's managers see it. The token never comes back.
+         */
+        InvitationOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Relation */
+            relation: string;
+            /** State */
+            state: string;
+        };
+        /**
+         * InvitationPreview
+         * @description What a link offers, before anyone signs in.
+         *
+         *     `email` is the address it was sent to, so the page can say which account to use.
+         */
+        InvitationPreview: {
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Relation */
+            relation: string;
+            /** State */
+            state: string;
+            /** Workspace Kind */
+            workspace_kind: string;
+            /** Workspace Name */
+            workspace_name: string;
+        };
+        /**
          * IssueOut
          * @description One validation finding; `rule` is stable, `path` points into the tree.
          */
@@ -3364,6 +3712,28 @@ export interface components {
          * @enum {string}
          */
         MediaVisibility: "workspace" | "public" | "official";
+        /**
+         * MemberOut
+         * @description One seat: who holds it, which relation, since when. `you` marks the caller.
+         */
+        MemberOut: {
+            /** Email */
+            email: string;
+            /** Relation */
+            relation: string;
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** You */
+            you: boolean;
+        };
         /**
          * MessageOut
          * @description Minimal status acknowledgement.
@@ -3976,6 +4346,17 @@ export interface components {
          */
         ReviewState: "none" | "pending" | "approved" | "refused";
         /**
+         * SeatIn
+         * @description The seat to hold from now on.
+         */
+        SeatIn: {
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "owner" | "admin" | "member";
+        };
+        /**
          * SelectionOut
          * @description A block's metrics recomputed for part of it (`pipeline.features.selection`).
          *
@@ -4243,6 +4624,14 @@ export interface components {
             ws_path: string;
         };
         /**
+         * TokenIn
+         * @description The token from an invitation link.
+         */
+        TokenIn: {
+            /** Token */
+            token: string;
+        };
+        /**
          * TokenOut
          * @description Bearer access token response.
          */
@@ -4388,8 +4777,22 @@ export interface components {
             warnings: components["schemas"]["IssueOut"][];
         };
         /**
+         * WorkspaceDecisionIn
+         * @description The admin's answer to a request.
+         */
+        WorkspaceDecisionIn: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "reject";
+        };
+        /**
          * WorkspaceOut
-         * @description A workspace the caller belongs to, with the relations they hold in it.
+         * @description A workspace the caller belongs to or asked for, with the relations they hold in it.
+         *
+         *     `relations` is empty for a request still `pending` (or `rejected`): no seat exists
+         *     until an admin approves it.
          */
         WorkspaceOut: {
             /**
@@ -4406,12 +4809,27 @@ export interface components {
             kind: string;
             /** Name */
             name: string;
+            /** Region */
+            region: string;
             /** Relations */
             relations: string[];
             /** Slug */
             slug: string;
             /** Status */
             status: string;
+        };
+        /**
+         * WorkspaceRequestIn
+         * @description A request for a clinic (`practice`) or a laboratory (`lab`).
+         */
+        WorkspaceRequestIn: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "practice" | "lab";
+            /** Name */
+            name: string;
         };
         /**
          * PresignForm
@@ -5046,6 +5464,75 @@ export interface operations {
             };
         };
     };
+    list_organisations_admin_workspaces_get: {
+        parameters: {
+            query?: {
+                status?: "pending" | "active" | "rejected" | "archived" | "all";
+                kind?: ("practice" | "lab") | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkspaceRow"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_admin_workspaces__workspace_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkspaceRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_annotation_annotations__annotation_id__delete: {
         parameters: {
             query?: never;
@@ -5480,7 +5967,9 @@ export interface operations {
     };
     config_config_get: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5494,6 +5983,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5536,6 +6034,72 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    accept_invitations_accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_invitation_invitations_lookup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -7266,6 +7830,250 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceOut"][];
+                };
+            };
+        };
+    };
+    request_organisation_workspaces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invitations_workspaces__workspace_id__invitations_get: {
+        parameters: {
+            query?: {
+                open?: boolean;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_invitation_workspaces__workspace_id__invitations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_invitation_workspaces__workspace_id__invitations__invitation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leave_workspace_workspaces__workspace_id__leave_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_members_workspaces__workspace_id__members_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_member_workspaces__workspace_id__members__member_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_member_workspaces__workspace_id__members__member_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
