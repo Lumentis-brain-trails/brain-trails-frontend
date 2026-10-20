@@ -12,7 +12,16 @@
     "consent_required": "Serve il consenso al trattamento dei dati.",
     "invalid_token": "Il link di verifica non è valido o è scaduto.",
     "invalid_state": "Questo account non è in attesa di verifica.",
-    "mail_failed": "Non siamo riusciti a inviare l'email di verifica. Riprova tra poco."
+    "mail_failed": "Non siamo riusciti a inviare l'email di verifica. Riprova tra poco.",
+    "too_many_requests": "Hai già tre richieste in attesa. Aspetta prima una risposta.",
+    "last_owner": "Un'organizzazione deve avere almeno un titolare. Prima nomina titolare un'altra persona.",
+    "already_member": "Questa persona ha già un posto qui.",
+    "wrong_account": "Questo invito è stato inviato a un altro indirizzo. Accedi con quello.",
+    "invitation_closed": "Questo invito non è più valido. Chiedine uno nuovo.",
+    "personal_workspace": "Nel tuo spazio personale non ci sono altre persone.",
+    "sole_owner": "Sei l'unico titolare di un'organizzazione. Affidala a un altro titolare prima di eliminare il tuo account.",
+    "self_approval": "Una richiesta fatta da te la decide un altro amministratore.",
+    "email_not_verified": "Prima conferma il tuo indirizzo email: apri il link che ti abbiamo inviato, poi riprova."
   },
   "application": {
     "step": "Candidatura",
@@ -1996,7 +2005,8 @@
       "recordings": "Registrazioni",
       "landscape": "Paesaggio cerebrale",
       "account": "Account",
-      "admin": "Admin"
+      "admin": "Admin",
+      "people": "Persone"
     },
     "sections": "Sezioni",
     "you": "Tu",
@@ -2023,6 +2033,103 @@
       "agree": "L'ho letta e sono d'accordo",
       "saving": "Salvataggio…",
       "decline": "Preferisci non accettare? Scrivi a {email} ed esporteremo o elimineremo tutto ciò che conserviamo su di te."
+    }
+  },
+  "workspaces": {
+    "switcher": {
+      "label": "Spazio di lavoro: {name}. Cambia spazio",
+      "title": "Lavora in",
+      "kindAndSeat": "{kind} · {seat}",
+      "pending": "In attesa di approvazione",
+      "rejected": "Non approvata",
+      "request": "Richiedi una clinica o un laboratorio"
+    },
+    "kinds": {
+      "personal": "Personale",
+      "practice": "Clinica",
+      "lab": "Laboratorio"
+    },
+    "editions": {
+      "personal": "Le tue registrazioni",
+      "therapy": "Terapia",
+      "research": "Ricerca"
+    },
+    "seats": {
+      "owner": "Titolare",
+      "admin": "Amministratore",
+      "member": "Membro"
+    }
+  },
+  "organisationRequest": {
+    "title": "Richiedi una clinica o un laboratorio",
+    "intro": "Un'organizzazione è uno spazio di lavoro condiviso: i colleghi costruiscono i protocolli insieme e ognuno segue le proprie persone. Durante la beta approviamo ogni richiesta a mano.",
+    "unavailable": "Le organizzazioni non sono ancora disponibili qui.",
+    "kind": "Tipo",
+    "practiceHint": "Per terapeuti, da soli o in équipe. Ogni terapeuta vede solo i pazienti che segue.",
+    "labHint": "Per un gruppo di ricerca. Titolari e amministratori vedono tutte le registrazioni del laboratorio.",
+    "name": "Nome",
+    "nameHint": "Come lo vedranno i tuoi colleghi, per esempio il nome dello studio.",
+    "submit": "Invia la richiesta",
+    "sent": "Richiesta inviata. La trovi qui sotto e, una volta approvata, nel menu degli spazi di lavoro.",
+    "yours": "Le tue richieste",
+    "none": "Nessuna richiesta per ora.",
+    "requestedOn": "{kind} · richiesta il {date}",
+    "status": {
+      "pending": "In attesa di approvazione",
+      "active": "Approvata",
+      "rejected": "Non approvata",
+      "archived": "Chiusa"
+    }
+  },
+  "people": {
+    "title": "Persone di {name}",
+    "intro": {
+      "therapy": "Chi ha un posto condivide i protocolli e i media della clinica. I pazienti invece non si condividono così: ogni terapeuta vede solo le persone che segue.",
+      "research": "Chi ha un posto condivide i protocolli e i media del laboratorio. Titolari e amministratori vedono tutte le registrazioni del laboratorio."
+    },
+    "personal": {
+      "title": "Questo è il tuo spazio personale",
+      "text": "Qui lavori solo tu. Passa a una clinica o a un laboratorio per vederne le persone."
+    },
+    "members": {
+      "title": "Posti",
+      "you": "tu",
+      "since": "Dal {date}",
+      "seatOf": "Posto di {email}",
+      "remove": "Rimuovi",
+      "removeConfirm": "Rimuovere {email}? Il suo posto finisce ora, e con esso l'accesso alle persone che seguiva qui.",
+      "leave": "Esci",
+      "leaveConfirm": "Uscire da {name}? Per tornare ti servirà un nuovo invito."
+    },
+    "secrecy": {
+      "therapy": "Un posto non dà accesso alle registrazioni di un paziente. Le leggono solo i terapeuti che lo seguono, titolari compresi.",
+      "research": "I membri vedono la libreria del laboratorio; le registrazioni le leggono titolari e amministratori, e i membri attraverso i loro studi."
+    },
+    "invitations": {
+      "title": "Inviti",
+      "email": "Email",
+      "seat": "Posto",
+      "send": "Invita",
+      "sent": "Invito inviato. Il link vale 14 giorni.",
+      "manual": "Questo ambiente non invia email. Passa tu questo link:",
+      "none": "Nessun invito aperto.",
+      "expires": "{seat} · valido fino al {date}",
+      "revoke": "Ritira"
+    }
+  },
+  "join": {
+    "missingToken": "Questo link non contiene un invito. Riapri il link dall'email.",
+    "loading": "Apertura dell'invito…",
+    "offer": "Un invito per {email}, come {seat}.",
+    "signIn": "Accedi per accettare",
+    "register": "Non hai un account? Registrati con {email}",
+    "expires": "Il link vale fino al {date}.",
+    "accept": "Entra in {name}",
+    "otherAccount": "Hai effettuato l'accesso come {current}, ma questo invito è per {invited}. Esci e accedi con quell'indirizzo.",
+    "closed": {
+      "accepted": "Questo invito è già stato accettato.",
+      "revoked": "Questo invito è stato ritirato. Chiedine uno nuovo.",
+      "expired": "Questo invito è scaduto. Chiedine uno nuovo."
     }
   },
   "privacy": {
@@ -2148,7 +2255,8 @@
         "fair": "Lo stand",
         "protocols": "Blocchi del catalogo",
         "review": "Revisione delle pubblicazioni",
-        "applications": "Esamina le candidature"
+        "applications": "Esamina le candidature",
+        "organisations": "Organizzazioni"
       },
       "loadFailed": "Non è stato possibile caricare le statistiche.",
       "stats": {
@@ -2311,6 +2419,26 @@
       "fps": "fps {fps}",
       "dropped": "persi {count}",
       "onset": "onset p95 {p95} ms (max {max}, n {count})"
+    },
+    "organisations": {
+      "title": "Organizzazioni",
+      "intro": "Cliniche e laboratori richiesti dagli utenti. Approvare rende titolare chi ha fatto la richiesta; a te non dà niente al suo interno.",
+      "unavailable": "Le organizzazioni sono disattivate in questo ambiente.",
+      "tabs": {
+        "pending": "In attesa",
+        "active": "Approvate",
+        "rejected": "Rifiutate"
+      },
+      "empty": {
+        "pending": "Nessuna richiesta in attesa.",
+        "active": "Ancora nessuna organizzazione approvata.",
+        "rejected": "Nessuna richiesta rifiutata."
+      },
+      "line": "{kind} · {email} · {date}",
+      "gone": "account eliminato",
+      "seats": "{count, plural, one {# posto} other {# posti}}",
+      "approve": "Approva",
+      "reject": "Rifiuta"
     }
   },
   "official": {

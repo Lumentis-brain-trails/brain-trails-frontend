@@ -137,6 +137,18 @@ describe("BFF proxy", () => {
     );
   });
 
+  test("allows opening an invitation link", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/backend/invitations/lookup",
+      { method: "POST", body: JSON.stringify({ token: "t".repeat(32) }) }
+    );
+    const res = await POST(req, ctx(["invitations", "lookup"]));
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(
+      "http://localhost:8000/invitations/lookup"
+    );
+  });
+
   // Left off the allow-list once, and every closed-list menu in the app rendered
   // disabled with no way to tell why: the registration form needs these before anyone
   // has an account, so they cannot ride on an authenticated path.

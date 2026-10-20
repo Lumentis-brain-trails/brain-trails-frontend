@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { ApiRequestError, api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useFeature } from "@/lib/features";
 import { taskName } from "@/lib/types";
 import {
   Card,
@@ -84,6 +85,7 @@ export default function AdminDashboardPage() {
   const days = s ? [...s.recordings.per_day].reverse() : [];
   const maxDay = Math.max(1, ...days.map((d) => d.count));
   const pending = s?.users_by_status?.pending ?? 0;
+  const organisations = useFeature("workspaces_multi");
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -102,6 +104,14 @@ export default function AdminDashboardPage() {
           <Link href="/admin/review" className={buttonClass("secondary")}>
             {t("links.review")}
           </Link>
+          {organisations && (
+            <Link
+              href="/admin/organisations"
+              className={buttonClass("secondary")}
+            >
+              {t("links.organisations")}
+            </Link>
+          )}
           <Link
             href="/admin/applications"
             className="pressable inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover"

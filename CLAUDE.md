@@ -98,3 +98,14 @@ npm run e2e                              # Playwright; needs the local backend (
 Read the wiki `index.md`; `git fetch && git status`; open PRs to `beta` and the last
 `integrate` run (what is in dev, what was left out);
 `export GH_TOKEN=$(gh auth token --user anonymous2532)`.
+
+## Organisations (backend V4 sprint T2)
+
+Behind the flag `workspaces_multi`. `src/lib/workspace.ts` keeps the current workspace
+(the switcher's choice, localStorage `bt-workspace`, falling back to the personal one)
+and its edition (`useEdition`: kind -> personal / therapy / research), which picks the
+rail in `AppShell.sectionsFor`. `src/components/WorkspaceSwitcher.tsx` is the switcher;
+the pages are `/organisations/new` (request), `/people` (seats, invitations), `/join`
+(an invitation link, public) and `/admin/organisations` (the approval queue). The code
+map's `workspace.ts` row predates them; fold this section into it when the table is next
+reformatted.
