@@ -12,7 +12,14 @@
     "consent_required": "Consent to data processing is required.",
     "invalid_token": "The verification link is invalid or expired.",
     "invalid_state": "This account is not awaiting verification.",
-    "mail_failed": "The verification email could not be sent. Try again in a moment."
+    "mail_failed": "The verification email could not be sent. Try again in a moment.",
+    "too_many_requests": "You already have three requests waiting. Wait for an answer first.",
+    "last_owner": "An organisation keeps at least one owner. Make someone else owner first.",
+    "already_member": "This person already has a seat here.",
+    "wrong_account": "This invitation was sent to another address. Sign in with that one.",
+    "invitation_closed": "This invitation is no longer open. Ask for a new one.",
+    "personal_workspace": "Your personal workspace has no other people.",
+    "sole_owner": "You are the only owner of an organisation. Hand it to another owner before deleting your account."
   },
   "application": {
     "step": "Application",
@@ -1994,7 +2001,8 @@
       "recordings": "Recordings",
       "landscape": "Brain Landscape",
       "account": "Account",
-      "admin": "Admin"
+      "admin": "Admin",
+      "people": "People"
     },
     "sections": "Sections",
     "you": "You",
@@ -2146,7 +2154,8 @@
         "fair": "The stand",
         "protocols": "Catalog locks",
         "review": "Publication review",
-        "applications": "Review applications"
+        "applications": "Review applications",
+        "organisations": "Organisations"
       },
       "loadFailed": "Could not load statistics.",
       "stats": {
@@ -2309,6 +2318,26 @@
       "fps": "fps {fps}",
       "dropped": "dropped {count}",
       "onset": "onset p95 {p95} ms (max {max}, n {count})"
+    },
+    "organisations": {
+      "title": "Organisations",
+      "intro": "Clinics and laboratories asked for by users. Approving makes the requester the owner; it gives you nothing inside.",
+      "unavailable": "Organisations are off in this environment.",
+      "tabs": {
+        "pending": "Waiting",
+        "active": "Approved",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "No requests waiting.",
+        "active": "No approved organisations yet.",
+        "rejected": "No rejected requests."
+      },
+      "line": "{kind} · {email} · {date}",
+      "gone": "account deleted",
+      "seats": "{count, plural, one {# seat} other {# seats}}",
+      "approve": "Approve",
+      "reject": "Reject"
     }
   },
   "official": {
@@ -3087,6 +3116,103 @@
           "label": "Free recording"
         }
       }
+    }
+  },
+  "workspaces": {
+    "switcher": {
+      "label": "Workspace: {name}. Change workspace",
+      "title": "Work in",
+      "kindAndSeat": "{kind} · {seat}",
+      "pending": "Waiting for approval",
+      "rejected": "Not approved",
+      "request": "Request a clinic or a laboratory"
+    },
+    "kinds": {
+      "personal": "Personal",
+      "practice": "Clinic",
+      "lab": "Laboratory"
+    },
+    "editions": {
+      "personal": "Your own recordings",
+      "therapy": "Therapy",
+      "research": "Research"
+    },
+    "seats": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    }
+  },
+  "organisationRequest": {
+    "title": "Request a clinic or a laboratory",
+    "intro": "An organisation is a shared workspace: colleagues build protocols together and each keeps the people they work with. We approve every request by hand during the beta.",
+    "unavailable": "Organisations are not available here yet.",
+    "kind": "Kind",
+    "practiceHint": "For therapists, alone or in a team. Each therapist sees only the patients they care for.",
+    "labHint": "For a research group. Owners and admins see the whole laboratory's recordings.",
+    "name": "Name",
+    "nameHint": "As your colleagues will see it, for example the name of the practice.",
+    "submit": "Send the request",
+    "sent": "Request sent. You will find it below, and in the workspace menu once approved.",
+    "yours": "Your requests",
+    "none": "No requests yet.",
+    "requestedOn": "{kind} · requested on {date}",
+    "status": {
+      "pending": "Waiting for approval",
+      "active": "Approved",
+      "rejected": "Not approved",
+      "archived": "Closed"
+    }
+  },
+  "people": {
+    "title": "People of {name}",
+    "intro": {
+      "therapy": "Everyone with a seat shares the clinic's protocols and media. Patients are not shared that way: each therapist sees only the people they care for.",
+      "research": "Everyone with a seat shares the laboratory's protocols and media. Owners and admins see every recording of the laboratory."
+    },
+    "personal": {
+      "title": "This is your personal workspace",
+      "text": "Only you work here. Switch to a clinic or a laboratory to see its people."
+    },
+    "members": {
+      "title": "Seats",
+      "you": "you",
+      "since": "Since {date}",
+      "seatOf": "Seat of {email}",
+      "remove": "Remove",
+      "removeConfirm": "Remove {email}? Their seat ends now, and so does their access to the people they cared for here.",
+      "leave": "Leave",
+      "leaveConfirm": "Leave {name}? You will need a new invitation to come back."
+    },
+    "secrecy": {
+      "therapy": "A seat gives no access to a patient's recordings. Only the patient's carers read them, owners included.",
+      "research": "Members see the laboratory's library; recordings are read by owners and admins, and by members through their studies."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "email": "Email",
+      "seat": "Seat",
+      "send": "Invite",
+      "sent": "Invitation sent. The link is good for 14 days.",
+      "manual": "This environment sends no email. Pass this link on yourself:",
+      "none": "No open invitations.",
+      "expires": "{seat} · open until {date}",
+      "revoke": "Revoke"
+    }
+  },
+  "join": {
+    "missingToken": "This link has no invitation in it. Open the link from the email again.",
+    "loading": "Opening the invitation…",
+    "offer": "An invitation for {email}, as {seat}.",
+    "signIn": "Sign in to accept",
+    "register": "No account yet? Register with {email}",
+    "expires": "The link is good until {date}.",
+    "accept": "Join {name}",
+    "otherAccount": "You are signed in as {current}, but this invitation is for {invited}. Sign out and sign in with that address.",
+    "closed": {
+      "accepted": "This invitation has already been accepted.",
+      "revoked": "This invitation was withdrawn. Ask for a new one.",
+      "expired": "This invitation has expired. Ask for a new one."
     }
   }
 }

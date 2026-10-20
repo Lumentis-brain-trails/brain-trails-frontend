@@ -33,6 +33,8 @@ describe("middleware", () => {
       "/protocols",
       "/protocols/:path*",
       "/admin/:path*",
+      "/people",
+      "/organisations/:path*",
     ]);
   });
 });
