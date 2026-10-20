@@ -12,7 +12,10 @@ import { afterEach, expect, test, vi } from "vitest";
 import messages from "../../../../../../messages/en.json";
 import RunProtocolPage from "./page";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 const get = vi.fn();
 const post = vi.fn();
 vi.mock("@/lib/api", async (orig) => ({

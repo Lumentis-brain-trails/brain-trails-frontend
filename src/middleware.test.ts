@@ -23,6 +23,11 @@ describe("middleware", () => {
     expect(config.matcher).toEqual([
       "/home",
       "/people",
+      // an organisation's subjects and the client shell (backend T3)
+      "/patients",
+      "/patients/:path*",
+      "/my",
+      "/my/:path*",
       "/organisations/:path*",
       "/account",
       "/library",

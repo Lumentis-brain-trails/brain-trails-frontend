@@ -109,3 +109,17 @@ the pages are `/organisations/new` (request), `/people` (seats, invitations), `/
 (an invitation link, public) and `/admin/organisations` (the approval queue). The code
 map's `workspace.ts` row predates them; fold this section into it when the table is next
 reformatted.
+
+## Patients, assignments and the client shell (backend V4 sprint T3)
+
+Behind `workspaces_multi` (subjects) and `assignments` (assignments, invitations, `/my`).
+`/patients` and `/patients/[id]` are one page for both editions: "Patients" in a clinic,
+"Participants" in a laboratory (`subjectWords`, `src/lib/subjects.ts`); a roster row
+(`readable: false`) shows code, carers and dates only. `AssignDialog` assigns from a
+subject's page or a protocol's; `SubjectPicker` is the run's and the console's "who is
+being recorded?". The run itself is `src/components/run/RunProtocol.tsx`, shared by
+`/protocols/[id]/run` and the client's `/my/run/[assignment]` (`client`: no scores, no
+recording link). The **client shell** is the `(client)` route group (`ClientShell`): an
+account whose `GET /auth/me` says `shell: client` is sent there by `AppShell` and has no
+other page. `/join` opens a subject's invitation into a client account
+(`POST /invitations/register`).

@@ -15,6 +15,10 @@ export const config = {
   matcher: [
     "/home",
     "/people",
+    "/patients",
+    "/patients/:path*",
+    "/my",
+    "/my/:path*",
     "/organisations/:path*",
     "/account",
     "/library",

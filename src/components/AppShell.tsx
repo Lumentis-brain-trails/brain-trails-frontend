@@ -33,7 +33,10 @@ type SectionKey =
   | "media"
   | "recordings"
   | "landscape"
+  | "patients"
+  | "participants"
   | "people"
+  | "my"
   | "account"
   | "admin";
 
@@ -50,21 +53,29 @@ const MAIN: Section[] = [
 ];
 
 /**
- * An organisation's rail (V4-0006): the same work, plus its people; the Brain Landscape
- * is a person's own map and stays in the personal workspace. The therapy and research
- * editions share these sections until their own pages arrive (T3, T6, T7).
+ * An organisation's rail (V4-0006): the same work, plus the people it records and its
+ * staff; the Brain Landscape is a person's own map and stays in the personal workspace.
+ * The people recorded are patients in a clinic and participants in a laboratory (T3):
+ * one page, two words.
  */
-const ORGANISATION: Section[] = [
-  { href: "/home", key: "home", icon: "home" },
-  { href: "/protocols", key: "protocols", icon: "protocol" },
-  { href: "/media", key: "media", icon: "library" },
-  { href: "/recordings", key: "recordings", icon: "recordings" },
-  { href: "/people", key: "people", icon: "people" },
-];
+function organisation(edition: Edition): Section[] {
+  return [
+    { href: "/home", key: "home", icon: "home" },
+    { href: "/protocols", key: "protocols", icon: "protocol" },
+    { href: "/media", key: "media", icon: "library" },
+    { href: "/recordings", key: "recordings", icon: "recordings" },
+    {
+      href: "/patients",
+      key: edition === "therapy" ? "patients" : "participants",
+      icon: "person",
+    },
+    { href: "/people", key: "people", icon: "people" },
+  ];
+}
 
 /** The sections an edition shows, in order (one place decides, V4-0006). */
 export function sectionsFor(edition: Edition): Section[] {
-  return edition === "personal" ? MAIN : ORGANISATION;
+  return edition === "personal" ? MAIN : organisation(edition);
 }
 
 /**
@@ -105,6 +116,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     consent.data !== undefined &&
     consent.data.core_version !== consent.data.current_version;
 
+  // Someone's patient or participant with no seat anywhere has one surface, `/my`
+  // (V4-0006): the app's pages are not theirs, and the API would refuse their lists.
+  const router = useRouter();
+  const me = useMe();
+  const client = me.data?.shell === "client";
+  useEffect(() => {
+    if (client) router.replace("/my");
+  }, [client, router]);
+
   // Following a link inside the drawer closes it: the state resets when the path
   // it was opened on is no longer the current one.
   if (open && openedAt !== pathname) setOpen(false);
@@ -116,6 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  if (client) return null;
   if (stale && consent.data) return <PolicyUpdateGate consent={consent.data} />;
 
   return (
@@ -160,6 +181,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** The signed-in account, shared by the shell's checks (one request, cached). */
+function useMe() {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.get<UserInfo>("auth/me"),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
 /**
  * Whether the Brain Landscape was redrawn since this browser last showed it. Asked once
  * per page load and kept for a while, never polled: the status is a database read, and
@@ -189,13 +220,13 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
   const redrawn = useLandscapeRedrawn();
   const multi = useFeature("workspaces_multi");
   const edition = useEdition();
-  const me = useQuery({
-    queryKey: ["me"],
-    queryFn: () => api.get<UserInfo>("auth/me"),
-    staleTime: 60_000,
-    retry: false,
-  });
+  const me = useMe();
+  const assignments = useFeature("assignments");
   const secondary: Section[] = [
+    // a private user or a therapist who is also somebody's patient (V4 question A8)
+    ...(assignments && me.data?.is_client
+      ? [{ href: "/my", key: "my", icon: "protocol" } as const]
+      : []),
     { href: "/account", key: "account", icon: "person" },
     ...(me.data?.role === "admin"
       ? [{ href: "/admin", key: "admin", icon: "shield" } as const]

@@ -10,12 +10,17 @@
  * request body, never in a path.
  *
  * Accepting chooses the organisation as the current workspace and opens the app there.
+ *
+ * A patient's or participant's invitation (relation `client`, backend T3) is another
+ * door: with no account yet, the person sets a password, says they are of age and agrees
+ * to the processing right here, and lands in the client shell (`/my`) - their clinic's
+ * invitation stands for the beta application. With an account, they sign in and accept.
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
@@ -27,6 +32,8 @@ import {
   Button,
   Card,
   ErrorBanner,
+  Field,
+  Input,
   Spinner,
   buttonClass,
 } from "@/components/ui";
@@ -60,10 +67,10 @@ function JoinContent() {
   const accept = useMutation({
     mutationFn: () => api.post<Workspace>("invitations/accept", { token }),
     onSuccess: (workspace) => {
-      selectWorkspace(workspace.id);
+      const client = preview.data?.relation === "client";
+      if (!client) selectWorkspace(workspace.id);
       // A full load: every list is scoped to the workspace, none may show the old one.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign("/home");
+      window.location.assign(client ? "/my" : "/home");
     },
   });
 
@@ -81,6 +88,17 @@ function JoinContent() {
 
   const here = `/join?token=${encodeURIComponent(token)}`;
   const kind = tKinds(offer.workspace_kind as "practice" | "lab");
+  if (offer.relation === "client")
+    return (
+      <ClientJoin
+        token={token}
+        offer={offer}
+        signedIn={me.data ?? null}
+        accept={() => accept.mutate()}
+        accepting={accept.isPending}
+        acceptError={accept.isError ? errorMessage(accept.error) : null}
+      />
+    );
   const sameAccount =
     me.data != null &&
     me.data.email.toLowerCase() === offer.email.toLowerCase();
@@ -139,6 +157,172 @@ function JoinContent() {
             })}
           />
         </div>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * A patient's or participant's invitation: open an account from the link, or accept
+ * with the one they have. The address is fixed - it is the one the link reached.
+ */
+function ClientJoin({
+  token,
+  offer,
+  signedIn,
+  accept,
+  accepting,
+  acceptError,
+}: {
+  token: string;
+  offer: Preview;
+  signedIn: UserInfo | null;
+  accept: () => void;
+  accepting: boolean;
+  acceptError: string | null;
+}) {
+  const t = useTranslations("join");
+  const tRegister = useTranslations("public.register");
+  const errorMessage = useErrorMessage();
+  const locale = useFormatLocale();
+  // the language this form is read in: the account's first, as on registration
+  const language = useLocale();
+  const [password, setPassword] = useState("");
+  const [adult, setAdult] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const here = `/join?token=${encodeURIComponent(token)}`;
+  const register = useMutation({
+    mutationFn: async () => {
+      await api.post("invitations/register", {
+        token,
+        password,
+        adult,
+        consent,
+        locale: language,
+      });
+      await api.login(offer.email, password);
+    },
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    onSuccess: () => window.location.assign("/my"),
+  });
+  const same =
+    signedIn != null &&
+    signedIn.email.toLowerCase() === offer.email.toLowerCase();
+
+  return (
+    <Card className="enter-up w-full max-w-md">
+      <h1 className="type-title text-center">{offer.workspace_name}</h1>
+      <p className="mt-4 text-center text-ink-2">
+        {t("client.offer", { name: offer.workspace_name })}
+      </p>
+      <p className="mt-2 text-center text-[14px] text-ink-3">
+        {t("client.address", { email: offer.email })}
+      </p>
+      {offer.state !== "open" ? (
+        <div className="mt-6">
+          <ErrorBanner
+            message={t(
+              `closed.${offer.state as "accepted" | "revoked" | "expired"}`
+            )}
+          />
+        </div>
+      ) : same ? (
+        <div className="mt-8 text-center">
+          {acceptError && (
+            <div className="mb-4">
+              <ErrorBanner message={acceptError} />
+            </div>
+          )}
+          <Button onClick={accept} disabled={accepting}>
+            {t("client.accept")}
+          </Button>
+        </div>
+      ) : signedIn != null ? (
+        <div className="mt-6">
+          <ErrorBanner
+            message={t("otherAccount", {
+              current: signedIn.email,
+              invited: offer.email,
+            })}
+          />
+        </div>
+      ) : offer.has_account ? (
+        <div className="mt-8 text-center">
+          <Link
+            href={`/login?from=${encodeURIComponent(here)}`}
+            className={buttonClass("primary")}
+          >
+            {t("client.signIn")}
+          </Link>
+        </div>
+      ) : (
+        <form
+          className="mt-8 space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            register.mutate();
+          }}
+        >
+          {register.isError && (
+            <ErrorBanner message={errorMessage(register.error)} />
+          )}
+          <Field label={t("client.password")} hint={t("client.passwordHint")}>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              minLength={10}
+              maxLength={200}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </Field>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={adult}
+              onChange={(e) => setAdult(e.target.checked)}
+              className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+            />
+            <span>{t("client.adult")}</span>
+          </label>
+          <p className="rounded-[var(--radius-card)] bg-surface-2 p-4 text-[14px] text-pretty text-ink-2">
+            {tRegister.rich("consent.core", {
+              link: (chunks) => (
+                <Link
+                  className="font-semibold text-ink hover:underline"
+                  href="/privacy?in=tab"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {chunks}
+                </Link>
+              ),
+              hidden: (chunks) => <span className="sr-only">{chunks}</span>,
+            })}
+          </p>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+            />
+            <span>{tRegister("consent.coreTick")}</span>
+          </label>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={
+              password.length < 10 || !adult || !consent || register.isPending
+            }
+          >
+            {t("client.create")}
+          </Button>
+          <p className="text-center text-[13px] text-ink-3">
+            {t("expires", { date: formatDate(offer.expires_at, locale) })}
+          </p>
+        </form>
       )}
     </Card>
   );
