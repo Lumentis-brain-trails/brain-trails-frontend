@@ -726,7 +726,7 @@ export interface components {
         };
         /**
          * HoursDayOut
-         * @description A day of Andrea's table; `total_minutes` merges parallel sessions, plus offline.
+         * @description A day of Andrea's table; `total_minutes` adds every row in full, plus offline.
          */
         HoursDayOut: {
             /**

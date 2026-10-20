@@ -131,7 +131,7 @@
         "area": "Area",
         "period": "Periodo",
         "hours": "Ore di lavoro",
-        "hoursHint": "Le sessioni in parallelo contano una volta, lavoro offline incluso",
+        "hoursHint": "Ogni thread conta per intero, anche in parallelo; lavoro offline incluso",
         "offline": "Lavoro offline"
       },
       "export": {
@@ -155,7 +155,7 @@
       },
       "hours": {
         "title": "Tempo speso",
-        "note": "Il totale del giorno unisce le sessioni che si sono svolte in parallelo e aggiunge il lavoro fuori dalle sessioni, quindi può essere minore della somma delle righe.",
+        "note": "Il totale del giorno somma per intero il tempo di ogni thread, anche quando si sono svolti in parallelo, e il lavoro fuori dalle sessioni.",
         "none": "Nessun tempo registrato in questa selezione.",
         "date": "Data",
         "category": "Categoria attività",

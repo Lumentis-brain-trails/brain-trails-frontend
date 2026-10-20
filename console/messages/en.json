@@ -131,7 +131,7 @@
         "area": "Area",
         "period": "Period",
         "hours": "Hours worked",
-        "hoursHint": "Parallel sessions counted once, offline time included",
+        "hoursHint": "Every thread counts in full, also in parallel; offline time included",
         "offline": "Offline work"
       },
       "export": {
@@ -155,7 +155,7 @@
       },
       "hours": {
         "title": "Time spent",
-        "note": "A day's total merges the sessions that ran at the same time and adds the time worked away from any session, so it can be less than the sum of its rows.",
+        "note": "A day's total adds the time of every thread in full, also when threads ran in parallel, and the time worked away from any session.",
         "none": "No time recorded in this selection.",
         "date": "Date",
         "category": "Activity category",
