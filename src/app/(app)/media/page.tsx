@@ -173,9 +173,14 @@ function MakeProtocol({ item }: { item: Media }) {
   const t = useTranslations("media.page");
   const errorMessage = useErrorMessage();
   const router = useRouter();
+  // The protocol goes to the library being worked in, a clinic's included.
+  const workspace = useCurrentWorkspace();
   const create = useMutation({
     mutationFn: () =>
-      api.post<ProtocolDetail>(`protocols/from-media/${item.id}`, {}),
+      api.post<ProtocolDetail>(
+        inWorkspace(`protocols/from-media/${item.id}`, workspace),
+        {}
+      ),
     onSuccess: (protocol) => router.push(`/protocols/${protocol.id}`),
   });
   if (!WRAPPABLE.has(item.kind) || item.status !== "ready") return null;
@@ -185,7 +190,7 @@ function MakeProtocol({ item }: { item: Media }) {
         <Button
           size="sm"
           onClick={() => create.mutate()}
-          disabled={create.isPending}
+          disabled={create.isPending || workspace === undefined}
         >
           {t("createProtocol")}
         </Button>

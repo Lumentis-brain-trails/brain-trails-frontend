@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { api } from "@/lib/api";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import {
   type Presign,
   uploadToStorage,
@@ -59,6 +60,9 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The library the item goes to: the current workspace's, a clinic's included. Until
+  // it is known the upload waits, rather than defaulting to the personal library.
+  const workspace = useCurrentWorkspace();
 
   const kind: "video" | "audio" = file?.type.startsWith("audio/")
     ? "audio"
@@ -83,15 +87,18 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
       // Thrown already translated: `onError` shows the message as it is.
       if (!file) throw new Error(t("chooseFile"));
       if (!title.trim()) throw new Error(t("needTitle"));
-      const presign = await api.post<MediaPresign>("media/uploads", {
-        filename: file.name,
-      });
+      const presign = await api.post<MediaPresign>(
+        inWorkspace("media/uploads", workspace),
+        {
+          filename: file.name,
+        }
+      );
       if (file.size > presign.max_mb * 1024 * 1024)
         throw new Error(t("tooLarge", { max: presign.max_mb }));
       const duration = await readDuration(file);
       setProgress(0);
       await uploadToStorage(presign.source, file, setProgress);
-      return api.post<Media>("media", {
+      return api.post<Media>(inWorkspace("media", workspace), {
         kind,
         title: title.trim(),
         slug: slugify(title) || slugify(file.name),
@@ -202,7 +209,10 @@ export function MediaUploadDialog({ onClose }: { onClose: () => void }) {
           >
             {t("cancel")}
           </Button>
-          <Button onClick={() => upload.mutate()} disabled={upload.isPending}>
+          <Button
+            onClick={() => upload.mutate()}
+            disabled={upload.isPending || workspace === undefined}
+          >
             {upload.isPending ? t("uploading") : t("add")}
           </Button>
         </div>

@@ -8,6 +8,7 @@ import {
   inWorkspace,
   managesMembers,
   SELECTED_WORKSPACE_KEY,
+  choiceApplies,
   pickCurrent,
   resetPinnedWorkspace,
   useCurrentWorkspace,
@@ -19,7 +20,12 @@ import {
 
 const responses: Record<string, unknown> = {};
 vi.mock("@/lib/api", () => ({
-  api: { get: async (path: string) => responses[path] },
+  api: {
+    get: async (path: string) => {
+      const answer = responses[path];
+      return typeof answer === "function" ? answer() : answer;
+    },
+  },
 }));
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -179,5 +185,36 @@ describe("useCurrentWorkspace", () => {
     selectWorkspace("c");
     const { result } = renderHook(() => useCurrentWorkspace(), { wrapper });
     await waitFor(() => expect(result.current?.id).toBe("p"));
+  });
+});
+
+describe("while the flags are unknown", () => {
+  it("says whether the saved choice applies, and keeps it when /config fails", () => {
+    expect(choiceApplies({ isError: false })).toBeUndefined();
+    expect(choiceApplies({ isError: true })).toBe(true);
+    const on = { features: { workspaces_multi: true } } as never;
+    const off = { features: { workspaces_multi: false } } as never;
+    expect(choiceApplies({ data: on, isError: false })).toBe(true);
+    expect(choiceApplies({ data: off, isError: false })).toBe(false);
+  });
+
+  it("names no workspace until /config answers, so nothing saves to personal", async () => {
+    responses.workspaces = [PERSONAL, CLINIC];
+    let answer: (v: unknown) => void = () => {};
+    responses.config = new Promise((resolve) => (answer = resolve));
+    selectWorkspace("c");
+    const { result } = renderHook(() => useCurrentWorkspace(), { wrapper });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(result.current).toBeUndefined();
+    answer({ features: { workspaces_multi: true } });
+    await waitFor(() => expect(result.current?.id).toBe("c"));
+  });
+
+  it("keeps the saved choice when /config fails", async () => {
+    responses.workspaces = [PERSONAL, CLINIC];
+    responses.config = () => Promise.reject(new Error("down"));
+    selectWorkspace("c");
+    const { result } = renderHook(() => useCurrentWorkspace(), { wrapper });
+    await waitFor(() => expect(result.current?.id).toBe("c"));
   });
 });
