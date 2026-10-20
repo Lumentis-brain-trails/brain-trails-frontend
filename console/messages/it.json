@@ -1,0 +1,166 @@
+{
+  "console": {
+    "auth": {
+      "eyebrow": "Brain Trails · console",
+      "signInTitle": "Accedi",
+      "intro": "Usa il tuo account Brain Trails di questo ambiente. Poi la console ti chiede il codice della tua app di autenticazione.",
+      "email": "Email",
+      "password": "Password",
+      "continue": "Continua",
+      "code": "Codice",
+      "codeHint": "Le sei cifre della tua app di autenticazione.",
+      "verify": "Verifica",
+      "verifyTitle": "Secondo fattore",
+      "verifyIntro": "Apri la tua app di autenticazione e inserisci il codice di Brain Trails console.",
+      "enrollTitle": "Imposta il secondo fattore",
+      "enrollIntro": "Inquadra il codice con un'app di autenticazione (1Password, Google Authenticator, Authy), poi inserisci le sei cifre che mostra. Te lo chiediamo una volta sola; il segreto non viene più mostrato.",
+      "startAgain": "Ricomincia",
+      "qrLabel": "Codice QR per la tua app di autenticazione",
+      "secretLabel": "Oppure scrivi questo segreto:"
+    },
+    "errors": {
+      "generic": "Qualcosa è andato storto. Riprova.",
+      "product_login_refused": "Questa email e questa password non aprono un account qui.",
+      "invalid_credentials": "Questa email e questa password non aprono un account qui.",
+      "not_a_console_user": "Questo account non ha accesso alla console. Chiedilo ad Alessio.",
+      "wrong_code": "Il codice non è giusto. Controlla l'ora del telefono e riprova.",
+      "signed_out": "La tua sessione della console è finita. Accedi di nuovo.",
+      "forbidden": "Il tuo livello nella console non lo consente.",
+      "rate_limited": "Troppi tentativi. Aspetta un minuto e riprova.",
+      "product_unavailable": "Il prodotto non ha risposto. Riprova tra poco.",
+      "upstream_unavailable": "Il servizio della console non ha risposto. Riprova tra poco.",
+      "console_unavailable": "Questa console non è ancora configurata.",
+      "read_unavailable": "Questa console non ha ancora una connessione in lettura al database del prodotto.",
+      "already_enrolled": "Questo account ha già il suo secondo fattore. Accedi di nuovo per inserire un codice."
+    },
+    "age": {
+      "now": "adesso",
+      "m": "{n} min fa",
+      "h": "{n} h fa",
+      "d": "{n, plural, one {# giorno fa} other {# giorni fa}}"
+    },
+    "strip": {
+      "title": "Widget",
+      "edit": "Modifica",
+      "done": "Chiudi",
+      "empty": "Ancora nessun widget. Modifica la striscia per aggiungerne.",
+      "never": "Non ancora aggiornato.",
+      "refresh": "Aggiorna {title}",
+      "editIntro": "Scegli i widget della tua striscia. Ognuno mostra l'ultimo aggiornamento; niente si aggiorna da solo.",
+      "save": "Salva",
+      "cancel": "Annulla"
+    },
+    "rail": {
+      "label": "App",
+      "launcher": "Tutte le app",
+      "pinned": "Fissate",
+      "noPins": "Fissa un'app dall'elenco.",
+      "open": "Aperte"
+    },
+    "shell": {
+      "name": "Brain Trails console",
+      "signOut": "Esci"
+    },
+    "launcher": {
+      "title": "App",
+      "emptyTitle": "Ancora nessuna app per te",
+      "emptyText": "Le app compaiono qui quando sono pubblicate e il tuo livello le consente.",
+      "lastOpened": "Aperta {when}",
+      "neverOpened": "Non ancora aperta",
+      "open": "Apri",
+      "about": "Dettagli",
+      "pin": "Fissa",
+      "unpin": "Togli",
+      "version": "v{semver}"
+    },
+    "app": {
+      "unknownTitle": "App inesistente",
+      "unknownText": "Questa console non ha un'app a questo indirizzo.",
+      "noVersionTitle": "Versione inesistente",
+      "noVersionText": "Questa app non ha la versione {semver}.",
+      "historyText": "Questa versione è storia: la console gira con una sola build, la versione {current}. Qui sotto trovi le sue note.",
+      "openCurrent": "Apri la versione attuale",
+      "version": "v{semver}",
+      "versionAbout": "v{semver} · dettagli"
+    },
+    "about": {
+      "unknown": "App inesistente",
+      "open": "Apri",
+      "current": "Versione attuale",
+      "opens": "Aperture negli ultimi 30 giorni",
+      "people": "Persone negli ultimi 30 giorni",
+      "scopes": "Permessi",
+      "scopesHint": "Cosa può leggere o fare questa versione. Il tuo livello deve concederli tutti.",
+      "widgets": "Widget che esporta",
+      "versions": "Versioni",
+      "version": "v{semver}"
+    },
+    "worklog": {
+      "intro": "Il lavoro di Alessio con Claude, sessione per sessione, con i token che è costato. I filtri valgono per i totali, l'elenco e il report.",
+      "emptyTitle": "Nessuna voce",
+      "emptyText": "Niente corrisponde a questi filtri, oppure non è ancora stato importato nulla.",
+      "dayTokens": "{tokens} token nuovi",
+      "more": "Mostra altre",
+      "tokensNote": "I token nuovi sono il lavoro aggiunto a ogni turno: input, scrittura in cache e output. I token letti dalla cache sono il contesto riletto a ogni turno e costano molto meno. Entrambi vengono dalle trascrizioni delle sessioni di Claude Code, subagenti inclusi.",
+      "filters": {
+        "area": "Area",
+        "anyArea": "Tutte le aree",
+        "thread": "Thread",
+        "anyThread": "Tutti i thread",
+        "status": "Stato",
+        "anyStatus": "Qualsiasi stato",
+        "done": "Fatto",
+        "inProgress": "In corso",
+        "since": "Dal",
+        "until": "Al",
+        "clear": "Togli i filtri"
+      },
+      "totals": {
+        "title": "Token",
+        "groupBy": "Raggruppa per",
+        "byDay": "Giorno",
+        "byWeek": "Settimana",
+        "byArea": "Area",
+        "weekOf": "Settimana del {day}",
+        "tokensNew": "Token nuovi",
+        "tokensNewHint": "I token spesi",
+        "tokensCache": "Letti dalla cache",
+        "tokensCacheHint": "Contesto riletto, costa molto meno",
+        "entries": "Voci",
+        "none": "Nessuna voce in questa selezione.",
+        "area": "Area",
+        "period": "Periodo"
+      },
+      "export": {
+        "label": "Report",
+        "language": "Lingua del report",
+        "italian": "Italiano",
+        "english": "English",
+        "pdf": "PDF",
+        "markdown": "Markdown"
+      },
+      "entry": {
+        "done": "fatto",
+        "inProgress": "in corso",
+        "tokens": "nuovi · {cache} cache"
+      },
+      "widgets": {
+        "workWeek": "{done} fatte, {open} in corso, {days, plural, one {# giorno} other {# giorni}}",
+        "tokensWeekChart": "Token nuovi al giorno questa settimana"
+      }
+    },
+    "overview": {
+      "intro": "I numeri della dashboard di amministrazione del prodotto, letti dal database del prodotto con la connessione in sola lettura della console quando aggiorni un pannello.",
+      "refresh": "Aggiorna",
+      "never": "Non ancora aggiornato.",
+      "people": "Persone",
+      "total": "Account",
+      "new14d": "Aperti negli ultimi 14 giorni",
+      "recordings": "Registrazioni",
+      "recordingsChart": "Registrazioni al giorno, ultimi 14 giorni",
+      "count": "Registrazioni",
+      "minutes": "Minuti registrati",
+      "jobs": "Job {status}"
+    }
+  }
+}

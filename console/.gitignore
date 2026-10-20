@@ -1,0 +1,7 @@
+# Next.js output and generated typings of this app (the root .gitignore covers the root's)
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+/coverage/
+/node_modules/
