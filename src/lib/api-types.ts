@@ -1469,6 +1469,7 @@ export interface paths {
          *     `?workspace=` narrows to one workspace. Keyset pagination on `(created_at, id)`: the
          *     next page's cursor comes back in the `X-Next-Cursor` header, absent on the last page.
          *     Abandoned browser sessions are closed first, so none is listed as still capturing.
+         *     A page holding other people's recordings is audited, once per person (T3).
          */
         get: operations["list_recordings_recordings_get"];
         put?: never;
@@ -1859,6 +1860,8 @@ export interface paths {
         /**
          * List Sessions
          * @description Sessions the caller may see, newest first; `?workspace=` narrows to one.
+         *
+         *     Other people's sessions in the page are audited, once per person (T3).
          */
         get: operations["list_sessions_sessions_get"];
         put?: never;
@@ -1986,6 +1989,9 @@ export interface paths {
         /**
          * Renew Media Links
          * @description Fresh links to the session's media, for a run that outlived the first ones.
+         *
+         *     409 `session_closed` once the run has ended: the links are for running it, and a
+         *     finished session's media are its readers' to open from the review.
          */
         get: operations["renew_media_links_sessions__session_id__media_urls_get"];
         put?: never;
@@ -2145,7 +2151,7 @@ export interface paths {
         };
         /**
          * Subject Sessions
-         * @description The subject's sessions, newest first (its carers).
+         * @description The subject's sessions, newest first (its carers). Audited as a read of them.
          */
         get: operations["subject_sessions_subjects__subject_id__sessions_get"];
         put?: never;

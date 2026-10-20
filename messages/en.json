@@ -36,7 +36,10 @@
     "adult_required": "Accounts are for adults. Your clinic can record you without one.",
     "client_only": "Sign in, or register with this address, then accept the invitation.",
     "not_published": "Publish this protocol before using it.",
-    "no_workspace": "This account has no workspace of its own."
+    "no_workspace": "This account has no workspace of its own.",
+    "assignment_full": "Every session of this assignment is already under way. Finish or stop the other one first.",
+    "staff_not_client": "A member of this organisation cannot be one of its patients or participants.",
+    "session_closed": "This session has already ended."
   },
   "application": {
     "step": "Application",
@@ -3461,7 +3464,9 @@
     "noConsent": "{name} (consent not attested)",
     "intro": "A session of someone else is recorded in this organisation, and only their carers read it.",
     "countsTowards": "Count this run towards their assignment ({left, plural, =0 {none left} one {# left} other {# left}})",
-    "countsOpen": "Count this run towards their assignment"
+    "countsOpen": "Count this run towards their assignment",
+    "stray": "The person chosen is not among your patients or participants in this workspace. Switch to their workspace, or record yourself.",
+    "myselfInstead": "Record myself instead"
   },
   "my": {
     "brand": "Your sessions",

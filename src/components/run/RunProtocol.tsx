@@ -114,6 +114,7 @@ export function RunProtocol({
   backHref,
   target = {},
   picker = null,
+  startBlocked = false,
   client = false,
 }: {
   protocolId: string;
@@ -123,6 +124,8 @@ export function RunProtocol({
   backHref: string;
   target?: RunTarget;
   picker?: ReactNode;
+  /** The picker is still resolving whom the run records: Start waits. */
+  startBlocked?: boolean;
   client?: boolean;
 }) {
   const router = useRouter();
@@ -377,6 +380,7 @@ export function RunProtocol({
           override={override}
           onOverride={setOverride}
           starting={starting}
+          blocked={startBlocked}
           onStart={() => void begin()}
           onBack={() => router.push(backHref)}
         />

@@ -12,23 +12,37 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
+import { useSignOut } from "@/lib/signOut";
 import type { UserInfo } from "@/lib/types";
+import { type ConsentData } from "@/components/account/PrivacyCard";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { Logo } from "@/components/Logo";
+import { PolicyUpdateGate } from "@/components/PolicyUpdateGate";
 import { BRAND, cn } from "@/components/ui";
 
 export function ClientShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("my.nav");
   const pathname = usePathname();
-  const router = useRouter();
+  const signOut = useSignOut();
   const me = useQuery({
     queryKey: ["me"],
     queryFn: () => api.get<UserInfo>("auth/me"),
     staleTime: 60_000,
     retry: false,
   });
+  // As in the app (V3-0011): a person who has not agreed to the note as published now
+  // records nothing more until they read it and agree. Fails open, like the app's gate.
+  const consent = useQuery({
+    queryKey: ["me-consent"],
+    queryFn: () => api.get<ConsentData>("auth/me/consent"),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const stale =
+    consent.data !== undefined &&
+    consent.data.core_version !== consent.data.current_version;
   const link = (href: string, label: string) => (
     <Link
       href={href}
@@ -41,6 +55,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
       {label}
     </Link>
   );
+  if (stale && consent.data) return <PolicyUpdateGate consent={consent.data} />;
   return (
     <div className="flex min-h-screen flex-col">
       {/* `app-topbar` / `app-main`: in focus mode the bar steps aside and its room goes
@@ -64,10 +79,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               className="pressable rounded-full px-3 py-1.5 text-[14px] text-ink-2 hover:text-ink"
-              onClick={async () => {
-                await api.logout();
-                router.push("/login");
-              }}
+              onClick={() => void signOut()}
             >
               {t("signOut")}
             </button>

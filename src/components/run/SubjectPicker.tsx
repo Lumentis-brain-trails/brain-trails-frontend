@@ -11,13 +11,17 @@
  * towards it unless the operator says otherwise.
  *
  * Renders nothing outside an organisation or with organisations off: a private user's
- * Play is unchanged.
+ * Play is unchanged. A person preselected (`?subject=`) who is not among the caller's
+ * people here - another workspace is current, or they lost their care - is refused, not
+ * replaced: the card says so and Start waits until the operator chooses. `onBlocked`
+ * tells the page when Start must wait, including while the person's open assignment is
+ * still being looked up, so a quick Start cannot miss counting the run.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { api } from "@/lib/api";
-import { useFeature } from "@/lib/features";
+import { useAppConfig, useFeature } from "@/lib/features";
 import {
   type Assignment,
   recordable,
@@ -27,7 +31,7 @@ import {
   useSubjects,
 } from "@/lib/subjects";
 import { editionOf, useCurrentWorkspace } from "@/lib/workspace";
-import { Card, Select } from "@/components/ui";
+import { Button, Card, ErrorBanner, Select } from "@/components/ui";
 
 /** The person a run records and the assignment it counts towards; empty = the caller. */
 export interface RunTarget {
@@ -39,10 +43,12 @@ export function SubjectPicker({
   protocolId,
   value,
   onChange,
+  onBlocked,
 }: {
   protocolId: string;
   value: RunTarget;
   onChange: (target: RunTarget) => void;
+  onBlocked?: (blocked: boolean) => void;
 }) {
   const t = useTranslations("picker");
   const tSubjects = useTranslations("subjects");
@@ -71,6 +77,23 @@ export function SubjectPicker({
     enabled: organisation && assignmentsOn && value.subjectId !== undefined,
   });
   const runnable = (open.data ?? []).find((a) => a.open);
+  const config = useAppConfig();
+  const settled = config.isSuccess && workspace !== undefined;
+  // a preselected person this picker cannot offer: refused, never swapped for "myself"
+  const stray =
+    value.subjectId !== undefined &&
+    settled &&
+    (!organisation ||
+      (subjects.isSuccess &&
+        !subjects.data.some((s) => s.id === value.subjectId)));
+  const blocked =
+    stray ||
+    (value.subjectId !== undefined && !settled) ||
+    (organisation &&
+      (subjects.isLoading ||
+        (value.subjectId !== undefined && assignmentsOn && open.isLoading) ||
+        (runnable !== undefined && value.assignmentId === undefined)));
+  useEffect(() => onBlocked?.(blocked), [blocked, onBlocked]);
 
   // The first open assignment is counted unless the operator unticks it; a subject
   // with none clears the choice.
@@ -85,6 +108,19 @@ export function SubjectPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.subjectId, runnable?.id, open.isLoading]);
 
+  if (stray)
+    return (
+      <Card className="mb-6">
+        <ErrorBanner message={t("stray")} />
+        <Button
+          className="mt-4"
+          variant="secondary"
+          onClick={() => onChange({})}
+        >
+          {t("myselfInstead")}
+        </Button>
+      </Card>
+    );
   if (!organisation) return null;
   const words = subjectWords(editionOf(workspace?.kind));
   const left = runnable ? runsLeft(runnable) : null;

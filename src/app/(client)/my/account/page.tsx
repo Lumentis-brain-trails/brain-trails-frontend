@@ -11,10 +11,10 @@
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useSignOut } from "@/lib/signOut";
 import type { UserInfo } from "@/lib/types";
 import { LanguageCard } from "@/components/account/LanguageCard";
 import {
@@ -37,7 +37,7 @@ import {
 
 export default function MyAccountPage() {
   const t = useTranslations("my.account");
-  const router = useRouter();
+  const signOut = useSignOut();
   const toast = useToast();
   const errorMessage = useErrorMessage();
   const [confirm, setConfirm] = useState(false);
@@ -54,9 +54,8 @@ export default function MyAccountPage() {
   const erase = useMutation({
     mutationFn: () => api.delete("auth/me", { password }),
     onSuccess: async () => {
-      await api.logout();
       toast("success", t("done"));
-      router.push("/");
+      await signOut("/");
     },
   });
 

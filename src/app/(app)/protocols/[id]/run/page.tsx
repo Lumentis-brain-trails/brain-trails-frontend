@@ -20,14 +20,21 @@ export default function RunProtocolPage({
   const [target, setTarget] = useState<RunTarget>(
     subject ? { subjectId: subject } : {}
   );
+  const [blocked, setBlocked] = useState(false);
   return (
     <RunProtocol
       protocolId={id}
       detailPath={`protocols/${id}`}
       backHref={`/protocols/${id}`}
       target={target}
+      startBlocked={blocked}
       picker={
-        <SubjectPicker protocolId={id} value={target} onChange={setTarget} />
+        <SubjectPicker
+          protocolId={id}
+          value={target}
+          onChange={setTarget}
+          onBlocked={setBlocked}
+        />
       }
     />
   );

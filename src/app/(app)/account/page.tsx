@@ -3,10 +3,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useFormatLocale } from "@/i18n/formatLocale";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useSignOut } from "@/lib/signOut";
 import type { UserInfo } from "@/lib/types";
 import { Sheet } from "@/components/Sheet";
 import {
@@ -33,7 +33,7 @@ import {
 import { useToast } from "@/components/Toast";
 
 export default function AccountPage() {
-  const router = useRouter();
+  const signOut = useSignOut();
   const toast = useToast();
   const t = useTranslations("account");
   const locale = useFormatLocale();
@@ -68,9 +68,8 @@ export default function AccountPage() {
   const erase = useMutation({
     mutationFn: () => api.delete("auth/me", { password }),
     onSuccess: async () => {
-      await api.logout();
       toast("success", t("delete.done"));
-      router.push("/");
+      await signOut("/");
     },
     onError: (e) => setError(errorMessage(e)),
   });

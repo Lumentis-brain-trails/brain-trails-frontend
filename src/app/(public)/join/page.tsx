@@ -7,7 +7,8 @@
  * account yet - and says which organisation, which seat, and which address it was sent
  * to. Signed in, one button takes the seat; signed out, it sends them to sign in or to
  * register with that address and brings them back here. The token goes to the API in a
- * request body, never in a path.
+ * request body, never in a path, and leaves the address bar as soon as it is read
+ * (`useJoinToken`).
  *
  * Accepting chooses the organisation as the current workspace and opens the app there.
  *
@@ -19,13 +20,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { useErrorMessage } from "@/lib/errorMessage";
 import { formatDate } from "@/lib/format";
+import { forgetJoinToken, useJoinToken } from "@/lib/joinToken";
 import type { UserInfo } from "@/lib/types";
 import { type Workspace, selectWorkspace } from "@/lib/workspace";
 import {
@@ -41,7 +42,7 @@ import {
 type Preview = components["schemas"]["InvitationPreview"];
 
 function JoinContent() {
-  const token = useSearchParams().get("token") ?? "";
+  const { token, ready } = useJoinToken();
   const t = useTranslations("join");
   const tKinds = useTranslations("workspaces.kinds");
   const tSeats = useTranslations("workspaces.seats");
@@ -69,11 +70,13 @@ function JoinContent() {
     onSuccess: (workspace) => {
       const client = preview.data?.relation === "client";
       if (!client) selectWorkspace(workspace.id);
+      forgetJoinToken();
       // A full load: every list is scoped to the workspace, none may show the old one.
       window.location.assign(client ? "/my" : "/home");
     },
   });
 
+  if (!ready) return <Spinner />;
   if (token.length < 16) return <ErrorBanner message={t("missingToken")} />;
   if (preview.isLoading)
     return (
@@ -86,7 +89,8 @@ function JoinContent() {
   const offer = preview.data;
   if (!offer) return null;
 
-  const here = `/join?token=${encodeURIComponent(token)}`;
+  // the token stays in this tab's storage, never in a URL (`src/lib/joinToken.ts`)
+  const here = "/join";
   const kind = tKinds(offer.workspace_kind as "practice" | "lab");
   if (offer.relation === "client")
     return (
@@ -190,7 +194,8 @@ function ClientJoin({
   const [password, setPassword] = useState("");
   const [adult, setAdult] = useState(false);
   const [consent, setConsent] = useState(false);
-  const here = `/join?token=${encodeURIComponent(token)}`;
+  // the token stays in this tab's storage, never in a URL (`src/lib/joinToken.ts`)
+  const here = "/join";
   const register = useMutation({
     mutationFn: async () => {
       await api.post("invitations/register", {
@@ -202,8 +207,11 @@ function ClientJoin({
       });
       await api.login(offer.email, password);
     },
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    onSuccess: () => window.location.assign("/my"),
+    onSuccess: () => {
+      forgetJoinToken();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign("/my");
+    },
   });
   const same =
     signedIn != null &&

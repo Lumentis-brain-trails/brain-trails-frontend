@@ -36,7 +36,10 @@
     "adult_required": "Gli account sono per maggiorenni. La tua clinica può registrarti anche senza.",
     "client_only": "Accedi, o registrati con questo indirizzo, poi accetta l'invito.",
     "not_published": "Pubblica questo protocollo prima di usarlo.",
-    "no_workspace": "Questo account non ha uno spazio di lavoro suo."
+    "no_workspace": "Questo account non ha uno spazio di lavoro suo.",
+    "assignment_full": "Tutte le sessioni di questa assegnazione sono già in corso. Concludi o ferma prima l'altra.",
+    "staff_not_client": "Un membro di questa organizzazione non può esserne paziente o partecipante.",
+    "session_closed": "Questa sessione è già terminata."
   },
   "application": {
     "step": "Candidatura",
@@ -3461,7 +3464,9 @@
     "noConsent": "{name} (consenso non attestato)",
     "intro": "La sessione di un'altra persona viene registrata in questa organizzazione e la leggono solo i suoi terapeuti.",
     "countsTowards": "Conta questa sessione nella sua assegnazione ({left, plural, =0 {nessuna rimasta} one {ne resta #} other {ne restano #}})",
-    "countsOpen": "Conta questa sessione nella sua assegnazione"
+    "countsOpen": "Conta questa sessione nella sua assegnazione",
+    "stray": "La persona scelta non è tra i tuoi pazienti o partecipanti in questo spazio di lavoro. Passa al suo spazio, oppure registra te stesso.",
+    "myselfInstead": "Registra me"
   },
   "my": {
     "brand": "Le tue sessioni",

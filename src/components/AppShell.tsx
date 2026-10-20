@@ -13,6 +13,7 @@ import {
   subscribeSeenEpoch,
 } from "@/lib/landscapeStatus";
 import { useFeature } from "@/lib/features";
+import { useSignOut } from "@/lib/signOut";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
 import {
@@ -213,7 +214,7 @@ function useLandscapeRedrawn(): boolean {
 }
 
 function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
-  const router = useRouter();
+  const signOut = useSignOut();
   const theme = useTheme();
   const t = useTranslations("shell");
   const tLandscape = useTranslations("landscape");
@@ -293,10 +294,7 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
         <RailButton
           icon="signout"
           label={t("signOut")}
-          onClick={async () => {
-            await api.logout();
-            router.push("/login");
-          }}
+          onClick={() => void signOut()}
         />
         {me.data && (
           <div className="relative mt-2 flex h-10 w-10 items-center justify-center">

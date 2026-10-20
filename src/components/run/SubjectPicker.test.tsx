@@ -48,20 +48,29 @@ const subject = (id: string, name: string, consent: boolean) => ({
 
 const report = vi.fn();
 const seen = (): RunTarget => report.mock.lastCall?.[0] ?? {};
-function Harness() {
-  const [target, setTarget] = useState<RunTarget>({});
+const blocked = vi.fn();
+const isBlocked = (): boolean => blocked.mock.lastCall?.[0] ?? false;
+function Harness({ initial = {} }: { initial?: RunTarget }) {
+  const [target, setTarget] = useState<RunTarget>(initial);
   useEffect(() => report(target), [target]);
-  return <SubjectPicker protocolId="p1" value={target} onChange={setTarget} />;
+  return (
+    <SubjectPicker
+      protocolId="p1"
+      value={target}
+      onChange={setTarget}
+      onBlocked={blocked}
+    />
+  );
 }
 
-function renderPicker() {
+function renderPicker(initial?: RunTarget) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <QueryClientProvider client={client}>
-        <Harness />
+        <Harness initial={initial} />
       </QueryClientProvider>
     </NextIntlClientProvider>
   );
@@ -72,6 +81,7 @@ beforeEach(() => {
   window.localStorage.clear();
   resetPinnedWorkspace();
   report.mockReset();
+  blocked.mockReset();
   for (const k of Object.keys(responses)) delete responses[k];
   responses["config"] = {
     features: { workspaces_multi: true, assignments: true },
@@ -114,4 +124,38 @@ test("in a clinic: myself or a patient, consent first, the assignment counted", 
 
   fireEvent.change(select, { target: { value: "" } });
   await waitFor(() => expect(startOptions(seen())).toEqual({}));
+});
+
+test("a preselected person who is not here is refused, and Start waits", async () => {
+  responses["workspaces"] = [PERSONAL, CLINIC];
+  window.localStorage.setItem(SELECTED_WORKSPACE_KEY, "c");
+  renderPicker({ subjectId: "from-another-workspace" });
+  expect(await screen.findByText(/not among your patients/)).toBeTruthy();
+  expect(isBlocked()).toBe(true);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Record myself instead" })
+  );
+  await waitFor(() => expect(startOptions(seen())).toEqual({}));
+  await waitFor(() => expect(isBlocked()).toBe(false));
+});
+
+test("in a personal workspace a preselected person is refused too", async () => {
+  responses["workspaces"] = [PERSONAL];
+  renderPicker({ subjectId: "a" });
+  expect(await screen.findByText(/not among your patients/)).toBeTruthy();
+  expect(isBlocked()).toBe(true);
+});
+
+test("Start waits until the person's open assignment is known and counted", async () => {
+  responses["workspaces"] = [PERSONAL, CLINIC];
+  window.localStorage.setItem(SELECTED_WORKSPACE_KEY, "c");
+  renderPicker({ subjectId: "a" });
+  await waitFor(() =>
+    expect(startOptions(seen())).toEqual({
+      subjectId: "a",
+      assignmentId: "as1",
+    })
+  );
+  expect(blocked.mock.calls.some(([b]) => b === true)).toBe(true);
+  await waitFor(() => expect(isBlocked()).toBe(false));
 });

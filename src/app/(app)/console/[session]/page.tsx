@@ -211,6 +211,7 @@ function Console({
   const [phase, setPhase] = useState<Phase>("consent");
   // Whom the console records (backend T3): the operator, or someone they care for.
   const [target, setTarget] = useState<RunTarget>({});
+  const [targetBlocked, setTargetBlocked] = useState(false);
   const [override, setOverride] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -549,6 +550,7 @@ function Console({
           protocolId={protocolId}
           value={target}
           onChange={setTarget}
+          onBlocked={setTargetBlocked}
         />
         <HeadbandPreflight
           muse={muse}
@@ -559,6 +561,7 @@ function Console({
           override={override}
           onOverride={setOverride}
           starting={starting}
+          blocked={targetBlocked}
           onStart={() => void begin()}
           onBack={() => router.push(`/protocols/${protocolId}`)}
         />
