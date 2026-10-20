@@ -22,6 +22,26 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  # The console (backend plan OPS): a second Next.js app, an npm workspace of this repo,
+  # with its own lint, types, build and tests. The root install brings its dependencies.
+  console:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: console
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
   # End-to-end tests (plan V3, sprint S13): this frontend against the backend's `dev`
   # branch, with the simulated headband. The backend repo is private, so the job needs a
   # read-only token in the `E2E_BACKEND_TOKEN` secret; without it (forks, dependabot,

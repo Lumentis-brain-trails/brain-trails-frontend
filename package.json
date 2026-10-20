@@ -2,6 +2,9 @@
   "name": "brain-trails-frontend",
   "version": "0.0.0",
   "private": true,
+  "workspaces": [
+    "console"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

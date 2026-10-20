@@ -1,0 +1,191 @@
+{
+  "console": {
+    "auth": {
+      "eyebrow": "Brain Trails · console",
+      "signInTitle": "Sign in",
+      "intro": "Use your Brain Trails account of this environment. The console then asks for the code from your authenticator app.",
+      "email": "Email",
+      "password": "Password",
+      "continue": "Continue",
+      "code": "Code",
+      "codeHint": "Six digits from your authenticator app.",
+      "verify": "Verify",
+      "verifyTitle": "Second factor",
+      "verifyIntro": "Open your authenticator app and enter the code for Brain Trails console.",
+      "enrollTitle": "Set up your second factor",
+      "enrollIntro": "Scan the code with an authenticator app (1Password, Google Authenticator, Authy), then enter the six digits it shows. This is asked once; the secret is not shown again.",
+      "startAgain": "Start again",
+      "qrLabel": "QR code for your authenticator app",
+      "secretLabel": "Or type this secret:"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "product_login_refused": "That email and password do not open an account here.",
+      "invalid_credentials": "That email and password do not open an account here.",
+      "not_a_console_user": "This account has no access to the console. Ask Alessio for it.",
+      "wrong_code": "That code is not right. Check the clock of your phone and try again.",
+      "signed_out": "Your console session has ended. Sign in again.",
+      "forbidden": "Your console level does not allow this.",
+      "rate_limited": "Too many attempts. Wait a minute and try again.",
+      "product_unavailable": "The product did not answer. Try again in a moment.",
+      "upstream_unavailable": "The console's service did not answer. Try again in a moment.",
+      "console_unavailable": "This console is not configured yet.",
+      "read_unavailable": "This console has no read connection to the product database yet.",
+      "already_enrolled": "This account already has its second factor. Sign in again to enter a code."
+    },
+    "age": {
+      "now": "just now",
+      "m": "{n} min ago",
+      "h": "{n} h ago",
+      "d": "{n, plural, one {# day ago} other {# days ago}}"
+    },
+    "strip": {
+      "title": "Widgets",
+      "edit": "Edit",
+      "done": "Close",
+      "empty": "No widgets yet. Edit the strip to add some.",
+      "never": "Not refreshed yet.",
+      "refresh": "Refresh {title}",
+      "editIntro": "Choose the widgets on your strip. Each shows its last refresh; nothing updates by itself.",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "rail": {
+      "label": "Apps",
+      "launcher": "All apps",
+      "pinned": "Pinned",
+      "noPins": "Pin an app from the launcher.",
+      "open": "Open"
+    },
+    "shell": {
+      "name": "Brain Trails console",
+      "signOut": "Sign out"
+    },
+    "launcher": {
+      "title": "Apps",
+      "emptyTitle": "No apps for you yet",
+      "emptyText": "Apps appear here once they are published and your level allows them.",
+      "lastOpened": "Last opened {when}",
+      "neverOpened": "Not opened yet",
+      "open": "Open",
+      "about": "About",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "version": "v{semver}"
+    },
+    "app": {
+      "unknownTitle": "No such app",
+      "unknownText": "This console has no app at that address.",
+      "noVersionTitle": "No such version",
+      "noVersionText": "This app has no version {semver}.",
+      "historyText": "This version is history: the console runs one build, version {current}. Its changelog is below.",
+      "openCurrent": "Open the current version",
+      "version": "v{semver}",
+      "versionAbout": "v{semver} · about"
+    },
+    "about": {
+      "unknown": "No such app",
+      "open": "Open",
+      "current": "Current version",
+      "opens": "Opened in the last 30 days",
+      "people": "People in the last 30 days",
+      "scopes": "Scopes",
+      "scopesHint": "What this version may read or do. Your level must grant every one of them.",
+      "widgets": "Widgets it exports",
+      "versions": "Versions",
+      "version": "v{semver}"
+    },
+    "worklog": {
+      "intro": "What Alessio and Claude did together, session by session, with the tokens it took. Filters narrow the totals, the list and the report alike.",
+      "emptyTitle": "No entries",
+      "emptyText": "Nothing matches these filters, or nothing was imported yet.",
+      "dayTokens": "{tokens} new tokens",
+      "more": "Show more",
+      "tokensNote": "New tokens are the work added at each turn: input, cache writes and output. Tokens read from cache are the context read back at every turn, and cost much less. Both come from the Claude Code session transcripts, subagents included.",
+      "filters": {
+        "area": "Area",
+        "anyArea": "Every area",
+        "thread": "Thread",
+        "anyThread": "Every thread",
+        "status": "Status",
+        "anyStatus": "Any status",
+        "done": "Done",
+        "inProgress": "In progress",
+        "since": "From",
+        "until": "To",
+        "clear": "Clear filters"
+      },
+      "totals": {
+        "title": "Tokens",
+        "groupBy": "Group by",
+        "byDay": "Day",
+        "byWeek": "Week",
+        "byArea": "Area",
+        "weekOf": "Week of {day}",
+        "tokensNew": "New tokens",
+        "tokensNewHint": "The tokens spent",
+        "tokensCache": "Read from cache",
+        "tokensCacheHint": "Context read back, much cheaper",
+        "entries": "Entries",
+        "none": "No entries in this selection.",
+        "area": "Area",
+        "period": "Period",
+        "hours": "Hours worked",
+        "hoursHint": "Every thread counts in full, also in parallel; offline time included",
+        "offline": "Offline work"
+      },
+      "export": {
+        "label": "Report",
+        "language": "Report language",
+        "italian": "Italiano",
+        "english": "English",
+        "pdf": "PDF",
+        "markdown": "Markdown"
+      },
+      "entry": {
+        "done": "done",
+        "inProgress": "in progress",
+        "tokens": "new · {cache} cache",
+        "hours": "{hours} h"
+      },
+      "widgets": {
+        "workWeek": "{entries, plural, one {# entry} other {# entries}}: {done} done, {open} in progress, {days, plural, one {# day} other {# days}}",
+        "tokensWeekChart": "New tokens per day this week",
+        "hours": "{hours} h"
+      },
+      "hours": {
+        "title": "Time spent",
+        "note": "A day's total adds the time of every thread in full, also when threads ran in parallel, and the time worked away from any session.",
+        "none": "No time recorded in this selection.",
+        "date": "Date",
+        "category": "Activity category",
+        "hours": "Time spent (hours)",
+        "description": "Description",
+        "offline": "Offline work",
+        "dayTotal": "Day total"
+      },
+      "projects": {
+        "results": "Results",
+        "plans": "Plans",
+        "prs": "{merged} pull requests merged, {open} open",
+        "noResults": "No results imported yet.",
+        "noPlans": "No plans imported yet.",
+        "done": "done",
+        "inProgress": "in progress"
+      }
+    },
+    "overview": {
+      "intro": "The numbers of the product's admin dashboard, read from the product database through the console's read-only connection when you refresh a panel.",
+      "refresh": "Refresh",
+      "never": "Not refreshed yet.",
+      "people": "People",
+      "total": "Accounts",
+      "new14d": "Opened in the last 14 days",
+      "recordings": "Recordings",
+      "recordingsChart": "Recordings per day, last 14 days",
+      "count": "Recordings",
+      "minutes": "Minutes recorded",
+      "jobs": "Jobs {status}"
+    }
+  }
+}

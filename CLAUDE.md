@@ -75,6 +75,15 @@ npm run e2e                              # Playwright; needs the local backend (
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).
 - Conventional Commits; PR title becomes the squash commit.
 
+## The console (backend plan OPS, sprint O1)
+
+`console/` is a second Next.js app, an npm workspace of this repo, with its own Vercel
+project (root directory `console/`): the shell (launcher, side rail, widget strip), its
+BFF (`/api/session`, `/api/ops` to bt-ops, `/api/product` to the API), one directory
+per app under `console/apps/<slug>/` (Overview, Work log) and its strings under
+`console.*` in `console/messages/`. It imports the product's tokens, `ui` primitives
+and `common` messages from `../src`. See `console/README.md`.
+
 ## Working method (backend decision 0013, v2 since 2026-09-24)
 
 1. Branch from `beta` and open the PR **to `beta`**. `ci` runs on it.
