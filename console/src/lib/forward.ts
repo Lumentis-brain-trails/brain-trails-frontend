@@ -27,13 +27,50 @@ const FORWARDED_RESPONSE_HEADERS = [
   "content-disposition",
 ];
 
+/** What one path segment may be once decoded: the characters our routes use. */
+const SEGMENT = /^[A-Za-z0-9._:@-]+$/;
+
+function decoded(segment: string): string | null {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The segments of `path` if it may be forwarded, else null.
+ *
+ * The first segment must be on the allow-list, and every segment must stay one plain
+ * segment: an encoded slash or backslash (`%2F`, `%5C`), a backslash (which some
+ * servers read as `/`), a dot segment, or anything outside the characters our routes use
+ * is refused - checked after decoding, so `%2e%2e` is `..` too.
+ */
+export function allowedSegments(
+  path: string[],
+  allowed: readonly string[]
+): string[] | null {
+  if (path.length === 0) return null;
+  const out: string[] = [];
+  for (const raw of path) {
+    if (/%2f|%5c/i.test(raw) || raw.includes("\\")) return null;
+    const segment = decoded(raw);
+    if (
+      segment === null ||
+      segment === "." ||
+      segment === ".." ||
+      !SEGMENT.test(segment)
+    ) {
+      return null;
+    }
+    out.push(segment);
+  }
+  return allowed.includes(out[0]) ? out : null;
+}
+
 /** Whether `path` (joined segments) falls under one of `allowed`. */
 export function isAllowed(path: string, allowed: readonly string[]): boolean {
-  const first = path.split("/")[0];
-  return (
-    allowed.includes(first) &&
-    !path.split("/").some((s) => s === ".." || s === ".")
-  );
+  return allowedSegments(path.split("/"), allowed) !== null;
 }
 
 /** Forward `request` to `target` at `path`, or refuse it with 403 `forbidden_path`. */
@@ -42,13 +79,15 @@ export async function forward(
   path: string[],
   target: Target
 ): Promise<NextResponse> {
-  const joined = path.join("/");
-  if (!isAllowed(joined, target.allowed)) {
+  const segments = allowedSegments(path, target.allowed);
+  if (segments === null) {
     return NextResponse.json(errorBody("forbidden_path", "path not allowed"), {
       status: 403,
     });
   }
-  const url = new URL(`${target.base}${target.prefix}/${joined}`);
+  const url = new URL(
+    `${target.base}${target.prefix}/${segments.map(encodeURIComponent).join("/")}`
+  );
   request.nextUrl.searchParams.forEach((value, key) =>
     url.searchParams.append(key, value)
   );

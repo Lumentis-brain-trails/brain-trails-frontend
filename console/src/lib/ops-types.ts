@@ -261,9 +261,12 @@ export interface paths {
          * Verify
          * @description Check the code; a right one turns the session active for `session_hours`.
          *
-         *     A wrong code is counted on the session and answered with 401 `wrong_code`; at
-         *     `totp_max_failures` the session is revoked and the sign-in starts again. The count is
-         *     returned rather than raised so it is committed.
+         *     The person's row is locked for the check (`SELECT ... FOR UPDATE`), so two
+         *     concurrent verifies with the same code are serialised and the second meets the
+         *     step the first recorded. Wrong codes are counted **per person**, across sessions: at
+         *     `totp_max_failures` the person is locked out for `totp_lock_minutes` and every open
+         *     sign-in of theirs ends. Answered 401 `wrong_code` (or 429 `totp_locked`) rather than
+         *     raised, so the count is committed.
          *
          *     Raises:
          *         OpsError: 409 `not_enrolled` when the person has no secret yet.
@@ -433,6 +436,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/worklog/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Hours
+         * @description Andrea's table: date, activity category, time spent, description; day totals.
+         */
+        get: operations["get_hours_ops_v1_worklog_hours_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/worklog/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Milestones
+         * @description Results by project area, newest first.
+         */
+        get: operations["get_milestones_ops_v1_worklog_milestones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/worklog/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Plans
+         * @description The sprints of each plan and where they stand, in the artifact's order.
+         */
+        get: operations["get_plans_ops_v1_worklog_plans_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/worklog/report.md": {
         parameters: {
             query?: never;
@@ -465,6 +528,26 @@ export interface paths {
          * @description The report as a PDF drawn on the server.
          */
         get: operations["report_pdf_ops_v1_worklog_report_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/worklog/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Summary
+         * @description The artifact's summary block (PRs merged and open), as imported; `{}` if none.
+         */
+        get: operations["get_summary_ops_v1_worklog_summary_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -561,10 +644,15 @@ export interface components {
         /**
          * EntryOut
          * @description One entry of the work log.
+         *
+         *     `started` is the artifact's UTC clock; `started_local` is the same moment in
+         *     `report_timezone`, which is what the console shows.
          */
         EntryOut: {
             /** Areas */
             areas: string[];
+            /** Category */
+            category: string | null;
             /**
              * Date
              * Format: date
@@ -576,15 +664,21 @@ export interface components {
             id: string;
             /** Links */
             links: components["schemas"]["LinkOut"][];
+            /** Minutes */
+            minutes: number;
             /** Session */
             session: string | null;
             /** Started */
             started: string | null;
+            /** Started Local */
+            started_local: string | null;
             /**
              * Status
              * @enum {string}
              */
             status: "done" | "in_progress";
+            /** Summary */
+            summary: string | null;
             /** Thread */
             thread: string;
             /** Title */
@@ -631,6 +725,41 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * HoursDayOut
+         * @description A day of Andrea's table; `total_minutes` merges parallel sessions, plus offline.
+         */
+        HoursDayOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Offline Description */
+            offline_description: string | null;
+            /** Offline Minutes */
+            offline_minutes: number;
+            /** Rows */
+            rows: components["schemas"]["HoursRowOut"][];
+            /** Total Minutes */
+            total_minutes: number;
+        };
+        /**
+         * HoursRowOut
+         * @description One line of Andrea's table: an entry's category, time and short description.
+         */
+        HoursRowOut: {
+            /** Category */
+            category: string | null;
+            /** Description */
+            description: string;
+            /** Id */
+            id: string;
+            /** Minutes */
+            minutes: number;
+            /** Started Local */
+            started_local: string | null;
+        };
+        /**
          * LayoutIn
          * @description The whole strip, in order.
          */
@@ -669,6 +798,32 @@ export interface components {
             scopes: string[];
         };
         /**
+         * MilestoneOut
+         * @description A result reached, by project area.
+         */
+        MilestoneOut: {
+            /** Area */
+            area: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Detail */
+            detail: string;
+            /** Id */
+            id: string;
+            /** Links */
+            links: components["schemas"]["LinkOut"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress";
+            /** Title */
+            title: string;
+        };
+        /**
          * OpenIn
          * @description Which version was opened; null is the current one.
          */
@@ -697,6 +852,24 @@ export interface components {
             semver: string | null;
             /** Slug */
             slug: string;
+        };
+        /**
+         * PlanOut
+         * @description Where one sprint of a plan stands.
+         */
+        PlanOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Note */
+            note: string;
+            /** Plan */
+            plan: string;
+            /** Sprint */
+            sprint: string;
+            /** Status */
+            status: string;
         };
         /**
          * RefreshIn
@@ -821,13 +994,23 @@ export interface components {
         };
         /**
          * TotalOut
-         * @description Tokens and entries of one day, week (its Monday) or area.
+         * @description Tokens, entries and minutes of one day, week (its Monday) or area.
+         *
+         *     `offline: true` marks the row of time worked away from any session, which has no
+         *     area of its own.
          */
         TotalOut: {
             /** Entries */
             entries: number;
             /** Key */
             key: string;
+            /** Minutes */
+            minutes: number;
+            /**
+             * Offline
+             * @default false
+             */
+            offline: boolean;
             /** Tokens Cache */
             tokens_cache: number;
             /** Tokens New */
@@ -845,6 +1028,8 @@ export interface components {
             by: "day" | "week" | "area";
             /** Entries */
             entries: number;
+            /** Minutes */
+            minutes: number;
             /** Rows */
             rows: components["schemas"]["TotalOut"][];
             /** Tokens Cache */
@@ -1660,6 +1845,108 @@ export interface operations {
             };
         };
     };
+    get_hours_ops_v1_worklog_hours_get: {
+        parameters: {
+            query?: {
+                area?: string | null;
+                thread?: string | null;
+                status?: components["schemas"]["EntryStatus"] | null;
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoursDayOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_milestones_ops_v1_worklog_milestones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MilestoneOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_plans_ops_v1_worklog_plans_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     report_markdown_ops_v1_worklog_report_md_get: {
         parameters: {
             query?: {
@@ -1722,6 +2009,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_summary_ops_v1_worklog_summary_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
             };
             /** @description Validation Error */
             422: {

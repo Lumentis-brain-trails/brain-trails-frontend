@@ -129,7 +129,10 @@
         "entries": "Voci",
         "none": "Nessuna voce in questa selezione.",
         "area": "Area",
-        "period": "Periodo"
+        "period": "Periodo",
+        "hours": "Ore di lavoro",
+        "hoursHint": "Le sessioni in parallelo contano una volta, lavoro offline incluso",
+        "offline": "Lavoro offline"
       },
       "export": {
         "label": "Report",
@@ -142,11 +145,33 @@
       "entry": {
         "done": "fatto",
         "inProgress": "in corso",
-        "tokens": "nuovi · {cache} cache"
+        "tokens": "nuovi · {cache} cache",
+        "hours": "{hours} h"
       },
       "widgets": {
-        "workWeek": "{done} fatte, {open} in corso, {days, plural, one {# giorno} other {# giorni}}",
-        "tokensWeekChart": "Token nuovi al giorno questa settimana"
+        "workWeek": "{entries, plural, one {# voce} other {# voci}}: {done} fatte, {open} in corso, {days, plural, one {# giorno} other {# giorni}}",
+        "tokensWeekChart": "Token nuovi al giorno questa settimana",
+        "hours": "{hours} h"
+      },
+      "hours": {
+        "title": "Tempo speso",
+        "note": "Il totale del giorno unisce le sessioni che si sono svolte in parallelo e aggiunge il lavoro fuori dalle sessioni, quindi può essere minore della somma delle righe.",
+        "none": "Nessun tempo registrato in questa selezione.",
+        "date": "Data",
+        "category": "Categoria attività",
+        "hours": "Tempo speso (in ore)",
+        "description": "Descrizione",
+        "offline": "Lavoro offline",
+        "dayTotal": "Totale del giorno"
+      },
+      "projects": {
+        "results": "Risultati",
+        "plans": "Piani",
+        "prs": "{merged} pull request unite, {open} aperte",
+        "noResults": "Ancora nessun risultato importato.",
+        "noPlans": "Ancora nessun piano importato.",
+        "done": "fatto",
+        "inProgress": "in corso"
       }
     },
     "overview": {

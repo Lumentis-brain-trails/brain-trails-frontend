@@ -16,6 +16,7 @@ import {
   PRODUCT_SECONDS,
   SESSION_COOKIE,
   SESSION_SECONDS,
+  CLIENT_IP_HEADER,
   type ServerEnv,
   errorBody,
 } from "./server";
@@ -42,19 +43,24 @@ async function call(url: string, init: RequestInit): Promise<Upstream> {
   }
 }
 
-/** POST JSON to bt-ops with the BFF key and, when given, the console session. */
+/**
+ * Call bt-ops with the BFF key and, when given, the console session and the visitor's
+ * address (for its rate limit).
+ */
 export function opsCall(
   env: ServerEnv,
   method: string,
   path: string,
   token?: string,
-  body?: unknown
+  body?: unknown,
+  client?: string | null
 ): Promise<Upstream> {
   const headers: Record<string, string> = {
     "X-Ops-Key": env.bffKey,
     "Content-Type": "application/json",
   };
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (client) headers[CLIENT_IP_HEADER] = client;
   return call(`${env.opsUrl}/ops/v1${path}`, {
     method,
     headers,

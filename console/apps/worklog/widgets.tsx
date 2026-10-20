@@ -1,23 +1,31 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Bars } from "@console/components/Charts";
 import { tokens } from "@console/lib/format";
-import type { TokensWeekPayload, WeekPayload } from "./lib/worklog";
+import {
+  type TokensWeekPayload,
+  type WeekPayload,
+  hoursText,
+} from "./lib/worklog";
 
-/** "Work this week": entries, how many are done, days worked. */
+/** "Work this week": hours worked, entries, how many are done, days worked. */
 export function WorkWeekWidget({
   payload,
 }: {
   payload: Record<string, unknown>;
 }) {
   const t = useTranslations("console.worklog.widgets");
+  const locale = useLocale();
   const week = payload as unknown as WeekPayload;
   return (
     <div>
-      <p className="type-figure">{week.entries}</p>
+      <p className="type-figure">
+        {t("hours", { hours: hoursText(week.minutes ?? 0, locale) })}
+      </p>
       <p className="text-[12px] text-ink-3">
         {t("workWeek", {
+          entries: week.entries,
           done: week.done,
           open: week.in_progress,
           days: week.days_worked,

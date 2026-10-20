@@ -9,6 +9,31 @@ export type Entry = components["schemas"]["EntryOut"];
 export type Facets = components["schemas"]["FacetsOut"];
 export type Totals = components["schemas"]["TotalsOut"];
 export type Grouping = Totals["by"];
+export type HoursDay = components["schemas"]["HoursDayOut"];
+export type Milestone = components["schemas"]["MilestoneOut"];
+export type Plan = components["schemas"]["PlanOut"];
+
+/**
+ * Minutes as hours with two decimals in the reader's language (`0,65` in Italian):
+ * Andrea's table counts time in hours, the backend in minutes.
+ */
+export function hoursText(minutes: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minutes / 60);
+}
+
+/** Plans grouped by name, sprints in the order the artifact gave them. */
+export function byPlan(plans: Plan[]): { plan: string; sprints: Plan[] }[] {
+  const out: { plan: string; sprints: Plan[] }[] = [];
+  for (const p of plans) {
+    const last = out[out.length - 1];
+    if (last && last.plan === p.plan) last.sprints.push(p);
+    else out.push({ plan: p.plan, sprints: [p] });
+  }
+  return out;
+}
 
 /** What the person narrowed the log to; empty strings mean "any". */
 export interface Filters {
@@ -88,6 +113,7 @@ export interface WeekPayload {
   done: number;
   in_progress: number;
   days_worked: number;
+  minutes: number;
   tokens_new: number;
   items: { date: string; title: string; areas: string[]; status: string }[];
 }

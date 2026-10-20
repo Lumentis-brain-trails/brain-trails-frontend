@@ -129,7 +129,10 @@
         "entries": "Entries",
         "none": "No entries in this selection.",
         "area": "Area",
-        "period": "Period"
+        "period": "Period",
+        "hours": "Hours worked",
+        "hoursHint": "Parallel sessions counted once, offline time included",
+        "offline": "Offline work"
       },
       "export": {
         "label": "Report",
@@ -142,11 +145,33 @@
       "entry": {
         "done": "done",
         "inProgress": "in progress",
-        "tokens": "new · {cache} cache"
+        "tokens": "new · {cache} cache",
+        "hours": "{hours} h"
       },
       "widgets": {
-        "workWeek": "{done} done, {open} in progress, {days, plural, one {# day} other {# days}}",
-        "tokensWeekChart": "New tokens per day this week"
+        "workWeek": "{entries, plural, one {# entry} other {# entries}}: {done} done, {open} in progress, {days, plural, one {# day} other {# days}}",
+        "tokensWeekChart": "New tokens per day this week",
+        "hours": "{hours} h"
+      },
+      "hours": {
+        "title": "Time spent",
+        "note": "A day's total merges the sessions that ran at the same time and adds the time worked away from any session, so it can be less than the sum of its rows.",
+        "none": "No time recorded in this selection.",
+        "date": "Date",
+        "category": "Activity category",
+        "hours": "Time spent (hours)",
+        "description": "Description",
+        "offline": "Offline work",
+        "dayTotal": "Day total"
+      },
+      "projects": {
+        "results": "Results",
+        "plans": "Plans",
+        "prs": "{merged} pull requests merged, {open} open",
+        "noResults": "No results imported yet.",
+        "noPlans": "No plans imported yet.",
+        "done": "done",
+        "inProgress": "in progress"
       }
     },
     "overview": {

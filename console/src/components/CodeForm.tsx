@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 import { useErrorText } from "@console/components/useErrorText";
 import { OpsRequestError, session } from "@console/lib/client";
+import { safeFrom } from "@console/lib/safePath";
 
 /**
  * The six-digit code from the authenticator. A right one opens the console where the
@@ -15,7 +16,7 @@ export function CodeForm() {
   const t = useTranslations("console.auth");
   const errorText = useErrorText();
   const router = useRouter();
-  const from = useSearchParams().get("from");
+  const from = safeFrom(useSearchParams().get("from"));
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,7 +27,7 @@ export function CodeForm() {
     setError(null);
     try {
       await session.verify(code);
-      router.replace(from && from.startsWith("/") ? from : "/");
+      router.replace(from ?? "/");
     } catch (e) {
       if (e instanceof OpsRequestError && e.signedOut) {
         router.replace("/login");

@@ -14,7 +14,12 @@ import {
   relay,
   setPendingCookies,
 } from "@console/lib/session";
-import { SESSION_COOKIE, errorBody, serverEnv } from "@console/lib/server";
+import {
+  SESSION_COOKIE,
+  clientIp,
+  errorBody,
+  serverEnv,
+} from "@console/lib/server";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const env = serverEnv();
@@ -49,9 +54,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const login = await productLogin(env, email, password);
   if (login.status !== 200) return relay(login);
   const productToken = (login.body as { access_token: string }).access_token;
-  const opened = await opsCall(env, "POST", "/session", undefined, {
-    product_token: productToken,
-  });
+  const opened = await opsCall(
+    env,
+    "POST",
+    "/session",
+    undefined,
+    { product_token: productToken },
+    clientIp(request.headers)
+  );
   if (opened.status !== 200) return relay(opened);
   const session = opened.body as { token: string; next: string };
   const response = NextResponse.json({ next: session.next });

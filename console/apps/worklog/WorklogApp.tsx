@@ -1,7 +1,7 @@
 "use client";
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Button,
@@ -26,9 +26,14 @@ import {
   type Facets,
   type Filters,
   type Grouping,
+  type HoursDay,
+  type Milestone,
   NO_FILTERS,
+  type Plan,
   type Totals,
   byDay,
+  byPlan,
+  hoursText,
   filterQuery,
   reportHref,
   splitDetail,
@@ -110,6 +115,7 @@ function FilterBar({
 function TotalsPanel({ filters }: { filters: Filters }) {
   const t = useTranslations("console.worklog.totals");
   const format = useFormatter();
+  const locale = useLocale();
   const [by, setBy] = useState<Grouping>("week");
   const totals = useQuery({
     queryKey: ["worklog", "totals", by, filters],
@@ -118,23 +124,30 @@ function TotalsPanel({ filters }: { filters: Filters }) {
   });
   const rows = totals.data?.rows ?? [];
   const max = Math.max(1, ...rows.map((r) => r.tokens_new));
-  const label = (key: string) =>
-    by === "area"
-      ? key
-      : by === "week"
-        ? t("weekOf", {
-            day: format.dateTime(new Date(`${key}T12:00:00`), {
-              dateStyle: "medium",
-            }),
-          })
-        : format.dateTime(new Date(`${key}T12:00:00`), {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-          });
+  const label = (key: string, offline: boolean) =>
+    offline
+      ? t("offline")
+      : by === "area"
+        ? key
+        : by === "week"
+          ? t("weekOf", {
+              day: format.dateTime(new Date(`${key}T12:00:00`), {
+                dateStyle: "medium",
+              }),
+            })
+          : format.dateTime(new Date(`${key}T12:00:00`), {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
   return (
     <section className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat
+          label={t("hours")}
+          value={hoursText(totals.data?.minutes ?? 0, locale)}
+          hint={t("hoursHint")}
+        />
         <Stat
           label={t("tokensNew")}
           value={tokens(totals.data?.tokens_new ?? 0)}
@@ -172,7 +185,8 @@ function TotalsPanel({ filters }: { filters: Filters }) {
                 <th className="pb-2 font-medium">
                   {by === "area" ? t("area") : t("period")}
                 </th>
-                <th className="w-1/3 pb-2" />
+                <th className="w-1/4 pb-2" />
+                <th className="pb-2 text-right font-medium">{t("hours")}</th>
                 <th className="pb-2 text-right font-medium">
                   {t("tokensNew")}
                 </th>
@@ -185,7 +199,9 @@ function TotalsPanel({ filters }: { filters: Filters }) {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.key} className="border-t border-hairline">
-                  <td className="py-2 pr-3">{label(r.key)}</td>
+                  <td className="py-2 pr-3">
+                    {label(r.key, r.offline ?? false)}
+                  </td>
                   <td className="py-2 pr-3">
                     <div className="h-2 rounded-full bg-surface-2">
                       <div
@@ -195,6 +211,9 @@ function TotalsPanel({ filters }: { filters: Filters }) {
                         }}
                       />
                     </div>
+                  </td>
+                  <td className="py-2 text-right font-mono tabular-nums">
+                    {hoursText(r.minutes, locale)}
                   </td>
                   <td className="py-2 text-right font-mono tabular-nums">
                     {tokens(r.tokens_new)}
@@ -210,6 +229,196 @@ function TotalsPanel({ filters }: { filters: Filters }) {
         )}
       </Card>
     </section>
+  );
+}
+
+/**
+ * Andrea's table: date, activity category, time spent in hours, description, with a
+ * total per day that merges the sessions run side by side and adds the offline time.
+ */
+function HoursPanel({ filters }: { filters: Filters }) {
+  const t = useTranslations("console.worklog.hours");
+  const format = useFormatter();
+  const locale = useLocale();
+  const days = useQuery({
+    queryKey: ["worklog", "hours", filters],
+    queryFn: () => ops.get<HoursDay[]>(`worklog/hours${filterQuery(filters)}`),
+  });
+  const date = (iso: string) =>
+    format.dateTime(new Date(`${iso}T12:00:00`), { dateStyle: "short" });
+  return (
+    <Card inset>
+      <div className="border-b border-hairline px-5 py-3">
+        <h2 className="type-heading">{t("title")}</h2>
+        <p className="mt-1 text-[13px] text-ink-3">{t("note")}</p>
+      </div>
+      {days.isPending ? (
+        <Skeleton className="m-5 h-24" />
+      ) : (days.data ?? []).length === 0 ? (
+        <p className="px-5 py-4 text-[14px] text-ink-3">{t("none")}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[14px]">
+            <thead className="text-left text-[12px] text-ink-3">
+              <tr>
+                <th className="px-5 py-2 font-medium">{t("date")}</th>
+                <th className="py-2 pr-3 font-medium">{t("category")}</th>
+                <th className="py-2 pr-3 text-right font-medium whitespace-nowrap">
+                  {t("hours")}
+                </th>
+                <th className="py-2 pr-5 font-medium">{t("description")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(days.data ?? []).map((day) => (
+                <DayRows
+                  key={day.date}
+                  day={day}
+                  date={date(day.date)}
+                  locale={locale}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function DayRows({
+  day,
+  date,
+  locale,
+}: {
+  day: HoursDay;
+  date: string;
+  locale: string;
+}) {
+  const t = useTranslations("console.worklog.hours");
+  return (
+    <>
+      {day.rows.map((row) => (
+        <tr key={row.id} className="border-t border-hairline align-top">
+          <td className="px-5 py-2 whitespace-nowrap">{date}</td>
+          <td className="py-2 pr-3">{row.category}</td>
+          <td className="py-2 pr-3 text-right font-mono tabular-nums">
+            {hoursText(row.minutes, locale)}
+          </td>
+          <td className="py-2 pr-5 text-ink-2">{row.description}</td>
+        </tr>
+      ))}
+      {day.offline_minutes > 0 && (
+        <tr className="border-t border-hairline align-top">
+          <td className="px-5 py-2 whitespace-nowrap">{date}</td>
+          <td className="py-2 pr-3">{t("offline")}</td>
+          <td className="py-2 pr-3 text-right font-mono tabular-nums">
+            {hoursText(day.offline_minutes, locale)}
+          </td>
+          <td className="py-2 pr-5 text-ink-2">{day.offline_description}</td>
+        </tr>
+      )}
+      <tr className="border-t border-hairline bg-surface-2 font-semibold">
+        <td className="px-5 py-2 whitespace-nowrap">{date}</td>
+        <td className="py-2 pr-3">{t("dayTotal")}</td>
+        <td className="py-2 pr-3 text-right font-mono tabular-nums">
+          {hoursText(day.total_minutes, locale)}
+        </td>
+        <td className="py-2 pr-5" />
+      </tr>
+    </>
+  );
+}
+
+/** Results by project area, and where every sprint of every plan stands. */
+function ProjectsPanel() {
+  const t = useTranslations("console.worklog.projects");
+  const format = useFormatter();
+  const milestones = useQuery({
+    queryKey: ["worklog", "milestones"],
+    queryFn: () => ops.get<Milestone[]>("worklog/milestones"),
+  });
+  const plans = useQuery({
+    queryKey: ["worklog", "plans"],
+    queryFn: () => ops.get<Plan[]>("worklog/plans"),
+  });
+  const summary = useQuery({
+    queryKey: ["worklog", "summary"],
+    queryFn: () => ops.get<Record<string, unknown>>("worklog/summary"),
+  });
+  const merged = summary.data?.pr_merged;
+  const open = summary.data?.pr_open;
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <h2 className="type-heading mb-3">{t("results")}</h2>
+        {typeof merged === "number" && typeof open === "number" && (
+          <p className="mb-3 text-[13px] text-ink-3">
+            {t("prs", { merged, open })}
+          </p>
+        )}
+        {(milestones.data ?? []).length === 0 ? (
+          <p className="text-[14px] text-ink-3">{t("noResults")}</p>
+        ) : (
+          <ul className="space-y-3">
+            {(milestones.data ?? []).map((m) => (
+              <li key={m.id}>
+                <p className="text-[14px] font-semibold">
+                  <span className="mr-2 rounded-md bg-accent-soft px-2 py-0.5 text-[12px]">
+                    {m.area}
+                  </span>
+                  {m.title}
+                </p>
+                <p className="text-[12px] text-ink-3">
+                  {m.status === "done" ? t("done") : t("inProgress")} ·{" "}
+                  {format.dateTime(new Date(`${m.date}T12:00:00`), {
+                    dateStyle: "medium",
+                  })}
+                </p>
+                {m.detail && (
+                  <p className="mt-1 text-[13px] text-ink-2">{m.detail}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+      <Card>
+        <h2 className="type-heading mb-3">{t("plans")}</h2>
+        {(plans.data ?? []).length === 0 ? (
+          <p className="text-[14px] text-ink-3">{t("noPlans")}</p>
+        ) : (
+          <div className="space-y-4">
+            {byPlan(plans.data ?? []).map((group) => (
+              <div key={group.plan}>
+                <h3 className="mb-1 text-[13px] font-semibold text-ink-2">
+                  {group.plan}
+                </h3>
+                <ul className="space-y-1">
+                  {group.sprints.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-baseline gap-2 text-[14px]"
+                    >
+                      <span className="w-8 shrink-0 font-mono text-[12px] text-ink-3">
+                        {p.sprint}
+                      </span>
+                      <span className="flex-1">
+                        {p.name}
+                        {p.note && (
+                          <span className="text-ink-3"> · {p.note}</span>
+                        )}
+                      </span>
+                      <span className="text-[12px] text-ink-3">{p.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }
 
@@ -249,6 +458,7 @@ function ExportBar({ filters }: { filters: Filters }) {
 
 function EntryCard({ entry }: { entry: Entry }) {
   const t = useTranslations("console.worklog.entry");
+  const locale = useLocale();
   const { prose, bullets } = splitDetail(entry.detail);
   const done = entry.status === "done";
   return (
@@ -264,7 +474,16 @@ function EntryCard({ entry }: { entry: Entry }) {
             </span>
           ))}
           <span>
-            {[entry.thread, entry.started].filter(Boolean).join(" · ")}
+            {[
+              entry.thread,
+              entry.started_local,
+              entry.category,
+              entry.minutes
+                ? t("hours", { hours: hoursText(entry.minutes, locale) })
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </span>
           <span
             className={cn(
@@ -386,6 +605,8 @@ export function WorklogApp({ semver }: AppPageProps) {
         </Button>
       </div>
       <TotalsPanel filters={filters} />
+      <HoursPanel filters={filters} />
+      <ProjectsPanel />
       <EntryList filters={filters} />
       <p className="max-w-2xl text-[13px] text-ink-3">{t("tokensNote")}</p>
     </div>

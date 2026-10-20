@@ -2,7 +2,12 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { opsCall, relay, setActiveCookie } from "@console/lib/session";
-import { SESSION_COOKIE, errorBody, serverEnv } from "@console/lib/server";
+import {
+  SESSION_COOKIE,
+  clientIp,
+  errorBody,
+  serverEnv,
+} from "@console/lib/server";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const env = serverEnv();
@@ -19,9 +24,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch {
     // an unreadable body is a wrong code, which bt-ops counts
   }
-  const verified = await opsCall(env, "POST", "/session/totp/verify", token, {
-    code,
-  });
+  const verified = await opsCall(
+    env,
+    "POST",
+    "/session/totp/verify",
+    token,
+    { code },
+    clientIp(request.headers)
+  );
   if (verified.status !== 200) return relay(verified);
   const response = NextResponse.json({ status: "ok" });
   setActiveCookie(response, env, token);

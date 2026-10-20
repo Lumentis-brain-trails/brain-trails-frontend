@@ -51,3 +51,16 @@ export function serverEnv(): ServerEnv {
 export function errorBody(code: string, message: string) {
   return { error: { code, message } };
 }
+
+/** The header bt-ops reads the visitor's address from (its rate-limit bucket). */
+export const CLIENT_IP_HEADER = "X-Client-IP";
+
+/**
+ * The address of the browser that called the BFF: the first hop of `x-forwarded-for`
+ * (Vercel puts the client there), else `x-real-ip`. bt-ops trusts it only because the
+ * BFF key comes with it; without it every visitor would share one rate-limit bucket.
+ */
+export function clientIp(headers: Headers): string | null {
+  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return forwarded || headers.get("x-real-ip")?.trim() || null;
+}

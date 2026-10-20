@@ -67,7 +67,13 @@ const call = (i: number) => {
 
 describe("the bt-ops proxy", () => {
   test("refuses paths outside the allow-list, session included, without calling bt-ops", async () => {
-    for (const path of [["session"], ["metrics"], ["apps", "..", "session"]]) {
+    for (const path of [
+      ["session"],
+      ["metrics"],
+      ["apps", "..", "session"],
+      ["apps%2F..%2Fsession"],
+      ["apps", "..%5Csession"],
+    ]) {
       const res = await opsProxy.GET(
         new NextRequest("http://c/api/ops/x"),
         ctx(path)
@@ -90,6 +96,7 @@ describe("the bt-ops proxy", () => {
     );
     expect(init.headers.Authorization).toBe("Bearer ops-token");
     expect(init.headers["X-Ops-Key"]).toBe("local-ops-bff-key");
+    expect(init.headers["X-Client-IP"]).toBeUndefined();
   });
 
   test("passes paging and download headers back, and bodies forward", async () => {
@@ -295,9 +302,11 @@ describe("the second factor", () => {
       new NextRequest("http://c/x", {
         method: "POST",
         body: '{"code":"123456"}',
+        headers: { "x-real-ip": "198.51.100.4" },
       })
     );
     expect(res.status).toBe(200);
+    expect(call(0).init.headers["X-Client-IP"]).toBe("198.51.100.4");
     expect(JSON.parse(String(call(0).init.body))).toEqual({ code: "123456" });
     const cookie = res.headers.getSetCookie().join("\n");
     expect(cookie).toContain("bto_session=pending");
@@ -316,5 +325,30 @@ describe("the second factor", () => {
     expect(res.status).toBe(401);
     expect(res.headers.getSetCookie()).toEqual([]);
     expect(JSON.parse(String(call(0).init.body))).toEqual({ code: "" });
+  });
+});
+
+describe("the visitor's address", () => {
+  test("goes to bt-ops with the sign-in and every proxied call, first hop only", async () => {
+    replies.push({ body: { access_token: "p" } });
+    replies.push({ body: { token: "t", stage: "pending", next: "verify" } });
+    await sessionRoute.POST(
+      new NextRequest("http://c/api/session", {
+        method: "POST",
+        body: JSON.stringify({ email: "a@example.com", password: "pw" }),
+        headers: { "x-forwarded-for": "203.0.113.7, 10.0.0.1" },
+      })
+    );
+    expect(call(1).init.headers["X-Client-IP"]).toBe("203.0.113.7");
+    expect(call(0).init.headers["X-Client-IP"]).toBeUndefined(); // not to the product
+    await opsProxy.GET(
+      new NextRequest("http://c/api/ops/me", {
+        headers: { "x-real-ip": "198.51.100.9" },
+      }),
+      ctx(["me"])
+    );
+    expect(call(2).init.headers["X-Client-IP"]).toBe("198.51.100.9");
+    await opsProxy.GET(new NextRequest("http://c/api/ops/me"), ctx(["me"]));
+    expect(call(3).init.headers["X-Client-IP"]).toBeUndefined();
   });
 });

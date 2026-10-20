@@ -7,6 +7,7 @@ import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 import { AuthFrame } from "@console/components/AuthFrame";
 import { useErrorText } from "@console/components/useErrorText";
 import { session } from "@console/lib/client";
+import { safeFrom } from "@console/lib/safePath";
 
 /**
  * Sign-in, step one: the person's product account of this environment. The BFF signs
@@ -17,7 +18,7 @@ function LoginForm() {
   const t = useTranslations("console.auth");
   const errorText = useErrorText();
   const router = useRouter();
-  const from = useSearchParams().get("from");
+  const from = safeFrom(useSearchParams().get("from"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

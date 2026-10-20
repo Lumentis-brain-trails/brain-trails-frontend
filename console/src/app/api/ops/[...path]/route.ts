@@ -6,7 +6,13 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { forward } from "@console/lib/forward";
-import { SESSION_COOKIE, errorBody, serverEnv } from "@console/lib/server";
+import {
+  CLIENT_IP_HEADER,
+  SESSION_COOKIE,
+  clientIp,
+  errorBody,
+  serverEnv,
+} from "@console/lib/server";
 
 /** The first path segment of every `/ops/v1` route the browser may reach. */
 export const OPS_ALLOWED = [
@@ -31,12 +37,16 @@ async function handle(request: NextRequest, ctx: Ctx): Promise<NextResponse> {
     );
   }
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  const client = clientIp(request.headers);
   return forward(request, (await ctx.params).path, {
     base: env.opsUrl,
     prefix: "/ops/v1",
     allowed: OPS_ALLOWED,
     token,
-    headers: { "X-Ops-Key": env.bffKey },
+    headers: {
+      "X-Ops-Key": env.bffKey,
+      ...(client ? { [CLIENT_IP_HEADER]: client } : {}),
+    },
   });
 }
 

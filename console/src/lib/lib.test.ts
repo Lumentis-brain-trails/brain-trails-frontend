@@ -4,7 +4,8 @@ import { OpsRequestError, ops, query, session } from "./client";
 import { ageParts, isStale, tokens } from "./format";
 import { forgetOpenApp, readOpenApps, rememberOpenApp } from "./openApps";
 import { serverEnv } from "./server";
-import { isAllowed } from "./forward";
+import { allowedSegments, isAllowed } from "./forward";
+import { safeFrom } from "./safePath";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -195,5 +196,59 @@ describe("the open-apps store", () => {
     noteOpened("overview");
     expect(heard).toHaveLength(1);
     expect(openAppsServerSnapshot()).toEqual([]);
+  });
+});
+
+describe("where a sign-in may send the person", () => {
+  test("a path on this site only", () => {
+    expect(safeFrom("/apps/worklog")).toBe("/apps/worklog");
+    expect(safeFrom("/")).toBe("/");
+    for (const bad of [
+      "//evil.com",
+      "/\\evil.com",
+      "/apps\\..\\x",
+      "https://evil.com",
+      "evil.com",
+      "/a\u0000b",
+      "",
+      null,
+      undefined,
+    ]) {
+      expect(safeFrom(bad), String(bad)).toBeNull();
+    }
+  });
+});
+
+describe("the BFF allow-list", () => {
+  const allowed = ["worklog", "apps", "snapshots"];
+  test("plain segments under an allowed first segment pass, decoded", () => {
+    expect(allowedSegments(["worklog", "entries"], allowed)).toEqual([
+      "worklog",
+      "entries",
+    ]);
+    expect(
+      allowedSegments(["snapshots", "worklog.week%3Aab12"], allowed)
+    ).toEqual(["snapshots", "worklog.week:ab12"]);
+    expect(allowedSegments(["apps", "worklog@1.0.0"], allowed)).toEqual([
+      "apps",
+      "worklog@1.0.0",
+    ]);
+  });
+
+  test("encoded slashes, backslashes, dot segments and odd characters are refused", () => {
+    for (const path of [
+      ["worklog%2F..%2Fsession"],
+      ["worklog", "..%5Csession"],
+      ["worklog", "a\\b"],
+      ["worklog", "%2e%2e"],
+      ["worklog", ".."],
+      ["worklog", "."],
+      ["worklog", "a b"],
+      ["worklog", "%E0%A4%A"],
+      ["session"],
+      [],
+    ]) {
+      expect(allowedSegments(path, allowed), path.join("/")).toBeNull();
+    }
   });
 });
