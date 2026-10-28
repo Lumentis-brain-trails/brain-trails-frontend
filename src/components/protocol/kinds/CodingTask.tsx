@@ -202,4 +202,5 @@ export const codingTaskKind: TaskKind<CodingConfig> = {
   name: "coding",
   configSchema: codingConfigSchema,
   Renderer: CodingRenderer,
+  photosensitive: true,
 };

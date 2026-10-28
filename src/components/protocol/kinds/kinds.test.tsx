@@ -466,3 +466,29 @@ describe("breathing", () => {
     expect(results).toHaveLength(1);
   });
 });
+
+describe("photosensitive kinds (H4)", () => {
+  test("the visual kinds, and only they, need the warning", async () => {
+    const { hasPhotosensitiveStep } = await import("@/lib/protocol/registry");
+    const visual = [
+      "video",
+      "image-sequence",
+      "go-no-go",
+      "flanker",
+      "n-back",
+      "coding",
+    ];
+    for (const kind of visual)
+      expect(hasPhotosensitiveStep([{ kind }])).toBe(true);
+    for (const kind of [
+      "rest",
+      "baseline",
+      "instructions",
+      "questionnaire",
+      "breathing",
+    ])
+      expect(hasPhotosensitiveStep([{ kind }])).toBe(false);
+    // a kind nobody registered is treated as visual
+    expect(hasPhotosensitiveStep([{ kind: "mystery" }])).toBe(true);
+  });
+});

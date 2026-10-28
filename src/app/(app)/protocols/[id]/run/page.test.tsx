@@ -274,3 +274,71 @@ test("free recording runs its self-paced block and finishes on demand", async ()
   expect(finish).toBeTruthy();
   await act(() => new Promise((r) => setTimeout(r, 1500)));
 }, 20_000);
+
+test("a start refused for a missing acknowledgement goes back to the warning", async () => {
+  const { ApiRequestError } = await import("@/lib/api");
+  // the detail says nothing visual (its current version), the pinned version is
+  get.mockResolvedValue({ ...protocol, photosensitive: false });
+  post.mockRejectedValue(
+    new ApiRequestError(422, {
+      code: "photosensitivity_ack_required",
+      message: "acknowledge",
+    })
+  );
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  await act(async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={client}>
+          <Suspense fallback="loading">
+            <RunProtocolPage params={Promise.resolve({ id: "p1" })} />
+          </Suspense>
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    );
+  });
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: messages.run.preflight.connect },
+      { timeout: 5000 }
+    )
+  );
+  await screen.findByText(/Connected to/, {}, { timeout: 5000 });
+  const override = screen.queryByLabelText(messages.run.preflight.override);
+  if (override) fireEvent.click(override);
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.run.preflight.start })
+    );
+  });
+  expect(
+    await screen.findByRole("alert", {
+      name: messages.run.photosensitivity.title,
+    })
+  ).toBeInTheDocument();
+  // ticked, the next start says so
+  post.mockClear();
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: messages.run.photosensitivity.agree })
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: messages.run.consent.accept })
+  );
+  await screen.findByRole(
+    "button",
+    { name: messages.run.preflight.start },
+    { timeout: 5000 }
+  );
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.run.preflight.start })
+    );
+  });
+  expect(post).toHaveBeenCalledWith(
+    "sessions",
+    expect.objectContaining({ acknowledged: ["photosensitivity"] })
+  );
+}, 20_000);

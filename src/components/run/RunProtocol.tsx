@@ -57,7 +57,7 @@ import {
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
 import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
-import { api } from "@/lib/api";
+import { ApiRequestError, api } from "@/lib/api";
 import { useUploadErrorMessage } from "@/lib/upload";
 import { useFocusMode } from "@/lib/focus";
 import {
@@ -179,7 +179,12 @@ export function RunProtocol({
   const [phase, setPhase] = useState<Phase>("consent");
   // The person ticked the photosensitivity warning; the session start says so (H4).
   const [acknowledged, setAcknowledged] = useState(false);
-  const photosensitive = protocol.data?.photosensitive ?? false;
+  // The detail says whether the protocol's current version is visual; a run of an
+  // assignment's pinned version may differ, and the server then refuses the start
+  // (`photosensitivity_ack_required`): the warning is forced on and shown again.
+  const [forceWarning, setForceWarning] = useState(false);
+  const photosensitive =
+    forceWarning || (protocol.data?.photosensitive ?? false);
   const [plan, setPlan] = useState<ProtocolDefinition | null>(null);
   const [override, setOverride] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -230,6 +235,15 @@ export function RunProtocol({
       setSession(started);
       setPhase("syncing");
     } catch (e) {
+      if (
+        e instanceof ApiRequestError &&
+        e.error.code === "photosensitivity_ack_required"
+      ) {
+        setForceWarning(true);
+        setAcknowledged(false);
+        setPhase("consent");
+        return;
+      }
       setError(errorText(e));
     } finally {
       setStarting(false);

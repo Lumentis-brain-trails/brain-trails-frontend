@@ -51,6 +51,12 @@ export interface TaskKind<C = unknown> {
   Renderer: ComponentType<TaskContext<C>>;
   /** Shows the motion notice before this step runs. */
   motionSensitive?: boolean;
+  /**
+   * Flashing, high-contrast or moving stimuli (hazard H4): a protocol with such a step
+   * opens on the photosensitivity warning. Exported in `blocks.schema.json`
+   * (`photosensitive`), so the backend reads the same list.
+   */
+  photosensitive?: boolean;
 }
 
 export interface ProtocolStep {
