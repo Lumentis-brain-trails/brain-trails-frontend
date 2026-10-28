@@ -60,7 +60,7 @@ import {
   Spinner,
   buttonClass,
 } from "@/components/ui";
-import { api } from "@/lib/api";
+import { ApiRequestError, api } from "@/lib/api";
 import {
   type ChannelMessage,
   type ConsoleChannel,
@@ -211,7 +211,12 @@ function Console({
   const [phase, setPhase] = useState<Phase>("consent");
   // The operator ticked the photosensitivity warning; the session start says so (H4).
   const [acknowledged, setAcknowledged] = useState(false);
-  const photosensitive = protocol.data?.photosensitive ?? false;
+  // The detail says whether the protocol's current version is visual; a run of an
+  // assignment's pinned version may differ, and the server then refuses the start
+  // (`photosensitivity_ack_required`): the warning is forced on and shown again.
+  const [forceWarning, setForceWarning] = useState(false);
+  const photosensitive =
+    forceWarning || (protocol.data?.photosensitive ?? false);
   // Whom the console records (backend T3): the operator, or someone they care for.
   const [target, setTarget] = useState<RunTarget>({});
   const [targetBlocked, setTargetBlocked] = useState(false);
@@ -402,6 +407,15 @@ function Console({
       setSession(started);
       setPhase("syncing");
     } catch (e) {
+      if (
+        e instanceof ApiRequestError &&
+        e.error.code === "photosensitivity_ack_required"
+      ) {
+        setForceWarning(true);
+        setAcknowledged(false);
+        setPhase("consent");
+        return;
+      }
       setError(errorText(e));
     } finally {
       setStarting(false);
