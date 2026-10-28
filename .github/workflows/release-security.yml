@@ -1,0 +1,86 @@
+# Supply-chain record of every prod release: what ships (CycloneDX SBOM of the runtime
+# dependencies, app and console), which of those have known vulnerabilities (npm audit),
+# and what CodeQL finds in our own code. See SECURITY.md and the wiki's
+# compliance/cybersecurity.md.
+#
+# It runs only when prod deploys (a merge of beta into main) or by hand: never on pull
+# requests, beta or dev, so `ci` and `integrate` stay as fast as they are.
+# Report only: a finding never fails the run or blocks the deploy. The owner reads the job
+# summary (and the Security tab for CodeQL) and decides; making a scan blocking is a
+# later, explicit change.
+name: release-security
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-security-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  supply-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Pinned so two releases are described by the same tool unless we choose to move it.
+      CYCLONEDX_NPM: "@cyclonedx/cyclonedx-npm@6.0.1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # The SBOM reads the installed tree for licences and hashes; no install script needs
+      # to run for that.
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: CycloneDX SBOM (runtime dependencies, app and console)
+        run: |
+          mkdir -p out
+          npx -y "$CYCLONEDX_NPM" --omit dev --spec-version 1.6 --output-reproducible \
+            --output-format JSON --output-file "out/sbom-frontend-${GITHUB_SHA}.cdx.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-frontend-${{ github.sha }}
+          path: out/sbom-frontend-${{ github.sha }}.cdx.json
+          retention-days: 90
+          if-no-files-found: error
+      - name: Vulnerability scan (npm audit, report only)
+        run: |
+          npm audit --omit=dev --json > out/npm-audit.json || true
+          {
+            echo "## npm audit - runtime dependencies, high and critical (${GITHUB_SHA::7})"
+            echo
+            echo '```'
+            if npm audit --omit=dev --audit-level=high; then
+              echo
+              echo "No high or critical vulnerabilities."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-frontend-${{ github.sha }}
+          path: out/npm-audit.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  # The repository is public, so code scanning is free: results land in the Security tab
+  # (Code scanning), where an alert is tracked until it is fixed or dismissed with a reason.
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: release
