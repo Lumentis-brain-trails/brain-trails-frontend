@@ -86,8 +86,12 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
   const summaryRef = useLatest(summary);
 
   // What the block resolved for itself, before anything else: the defaults that came
-  // from the signal are on the record, not only in this code.
+  // from the signal are on the record, not only in this code. Once per mount, even
+  // where React runs an effect twice (strict mode in development).
+  const startedRef = useRef(false);
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     emit.current({
       label: "nf_start",
       kind: "stage",

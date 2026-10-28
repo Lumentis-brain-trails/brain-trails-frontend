@@ -122,7 +122,8 @@ describe("the neurofeedback block in the runner", () => {
     await push(packets.slice(0, 21 * 4 * 10));
     await frames();
     const labels = sink.all().map((m) => m.label);
-    expect(labels).toContain("nf_baseline_start");
+    expect(labels.filter((l) => l === "nf_start")).toHaveLength(1);
+    expect(labels.filter((l) => l === "nf_baseline_start")).toHaveLength(1);
     expect(labels).toContain("nf_baseline_end");
     const set = sink.all().find((m) => m.label === "nf_threshold");
     expect(set?.meta).toMatchObject({ cause: "baseline", previous: null });
