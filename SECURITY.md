@@ -7,8 +7,8 @@ take reports about its security seriously and we are grateful for them.
 
 Report it privately through GitHub: on this repository's page open **Security -> Report a
 vulnerability**. Only the maintainers see the report, and we can discuss it and agree a fix
-with you there. If you cannot use GitHub, write to **`SECURITY-CONTACT-TBD`** (address to
-be confirmed).
+with you there. If you cannot use GitHub, write to
+**[alessio@lumentis.ca](mailto:alessio@lumentis.ca)**.
 
 Please do **not** open a public issue, pull request or discussion for a vulnerability.
 
