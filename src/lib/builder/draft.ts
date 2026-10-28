@@ -410,6 +410,13 @@ export interface PaletteItem {
   hint?: string;
   group: "element" | "task";
   config: Record<string, unknown>;
+  /** Offered only where this flag is on (`GET /config`): a kind still behind one. */
+  flag?: "neurofeedback";
+  /**
+   * Its video is chosen in the inspector after the block is placed: until then the block
+   * is incomplete, and validation says so.
+   */
+  picksVideo?: true;
   /**
    * The settings in `config` that hold words the participant reads, by the name their
    * translation has under `builder.palette.<id>.text`. `usePaletteText` writes them in
@@ -582,6 +589,16 @@ export const ELEMENTS: PaletteItem[] = [
     group: "task",
     label: "Heartbeat counting",
     config: { intervals_s: [25, 35, 45] },
+  },
+  {
+    id: "neurofeedback",
+    kind: "neurofeedback",
+    group: "task",
+    label: "Neurofeedback",
+    hint: "Pick its video in the settings. A baseline comes first and sets the threshold.",
+    config: { signal: "alpha", duration_s: 300, baseline_s: 60 },
+    flag: "neurofeedback",
+    picksVideo: true,
   },
 ];
 

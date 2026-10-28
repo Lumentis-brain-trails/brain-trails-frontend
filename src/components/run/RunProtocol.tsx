@@ -426,6 +426,7 @@ export function RunProtocol({
             seed={session?.seed ?? 1}
             sink={sink}
             anchor={anchor}
+            signal={muse.eegFeed}
             onFinish={onFinish}
             onExit={onExit}
           />

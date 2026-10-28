@@ -13,3 +13,5 @@ schemas/*.schema.json
 
 # Source documents kept exactly as they were written, not reflowed by a formatter
 lumentis-privacy-implementation-protocols.md
+# written by a test and compared byte for byte by the backend (make schemas-check)
+schemas/neurofeedback-golden.json

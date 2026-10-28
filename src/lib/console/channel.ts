@@ -24,9 +24,14 @@ import {
   type RunnerState,
   operatorCommandSchema,
 } from "@/lib/protocol/commands";
+import type { EegPacket } from "@/lib/neurofeedback/engine";
 import type { Marker } from "@/lib/protocol/marker";
 import type { MarkerSink } from "@/lib/protocol/sink";
-import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
+import type {
+  EegFeed,
+  ProtocolDefinition,
+  TaskResult,
+} from "@/lib/protocol/types";
 
 /**
  * How long the console waits, after asking the runner to stop because the headband
@@ -56,6 +61,12 @@ export type ConsoleMessage =
   | { type: "boot"; boot: RunBoot }
   | { type: "fit"; fit: TimelineFit; origin: number }
   | { type: "command"; command: OperatorCommand }
+  /**
+   * One EEG packet as the console's headband delivered it, `hostMs` in the console's
+   * frame: what a neurofeedback block computes from (V4-0009). ~85 small messages a
+   * second, ~4 KB/s.
+   */
+  | { type: "eeg"; packet: EegPacket }
   /** To a second window opened while the first still runs: it cannot take over. */
   | { type: "detached" };
 
@@ -137,6 +148,26 @@ export function commandPortFrom(channel: ConsoleChannel): CommandPort {
         if (message.type !== "command") return;
         const parsed = operatorCommandSchema.safeParse(message.command);
         if (parsed.success) listener(parsed.data);
+      }),
+  };
+}
+
+/**
+ * The EEG packets arriving on `channel`, as the runner's live signal, with each packet's
+ * arrival moved from the console's frame (`origin`, its `performance.timeOrigin`) into
+ * this window's - the latency a block records is then measured on one clock.
+ */
+export function eegFeedFrom(
+  channel: ConsoleChannel,
+  origin: number,
+  here: number = performance.timeOrigin
+): EegFeed {
+  return {
+    subscribe: (listener) =>
+      channel.subscribe((message) => {
+        if (message.type !== "eeg") return;
+        const { packet } = message;
+        listener({ ...packet, hostMs: packet.hostMs + (origin - here) });
       }),
   };
 }

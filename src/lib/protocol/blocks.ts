@@ -198,3 +198,86 @@ export const NASA_TLX_SCALES = [
   "effort",
   "frustration",
 ] as const;
+
+/** The signals a neurofeedback block can train on (backend V4-0009). */
+export const NF_SIGNALS = [
+  "alpha",
+  "theta",
+  "smr",
+  "beta",
+  "theta_beta",
+  "alpha_theta",
+] as const;
+
+/** The Muse's electrodes, in its own order (`lib/muse/protocol.ts`). */
+const NF_CHANNELS = ["TP9", "AF7", "AF8", "TP10"] as const;
+
+/**
+ * Live neurofeedback (backend V4-0009): a looped, muted video whose brightness - and, with `clarity`, sharpness - follows a band of the person's EEG
+ * against a threshold. A baseline at neutral brightness comes first and, by default,
+ * sets the threshold; the operator can nudge it from the console.
+ *
+ * `direction` and `channels` are left out by default and chosen from the signal
+ * (`lib/neurofeedback/engine.ts`): theta, beta and theta/beta are trained down, the
+ * others up; alpha and alpha/theta are read at TP9/TP10, the rest at AF7/AF8.
+ */
+export const neurofeedbackConfigSchema = z
+  .object({
+    ...mediaRefShape,
+    signal: z.enum(NF_SIGNALS).default("alpha"),
+    direction: z.enum(["up", "down"]).optional(),
+    channels: z.array(z.enum(NF_CHANNELS)).min(1).max(4).optional(),
+    effect: z.enum(["brightness", "clarity"]).default("brightness"),
+    /** Training time after the baseline. */
+    duration_s: z.number().int().min(30).max(1800).default(300),
+    /** 0 for no baseline, which needs a fixed threshold. */
+    baseline_s: z.number().int().min(0).max(180).default(60),
+    threshold: z
+      .discriminatedUnion("mode", [
+        z.object({
+          mode: z.literal("baseline"),
+          /** Share of the baseline that would have been in target. */
+          target_fraction: z.number().min(0.1).max(0.9).default(0.4),
+        }),
+        z.object({
+          mode: z.literal("fixed"),
+          /** Relative power (0-1) for a band; the ratio itself for a ratio. */
+          value: z.number().positive(),
+        }),
+      ])
+      .default({ mode: "baseline", target_fraction: 0.4 }),
+    window_s: z.union([z.literal(1), z.literal(2)]).default(1),
+    smoothing_s: z.number().min(0.25).max(5).default(1),
+    /** How long a full swing of the picture takes. */
+    ramp_s: z.number().min(1).max(20).default(3),
+    /** The picture's brightness fully out of target. */
+    min_level: z.number().min(0.2).max(0.9).default(0.4),
+    artefact: z
+      .object({
+        max_ptp_uv: z.number().min(50).max(1000).default(150),
+        max_muscle: z.number().min(0.05).max(0.9).default(0.35),
+      })
+      .default({ max_ptp_uv: 150, max_muscle: 0.35 }),
+  })
+  .refine(hasMediaRef, { message: MEDIA_REF_MESSAGE, path: ["src"] })
+  .refine((c) => c.baseline_s > 0 || c.threshold.mode === "fixed", {
+    message: "without a baseline the threshold must be fixed",
+    path: ["threshold"],
+  })
+  .meta({
+    ...MEDIA_REF_JSON,
+    if: {
+      properties: { baseline_s: { const: 0 } },
+      required: ["baseline_s"],
+    },
+    then: {
+      properties: {
+        threshold: {
+          properties: { mode: { const: "fixed" } },
+          required: ["mode"],
+        },
+      },
+      required: ["threshold"],
+    },
+  });
+export type NeurofeedbackConfig = z.infer<typeof neurofeedbackConfigSchema>;

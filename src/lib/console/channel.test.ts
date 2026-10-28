@@ -4,6 +4,7 @@ import {
   type ChannelMessage,
   channelName,
   commandPortFrom,
+  eegFeedFrom,
   mergeMarkers,
   openChannel,
   resumePoint,
@@ -112,6 +113,31 @@ describe("console channel", () => {
     expect(sink.pending).toBe(0);
     await sink.flush();
     sink.flushBeacon();
+  });
+});
+
+describe("the EEG feed to the participant's window (V4-0009)", () => {
+  test("carries packets, with arrival times moved into this window's frame", () => {
+    const [a, b] = pair();
+    const console_ = openChannel("k", () => a)!;
+    const participant = openChannel("k", () => b)!;
+    const heard: { hostMs: number; sampleIndex: number }[] = [];
+    // the console's clock started 250 ms before this window's
+    const off = eegFeedFrom(participant, 1000, 1250).subscribe((p) =>
+      heard.push({ hostMs: p.hostMs, sampleIndex: p.sampleIndex })
+    );
+    console_.post({ type: "hello" });
+    console_.post({
+      type: "eeg",
+      packet: { channel: "TP9", sampleIndex: 24, samples: [1, 2], hostMs: 500 },
+    });
+    expect(heard).toEqual([{ hostMs: 250, sampleIndex: 24 }]);
+    off();
+    console_.post({
+      type: "eeg",
+      packet: { channel: "TP9", sampleIndex: 36, samples: [1], hostMs: 600 },
+    });
+    expect(heard).toHaveLength(1);
   });
 });
 

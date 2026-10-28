@@ -365,6 +365,11 @@
       "inhale": "Breathe in",
       "hold": "Hold",
       "exhale": "Breathe out"
+    },
+    "neurofeedback": {
+      "needsHeadband": "This part needs the headband, and none is streaming. It will be skipped.",
+      "baselineFailed": "The signal was too noisy to start this part. Let's move on.",
+      "timeout": "The headband signal did not come through. Let's move on."
     }
   },
   "builder": {
@@ -480,7 +485,10 @@
       "pre_fixation_s_hint": "Shows a fixation cross for this long before the block starts, to settle the eyes.",
       "jitter_s_hint": "Adds a random time, up to this much, to the cross before the block, so the participant cannot predict the exact start.",
       "post_rest_s_hint": "An empty screen for this long after the block, to let the signal come back to rest.",
-      "skippable_hint": "Shows a Skip button. The skip is written in the timeline, so you know the block was not completed."
+      "skippable_hint": "Shows a Skip button. The skip is written in the timeline, so you know the block was not completed.",
+      "video": "Video",
+      "video_hint": "The video the person watches during the block, looped and muted.",
+      "video_none": "Choose a video"
     },
     "group_action": "Group",
     "monitor": {
@@ -603,6 +611,10 @@
       "prompt": {
         "label": "Prompt",
         "hint": "A short line on screen, then on with the run."
+      },
+      "neurofeedback": {
+        "label": "Neurofeedback",
+        "hint": "A video that brightens while the chosen brain rhythm is in its target zone."
       }
     },
     "palette": {
@@ -657,6 +669,10 @@
       },
       "heartbeat": {
         "label": "Heartbeat counting"
+      },
+      "neurofeedback": {
+        "label": "Neurofeedback",
+        "hint": "Pick its video in the settings. A baseline comes first and sets the threshold."
       }
     },
     "fields": {
@@ -1155,6 +1171,104 @@
         "feedback": {
           "label": "Say if the answer was right",
           "help": "Off keeps the participant from learning during the quiz."
+        }
+      },
+      "neurofeedback": {
+        "signal": {
+          "label": "Brain rhythm",
+          "help": "What the feedback follows, measured in the browser from the headband. A band is its share of all the power between 1 and 45 Hz; a ratio divides one band by the other.",
+          "options": {
+            "alpha": "Alpha (8-13 Hz)",
+            "theta": "Theta (4-8 Hz)",
+            "smr": "SMR (12-15 Hz)",
+            "beta": "Beta (13-30 Hz)",
+            "theta_beta": "Theta/beta ratio",
+            "alpha_theta": "Alpha/theta ratio"
+          }
+        },
+        "direction": {
+          "label": "Reward when the value is",
+          "help": "Above or below the threshold. Left empty, theta, beta and theta/beta are trained down and the others up.",
+          "options": {
+            "up": "Above the threshold",
+            "down": "Below the threshold"
+          }
+        },
+        "channels": {
+          "label": "Electrodes",
+          "help": "Left empty, alpha and alpha/theta are read behind the ears (TP9, TP10) and the others on the forehead (AF7, AF8).",
+          "options": {
+            "TP9": "TP9, behind the left ear",
+            "AF7": "AF7, forehead left",
+            "AF8": "AF8, forehead right",
+            "TP10": "TP10, behind the right ear"
+          }
+        },
+        "effect": {
+          "label": "The picture",
+          "help": "Brightness only, or brightness plus a blur that clears in target.",
+          "options": {
+            "brightness": "Brightens and dims",
+            "clarity": "Brightens and sharpens"
+          }
+        },
+        "duration_s": {
+          "label": "Training time (seconds)",
+          "help": "How long the feedback runs after the baseline. Up to 30 minutes; long blocks tire people."
+        },
+        "baseline_s": {
+          "label": "Baseline (seconds)",
+          "help": "The video at a steady brightness while the signal is measured; it sets the threshold. 0 for none, which needs a fixed threshold."
+        },
+        "threshold": {
+          "label": "Threshold"
+        },
+        "threshold/mode": {
+          "label": "Threshold from",
+          "help": "From this person's baseline today, or a fixed number that stays the same across sessions.",
+          "options": {
+            "baseline": "The baseline",
+            "fixed": "A fixed value"
+          }
+        },
+        "threshold/target_fraction": {
+          "label": "Share of the baseline in target",
+          "help": "0.4 sets the threshold so that 40% of the baseline would have been rewarded."
+        },
+        "threshold/value": {
+          "label": "Fixed threshold",
+          "help": "A share between 0 and 1 for a band (0.25 is a quarter of the power), or the ratio itself."
+        },
+        "window_s": {
+          "label": "Analysis window (seconds)",
+          "help": "Each value is computed over this much signal. Longer is steadier and slower.",
+          "options": {
+            "1": "1 second",
+            "2": "2 seconds"
+          }
+        },
+        "smoothing_s": {
+          "label": "Smoothing (seconds)",
+          "help": "How much the value is averaged over time before it is compared with the threshold."
+        },
+        "ramp_s": {
+          "label": "Picture response (seconds)",
+          "help": "How long a full swing from dim to bright takes. The brightness never changes fast enough to flash, whatever this says."
+        },
+        "min_level": {
+          "label": "Brightness out of target",
+          "help": "How dim the picture gets: 0.4 is 40% of full brightness."
+        },
+        "artefact": {
+          "label": "Artefact limits"
+        },
+        "artefact/max_ptp_uv": {
+          "label": "Largest swing (µV)",
+          "help": "A window with a bigger swing (a blink, a movement) holds the picture instead of moving it."
+        },
+        "artefact/max_muscle": {
+          "label": "Muscle share limit",
+          "help": "A window with more than this share of power above 30 Hz (jaw, frowning) holds the picture."
         }
       }
     }
@@ -3325,6 +3439,34 @@
     "headbandPanel": {
       "title": "Headband",
       "packets": "Packets lost: {lost} ({pct} %) · {rate} packets/s"
+    },
+    "neurofeedback": {
+      "title": "Neurofeedback",
+      "baseline": "Baseline: measuring, the picture is held still",
+      "inTarget": "In target: the picture brightens",
+      "outOfTarget": "Out of target: the picture dims",
+      "waiting": "Waiting for the signal",
+      "gated": "Held: {reason}",
+      "gate": {
+        "amplitude": "a blink or movement",
+        "muscle": "jaw or face muscles",
+        "flat": "no contact",
+        "gap": "lost packets"
+      },
+      "value": "Value (smoothed)",
+      "threshold": "Threshold",
+      "timeInTarget": "Time in target",
+      "latency": "Latency",
+      "alert": {
+        "baseline_failed": "The baseline was too noisy twice: the block ended without training.",
+        "baseline_extended": "The baseline was too noisy: it runs again once.",
+        "signal_lost": "No signal from the headband for 5 seconds."
+      },
+      "thresholdLabel": "Threshold",
+      "lower": "Lower the threshold by 5%",
+      "raise": "Raise the threshold by 5%",
+      "nudges": "{n, plural, one {# change} other {# changes}}",
+      "disclaimer": "The value is what the participant's screen computes, live. It is not a clinical measure."
     }
   },
   "subjects": {
