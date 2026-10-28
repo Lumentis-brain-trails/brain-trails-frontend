@@ -248,7 +248,7 @@
       },
       "logs": {
         "title": "Log",
-        "intro": "Letti quando li chiedi, mai salvati dalla console: i log possono contenere email e id. Ogni lettura resta nell'audit della console con il tuo nome e il filtro.",
+        "intro": "Letti quando li chiedi, mai salvati dalla console: i log possono contenere email e id. Ogni lettura resta nell'audit della console con il tuo nome (e se hai filtrato, non cosa).",
         "container": "Container",
         "choose": "Scegli un container",
         "refreshPods": "Prima aggiorna Pod",
@@ -257,8 +257,8 @@
         "filter": "Solo le righe che contengono",
         "read": "Leggi",
         "shown": "{lines} righe su {read}",
-        "truncated": "tagliato a 512 KiB",
-        "empty": "Nessuna riga corrisponde."
+        "empty": "Nessuna riga corrisponde.",
+        "olderCut": "righe più vecchie tagliate per tenere gli ultimi 512 KiB"
       },
       "widgets": {
         "failedJobs": "{loops} in loop di retry · {stale} scaduti",

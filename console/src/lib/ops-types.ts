@@ -809,14 +809,16 @@ export interface components {
          * @description A container's log tail, filtered.
          *
          *     `lines` are the lines of the tail that contain `q` (case-insensitive), oldest first;
-         *     `read` is how many lines the tail had before the filter. `truncated` is true when
-         *     the byte cap was reached, so the tail may hold fewer than `tail` lines.
+         *     `read` is how many lines the tail had before the filter. `older_cut` is true when
+         *     the byte cap dropped the tail's oldest lines: the newest are always there.
          */
         LogOut: {
             /** Container */
             container: string | null;
             /** Lines */
             lines: string[];
+            /** Older Cut */
+            older_cut: boolean;
             /** Pod */
             pod: string;
             /** Previous */
@@ -827,8 +829,6 @@ export interface components {
             read: number;
             /** Tail */
             tail: number;
-            /** Truncated */
-            truncated: boolean;
         };
         /**
          * MeOut

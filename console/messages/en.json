@@ -248,7 +248,7 @@
       },
       "logs": {
         "title": "Logs",
-        "intro": "Read when you ask, never stored by the console: logs can carry emails and ids. Each read is recorded in the console's audit with your name and filter.",
+        "intro": "Read when you ask, never stored by the console: logs can carry emails and ids. Each read is recorded in the console's audit with your name (and whether you filtered, not what).",
         "container": "Container",
         "choose": "Choose a container",
         "refreshPods": "Refresh Pods first",
@@ -257,8 +257,8 @@
         "filter": "Only lines containing",
         "read": "Read",
         "shown": "{lines} of {read} lines",
-        "truncated": "cut at 512 KiB",
-        "empty": "No line matches."
+        "empty": "No line matches.",
+        "olderCut": "older lines cut to keep the newest 512 KiB"
       },
       "widgets": {
         "failedJobs": "{loops} in a retry loop · {stale} stale",
