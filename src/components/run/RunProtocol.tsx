@@ -10,8 +10,8 @@
  * counts towards; `picker` is shown above the headband pre-flight. `client` is the
  * patient's own run: no scores at the end and no way into the recording - they see
  * neither (V4-0006).
- * Consent and the content warning come first, then the
- * headband pre-flight; Start opens a session, which returns the published version's
+ * Consent, the content warning and - for a protocol with visual blocks - the
+ * photosensitivity warning come first (`ConsentGate`), then the headband pre-flight; Start opens a session, which returns the published version's
  * tree, the run's seed and links to its media. The tree is resolved here
  * (`resolvePlan`: loops, shuffles, jitter), the media are bound to it and the flat plan
  * is posted back before the first block, so review reads what was shown rather than what
@@ -177,6 +177,9 @@ export function RunProtocol({
   const muse = useMuse(createDevice);
 
   const [phase, setPhase] = useState<Phase>("consent");
+  // The person ticked the photosensitivity warning; the session start says so (H4).
+  const [acknowledged, setAcknowledged] = useState(false);
+  const photosensitive = protocol.data?.photosensitive ?? false;
   const [plan, setPlan] = useState<ProtocolDefinition | null>(null);
   const [override, setOverride] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -209,6 +212,9 @@ export function RunProtocol({
       const started = await startSession(protocolId, {
         device: MODEL_PROFILES[muse.model].apiDevice,
         ...startOptions(target),
+        ...(acknowledged
+          ? { acknowledged: ["photosensitivity" as const] }
+          : {}),
       });
       // The tree becomes this run's flat plan here, and the backend stores it: from now
       // on, what was shown is a record, not something to re-derive.
@@ -228,7 +234,7 @@ export function RunProtocol({
     } finally {
       setStarting(false);
     }
-  }, [errorText, muse, protocol.data, protocolId, target]);
+  }, [acknowledged, errorText, muse, protocol.data, protocolId, target]);
 
   const save = useCallback(async () => {
     const end = ending.current;
@@ -342,11 +348,15 @@ export function RunProtocol({
   if (phase === "consent")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        {needsConsentGate(manifest) ? (
+        {needsConsentGate(manifest, photosensitive) ? (
           <ConsentGate
             manifest={manifest}
             title={shown.title}
-            onAccept={() => setPhase("preflight")}
+            photosensitive={photosensitive}
+            onAccept={() => {
+              setAcknowledged(photosensitive);
+              setPhase("preflight");
+            }}
             onDecline={() => router.push(backHref)}
           />
         ) : (

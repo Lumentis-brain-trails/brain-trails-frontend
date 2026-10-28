@@ -34,6 +34,11 @@ export interface StartSessionOptions {
   subjectId?: string;
   /** Run an assignment: its pinned version, counted when the run finishes (T3). */
   assignmentId?: string;
+  /**
+   * The warnings the person acknowledged before Start. The backend refuses a protocol
+   * with visual blocks without `photosensitivity` and records it in the timeline (H4).
+   */
+  acknowledged?: "photosensitivity"[];
 }
 
 /**
@@ -55,6 +60,9 @@ export function startSession(
     params: options.params ?? {},
     ...(options.subjectId ? { subject_id: options.subjectId } : {}),
     ...(options.assignmentId ? { assignment_id: options.assignmentId } : {}),
+    ...(options.acknowledged?.length
+      ? { acknowledged: options.acknowledged }
+      : {}),
   });
 }
 

@@ -39,7 +39,8 @@
     "no_workspace": "This account has no workspace of its own.",
     "assignment_full": "Every session of this assignment is already under way. Finish or stop the other one first.",
     "staff_not_client": "A member of this organisation cannot be one of its patients or participants.",
-    "session_closed": "This session has already ended."
+    "session_closed": "This session has already ended.",
+    "photosensitivity_ack_required": "This protocol shows flashing images: read and confirm the photosensitivity warning before starting."
   },
   "application": {
     "step": "Application",
@@ -141,6 +142,12 @@
       "accept": "Continue",
       "decline": "Back",
       "required": "Tick the box to continue."
+    },
+    "photosensitivity": {
+      "title": "Photosensitivity warning",
+      "body": "This protocol shows flashing, high-contrast or moving images. If you or the person being recorded have photosensitive epilepsy, or have ever had a seizure with flashing lights, do not continue.",
+      "stop": "You can stop at any time with Stop or the Esc key. Stop at once if you feel dizzy, notice twitching or changes in your vision, or feel unwell in any way.",
+      "agree": "I have read this warning and want to continue."
     },
     "runner": {
       "reduceMotion": "Reduce motion",

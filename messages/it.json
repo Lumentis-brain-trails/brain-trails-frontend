@@ -39,7 +39,8 @@
     "no_workspace": "Questo account non ha uno spazio di lavoro suo.",
     "assignment_full": "Tutte le sessioni di questa assegnazione sono già in corso. Concludi o ferma prima l'altra.",
     "staff_not_client": "Un membro di questa organizzazione non può esserne paziente o partecipante.",
-    "session_closed": "Questa sessione è già terminata."
+    "session_closed": "Questa sessione è già terminata.",
+    "photosensitivity_ack_required": "Questo protocollo mostra immagini lampeggianti: leggi e conferma l'avviso di fotosensibilità prima di iniziare."
   },
   "application": {
     "step": "Candidatura",
@@ -141,6 +142,12 @@
       "accept": "Continua",
       "decline": "Indietro",
       "required": "Spunta la casella per continuare."
+    },
+    "photosensitivity": {
+      "title": "Avviso di fotosensibilità",
+      "body": "Questo protocollo mostra immagini lampeggianti, ad alto contrasto o in movimento. Se tu o la persona registrata soffrite di epilessia fotosensibile, o avete mai avuto crisi con luci lampeggianti, non procedete.",
+      "stop": "Puoi interrompere in qualsiasi momento con Ferma o con il tasto Esc. Fermati subito se avverti capogiri, contrazioni muscolari, disturbi della vista o qualsiasi malessere.",
+      "agree": "Ho letto l'avviso e voglio procedere."
     },
     "runner": {
       "reduceMotion": "Riduci il movimento",
