@@ -17,14 +17,14 @@ describe("foldPanel", () => {
     let panel = EMPTY_PANEL;
     for (const m of [
       marker("nf_update", {
-        phase: "baseline",
+        nf_phase: "baseline",
         value: 0.1,
         smoothed: 0.1,
         in_target: null,
       }),
       marker("nf_threshold", { threshold: 0.2, cause: "baseline" }),
       marker("nf_update", {
-        phase: "training",
+        nf_phase: "training",
         value: 0.3,
         smoothed: 0.25,
         threshold: 0.2,
@@ -33,7 +33,7 @@ describe("foldPanel", () => {
         age_ms: 60,
       }),
       marker("nf_update", {
-        phase: "training",
+        nf_phase: "training",
         value: null,
         smoothed: 0.25,
         threshold: 0.2,
@@ -41,7 +41,7 @@ describe("foldPanel", () => {
         gated: "muscle",
       }),
       marker("nf_update", {
-        phase: "training",
+        nf_phase: "training",
         value: 0.1,
         smoothed: 0.19,
         threshold: 0.2,
@@ -66,7 +66,7 @@ describe("foldPanel", () => {
   test("a new block starts from nothing; alerts come and go", () => {
     let panel = foldPanel(
       EMPTY_PANEL,
-      marker("nf_update", { phase: "training", in_target: true })
+      marker("nf_update", { nf_phase: "training", in_target: true })
     );
     panel = foldPanel(panel, marker("nf_signal_lost"));
     expect(panel.alert).toBe("signal_lost");

@@ -21,6 +21,7 @@ import {
   packetsOf,
 } from "@/lib/neurofeedback/recording.fixture";
 import { parseProtocol } from "@/lib/protocol/schema";
+import { toWireEvent } from "@/lib/protocol/marker";
 import { createMemorySink } from "@/lib/protocol/sink";
 import type { EegFeed, ProtocolDefinition } from "@/lib/protocol/types";
 
@@ -130,12 +131,17 @@ describe("the neurofeedback block in the runner", () => {
     const updates = sink.all().filter((m) => m.label === "nf_update");
     expect(updates.length).toBeGreaterThan(50);
     expect(updates[0].meta).toMatchObject({
-      phase: "baseline",
+      nf_phase: "baseline",
+      // the runner's own phase of the step is not overwritten
+      phase: "nf",
       step_id: "nf",
       block_id: "nf",
       timing_source: "raf",
     });
     expect(typeof updates[0].meta?.sample_end).toBe("number");
+    // small enough for ten a second over half an hour
+    const wire = JSON.stringify(toWireEvent(updates.at(-1)!));
+    expect(wire.length).toBeLessThan(560);
     expect(typeof updates.at(-1)?.meta?.age_ms).toBe("number");
     expect(video.style.filter).toMatch(/^brightness\(/);
 

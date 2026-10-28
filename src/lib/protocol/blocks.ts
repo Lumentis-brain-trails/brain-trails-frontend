@@ -219,7 +219,9 @@ const NF_CHANNELS = ["TP9", "AF7", "AF8", "TP10"] as const;
  *
  * `direction` and `channels` are left out by default and chosen from the signal
  * (`lib/neurofeedback/engine.ts`): theta, beta and theta/beta are trained down, the
- * others up; alpha and alpha/theta are read at TP9/TP10, the rest at AF7/AF8.
+ * others up; theta and theta/beta are read at AF7/AF8, the rest at TP9/TP10 (beta and
+ * SMR at the forehead are mostly the frontalis muscle). The artefact limits (100 µV,
+ * a 0.25 share above 30 Hz) were checked on recorded Muse data (backend V4-0009).
  */
 export const neurofeedbackConfigSchema = z
   .object({
@@ -254,10 +256,10 @@ export const neurofeedbackConfigSchema = z
     min_level: z.number().min(0.2).max(0.9).default(0.4),
     artefact: z
       .object({
-        max_ptp_uv: z.number().min(50).max(1000).default(150),
-        max_muscle: z.number().min(0.05).max(0.9).default(0.35),
+        max_ptp_uv: z.number().min(50).max(1000).default(100),
+        max_muscle: z.number().min(0.05).max(0.9).default(0.25),
       })
-      .default({ max_ptp_uv: 150, max_muscle: 0.35 }),
+      .default({ max_ptp_uv: 100, max_muscle: 0.25 }),
   })
   .refine(hasMediaRef, { message: MEDIA_REF_MESSAGE, path: ["src"] })
   .refine((c) => c.baseline_s > 0 || c.threshold.mode === "fixed", {

@@ -260,18 +260,21 @@ export function RunProtocol({
         end.files && session.upload
           ? await uploadCapture(session.upload, end.files, setProgress)
           : undefined;
+      // what the batches already delivered is not sent again: only what is still owed
+      await sink?.flush().catch(() => undefined);
+      const owed = sink ? sink.unacknowledged() : markers.current;
       await finishSession(session.id, {
         summary: end.summary,
         aborted: end.aborted || capture === undefined,
         capture,
-        events: markers.current.map(toWireEvent),
+        events: owed.map(toWireEvent),
       });
       setPhase("saved");
     } catch (e) {
       setError(errorText(e));
       setPhase("failed");
     }
-  }, [errorText, session]);
+  }, [errorText, session, sink]);
 
   const close = useCallback(
     async (

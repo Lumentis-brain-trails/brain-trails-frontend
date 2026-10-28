@@ -1196,7 +1196,7 @@
         },
         "channels": {
           "label": "Electrodes",
-          "help": "Left empty, alpha and alpha/theta are read behind the ears (TP9, TP10) and the others on the forehead (AF7, AF8).",
+          "help": "Left empty, theta and theta/beta are read on the forehead (AF7, AF8) and the others behind the ears (TP9, TP10): at the forehead, beta and SMR are mostly the muscle above the eyebrows.",
           "options": {
             "TP9": "TP9, behind the left ear",
             "AF7": "AF7, forehead left",

@@ -148,11 +148,21 @@ export default function ParticipantRunPage({
         resume={boot.resume}
         onState={(state) => channel.post({ type: "state", state })}
         onFinish={(results, markers) => {
-          channel.post({ type: "finished", results, markers: [...markers] });
+          channel.post({
+            type: "finished",
+            results,
+            markers: [...markers],
+            unsent: [...sink.unacknowledged()],
+          });
           setEnded(true);
         }}
         onExit={(reason) => {
-          channel.post({ type: "exited", reason, markers: [...sink.all()] });
+          channel.post({
+            type: "exited",
+            reason,
+            markers: [...sink.all()],
+            unsent: [...sink.unacknowledged()],
+          });
           setEnded(true);
         }}
       />

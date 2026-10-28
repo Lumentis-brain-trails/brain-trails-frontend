@@ -1196,7 +1196,7 @@
         },
         "channels": {
           "label": "Elettrodi",
-          "help": "Se lo lasci vuoto, alfa e alfa/theta si leggono dietro le orecchie (TP9, TP10) e gli altri sulla fronte (AF7, AF8).",
+          "help": "Se lo lasci vuoto, theta e theta/beta si leggono sulla fronte (AF7, AF8) e gli altri dietro le orecchie (TP9, TP10): sulla fronte, beta e SMR sono soprattutto il muscolo sopra le sopracciglia.",
           "options": {
             "TP9": "TP9, dietro l'orecchio sinistro",
             "AF7": "AF7, fronte a sinistra",

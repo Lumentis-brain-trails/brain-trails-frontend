@@ -132,14 +132,16 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
               {
                 label: "nf_update",
                 kind: "stimulus",
+                // ten a second for up to 30 minutes: only what analysis and the
+                // replay read, numbers to six significant digits; `nf_phase`, so the
+                // runner's own `phase` of the step stays on the marker
                 meta: {
-                  phase: u.phase,
-                  value: u.value,
-                  smoothed: u.smoothed,
-                  threshold: u.threshold,
+                  nf_phase: u.phase,
+                  value: sig(u.value),
+                  smoothed: sig(u.smoothed),
+                  threshold: sig(u.threshold),
                   in_target: u.inTarget,
                   gated: u.gated,
-                  level: round(u.level),
                   brightness: round(u.brightness),
                   sample_end: u.sampleEnd,
                   age_ms: u.firstArrivalMs
@@ -305,6 +307,10 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
 
 function round(value: number): number {
   return Math.round(value * 10_000) / 10_000;
+}
+
+function sig(value: number | null): number | null {
+  return value === null ? null : Number(value.toPrecision(6));
 }
 
 export const neurofeedbackTaskKind: TaskKind<NeurofeedbackConfig> = {

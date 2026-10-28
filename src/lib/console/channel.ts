@@ -75,8 +75,18 @@ export type RunMessage =
   | { type: "hello" }
   | { type: "state"; state: RunnerState }
   | { type: "marker"; marker: Marker }
-  | { type: "finished"; results: TaskResult[]; markers: Marker[] }
-  | { type: "exited"; reason: string; markers: Marker[] }
+  /**
+   * The run's end. `markers` is every marker this window made (the console's resume
+   * bookkeeping reads them); `unsent` the ones its sink never had acknowledged, which
+   * is all the console's finish has to send.
+   */
+  | {
+      type: "finished";
+      results: TaskResult[];
+      markers: Marker[];
+      unsent?: Marker[];
+    }
+  | { type: "exited"; reason: string; markers: Marker[]; unsent?: Marker[] }
   | { type: "gone" };
 
 export type ChannelMessage = ConsoleMessage | RunMessage;
@@ -205,6 +215,7 @@ export function teeSink(
     flush: () => sink.flush(),
     flushBeacon: () => sink.flushBeacon(),
     all: () => sink.all(),
+    unacknowledged: () => sink.unacknowledged(),
     get pending() {
       return sink.pending;
     },

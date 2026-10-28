@@ -1174,19 +1174,19 @@
         },
         "artefact": {
           "default": {
-            "max_ptp_uv": 150,
-            "max_muscle": 0.35
+            "max_ptp_uv": 100,
+            "max_muscle": 0.25
           },
           "type": "object",
           "properties": {
             "max_ptp_uv": {
-              "default": 150,
+              "default": 100,
               "type": "number",
               "minimum": 50,
               "maximum": 1000
             },
             "max_muscle": {
-              "default": 0.35,
+              "default": 0.25,
               "type": "number",
               "minimum": 0.05,
               "maximum": 0.9

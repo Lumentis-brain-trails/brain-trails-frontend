@@ -69,7 +69,11 @@ describe("defaults from the signal", () => {
       "up"
     );
     expect(nfChannels(config())).toEqual(["TP9", "TP10"]);
-    expect(nfChannels(config({ signal: "smr" }))).toEqual(["AF7", "AF8"]);
+    expect(nfChannels(config({ signal: "smr" }))).toEqual(["TP9", "TP10"]);
+    expect(nfChannels(config({ signal: "theta_beta" }))).toEqual([
+      "AF7",
+      "AF8",
+    ]);
     expect(nfChannels(config({ channels: ["AF8"] }))).toEqual(["AF8"]);
   });
 
@@ -124,14 +128,17 @@ describe("the fixed recording, alpha up at TP9/TP10", () => {
     const burst = updates.filter((u) => at(u) >= 18 && at(u) < 22);
     expect(burst.every((u) => u.inTarget === true)).toBe(true);
     expect(burst.at(-1)!.brightness).toBeCloseTo(1, 6);
-    expect(count(updates, (u) => u.inTarget === true)).toBe(221);
-    expect(count(updates, (u) => u.inTarget === false)).toBe(81);
+    expect(count(updates, (u) => u.inTarget === true)).toBe(222);
+    expect(count(updates, (u) => u.inTarget === false)).toBe(79);
   });
 
-  test("blinks do not reach the posterior electrodes; the jaw is gated", () => {
+  test("blinks do not reach the posterior electrodes; only the jaw is gated", () => {
     const gated = updates.filter((u) => u.gated !== null);
-    expect(new Set(gated.map((u) => u.gated))).toEqual(new Set(["muscle"]));
-    expect(gated).toHaveLength(18);
+    // the clench is both broadband and large: muscle first, then its swing
+    expect(new Set(gated.map((u) => u.gated))).toEqual(
+      new Set(["muscle", "amplitude"])
+    );
+    expect(gated).toHaveLength(19);
     expect(gated.every((u) => at(u) > 27 && at(u) < 29.6)).toBe(true);
   });
 
@@ -175,13 +182,13 @@ describe("theta down at AF7/AF8, on the same recording", () => {
 
   test("blinks are gated by amplitude, the jaw by muscle", () => {
     const blinks = updates.filter((u) => u.gated === "amplitude");
-    expect(blinks).toHaveLength(24);
+    expect(blinks).toHaveLength(25);
     expect(
       blinks.every(
         (u) => (at(u) > 12.3 && at(u) < 13.8) || (at(u) > 25 && at(u) < 26.5)
       )
     ).toBe(true);
-    expect(count(updates, (u) => u.gated === "muscle")).toBe(17);
+    expect(count(updates, (u) => u.gated === "muscle")).toBe(19);
   });
 
   test("in target means below the threshold", () => {

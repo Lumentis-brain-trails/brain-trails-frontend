@@ -58,7 +58,7 @@ export function foldPanel(panel: NfPanel, marker: Marker): NfPanel {
   const base = stepId !== panel.stepId ? { ...EMPTY_PANEL, stepId } : panel;
   switch (marker.label) {
     case "nf_update": {
-      const phase = meta.phase === "baseline" ? "baseline" : "training";
+      const phase = meta.nf_phase === "baseline" ? "baseline" : "training";
       const training = phase === "training";
       const inTarget =
         typeof meta.in_target === "boolean" ? meta.in_target : null;

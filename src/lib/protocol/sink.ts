@@ -26,6 +26,12 @@ export interface MarkerSink {
   flushBeacon(): void;
   /** Every marker this run produced, in order. */
   all(): readonly Marker[];
+  /**
+   * The markers no posted batch has had acknowledged yet, in order: all a run's finish
+   * still has to send. Re-sending the whole timeline instead made a long session's
+   * finish request larger than the BFF accepts (4.5 MB, ~11 min of neurofeedback).
+   */
+  unacknowledged(): readonly Marker[];
   readonly pending: number;
 }
 
@@ -37,6 +43,8 @@ export function createMemorySink(): MarkerSink {
     flush: async () => {},
     flushBeacon: () => {},
     all: () => markers,
+    // nothing is ever sent: everything is still to send
+    unacknowledged: () => markers,
     get pending() {
       return 0;
     },
@@ -137,6 +145,7 @@ export function createSessionSink(
       }
     },
     all: () => all,
+    unacknowledged: () => [...buffer],
     get pending() {
       return buffer.length;
     },

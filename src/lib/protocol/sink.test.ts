@@ -136,6 +136,19 @@ describe("createSessionSink", () => {
       .toEqual(["a", "b"]);
   });
 
+  test("only what no batch delivered is still owed", async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error("offline"));
+    const sink = createSessionSink("s", { post, batchMax: 2, highWater: 99 });
+    for (const label of ["a", "b", "c"]) sink.push(marker(label));
+    await expect(sink.flush()).rejects.toThrow("offline");
+    expect(sink.unacknowledged().map((m) => m.label)).toEqual(["c"]);
+    expect(sink.all()).toHaveLength(3);
+    expect(createMemorySink().unacknowledged()).toEqual([]);
+  });
+
   test("a rejected flush does not wedge the sink for later flushes", async () => {
     const post = vi
       .fn()

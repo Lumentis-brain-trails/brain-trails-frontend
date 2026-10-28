@@ -119,9 +119,11 @@ export function nfDirection(config: NeurofeedbackConfig): "up" | "down" {
 /** The block's electrodes: what the author chose, else where the signal is strongest. */
 export function nfChannels(config: NeurofeedbackConfig): readonly EegChannel[] {
   if (config.channels && config.channels.length > 0) return config.channels;
-  return config.signal === "alpha" || config.signal === "alpha_theta"
-    ? POSTERIOR
-    : FRONTAL;
+  // theta is a frontal rhythm; beta and SMR at the forehead are mostly the frontalis
+  // muscle, so they and alpha are read behind the ears (V4-0009, checked on recordings)
+  return config.signal === "theta" || config.signal === "theta_beta"
+    ? FRONTAL
+    : POSTERIOR;
 }
 
 const RATIOS: Record<string, [BandName, BandName]> = {
