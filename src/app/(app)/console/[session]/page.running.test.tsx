@@ -177,6 +177,11 @@ async function startRun(runKey: string) {
       screen.getByRole("button", { name: messages.run.preflight.start })
     );
   });
+  // a console run says so, for the stats (T1)
+  expect(post).toHaveBeenCalledWith(
+    "sessions",
+    expect.objectContaining({ console: "local" })
+  );
   // the console boots the participant's window once the headband clock is fitted
   await waitFor(() => expect(heard.some((m) => m.type === "boot")).toBe(true), {
     timeout: 8000,
@@ -188,6 +193,8 @@ async function startRun(runKey: string) {
       stepIndex: 0,
       stepId: "free",
       pausePending: false,
+      extendable: false,
+      attempt: 0,
       message: null,
     },
   });
@@ -203,17 +210,10 @@ async function startRun(runKey: string) {
 const finishCalls = () =>
   post.mock.calls.filter(([path]) => path === "sessions/s1/finish");
 
-test("a participant window reloaded mid-run stays lost, and stop-and-save still works", async () => {
+test("a participant window closed mid-run is lost until it is opened again; stop-and-save works", async () => {
   const { participant, heard } = await startRun("run-lost");
 
-  // the window reloads: it goes, then a new one says hello
   participant.postMessage({ type: "gone" });
-  participant.postMessage({ type: "hello" });
-
-  // the new window is told it cannot resume, and the console does not look healthy
-  await waitFor(() =>
-    expect(heard.some((m) => m.type === "detached")).toBe(true)
-  );
   expect(
     await screen.findByText(messages.console.participantGone)
   ).toBeInTheDocument();
@@ -222,15 +222,9 @@ test("a participant window reloaded mid-run stays lost, and stop-and-save still 
     screen.getByRole("button", { name: messages.console.commands.endBlock })
   ).toBeDisabled();
   expect(
-    screen.getByRole("button", { name: messages.console.commands.abort })
-  ).toBeDisabled();
-
-  // another hello does not bring it back
-  participant.postMessage({ type: "hello" });
-  await act(() => new Promise((r) => setTimeout(r, 50)));
-  expect(
-    screen.getByText(messages.console.participantGone)
+    screen.getByRole("button", { name: messages.console.participant.reopen })
   ).toBeInTheDocument();
+  expect(heard.some((m) => m.type === "detached")).toBe(false);
 
   await act(async () => {
     fireEvent.click(
@@ -241,6 +235,65 @@ test("a participant window reloaded mid-run stays lost, and stop-and-save still 
     timeout: 5000,
   });
   expect(finishCalls()[0][1]).toMatchObject({ aborted: true });
+  participant.close();
+}, 30_000);
+
+test("a participant window reloaded mid-run is booted again where the run was", async () => {
+  const { participant, heard } = await startRun("run-reload");
+  const stamp = (seq: number, label: string, meta = {}) => ({
+    label,
+    kind: "stage",
+    tMonotonicMs: seq,
+    tRunMs: seq,
+    tSessionS: seq / 1000,
+    seq,
+    meta: { step_id: "free", ...meta },
+  });
+  participant.postMessage({ type: "marker", marker: stamp(0, "block_start") });
+  participant.postMessage({ type: "marker", marker: stamp(1, "rest_start") });
+
+  // the window reloads: it goes, then the new one says hello
+  participant.postMessage({ type: "gone" });
+  await screen.findByText(messages.console.participantGone);
+  participant.postMessage({ type: "hello" });
+
+  await waitFor(() =>
+    expect(heard.filter((m) => m.type === "boot" && m.boot.resume).length).toBe(
+      1
+    )
+  );
+  const boot = heard.find((m) => m.type === "boot" && m.boot.resume);
+  expect(boot?.type === "boot" && boot.boot.resume).toEqual({
+    stepIndex: 0,
+    seqFrom: 2,
+    interrupted: true,
+  });
+  expect(
+    await screen.findByText(messages.console.participantResumed)
+  ).toBeInTheDocument();
+  expect(screen.queryByText(messages.console.participantGone)).toBeNull();
+  expect(heard.some((m) => m.type === "detached")).toBe(false);
+
+  // a second window while this one runs cannot take over
+  participant.postMessage({ type: "hello" });
+  await waitFor(() =>
+    expect(heard.some((m) => m.type === "detached")).toBe(true)
+  );
+
+  // the end: the timeline is both windows', once each
+  participant.postMessage({
+    type: "finished",
+    results: [],
+    markers: [
+      stamp(2, "block_end", { ended_by: "reload" }),
+      stamp(3, "block_start"),
+    ],
+  });
+  await waitFor(() => expect(finishCalls()).toHaveLength(1), {
+    timeout: 5000,
+  });
+  const sent = (finishCalls()[0][1] as { events: { seq: number }[] }).events;
+  expect(sent.map((e) => e.seq)).toEqual([0, 1, 2, 3]);
   participant.close();
 }, 30_000);
 

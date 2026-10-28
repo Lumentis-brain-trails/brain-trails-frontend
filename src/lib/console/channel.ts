@@ -20,6 +20,7 @@ import type { TimelineFit } from "@/lib/protocol/clock";
 import {
   type CommandPort,
   type OperatorCommand,
+  type RunResume,
   type RunnerState,
   operatorCommandSchema,
 } from "@/lib/protocol/commands";
@@ -46,6 +47,8 @@ export interface RunBoot {
   fit: TimelineFit;
   /** The console's `performance.timeOrigin`, the frame `fit` is in. */
   origin: number;
+  /** Set when the run began in a window that is gone: where this one picks it up. */
+  resume?: RunResume;
 }
 
 /** What the console sends. */
@@ -53,7 +56,7 @@ export type ConsoleMessage =
   | { type: "boot"; boot: RunBoot }
   | { type: "fit"; fit: TimelineFit; origin: number }
   | { type: "command"; command: OperatorCommand }
-  /** To a window that opened after the run began there: it cannot resume it. */
+  /** To a second window opened while the first still runs: it cannot take over. */
   | { type: "detached" };
 
 /** What the participant's window sends. */
@@ -175,4 +178,58 @@ export function teeSink(
       return sink.pending;
     },
   };
+}
+
+/**
+ * Where a reloaded participant window should pick the run up, from what the console
+ * knows: the runner's last state and every marker it mirrored.
+ *
+ * A run held between blocks resumes at the block it was about to start; otherwise the
+ * block that was on screen runs again, and is `interrupted` when its `block_start` never
+ * got a `block_end`. Markers continue after the highest `seq` seen, so nothing the new
+ * window stamps can be taken for something the lost one sent. Null once the plan is
+ * done: there is nothing left to run.
+ */
+export function resumePoint(
+  state: RunnerState | null,
+  markers: readonly Marker[],
+  steps: number
+): RunResume | null {
+  const stepIndex = !state
+    ? 0
+    : state.status === "paused"
+      ? state.stepIndex + 1
+      : state.stepIndex;
+  if (stepIndex >= steps) return null;
+  const seqFrom = markers.reduce(
+    (top, m) => Math.max(top, (m.seq ?? -1) + 1),
+    0
+  );
+  let open = false;
+  for (const m of markers) {
+    if (m.label === "block_start" && m.meta?.step_id === state?.stepId)
+      open = true;
+    else if (m.label === "block_end" && m.meta?.step_id === state?.stepId)
+      open = false;
+  }
+  return {
+    stepIndex,
+    seqFrom,
+    interrupted: state?.status !== "paused" && open,
+  };
+}
+
+/**
+ * The run's whole timeline after a reload: what the console mirrored from every window,
+ * plus what the last window hands over at the end, once each.
+ */
+export function mergeMarkers(
+  mirrored: readonly Marker[],
+  last: readonly Marker[]
+): Marker[] {
+  const key = (m: Marker) => `${m.seq}:${m.label}:${m.tMonotonicMs}`;
+  const seen = new Set(mirrored.map(key));
+  return [...mirrored, ...last.filter((m) => !seen.has(key(m)))].sort(
+    (a, b) => (a.seq ?? 0) - (b.seq ?? 0)
+  );
 }

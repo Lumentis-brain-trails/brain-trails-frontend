@@ -4,12 +4,14 @@ import {
   type ChannelMessage,
   channelName,
   commandPortFrom,
+  mergeMarkers,
   openChannel,
+  resumePoint,
   shiftFit,
   teeSink,
 } from "./channel";
 import { eegAnchor } from "@/lib/protocol/clock";
-import type { OperatorCommand } from "@/lib/protocol/commands";
+import type { OperatorCommand, RunnerState } from "@/lib/protocol/commands";
 import type { Marker } from "@/lib/protocol/marker";
 import { createMemorySink } from "@/lib/protocol/sink";
 
@@ -110,5 +112,60 @@ describe("console channel", () => {
     expect(sink.pending).toBe(0);
     await sink.flush();
     sink.flushBeacon();
+  });
+});
+
+describe("resuming a reloaded participant window", () => {
+  const marker = (seq: number, label: string, stepId = "a"): Marker => ({
+    label,
+    kind: "stage",
+    tMonotonicMs: seq * 10,
+    tRunMs: seq * 10,
+    tSessionS: seq / 100,
+    seq,
+    meta: { step_id: stepId },
+  });
+  const running = (stepIndex: number, stepId: string): RunnerState => ({
+    status: "running",
+    stepIndex,
+    stepId,
+    pausePending: false,
+    extendable: false,
+    attempt: 0,
+    message: null,
+  });
+
+  test("the block on screen runs again, closed first when it never ended", () => {
+    const markers = [
+      marker(0, "block_start", "a"),
+      marker(1, "block_end", "a"),
+      marker(2, "block_start", "b"),
+    ];
+    expect(resumePoint(running(1, "b"), markers, 3)).toEqual({
+      stepIndex: 1,
+      seqFrom: 3,
+      interrupted: true,
+    });
+    expect(
+      resumePoint(running(1, "b"), [...markers, marker(3, "block_end", "b")], 3)
+    ).toMatchObject({ interrupted: false, seqFrom: 4 });
+  });
+
+  test("a run held between blocks resumes at the next one; a finished plan does not", () => {
+    const paused = { ...running(0, "a"), status: "paused" as const };
+    expect(resumePoint(paused, [marker(0, "block_end", "a")], 2)).toEqual({
+      stepIndex: 1,
+      seqFrom: 1,
+      interrupted: false,
+    });
+    expect(resumePoint(paused, [], 1)).toBeNull();
+  });
+
+  test("the merged timeline has every marker once, in seq order", () => {
+    const merged = mergeMarkers(
+      [marker(0, "x"), marker(1, "y")],
+      [marker(1, "y"), marker(2, "z")]
+    );
+    expect(merged.map((m) => m.seq)).toEqual([0, 1, 2]);
   });
 });

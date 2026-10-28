@@ -325,4 +325,107 @@ describe("ProtocolRunner command port", () => {
     send(port, "abort");
     expect(onExit).toHaveBeenCalledWith("operator");
   });
+
+  test("repeat_block closes the attempt and runs the same block again", async () => {
+    const { sink, port, states } = renderRunner();
+    await advance(400);
+    send(port, "repeat_block");
+    // still the first block, on its second attempt
+    expect(screen.getByText("Step one")).toBeInTheDocument();
+    expect(states.at(-1)).toMatchObject({ stepIndex: 0, attempt: 1 });
+    const blocks = sink
+      .all()
+      .filter((m) => m.label === "block_start" || m.label === "block_end");
+    expect(blocks.map((m) => m.label)).toEqual([
+      "block_start",
+      "block_end",
+      "block_start",
+    ]);
+    expect(blocks[1].meta).toMatchObject({
+      block_id: "first",
+      ended_by: "operator",
+      repeated: true,
+    });
+    expect(blocks[2].meta).toMatchObject({ block_id: "first", attempt: 1 });
+    expect(commandsOf(sink.all())[0].meta).toMatchObject({
+      command: "repeat_block",
+      effect: "applied",
+    });
+
+    // the repeated attempt runs its whole time again, then the run moves on once
+    await advance(700);
+    expect(screen.getByText("Step one")).toBeInTheDocument();
+    await advance(400);
+    expect(screen.getByText("Step two")).toBeInTheDocument();
+    expect(
+      sink
+        .all()
+        .filter((m) => m.label === "block_end" && m.meta?.block_id === "first")
+    ).toHaveLength(2);
+  });
+
+  test("extend_rest adds time to a timed rest and nothing else", async () => {
+    const rest: ProtocolStep = {
+      id: "rest",
+      kind: "rest",
+      label: "rest",
+      phase: "rest",
+      config: { mode: "timed", duration_s: 2 },
+      block: { block_id: "rest", node_path: "rest", iteration: null },
+    };
+    const { sink, port, states } = renderRunner({
+      ...THREE_BLOCKS,
+      steps: [block("first", "Step one", 500), rest, block("last", "The end")],
+    });
+    expect(states.at(-1)).toMatchObject({ extendable: false });
+    send(port, "extend_rest");
+    expect(commandsOf(sink.all()).at(-1)?.meta).toMatchObject({
+      command: "extend_rest",
+      effect: "ignored",
+    });
+
+    await advance(600);
+    expect(states.at(-1)).toMatchObject({ stepIndex: 1, extendable: true });
+    await advance(1000);
+    send(port, "extend_rest");
+    expect(commandsOf(sink.all()).at(-1)?.meta).toMatchObject({
+      command: "extend_rest",
+      effect: "applied",
+      extended_s: 30,
+      total_s: 32,
+    });
+    // the 2 s rest would have ended here; it now lasts 32 s from its start
+    await advance(2000);
+    expect(states.at(-1)).toMatchObject({ stepIndex: 1 });
+    await advance(29_100);
+    expect(screen.getByText("The end")).toBeInTheDocument();
+  });
+
+  test("a resumed runner picks the run up at its block, with fresh seq numbers", async () => {
+    const sink = createMemorySink();
+    render(
+      <ProtocolRunner
+        protocol={THREE_BLOCKS}
+        seed={1}
+        sink={sink}
+        resume={{ stepIndex: 1, seqFrom: 40, interrupted: true }}
+        onFinish={vi.fn()}
+        onExit={vi.fn()}
+      />
+    );
+    // no notice screen, no session_start: straight into the second block
+    expect(screen.getByText("Step two")).toBeInTheDocument();
+    const markers = sink.all();
+    expect(labels(markers).slice(0, 3)).toEqual([
+      "run_reloaded",
+      "block_end",
+      "block_start",
+    ]);
+    expect(labels(markers)).not.toContain("session_start");
+    expect(markers[0].seq).toBe(40);
+    expect(markers[1].meta).toMatchObject({
+      block_id: "second",
+      ended_by: "reload",
+    });
+  });
 });
