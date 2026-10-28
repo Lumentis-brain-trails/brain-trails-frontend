@@ -536,7 +536,7 @@ function Logs({
               lines: read.data.lines.length,
               read: read.data.read,
             })}
-            {read.data.truncated && ` · ${t("truncated")}`}
+            {read.data.older_cut && ` · ${t("olderCut")}`}
           </p>
           <pre className="max-h-[32rem] overflow-auto rounded-md bg-surface-2 p-3 font-mono text-[12px] leading-5 wrap-anywhere whitespace-pre-wrap">
             {read.data.lines.join("\n") || t("empty")}
