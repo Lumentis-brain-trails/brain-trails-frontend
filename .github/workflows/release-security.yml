@@ -13,11 +13,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+# No concurrency group: GitHub keeps only one pending run per group, so quick successive
+# prod merges would leave the middle release without its SBOM. Every commit gets its run.
 permissions:
   contents: read
-concurrency:
-  group: release-security-${{ github.ref }}
-  cancel-in-progress: false
 jobs:
   supply-chain:
     runs-on: ubuntu-latest
@@ -68,6 +67,8 @@ jobs:
 
   # The repository is public, so code scanning is free: results land in the Security tab
   # (Code scanning), where an alert is tracked until it is fixed or dismissed with a reason.
+  # The tab shows the DEFAULT branch, which is `dev`, not `main`: to see what prod carries,
+  # filter it with `branch:main`.
   codeql:
     runs-on: ubuntu-latest
     timeout-minutes: 30

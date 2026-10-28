@@ -5,8 +5,12 @@ take reports about its security seriously and we are grateful for them.
 
 ## Reporting a vulnerability
 
-Write to **`SECURITY-CONTACT-TBD`** (address to be confirmed). Please do **not** open a
-public issue, pull request or discussion for a vulnerability.
+Report it privately through GitHub: on this repository's page open **Security -> Report a
+vulnerability**. Only the maintainers see the report, and we can discuss it and agree a fix
+with you there. If you cannot use GitHub, write to **`SECURITY-CONTACT-TBD`** (address to
+be confirmed).
+
+Please do **not** open a public issue, pull request or discussion for a vulnerability.
 
 Tell us, as far as you can:
 
@@ -60,4 +64,5 @@ Every production release produces a CycloneDX software bill of materials of the 
 dependencies (app and console) and scans them for known vulnerabilities, together with a
 CodeQL analysis of our own code (`.github/workflows/release-security.yml`). The SBOM and
 the scan are kept with the release run for 90 days; CodeQL alerts stay in the Security
-tab until they are fixed or dismissed with a reason.
+tab until they are fixed or dismissed with a reason. The tab opens on the default branch,
+`dev`; the alerts of what runs in production are under the `branch:main` filter.
