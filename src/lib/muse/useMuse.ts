@@ -35,6 +35,13 @@ import { PacketTimeline, type TimelineStats } from "./timeline";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
 
+/** One EEG packet of one channel, as the device stamped it. */
+export type EegListener = (
+  channel: EegChannel,
+  sampleIndex: number,
+  samples: ArrayLike<number>
+) => void;
+
 export interface MuseState {
   status: MuseStatus;
   /** The last connection failure in English, for logs; the UI shows `failure`. */
@@ -160,6 +167,8 @@ export function useMuse(createDevice: () => MuseDevice) {
   const batteryRef = useRef<number | null>(null);
   const packetsSinceRefresh = useRef(0);
   const unsubscribe = useRef<(() => void)[]>([]);
+  // Who else wants every EEG packet as it comes (the live producer, T5).
+  const eegListeners = useRef(new Set<EegListener>());
 
   const teardown = useCallback(() => {
     for (const off of unsubscribe.current) off();
@@ -190,6 +199,8 @@ export function useMuse(createDevice: () => MuseDevice) {
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
         recorderRef.current?.feed(channel, packet.sampleIndex, packet.samples);
+        for (const listener of eegListeners.current)
+          listener(channel, packet.sampleIndex, packet.samples);
         // The four electrodes are stamped alike; anchor the timeline on the first.
         if (channel === EEG_CHANNELS[0]) {
           timelineRef.current.push(
@@ -378,6 +389,15 @@ export function useMuse(createDevice: () => MuseDevice) {
     []
   );
 
+  /** Every EEG packet from now on, one channel at a time; returns the unsubscribe. */
+  const onEeg = useCallback((listener: EegListener) => {
+    eegListeners.current.add(listener);
+    return () => void eegListeners.current.delete(listener);
+  }, []);
+
+  /** The packet counts so far, read when asked rather than once a second. */
+  const readTimeline = useCallback(() => timelineRef.current.stats(), []);
+
   const allGood = EEG_CHANNELS.every((c) => state.quality[c].level === "good");
   return {
     ...state,
@@ -390,5 +410,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     stopRecording,
     readTimelineFit,
     readFirstSampleIndex,
+    onEeg,
+    readTimeline,
   };
 }

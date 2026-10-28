@@ -47,8 +47,11 @@ export const operatorCommandSchema = z.object({
   type: z.enum(COMMAND_TYPES),
   /** The words of a `message`, or an optional note on a `flag`. */
   text: z.string().max(MESSAGE_MAX_CHARS).optional(),
-  /** Who asked: the console on this machine for now; a remote console from T5. */
-  source: z.enum(["console"]).default("console"),
+  /**
+   * Who asked: the console on this machine (T1), a remote console over the live service
+   * (T5), or the run itself (`auto`: "pause when I lose sight" fired).
+   */
+  source: z.enum(["console", "remote", "auto"]).default("console"),
 });
 
 export type OperatorCommand = z.infer<typeof operatorCommandSchema>;
@@ -139,7 +142,11 @@ export function createLocalCommandPort(): LocalCommandPort {
 let counter = 0;
 
 /** A command with a fresh id; `text` is trimmed and capped. */
-export function makeCommand(type: CommandType, text?: string): OperatorCommand {
+export function makeCommand(
+  type: CommandType,
+  text?: string,
+  source: OperatorCommand["source"] = "console"
+): OperatorCommand {
   counter += 1;
   const random =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -149,7 +156,7 @@ export function makeCommand(type: CommandType, text?: string): OperatorCommand {
   return {
     id: random,
     type,
-    source: "console",
+    source,
     ...(trimmed ? { text: trimmed } : {}),
   };
 }
