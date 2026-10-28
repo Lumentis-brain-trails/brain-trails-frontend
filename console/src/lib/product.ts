@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type ApiError, ApiRequestError, type WriteOptions } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function send(path: string, init?: RequestInit): Promise<Response> {
   const response = await fetch(`/api/product/${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
@@ -35,8 +35,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiRequestError(response.status, error);
   }
+  return response;
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await send(path, init);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+/** One page of a product list and the cursor of the next (`X-Next-Cursor`), if any. */
+export interface Page<T> {
+  items: T[];
+  next: string | null;
 }
 
 function write<T>(
@@ -57,6 +68,14 @@ function write<T>(
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
+  /** A keyset-paged list: the rows and the next page's cursor (backend `pagination`). */
+  page: async <T>(path: string): Promise<Page<T>> => {
+    const response = await send(path);
+    return {
+      items: (await response.json()) as T[],
+      next: response.headers.get("x-next-cursor"),
+    };
+  },
   post: <T>(path: string, body?: unknown, options?: WriteOptions) =>
     write<T>("POST", path, body, options),
   put: <T>(path: string, body?: unknown, options?: WriteOptions) =>

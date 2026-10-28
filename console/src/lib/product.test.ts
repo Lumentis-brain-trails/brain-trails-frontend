@@ -30,6 +30,21 @@ describe("the product client", () => {
     expect(init.body).toBe('{"decision":"accept"}');
   });
 
+  test("a page carries the next cursor from X-Next-Cursor", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify([{ id: 1 }]), {
+        status: 200,
+        headers: { "X-Next-Cursor": "c2" },
+      })
+    );
+    expect(await api.page("admin/applications?limit=50")).toEqual({
+      items: [{ id: 1 }],
+      next: "c2",
+    });
+    fetchSpy.mockResolvedValueOnce(reply(200, []));
+    expect((await api.page("admin/applications")).next).toBeNull();
+  });
+
   test("passes If-Match and answers nothing on a 204", async () => {
     fetchSpy.mockResolvedValueOnce(reply(204));
     expect(

@@ -85,8 +85,8 @@ export function FairSection() {
   const queue = useQuery({
     queryKey: ["fair-queue"],
     queryFn: () => api.get<FairRow[]>("admin/fair/queue"),
-    // A stand moves; the page should not need reloading while somebody waits.
-    refetchInterval: 30_000,
+    // No timer (backend decision 0014): an open tab must not keep the database awake.
+    // The queue is read again on "Refresh" and after every act.
   });
 
   const toggle = useMutation({
@@ -195,7 +195,20 @@ export function FairSection() {
         </p>
       )}
 
-      <SectionTitle>{t("queue")}</SectionTitle>
+      <SectionTitle
+        action={
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={queue.isFetching}
+            onClick={() => void queue.refetch()}
+          >
+            {t("refresh")}
+          </Button>
+        }
+      >
+        {t("queue")}
+      </SectionTitle>
       <Card inset>
         {queue.isLoading && (
           <div className="space-y-2 p-5">

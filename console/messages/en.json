@@ -394,7 +394,8 @@
         "accept": "Accept",
         "waitlist": "Waitlist",
         "reject": "Reject"
-      }
+      },
+      "more": "More applications"
     },
     "fair": {
       "title": "The stand",
@@ -430,7 +431,8 @@
         "emailed": "Emailed {email}.",
         "done": "Marked done.",
         "declined": "Taken off the queue."
-      }
+      },
+      "refresh": "Refresh"
     },
     "protocols": {
       "title": "Catalog locks",

@@ -394,7 +394,8 @@
         "accept": "Accetta",
         "waitlist": "Metti in lista d'attesa",
         "reject": "Rifiuta"
-      }
+      },
+      "more": "Altre candidature"
     },
     "fair": {
       "title": "Lo stand",
@@ -430,7 +431,8 @@
         "emailed": "Email inviata a {email}.",
         "done": "Segnato come fatto.",
         "declined": "Tolto dalla coda."
-      }
+      },
+      "refresh": "Aggiorna"
     },
     "protocols": {
       "title": "Blocchi del catalogo",

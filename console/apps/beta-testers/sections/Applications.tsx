@@ -14,7 +14,12 @@
  * (profile, decision, headband) is shown in the reader's words, the headband in the
  * very words of the form the applicant chose from (`application.headband`).
  */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useFormatLocale } from "@/i18n/formatLocale";
@@ -317,6 +322,9 @@ function Decide({
   );
 }
 
+/** Applications per page; "More" asks for the next with the cursor the product sent. */
+const PAGE = 50;
+
 export function ApplicationsSection() {
   const t = useTranslations("admin.applications");
   const profileLabel = useProfileLabel();
@@ -329,14 +337,21 @@ export function ApplicationsSection() {
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const params = new URLSearchParams({ decision: tab, limit: "200" });
+  const params = new URLSearchParams({ decision: tab, limit: String(PAGE) });
   if (profile) params.set("profile", profile);
   if (cohort) params.set("cohort", cohort);
-  const board = useQuery({
+  const board = useInfiniteQuery({
     queryKey: ["applications", params.toString()],
-    queryFn: () => api.get<BoardRow[]>(`admin/applications?${params}`),
+    queryFn: ({ pageParam }) => {
+      const page = new URLSearchParams(params);
+      if (pageParam) page.set("cursor", pageParam);
+      return api.page<BoardRow>(`admin/applications?${page}`);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.next,
     retry: false,
   });
+  const rows = board.data?.pages.flatMap((p) => p.items);
   const cohorts = useQuery({
     queryKey: ["cohorts"],
     queryFn: () => api.get<Cohort[]>("admin/cohorts"),
@@ -425,13 +440,13 @@ export function ApplicationsSection() {
               <Skeleton className="h-40" />
             </div>
           )}
-          {board.data?.length === 0 && (
+          {rows?.length === 0 && (
             <Card inset>
               <EmptyState title={t(`empty.${tab}`)} />
             </Card>
           )}
           <div className="stagger space-y-4">
-            {board.data?.map((row) => (
+            {rows?.map((row) => (
               <Card key={row.user.id}>
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -489,6 +504,17 @@ export function ApplicationsSection() {
               </Card>
             ))}
           </div>
+          {board.hasNextPage && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                variant="secondary"
+                disabled={board.isFetchingNextPage}
+                onClick={() => void board.fetchNextPage()}
+              >
+                {t("more")}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

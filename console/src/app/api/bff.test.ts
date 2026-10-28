@@ -223,7 +223,13 @@ describe("the product proxy", () => {
     expect(call(0).url).toBe(
       "http://localhost:8000/protocols?circle=official&include_locked=true"
     );
-    for (const path of [["protocols", "p", "publish"], ["config"]]) {
+    for (const path of [
+      ["protocols", "p", "publish"],
+      ["config"],
+      // encoded, the guard reads it decoded: still the catalog
+      ["%70rotocols", "p", "publish"],
+      ["%63onfig"],
+    ]) {
       const write = await productProxy.POST(
         new NextRequest("http://c/x", { method: "POST", body: "{}" }),
         ctx(path)

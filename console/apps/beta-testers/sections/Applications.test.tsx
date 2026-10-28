@@ -5,9 +5,14 @@ import { IntlEn } from "@console/i18n/testing";
 import { ApplicationsSection as AdminApplicationsPage } from "./Applications";
 
 const get = vi.fn();
+const page = vi.fn();
 vi.mock("@console/lib/product", async (orig) => ({
   ...(await orig<typeof import("@console/lib/product")>()),
-  api: { get: (path: string) => get(path), post: vi.fn() },
+  api: {
+    get: (path: string) => get(path),
+    page: (path: string) => page(path),
+    post: vi.fn(),
+  },
 }));
 
 const COHORT = {
@@ -18,10 +23,10 @@ const COHORT = {
   counts: { accepted: 4, waitlisted: 1 },
 };
 
-function row() {
+function row({ id = "u1", name = "Ada Rossi" } = {}) {
   return {
-    user: { id: "u1", email: "ada@example.com", status: "pending" },
-    profile: { full_name: "Ada Rossi" },
+    user: { id, email: "ada@example.com", status: "pending" },
+    profile: { full_name: name },
     cohort: { id: "c1", name: "Therapists, autumn" },
     application: {
       requested_profile: "therapist",
@@ -62,9 +67,8 @@ function renderPage() {
 
 beforeEach(() => {
   rows = [row()];
-  get.mockImplementation((path: string) =>
-    Promise.resolve(path === "admin/cohorts" ? [COHORT] : rows)
-  );
+  get.mockImplementation(() => Promise.resolve([COHORT]));
+  page.mockImplementation(() => Promise.resolve({ items: rows, next: null }));
 });
 
 afterEach(() => {
@@ -109,7 +113,27 @@ test("each decision tab has its own empty sentence", async () => {
   expect(await screen.findByText("Nothing pending.")).toBeTruthy();
   fireEvent.click(screen.getByRole("radio", { name: "Waitlisted" }));
   expect(await screen.findByText("Nothing waitlisted.")).toBeTruthy();
-  expect(get).toHaveBeenCalledWith(
-    "admin/applications?decision=waitlisted&limit=200"
+  expect(page).toHaveBeenCalledWith(
+    "admin/applications?decision=waitlisted&limit=50"
   );
+});
+
+test("more applications come with the cursor the product sent", async () => {
+  page.mockImplementation((path: string) =>
+    Promise.resolve(
+      path.includes("cursor=")
+        ? { items: [row({ id: "u2", name: "Bruno Neri" })], next: null }
+        : { items: rows, next: "c2" }
+    )
+  );
+  renderPage();
+  await screen.findByText("Ada Rossi");
+  fireEvent.click(screen.getByRole("button", { name: "More applications" }));
+  expect(await screen.findByText("Bruno Neri")).toBeTruthy();
+  expect(page).toHaveBeenLastCalledWith(
+    "admin/applications?decision=pending&limit=50&cursor=c2"
+  );
+  expect(
+    screen.queryByRole("button", { name: "More applications" })
+  ).toBeNull();
 });
