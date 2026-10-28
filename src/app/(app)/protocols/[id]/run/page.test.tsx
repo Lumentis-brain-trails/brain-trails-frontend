@@ -71,11 +71,12 @@ const protocol = {
   definition: tree,
   draft: tree,
   draft_rev: 1,
+  photosensitive: true,
 };
 
 const form = { key: "k", url: "https://s3", fields: {} };
 
-test("a video protocol goes from pre-flight to the runner with the simulated headband", async () => {
+test("a video protocol goes from the photosensitivity warning and pre-flight to the runner", async () => {
   get.mockResolvedValue(protocol);
   post.mockImplementation((path: string) =>
     path.endsWith("/plan")
@@ -130,6 +131,17 @@ test("a video protocol goes from pre-flight to the runner with the simulated hea
       </NextIntlClientProvider>
     );
   });
+  // a video is a visual block: the warning comes first and must be ticked (H4)
+  fireEvent.click(
+    await screen.findByRole(
+      "checkbox",
+      { name: messages.run.photosensitivity.agree },
+      { timeout: 5000 }
+    )
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: messages.run.consent.accept })
+  );
   fireEvent.click(
     await screen.findByRole(
       "button",
@@ -147,7 +159,10 @@ test("a video protocol goes from pre-flight to the runner with the simulated hea
   });
   expect(post).toHaveBeenCalledWith(
     "sessions",
-    expect.objectContaining({ protocol_id: "p1" })
+    expect.objectContaining({
+      protocol_id: "p1",
+      acknowledged: ["photosensitivity"],
+    })
   );
   // the plan this run resolved is posted back before the first block (V3-0004)
   expect(post).toHaveBeenCalledWith(
@@ -183,6 +198,7 @@ test("free recording runs its self-paced block and finishes on demand", async ()
   get.mockResolvedValue({
     ...protocol,
     title: "Free recording",
+    photosensitive: false,
     definition: freeTree,
     draft: freeTree,
     outline: [

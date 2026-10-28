@@ -74,7 +74,7 @@ const protocol = {
   draft_rev: 1,
 };
 
-function serve(consoleOn: boolean) {
+function serve(consoleOn: boolean, extra: Record<string, unknown> = {}) {
   get.mockImplementation((path: string) =>
     path === "config"
       ? Promise.resolve({
@@ -82,7 +82,7 @@ function serve(consoleOn: boolean) {
           version: "x",
           features: { console: consoleOn },
         })
-      : Promise.resolve(protocol)
+      : Promise.resolve({ ...protocol, ...extra })
   );
 }
 
@@ -113,6 +113,27 @@ test("the console stays hidden while its flag is off", async () => {
     await screen.findByText(messages.console.unavailable)
   ).toBeInTheDocument();
   expect(get).not.toHaveBeenCalledWith("protocols/p1");
+});
+
+test("a protocol with visual blocks opens on the photosensitivity warning", async () => {
+  serve(true, { photosensitive: true });
+  await renderPage();
+  expect(
+    await screen.findByRole("alert", {
+      name: messages.run.photosensitivity.title,
+    })
+  ).toBeInTheDocument();
+  const accept = screen.getByRole("button", {
+    name: messages.run.consent.accept,
+  });
+  expect(accept).toBeDisabled();
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: messages.run.photosensitivity.agree })
+  );
+  fireEvent.click(accept);
+  expect(
+    await screen.findByText(messages.console.participant.notConnected)
+  ).toBeInTheDocument();
 });
 
 test("without a protocol there is nothing to run", async () => {

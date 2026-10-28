@@ -209,6 +209,9 @@ function Console({
   const muse = useMuse(createDevice);
 
   const [phase, setPhase] = useState<Phase>("consent");
+  // The operator ticked the photosensitivity warning; the session start says so (H4).
+  const [acknowledged, setAcknowledged] = useState(false);
+  const photosensitive = protocol.data?.photosensitive ?? false;
   // Whom the console records (backend T3): the operator, or someone they care for.
   const [target, setTarget] = useState<RunTarget>({});
   const [targetBlocked, setTargetBlocked] = useState(false);
@@ -383,6 +386,9 @@ function Console({
       const started = await startSession(protocolId, {
         device: MODEL_PROFILES[muse.model].apiDevice,
         ...startOptions(target),
+        ...(acknowledged
+          ? { acknowledged: ["photosensitivity" as const] }
+          : {}),
       });
       const resolved = planFor(started);
       if (!resolved.ok) {
@@ -400,7 +406,16 @@ function Console({
     } finally {
       setStarting(false);
     }
-  }, [errorText, muse, participant, protocol.data, protocolId, t, target]);
+  }, [
+    acknowledged,
+    errorText,
+    muse,
+    participant,
+    protocol.data,
+    protocolId,
+    t,
+    target,
+  ]);
 
   // Once the device clock is fitted, the participant's window gets the plan and the
   // clock, and the run begins there.
@@ -508,13 +523,17 @@ function Console({
     );
 
   // Nothing to consent to: straight to the pre-flight, as on the plain run page.
-  if (phase === "consent" && needsConsentGate(manifest))
+  if (phase === "consent" && needsConsentGate(manifest, photosensitive))
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <ConsentGate
           manifest={manifest}
           title={shown.title}
-          onAccept={() => setPhase("preflight")}
+          photosensitive={photosensitive}
+          onAccept={() => {
+            setAcknowledged(photosensitive);
+            setPhase("preflight");
+          }}
           onDecline={() => router.push(`/protocols/${protocolId}`)}
         />
       </main>
