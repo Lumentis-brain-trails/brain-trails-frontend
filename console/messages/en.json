@@ -31,7 +31,11 @@
       "upstream_unavailable": "The console's service did not answer. Try again in a moment.",
       "console_unavailable": "This console is not configured yet.",
       "read_unavailable": "This console has no read connection to the product database yet.",
-      "already_enrolled": "This account already has its second factor. Sign in again to enter a code."
+      "already_enrolled": "This account already has its second factor. Sign in again to enter a code.",
+      "cluster_unavailable": "This console cannot reach the cluster (it runs outside a pod, or the cluster did not answer).",
+      "cluster_forbidden": "The console may not read the cluster yet: its Role (infra/k8s/rbac/bt-ops.yaml) is not applied in this namespace.",
+      "no_pod": "No such pod, container or previous run. Refresh Pods and try again.",
+      "invalid_pod": "That is not a pod or container name."
     },
     "age": {
       "now": "just now",
@@ -176,8 +180,6 @@
     },
     "overview": {
       "intro": "The numbers of the product's admin dashboard, read from the product database through the console's read-only connection when you refresh a panel.",
-      "refresh": "Refresh",
-      "never": "Not refreshed yet.",
       "people": "People",
       "total": "Accounts",
       "new14d": "Opened in the last 14 days",
@@ -186,6 +188,82 @@
       "count": "Recordings",
       "minutes": "Minutes recorded",
       "jobs": "Jobs {status}"
+    },
+    "panel": {
+      "refresh": "Refresh",
+      "never": "Not refreshed yet."
+    },
+    "health": {
+      "intro": "The worker's job queue, the pods of this environment and their logs: what used to need kubectl. Each panel is the result of its last refresh; nothing here refreshes on its own.",
+      "definitions": "What these numbers count",
+      "jobs": {
+        "title": "Jobs",
+        "queued": "Queued",
+        "oldestQueued": "Oldest queued",
+        "stale": "Stale claims",
+        "loops": "Retry loops",
+        "failed24h": "Failed (24 h)",
+        "kind": "Kind",
+        "status": {
+          "queued": "queued",
+          "running": "running",
+          "done": "done",
+          "failed": "failed"
+        },
+        "staleTitle": "Stale claims (locked more than {minutes} min)",
+        "loopsTitle": "Retry loops",
+        "failuresTitle": "Last failures",
+        "attempts": "{n, plural, one {# attempt} other {# attempts}}",
+        "def": {
+          "queue": "Queue: every job by kind and status. The table keeps finished jobs too.",
+          "oldest": "Oldest queued: how long the oldest job still waiting for a worker has waited. Minutes is normal after an upload; hours means no worker is claiming.",
+          "stale": "Stale claim: a running job whose lock is older than {minutes} minutes. Its worker died; the next poll puts it back in the queue, or fails it when its attempts are used up.",
+          "loop": "Retry loop: a job claimed twice or more that is still queued or running - a worker killed in the middle of it, again and again (out of memory). After {attempts} attempts the job fails.",
+          "failed": "Failed (24 h): jobs that ended failed in the last 24 hours. Last failures lists the newest 20 with the worker's error."
+        }
+      },
+      "pods": {
+        "title": "Pods",
+        "namespace": "Namespace",
+        "restarted24h": "Restarted (24 h)",
+        "oom24h": "Out of memory (24 h)",
+        "restartsTotal": "Restarts, all pods",
+        "noMetrics": "This cluster reports no memory use (no metrics-server); limits are still shown.",
+        "pod": "Pod",
+        "state": "State",
+        "restarts": "Restarts",
+        "last": "Last termination",
+        "memory": "Memory / limit",
+        "exit": "exit {code}",
+        "logs": "Log",
+        "previousLogs": "Previous run",
+        "events": "Recent events",
+        "def": {
+          "restarts": "Restarts: how often the container restarted since its pod was created. A deploy replaces the pod and starts the count again.",
+          "last": "Last termination: why the container's previous run ended (OOMKilled is out of memory), its exit code and when. Kubernetes keeps only the last one.",
+          "restarted": "Restarted (24 h): containers whose last termination was in the last 24 hours. Kubernetes keeps no history of restarts, so this counts containers, not restarts: a worker killed 900 times is one container with 900 restarts.",
+          "memory": "Memory: what the container uses now, against its limit. Near the limit (red past 90%) is where the out-of-memory killer acts.",
+          "events": "Events: the newest the cluster still keeps, about an hour: scheduling, failing probes, back-off, kills."
+        }
+      },
+      "logs": {
+        "title": "Logs",
+        "intro": "Read when you ask, never stored by the console: logs can carry emails and ids. Each read is recorded in the console's audit with your name and filter.",
+        "container": "Container",
+        "choose": "Choose a container",
+        "refreshPods": "Refresh Pods first",
+        "previous": "Previous run",
+        "tail": "Last lines",
+        "filter": "Only lines containing",
+        "read": "Read",
+        "shown": "{lines} of {read} lines",
+        "truncated": "cut at 512 KiB",
+        "empty": "No line matches."
+      },
+      "widgets": {
+        "failedJobs": "{loops} in a retry loop · {stale} stale",
+        "restarts": "{oom} out of memory · {pods} pods"
+      }
     }
   }
 }

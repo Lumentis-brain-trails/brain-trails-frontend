@@ -80,7 +80,7 @@ npm run e2e                              # Playwright; needs the local backend (
 `console/` is a second Next.js app, an npm workspace of this repo, with its own Vercel
 project (root directory `console/`): the shell (launcher, side rail, widget strip), its
 BFF (`/api/session`, `/api/ops` to bt-ops, `/api/product` to the API), one directory
-per app under `console/apps/<slug>/` (Overview, Work log) and its strings under
+per app under `console/apps/<slug>/` (Overview, Work log, Health) and its strings under
 `console.*` in `console/messages/`. It imports the product's tokens, `ui` primitives
 and `common` messages from `../src`. See `console/README.md`.
 

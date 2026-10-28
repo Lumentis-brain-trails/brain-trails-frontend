@@ -144,6 +144,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/health/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Logs
+         * @description The last `tail` lines of one container's log, or of its previous run.
+         *
+         *     `previous=true` is the run before the last restart: where an OOM-killed worker's
+         *     last lines are.
+         *
+         *     Raises:
+         *         OpsError: 422 `invalid_pod` for a name Kubernetes would not allow, 404 `no_pod`,
+         *             503 `cluster_unavailable` / `cluster_forbidden`.
+         */
+        get: operations["get_logs_ops_v1_health_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/me": {
         parameters: {
             query?: never;
@@ -778,6 +805,32 @@ export interface components {
             url: string;
         };
         /**
+         * LogOut
+         * @description A container's log tail, filtered.
+         *
+         *     `lines` are the lines of the tail that contain `q` (case-insensitive), oldest first;
+         *     `read` is how many lines the tail had before the filter. `truncated` is true when
+         *     the byte cap was reached, so the tail may hold fewer than `tail` lines.
+         */
+        LogOut: {
+            /** Container */
+            container: string | null;
+            /** Lines */
+            lines: string[];
+            /** Pod */
+            pod: string;
+            /** Previous */
+            previous: boolean;
+            /** Q */
+            q: string | null;
+            /** Read */
+            read: number;
+            /** Tail */
+            tail: number;
+            /** Truncated */
+            truncated: boolean;
+        };
+        /**
          * MeOut
          * @description The signed-in console person.
          */
@@ -1321,6 +1374,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_logs_ops_v1_health_logs_get: {
+        parameters: {
+            query: {
+                pod: string;
+                container?: string | null;
+                previous?: boolean;
+                tail?: number;
+                q?: string | null;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogOut"];
                 };
             };
             /** @description Validation Error */

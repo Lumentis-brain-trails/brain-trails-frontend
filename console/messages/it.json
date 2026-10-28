@@ -31,7 +31,11 @@
       "upstream_unavailable": "Il servizio della console non ha risposto. Riprova tra poco.",
       "console_unavailable": "Questa console non è ancora configurata.",
       "read_unavailable": "Questa console non ha ancora una connessione in lettura al database del prodotto.",
-      "already_enrolled": "Questo account ha già il suo secondo fattore. Accedi di nuovo per inserire un codice."
+      "already_enrolled": "Questo account ha già il suo secondo fattore. Accedi di nuovo per inserire un codice.",
+      "cluster_unavailable": "Questa console non raggiunge il cluster (gira fuori da un pod, o il cluster non ha risposto).",
+      "cluster_forbidden": "La console non può ancora leggere il cluster: il suo Role (infra/k8s/rbac/bt-ops.yaml) non è applicato in questo namespace.",
+      "no_pod": "Questo pod, container o run precedente non c'è. Aggiorna Pod e riprova.",
+      "invalid_pod": "Non è il nome di un pod o di un container."
     },
     "age": {
       "now": "adesso",
@@ -176,8 +180,6 @@
     },
     "overview": {
       "intro": "I numeri della dashboard di amministrazione del prodotto, letti dal database del prodotto con la connessione in sola lettura della console quando aggiorni un pannello.",
-      "refresh": "Aggiorna",
-      "never": "Non ancora aggiornato.",
       "people": "Persone",
       "total": "Account",
       "new14d": "Aperti negli ultimi 14 giorni",
@@ -186,6 +188,82 @@
       "count": "Registrazioni",
       "minutes": "Minuti registrati",
       "jobs": "Job {status}"
+    },
+    "panel": {
+      "refresh": "Aggiorna",
+      "never": "Non ancora aggiornato."
+    },
+    "health": {
+      "intro": "La coda dei job del worker, i pod di questo ambiente e i loro log: quello per cui serviva kubectl. Ogni pannello è il risultato del suo ultimo aggiornamento; qui niente si aggiorna da solo.",
+      "definitions": "Cosa contano questi numeri",
+      "jobs": {
+        "title": "Job",
+        "queued": "In coda",
+        "oldestQueued": "Il più vecchio in coda",
+        "stale": "Claim scaduti",
+        "loops": "In loop di retry",
+        "failed24h": "Falliti (24 h)",
+        "kind": "Tipo",
+        "status": {
+          "queued": "in coda",
+          "running": "in corso",
+          "done": "finiti",
+          "failed": "falliti"
+        },
+        "staleTitle": "Claim scaduti (lock da più di {minutes} min)",
+        "loopsTitle": "Loop di retry",
+        "failuresTitle": "Ultimi fallimenti",
+        "attempts": "{n, plural, one {# tentativo} other {# tentativi}}",
+        "def": {
+          "queue": "Coda: tutti i job per tipo e stato. La tabella tiene anche i job finiti.",
+          "oldest": "Il più vecchio in coda: da quanto aspetta un worker il job più vecchio ancora in coda. Qualche minuto dopo un upload è normale; ore vuol dire che nessun worker prende lavoro.",
+          "stale": "Claim scaduto: un job in corso con il lock più vecchio di {minutes} minuti. Il suo worker è morto; il prossimo giro lo rimette in coda, o lo fa fallire se ha finito i tentativi.",
+          "loop": "Loop di retry: un job preso due o più volte e ancora in coda o in corso - un worker ucciso a metà, più e più volte (memoria esaurita). Dopo {attempts} tentativi il job fallisce.",
+          "failed": "Falliti (24 h): i job finiti in errore nelle ultime 24 ore. Ultimi fallimenti mostra i 20 più recenti con l'errore del worker."
+        }
+      },
+      "pods": {
+        "title": "Pod",
+        "namespace": "Namespace",
+        "restarted24h": "Riavviati (24 h)",
+        "oom24h": "Memoria esaurita (24 h)",
+        "restartsTotal": "Riavvii, tutti i pod",
+        "noMetrics": "Questo cluster non riporta l'uso di memoria (manca metrics-server); i limiti si vedono comunque.",
+        "pod": "Pod",
+        "state": "Stato",
+        "restarts": "Riavvii",
+        "last": "Ultima terminazione",
+        "memory": "Memoria / limite",
+        "exit": "uscita {code}",
+        "logs": "Log",
+        "previousLogs": "Run precedente",
+        "events": "Eventi recenti",
+        "def": {
+          "restarts": "Riavvii: quante volte il container è ripartito da quando il pod è stato creato. Un deploy sostituisce il pod e il conteggio riparte.",
+          "last": "Ultima terminazione: perché è finito il run precedente del container (OOMKilled è memoria esaurita), il codice di uscita e quando. Kubernetes tiene solo l'ultima.",
+          "restarted": "Riavviati (24 h): i container con l'ultima terminazione nelle ultime 24 ore. Kubernetes non tiene lo storico dei riavvii, quindi conta i container, non i riavvii: un worker ucciso 900 volte è un container con 900 riavvii.",
+          "memory": "Memoria: quanta ne usa ora il container, rispetto al suo limite. Vicino al limite (rosso oltre il 90%) è dove interviene l'OOM killer.",
+          "events": "Eventi: i più recenti che il cluster tiene ancora, circa un'ora: scheduling, probe che falliscono, back-off, kill."
+        }
+      },
+      "logs": {
+        "title": "Log",
+        "intro": "Letti quando li chiedi, mai salvati dalla console: i log possono contenere email e id. Ogni lettura resta nell'audit della console con il tuo nome e il filtro.",
+        "container": "Container",
+        "choose": "Scegli un container",
+        "refreshPods": "Prima aggiorna Pod",
+        "previous": "Run precedente",
+        "tail": "Ultime righe",
+        "filter": "Solo le righe che contengono",
+        "read": "Leggi",
+        "shown": "{lines} righe su {read}",
+        "truncated": "tagliato a 512 KiB",
+        "empty": "Nessuna riga corrisponde."
+      },
+      "widgets": {
+        "failedJobs": "{loops} in loop di retry · {stale} scaduti",
+        "restarts": "{oom} per memoria · {pods} pod"
+      }
     }
   }
 }

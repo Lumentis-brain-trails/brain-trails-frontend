@@ -17,6 +17,10 @@ const KNOWN = [
   "console_unavailable",
   "read_unavailable",
   "already_enrolled",
+  "cluster_unavailable",
+  "cluster_forbidden",
+  "no_pod",
+  "invalid_pod",
 ] as const;
 
 type Known = (typeof KNOWN)[number];
