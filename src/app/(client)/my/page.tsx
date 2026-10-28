@@ -9,6 +9,7 @@
  * by when, how many runs are left and the carer's note. A due date that has passed is
  * said kindly: the session can still be done.
  */
+import { AfterSession } from "@/components/therapy/AfterSession";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -53,6 +54,7 @@ export default function MyPage() {
       <p className="mt-2 max-w-xl text-ink-2">{t("intro")}</p>
 
       <div className="mt-8 space-y-4">
+        <AfterSession />
         {assignments.isLoading && <Skeleton className="h-40" />}
         {assignments.isError && (
           <ErrorBanner message={errorMessage(assignments.error)} />
@@ -90,6 +92,15 @@ export default function MyPage() {
               <span className="w-28 text-right text-[14px] text-ink-2">
                 {t(`status.${s.status as "done"}`)}
               </span>
+              {/* shared in full by their carer (T6): the way to their results */}
+              {s.recording_id && (
+                <Link
+                  href={`/my/results/${s.recording_id}`}
+                  className="text-[14px] font-medium text-accent hover:underline"
+                >
+                  {t("results")}
+                </Link>
+              )}
             </ListRow>
           ))}
         </Card>

@@ -6,7 +6,12 @@ import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
+import { ClinicHome } from "@/components/therapy/ClinicHome";
+import {
+  inWorkspace,
+  useCurrentWorkspace,
+  useWorkspaceConfig,
+} from "@/lib/workspace";
 import { formatDate, formatDuration } from "@/lib/format";
 import { useRecordingTitle } from "@/lib/protocol/official";
 import type { Recording } from "@/lib/types";
@@ -36,6 +41,10 @@ export default function HomePage() {
   const locale = useFormatLocale();
   const [showUpload, setShowUpload] = useState(false);
   const workspace = useCurrentWorkspace();
+  // a practice with the therapy edition opens on the clinic's day (T6)
+  const workspaceFlags = useWorkspaceConfig().data?.features;
+  const clinic =
+    workspace?.kind === "practice" && workspaceFlags?.therapy === true;
   const recordings = useQuery({
     queryKey: ["recordings", workspace?.id],
     queryFn: () => api.get<Recording[]>(inWorkspace("recordings", workspace)),
@@ -71,109 +80,124 @@ export default function HomePage() {
         </h1>
       </header>
 
-      <div className="stagger grid gap-5 lg:grid-cols-3">
-        <Card className="relative isolate flex min-h-[250px] flex-col justify-between gap-8 overflow-hidden p-8 lg:col-span-2">
-          <div
-            aria-hidden
-            className="ribbon-glow -top-[64px] -right-[150px] -z-10 rotate-[-18deg]"
-          />
-          <div>
-            <h2 className="type-heading text-[26px] tracking-[-0.02em]">
-              {t("start.title")}
-            </h2>
-            <p className="mt-2 text-ink-2">{t("start.text")}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/protocols" className={buttonClass("primary", "lg")}>
-              <span className="h-2 w-2 rounded-full bg-danger" aria-hidden />
-              {t("start.record")}
-            </Link>
-            <Link href="/library" className={buttonClass("secondary", "lg")}>
-              {t("start.pick")}
-            </Link>
-            <Button variant="ghost" onClick={() => setShowUpload(true)}>
-              <Icon name="plus" /> {t("start.upload")}
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="flex flex-col p-7">
-          <h2 className="type-eyebrow text-ink-3">{t("week.title")}</h2>
-          <dl className="mt-5 flex flex-1 flex-col justify-between gap-4">
-            <WeekRow label={t("week.sessions")} value={thisWeek.length} />
-            <WeekRow
-              label={t("week.signal")}
-              value={formatDuration(
-                thisWeek.reduce((a, r) => a + (r.duration_s ?? 0), 0)
-              )}
-            />
-            <WeekRow label={t("week.all")} value={list.length} last />
-          </dl>
-        </Card>
-      </div>
-
-      <section className="mt-12">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <h2 className="type-heading text-[22px]">{t("recent.title")}</h2>
-          {list.length > RECENT && (
-            <Link
-              href="/recordings"
-              className="text-[14px] font-medium text-ink-2 hover:text-ink"
-            >
-              {t("recent.all")}
-            </Link>
-          )}
-        </div>
-
-        {recordings.isPending && (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-[200px]" />
-            ))}
-          </div>
-        )}
-        {recordings.isError && (
-          <Card>
-            <p className="text-ink-2">{t("recent.loadFailed")}</p>
-          </Card>
-        )}
-        {recordings.isSuccess && list.length === 0 && (
-          <Card inset>
-            <EmptyState
-              title={t("recent.emptyTitle")}
-              text={t("recent.emptyText")}
-              action={
-                <Link href="/protocols" className={buttonClass()}>
-                  {t("recent.emptyAction")}
-                </Link>
-              }
-            />
-          </Card>
-        )}
-        {recent.length > 0 && (
-          <ul className="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {recent.map((r) => (
-              <li key={r.id}>
+      {clinic && workspace ? (
+        <ClinicHome workspace={workspace} />
+      ) : (
+        <>
+          <div className="stagger grid gap-5 lg:grid-cols-3">
+            <Card className="relative isolate flex min-h-[250px] flex-col justify-between gap-8 overflow-hidden p-8 lg:col-span-2">
+              <div
+                aria-hidden
+                className="ribbon-glow -top-[64px] -right-[150px] -z-10 rotate-[-18deg]"
+              />
+              <div>
+                <h2 className="type-heading text-[26px] tracking-[-0.02em]">
+                  {t("start.title")}
+                </h2>
+                <p className="mt-2 text-ink-2">{t("start.text")}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
                 <Link
-                  href={`/recordings/${r.id}`}
-                  className="pressable group block"
+                  href="/protocols"
+                  className={buttonClass("primary", "lg")}
                 >
-                  <TrailThumb recording={{ ...r, title: titleOf(r) }} />
-                  <p className="mt-3 truncate font-semibold group-hover:underline">
-                    {titleOf(r)}
-                  </p>
-                  <p className="type-caption mt-0.5 text-ink-3">
-                    {t("recent.meta", {
-                      date: formatDate(r.created_at, locale),
-                      duration: formatDuration(r.duration_s),
-                    })}
-                  </p>
+                  <span
+                    className="h-2 w-2 rounded-full bg-danger"
+                    aria-hidden
+                  />
+                  {t("start.record")}
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                <Link
+                  href="/library"
+                  className={buttonClass("secondary", "lg")}
+                >
+                  {t("start.pick")}
+                </Link>
+                <Button variant="ghost" onClick={() => setShowUpload(true)}>
+                  <Icon name="plus" /> {t("start.upload")}
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="flex flex-col p-7">
+              <h2 className="type-eyebrow text-ink-3">{t("week.title")}</h2>
+              <dl className="mt-5 flex flex-1 flex-col justify-between gap-4">
+                <WeekRow label={t("week.sessions")} value={thisWeek.length} />
+                <WeekRow
+                  label={t("week.signal")}
+                  value={formatDuration(
+                    thisWeek.reduce((a, r) => a + (r.duration_s ?? 0), 0)
+                  )}
+                />
+                <WeekRow label={t("week.all")} value={list.length} last />
+              </dl>
+            </Card>
+          </div>
+
+          <section className="mt-12">
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <h2 className="type-heading text-[22px]">{t("recent.title")}</h2>
+              {list.length > RECENT && (
+                <Link
+                  href="/recordings"
+                  className="text-[14px] font-medium text-ink-2 hover:text-ink"
+                >
+                  {t("recent.all")}
+                </Link>
+              )}
+            </div>
+
+            {recordings.isPending && (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-[200px]" />
+                ))}
+              </div>
+            )}
+            {recordings.isError && (
+              <Card>
+                <p className="text-ink-2">{t("recent.loadFailed")}</p>
+              </Card>
+            )}
+            {recordings.isSuccess && list.length === 0 && (
+              <Card inset>
+                <EmptyState
+                  title={t("recent.emptyTitle")}
+                  text={t("recent.emptyText")}
+                  action={
+                    <Link href="/protocols" className={buttonClass()}>
+                      {t("recent.emptyAction")}
+                    </Link>
+                  }
+                />
+              </Card>
+            )}
+            {recent.length > 0 && (
+              <ul className="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {recent.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      href={`/recordings/${r.id}`}
+                      className="pressable group block"
+                    >
+                      <TrailThumb recording={{ ...r, title: titleOf(r) }} />
+                      <p className="mt-3 truncate font-semibold group-hover:underline">
+                        {titleOf(r)}
+                      </p>
+                      <p className="type-caption mt-0.5 text-ink-3">
+                        {t("recent.meta", {
+                          date: formatDate(r.created_at, locale),
+                          duration: formatDuration(r.duration_s),
+                        })}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
 
       {showUpload && <UploadDialog onClose={() => setShowUpload(false)} />}
     </main>
