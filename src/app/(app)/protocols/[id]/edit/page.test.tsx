@@ -366,3 +366,62 @@ test("the first save waits for /config, then files into the chosen clinic", asyn
   expect(post.mock.calls[0][0]).toBe("protocols?workspace=c1");
   resetPinnedWorkspace();
 });
+
+test("Preview of a draft with a visual block opens on the photosensitivity warning", async () => {
+  const visual = {
+    ...protocol,
+    draft: {
+      ...tree,
+      root: {
+        ...tree.root,
+        children: [
+          ...tree.root.children,
+          {
+            type: "block",
+            id: "letters",
+            kind: "n-back",
+            label: "Letters",
+            config: { n: 20 },
+          },
+        ],
+      },
+    },
+  };
+  get.mockImplementation((path: string) =>
+    Promise.resolve(path.startsWith("protocols/") ? visual : [])
+  );
+  await renderBuilder();
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.builder.preview })
+    );
+  });
+  const warning = await screen.findByRole("alert", {
+    name: messages.run.photosensitivity.title,
+  });
+  expect(warning).toBeTruthy();
+  const accept = screen.getByRole("button", {
+    name: messages.run.consent.accept,
+  });
+  expect(accept).toBeDisabled();
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: messages.run.photosensitivity.agree })
+  );
+  fireEvent.click(accept);
+  // the runner takes the screen
+  expect(
+    screen.queryByRole("alert", { name: messages.run.photosensitivity.title })
+  ).toBeNull();
+});
+
+test("Preview of a draft with nothing visual goes straight to the runner", async () => {
+  await renderBuilder();
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.builder.preview })
+    );
+  });
+  expect(
+    screen.queryByRole("alert", { name: messages.run.photosensitivity.title })
+  ).toBeNull();
+});

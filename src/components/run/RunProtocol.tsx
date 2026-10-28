@@ -10,8 +10,8 @@
  * counts towards; `picker` is shown above the headband pre-flight. `client` is the
  * patient's own run: no scores at the end and no way into the recording - they see
  * neither (V4-0006).
- * Consent and the content warning come first, then the
- * headband pre-flight; Start opens a session, which returns the published version's
+ * Consent, the content warning and - for a protocol with visual blocks - the
+ * photosensitivity warning come first (`ConsentGate`), then the headband pre-flight; Start opens a session, which returns the published version's
  * tree, the run's seed and links to its media. The tree is resolved here
  * (`resolvePlan`: loops, shuffles, jitter), the media are bound to it and the flat plan
  * is posted back before the first block, so review reads what was shown rather than what
@@ -57,7 +57,7 @@ import {
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
 import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
-import { api } from "@/lib/api";
+import { ApiRequestError, api } from "@/lib/api";
 import { useUploadErrorMessage } from "@/lib/upload";
 import { useFocusMode } from "@/lib/focus";
 import {
@@ -177,6 +177,14 @@ export function RunProtocol({
   const muse = useMuse(createDevice);
 
   const [phase, setPhase] = useState<Phase>("consent");
+  // The person ticked the photosensitivity warning; the session start says so (H4).
+  const [acknowledged, setAcknowledged] = useState(false);
+  // The detail says whether the protocol's current version is visual; a run of an
+  // assignment's pinned version may differ, and the server then refuses the start
+  // (`photosensitivity_ack_required`): the warning is forced on and shown again.
+  const [forceWarning, setForceWarning] = useState(false);
+  const photosensitive =
+    forceWarning || (protocol.data?.photosensitive ?? false);
   const [plan, setPlan] = useState<ProtocolDefinition | null>(null);
   const [override, setOverride] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -209,6 +217,9 @@ export function RunProtocol({
       const started = await startSession(protocolId, {
         device: MODEL_PROFILES[muse.model].apiDevice,
         ...startOptions(target),
+        ...(acknowledged
+          ? { acknowledged: ["photosensitivity" as const] }
+          : {}),
       });
       // The tree becomes this run's flat plan here, and the backend stores it: from now
       // on, what was shown is a record, not something to re-derive.
@@ -224,11 +235,20 @@ export function RunProtocol({
       setSession(started);
       setPhase("syncing");
     } catch (e) {
+      if (
+        e instanceof ApiRequestError &&
+        e.error.code === "photosensitivity_ack_required"
+      ) {
+        setForceWarning(true);
+        setAcknowledged(false);
+        setPhase("consent");
+        return;
+      }
       setError(errorText(e));
     } finally {
       setStarting(false);
     }
-  }, [errorText, muse, protocol.data, protocolId, target]);
+  }, [acknowledged, errorText, muse, protocol.data, protocolId, target]);
 
   const save = useCallback(async () => {
     const end = ending.current;
@@ -342,11 +362,15 @@ export function RunProtocol({
   if (phase === "consent")
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        {needsConsentGate(manifest) ? (
+        {needsConsentGate(manifest, photosensitive) ? (
           <ConsentGate
             manifest={manifest}
             title={shown.title}
-            onAccept={() => setPhase("preflight")}
+            photosensitive={photosensitive}
+            onAccept={() => {
+              setAcknowledged(photosensitive);
+              setPhase("preflight");
+            }}
             onDecline={() => router.push(backHref)}
           />
         ) : (

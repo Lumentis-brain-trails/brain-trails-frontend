@@ -73,5 +73,35 @@ describe("ConsentGate", () => {
     expect(needsConsentGate(none)).toBe(false);
     expect(needsConsentGate({ ...none, content_warning: "x" })).toBe(true);
     expect(needsConsentGate({ ...none, requires_consent: true })).toBe(true);
+    expect(needsConsentGate(none, true)).toBe(true);
+  });
+
+  test("a protocol with visual blocks waits for the photosensitivity warning", () => {
+    const onAccept = vi.fn();
+    renderGate({
+      manifest: {
+        content_warning: null,
+        requires_consent: true,
+        consent_text: null,
+      },
+      photosensitive: true,
+      onAccept,
+    });
+    expect(
+      screen.getByRole("alert", { name: "Photosensitivity warning" })
+    ).toHaveTextContent("photosensitive epilepsy");
+    expect(screen.getByText(/stop at any time/i)).toBeInTheDocument();
+    const accept = screen.getByRole("button", { name: "Continue" });
+    // consent alone is not enough
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /agree to take part/ })
+    );
+    expect(accept).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /read this warning/ })
+    );
+    expect(accept).toBeEnabled();
+    fireEvent.click(accept);
+    expect(onAccept).toHaveBeenCalledTimes(1);
   });
 });

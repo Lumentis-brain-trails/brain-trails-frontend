@@ -208,4 +208,5 @@ export const flankerTaskKind: TaskKind<FlankerConfig> = {
   name: "flanker",
   configSchema: flankerConfigSchema,
   Renderer: FlankerRenderer,
+  photosensitive: true,
 };

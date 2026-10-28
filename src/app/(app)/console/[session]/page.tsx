@@ -60,7 +60,7 @@ import {
   Spinner,
   buttonClass,
 } from "@/components/ui";
-import { api } from "@/lib/api";
+import { ApiRequestError, api } from "@/lib/api";
 import {
   type ChannelMessage,
   type ConsoleChannel,
@@ -209,6 +209,14 @@ function Console({
   const muse = useMuse(createDevice);
 
   const [phase, setPhase] = useState<Phase>("consent");
+  // The operator ticked the photosensitivity warning; the session start says so (H4).
+  const [acknowledged, setAcknowledged] = useState(false);
+  // The detail says whether the protocol's current version is visual; a run of an
+  // assignment's pinned version may differ, and the server then refuses the start
+  // (`photosensitivity_ack_required`): the warning is forced on and shown again.
+  const [forceWarning, setForceWarning] = useState(false);
+  const photosensitive =
+    forceWarning || (protocol.data?.photosensitive ?? false);
   // Whom the console records (backend T3): the operator, or someone they care for.
   const [target, setTarget] = useState<RunTarget>({});
   const [targetBlocked, setTargetBlocked] = useState(false);
@@ -383,6 +391,9 @@ function Console({
       const started = await startSession(protocolId, {
         device: MODEL_PROFILES[muse.model].apiDevice,
         ...startOptions(target),
+        ...(acknowledged
+          ? { acknowledged: ["photosensitivity" as const] }
+          : {}),
       });
       const resolved = planFor(started);
       if (!resolved.ok) {
@@ -396,11 +407,29 @@ function Console({
       setSession(started);
       setPhase("syncing");
     } catch (e) {
+      if (
+        e instanceof ApiRequestError &&
+        e.error.code === "photosensitivity_ack_required"
+      ) {
+        setForceWarning(true);
+        setAcknowledged(false);
+        setPhase("consent");
+        return;
+      }
       setError(errorText(e));
     } finally {
       setStarting(false);
     }
-  }, [errorText, muse, participant, protocol.data, protocolId, t, target]);
+  }, [
+    acknowledged,
+    errorText,
+    muse,
+    participant,
+    protocol.data,
+    protocolId,
+    t,
+    target,
+  ]);
 
   // Once the device clock is fitted, the participant's window gets the plan and the
   // clock, and the run begins there.
@@ -508,13 +537,17 @@ function Console({
     );
 
   // Nothing to consent to: straight to the pre-flight, as on the plain run page.
-  if (phase === "consent" && needsConsentGate(manifest))
+  if (phase === "consent" && needsConsentGate(manifest, photosensitive))
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <ConsentGate
           manifest={manifest}
           title={shown.title}
-          onAccept={() => setPhase("preflight")}
+          photosensitive={photosensitive}
+          onAccept={() => {
+            setAcknowledged(photosensitive);
+            setPhase("preflight");
+          }}
           onDecline={() => router.push(`/protocols/${protocolId}`)}
         />
       </main>

@@ -1887,6 +1887,13 @@ export interface paths {
          *     `profile_required` when the caller records themself and has not filled their profile
          *     yet: the run is about to produce EEG, and EEG without handedness and year of birth is
          *     not interpretable. A subject of an organisation carries those on their own row.
+         *
+         *     A version with visual blocks starts only when `acknowledged` holds
+         *     `photosensitivity` (422 `photosensitivity_ack_required`, hazard H4): the warning
+         *     screen is a control only if it cannot be skipped. The server then writes the
+         *     acknowledgement as the timeline's first event (`photosensitivity_ack` at `t` 0, with
+         *     the run's mode and the wall-clock time), so the record does not depend on the
+         *     browser that showed the screen.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -4673,6 +4680,10 @@ export interface components {
         /**
          * ProtocolDetail
          * @description The detail page: description, outline, the published tree and, for editors, the draft.
+         *
+         *     `photosensitive` says the published tree shows flashing, high-contrast or moving
+         *     stimuli (H4): the host shows the photosensitivity warning before Start, and
+         *     `POST /sessions` wants it acknowledged.
          */
         ProtocolDetail: {
             access: components["schemas"]["MediaAccess"];
@@ -4714,6 +4725,11 @@ export interface components {
             mine: boolean;
             /** Outline */
             outline: components["schemas"]["OutlineItem"][];
+            /**
+             * Photosensitive
+             * @default false
+             */
+            photosensitive: boolean;
             /** Preview Url */
             preview_url: string | null;
             review_state: components["schemas"]["ReviewState"];
@@ -5057,9 +5073,13 @@ export interface components {
          *     `subject_id` records someone else (operator mode, T3): a subject the caller may
          *     record, in that subject's organisation. `assignment_id` runs an assignment: the
          *     subject's own account at home, or a carer in the studio; the assignment's pinned
-         *     version runs and the run counts towards it when it finishes.
+         *     version runs and the run counts towards it when it finishes. `acknowledged` names
+         *     the warnings the person read before Start: `photosensitivity` is required for a
+         *     version with visual blocks (H4).
          */
         SessionStartIn: {
+            /** Acknowledged */
+            acknowledged?: "photosensitivity"[];
             /** Assignment Id */
             assignment_id?: string | null;
             /**

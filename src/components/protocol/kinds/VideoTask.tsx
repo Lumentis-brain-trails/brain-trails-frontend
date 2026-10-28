@@ -399,4 +399,5 @@ export const videoTaskKind: TaskKind<VideoConfig> = {
   name: "video",
   configSchema: videoConfigSchema,
   Renderer: VideoRenderer,
+  photosensitive: true,
 };

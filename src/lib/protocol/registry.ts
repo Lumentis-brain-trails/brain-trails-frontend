@@ -40,3 +40,17 @@ export function knownKinds(): string[] {
 export function resetRegistry(): void {
   kinds.clear();
 }
+
+/**
+ * Whether any of these steps shows flashing, high-contrast or moving stimuli (H4).
+ * For a draft (the builder's Preview); a published protocol carries the backend's
+ * answer as `ProtocolDetail.photosensitive`. An unknown kind counts as visual.
+ */
+export function hasPhotosensitiveStep(
+  steps: readonly { kind: string }[]
+): boolean {
+  return steps.some((step) => {
+    const kind = kinds.get(step.kind);
+    return kind ? kind.photosensitive === true : true;
+  });
+}

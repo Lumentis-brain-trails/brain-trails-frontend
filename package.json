@@ -27,7 +27,7 @@
     "@capacitor/ios": "^8.5.2",
     "@hookform/resolvers": "^5.9.1",
     "@tanstack/react-query": "^5.102.8",
-    "next": "16.3.4",
+    "next": "16.4.3",
     "next-intl": "^4.14.5",
     "plotly.js-dist-min": "^4.0.0",
     "react": "19.2.8",
@@ -53,9 +53,9 @@
     "@types/react-plotly.js": "^2.6.4",
     "@types/web-bluetooth": "^0.0.21",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "5.0.0",
+    "@vitest/coverage-v8": "5.0.5",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.3",
     "eslint-plugin-i18next": "^6.1.5",
     "fast-check": "^4.10.2",
     "jsdom": "^29.1.1",
@@ -63,6 +63,6 @@
     "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.5"
   }
 }
