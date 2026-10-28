@@ -7,6 +7,7 @@ import { APPS, appFor } from "./apps";
  * without the other fails here.
  */
 const BACKEND = {
+  health: { version: "0.1.0", widgets: ["failed_jobs", "restarts_24h"] },
   overview: { version: "1.0.0", widgets: ["recordings_14d"] },
   worklog: { version: "1.0.0", widgets: ["tokens_week", "work_week"] },
 };

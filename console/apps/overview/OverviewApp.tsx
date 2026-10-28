@@ -1,11 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Button, Card, ErrorBanner, KeyValue, Skeleton } from "@/components/ui";
-import { Age } from "@console/components/Age";
+import { KeyValue } from "@/components/ui";
 import { Sparkline } from "@console/components/Charts";
-import { useErrorText } from "@console/components/useErrorText";
-import { useRefresh, useSnapshot } from "@console/components/data";
+import { SnapshotPanel as Panel } from "@console/components/SnapshotPanel";
 import type { AppPageProps } from "@console/lib/manifest";
 
 interface PeoplePayload {
@@ -40,52 +38,6 @@ export function RecordingsWidget({
         label={t("recordingsChart")}
       />
     </div>
-  );
-}
-
-/** A panel drawn from its snapshot, with its age and the button that retakes it. */
-function Panel<T>({
-  panelKey,
-  title,
-  children,
-}: {
-  panelKey: string;
-  title: string;
-  children: (payload: T) => React.ReactNode;
-}) {
-  const t = useTranslations("console.overview");
-  const errorText = useErrorText();
-  const snapshot = useSnapshot(panelKey);
-  const refresh = useRefresh();
-  return (
-    <Card inset>
-      <div className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-3">
-        <h2 className="type-heading">{title}</h2>
-        <div className="flex items-center gap-3">
-          {snapshot.data && <Age seconds={snapshot.data.age_seconds} />}
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={refresh.isPending}
-            onClick={() => refresh.mutate(panelKey)}
-          >
-            {t("refresh")}
-          </Button>
-        </div>
-      </div>
-      {refresh.isError && (
-        <div className="p-4">
-          <ErrorBanner message={errorText(refresh.error)} />
-        </div>
-      )}
-      {snapshot.isPending ? (
-        <Skeleton className="m-5 h-20" />
-      ) : snapshot.data ? (
-        children(snapshot.data.payload as T)
-      ) : (
-        <p className="px-5 py-6 text-[14px] text-ink-3">{t("never")}</p>
-      )}
-    </Card>
   );
 }
 

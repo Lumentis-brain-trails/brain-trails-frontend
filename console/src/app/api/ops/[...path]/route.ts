@@ -22,6 +22,7 @@ export const OPS_ALLOWED = [
   "widgets",
   "snapshots",
   "worklog",
+  "health",
 ] as const;
 
 type Ctx = { params: Promise<{ path: string[] }> };

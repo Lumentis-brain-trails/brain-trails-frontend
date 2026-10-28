@@ -4,11 +4,12 @@
  * `console.main` is on the backend.
  */
 import type { AppManifest } from "@console/lib/manifest";
+import { manifest as health } from "@apps/health/manifest";
 import { manifest as overview } from "@apps/overview/manifest";
 import { manifest as worklog } from "@apps/worklog/manifest";
 
 export const APPS: Record<string, AppManifest> = Object.fromEntries(
-  [overview, worklog].map((m) => [m.slug, m])
+  [health, overview, worklog].map((m) => [m.slug, m])
 );
 
 /** The app called `slug`, if this build draws it. */
