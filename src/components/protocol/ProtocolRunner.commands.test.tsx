@@ -428,4 +428,32 @@ describe("ProtocolRunner command port", () => {
       ended_by: "reload",
     });
   });
+
+  test("a runner resumed during a pause stays held until resume, then closes the pause", async () => {
+    const sink = createMemorySink();
+    const port = createLocalCommandPort();
+    const states: RunnerState[] = [];
+    render(
+      <ProtocolRunner
+        protocol={THREE_BLOCKS}
+        seed={1}
+        sink={sink}
+        commands={port}
+        onState={(s) => states.push(s)}
+        resume={{ stepIndex: 1, seqFrom: 10, interrupted: false, held: true }}
+        onFinish={vi.fn()}
+        onExit={vi.fn()}
+      />
+    );
+    expect(screen.getByText(messages.run.runner.paused)).toBeInTheDocument();
+    expect(states.at(-1)).toMatchObject({ status: "paused", stepIndex: 0 });
+    await advance(5000);
+    // nothing started while held
+    expect(labels(sink.all())).toEqual(["run_reloaded"]);
+    send(port, "resume");
+    expect(screen.getByText("Step two")).toBeInTheDocument();
+    const resumed = sink.all().find((m) => m.label === "run_resumed");
+    expect(resumed?.meta).toMatchObject({ after_reload: true });
+    expect(labels(sink.all())).toContain("block_start");
+  });
 });

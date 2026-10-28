@@ -151,14 +151,21 @@ describe("resuming a reloaded participant window", () => {
     ).toMatchObject({ interrupted: false, seqFrom: 4 });
   });
 
-  test("a run held between blocks resumes at the next one; a finished plan does not", () => {
+  test("a run held between blocks resumes held at the next one; a finished plan does not", () => {
     const paused = { ...running(0, "a"), status: "paused" as const };
     expect(resumePoint(paused, [marker(0, "block_end", "a")], 2)).toEqual({
       stepIndex: 1,
       seqFrom: 1,
       interrupted: false,
+      held: true,
     });
     expect(resumePoint(paused, [], 1)).toBeNull();
+  });
+
+  test("a run whose notice was still up starts afresh", () => {
+    const notice = { ...running(0, "a"), status: "warning" as const };
+    expect(resumePoint(notice, [], 2)).toBe("fresh");
+    expect(resumePoint(null, [], 2)).toBe("fresh");
   });
 
   test("the merged timeline has every marker once, in seq order", () => {

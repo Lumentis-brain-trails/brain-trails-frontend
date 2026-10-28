@@ -104,6 +104,12 @@ export interface RunResume {
   seqFrom: number;
   /** The block on screen started and never ended: close it before running it again. */
   interrupted: boolean;
+  /**
+   * The run was held between blocks (a pause) when the window went: the new one starts
+   * held before `stepIndex`, and only `resume` moves it on (logging `run_resumed`, which
+   * closes the pause the lost window opened).
+   */
+  held?: boolean;
 }
 
 /** Where a runner receives commands from. */

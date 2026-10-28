@@ -168,7 +168,10 @@ export function ProtocolRunner({
       ? "warning"
       : "running"
   );
-  const [stepIndex, setStepIndex] = useState(resume?.stepIndex ?? 0);
+  // A run resumed while held stays on the block it had finished, as a live hold does.
+  const [stepIndex, setStepIndex] = useState(
+    resume?.held ? Math.max(0, resume.stepIndex - 1) : (resume?.stepIndex ?? 0)
+  );
   // A repeated block runs again under a new key; `attemptRef` lets a kind's timer from
   // the attempt the operator cut short see that it is no longer the one on screen.
   const [attempt, setAttempt] = useState(0);
@@ -176,6 +179,17 @@ export function ProtocolRunner({
   // Seconds `extend_rest` added to the step on screen, and which step that was.
   const [extension, setExtension] = useState({ step: -1, s: 0 });
   const extraS = extension.step === stepIndex ? extension.s : 0;
+  // Held between blocks: a pause, or a window resumed during one (`resume.held`).
+  const [hold, setHold] = useState<{
+    next: number;
+    since: number;
+    reloaded?: boolean;
+  } | null>(() =>
+    resume?.held
+      ? { next: resume.stepIndex, since: performance.now(), reloaded: true }
+      : null
+  );
+  const holdRef = useRef(hold);
   // The participant can override the OS preference on the notice screen.
   const osReducedMotion = useOsReducedMotion();
   const [motionOverride, setMotionOverride] = useState<boolean | null>(null);
@@ -338,7 +352,14 @@ export function ProtocolRunner({
   const reloadedBlockRef = useRef(resume?.interrupted ?? false);
   useLayoutEffect(() => {
     const key = `${stepIndex}#${attempt}`;
-    if (screen !== "running" || !step || startedStepRef.current === key) return;
+    // held between blocks (a pause, or a window resumed during one): nothing starts
+    if (
+      screen !== "running" ||
+      !step ||
+      holdRef.current ||
+      startedStepRef.current === key
+    )
+      return;
     startedStepRef.current = key;
     // trial ids restart with each block
     lastTrialRef.current = null;
@@ -367,7 +388,7 @@ export function ProtocolRunner({
     if (step.startMarker)
       emitForStep({ label: step.startMarker, kind: "stage" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, stepIndex, attempt]);
+  }, [screen, stepIndex, attempt, hold]);
 
   /**
    * A backgrounded tab throttles rAF to nothing, so a protocol that kept counting would
@@ -430,10 +451,6 @@ export function ProtocolRunner({
    * (`pausePendingRef`); the run then holds before the next block (`hold`) until
    * `resume`. Refs mirror the state so two commands in the same tick see each other.
    */
-  const [hold, setHold] = useState<{ next: number; since: number } | null>(
-    null
-  );
-  const holdRef = useRef(hold);
   const [pausePending, setPausePending] = useState(false);
   const pausePendingRef = useRef(false);
   const [message, setMessage] = useState<{ id: string; text: string } | null>(
@@ -584,7 +601,11 @@ export function ProtocolRunner({
             {
               label: "run_resumed",
               kind: "system",
-              meta: { paused_ms: Math.round(now - held.since) },
+              meta: {
+                paused_ms: Math.round(now - held.since),
+                // the lost window opened this pause; only its end is timed here
+                ...(held.reloaded ? { after_reload: true } : {}),
+              },
             },
             now
           );

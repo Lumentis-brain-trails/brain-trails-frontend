@@ -267,6 +267,13 @@ function Console({
   const [participant, setParticipant] = useState<Participant>("closed");
   const [resumedNotice, setResumedNotice] = useState(false);
   const [runner, setRunner] = useState<RunnerState | null>(null);
+  // what the channel handler reads: the latest, not the render it was made in
+  const participantRef = useRef(participant);
+  const runnerRef = useRef(runner);
+  useEffect(() => {
+    participantRef.current = participant;
+    runnerRef.current = runner;
+  });
   const markers = useRef<Marker[]>([]);
   const [ticker, setTicker] = useState<
     { seq: number; label: string; tS: number }[]
@@ -330,27 +337,33 @@ function Console({
             return;
           }
           // a second window while the first still runs: it cannot take over
-          if (participant === "open" || closing.current) {
+          if (participantRef.current === "open" || closing.current) {
             channelRef.current?.post({ type: "detached" });
             return;
           }
           // the participant's window reloaded (or was reopened): it continues the run
           const boot = bootRef.current;
           const resume = boot
-            ? resumePoint(runner, markers.current, boot.plan.steps.length)
+            ? resumePoint(
+                runnerRef.current,
+                markers.current,
+                boot.plan.steps.length
+              )
             : null;
           if (!boot || !resume) {
             channelRef.current?.post({ type: "detached" });
             return;
           }
-          resumed.current = true;
+          const fresh = resume === "fresh";
+          if (!fresh) resumed.current = true;
           channelRef.current?.post({
             type: "boot",
             boot: {
               ...boot,
               fit: muse.readTimelineFit() ?? boot.fit,
               origin: performance.timeOrigin,
-              resume,
+              // a run not begun yet starts over: the notice, then session_start
+              ...(fresh ? {} : { resume }),
             },
           });
           setParticipant("open");

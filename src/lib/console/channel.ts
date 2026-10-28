@@ -184,9 +184,10 @@ export function teeSink(
  * Where a reloaded participant window should pick the run up, from what the console
  * knows: the runner's last state and every marker it mirrored.
  *
- * A run held between blocks resumes at the block it was about to start; otherwise the
- * block that was on screen runs again, and is `interrupted` when its `block_start` never
- * got a `block_end`. Markers continue after the highest `seq` seen, so nothing the new
+ * A run held between blocks resumes held before the block it was about to start, and
+ * moves on only with `resume`; otherwise the block that was on screen runs again, and is
+ * `interrupted` when its `block_start` never got a `block_end`. A run whose notice was
+ * still up (`warning`, or no state yet) had not begun: `"fresh"`, boot it as new. Markers continue after the highest `seq` seen, so nothing the new
  * window stamps can be taken for something the lost one sent. Null once the plan is
  * done: there is nothing left to run.
  */
@@ -194,7 +195,10 @@ export function resumePoint(
   state: RunnerState | null,
   markers: readonly Marker[],
   steps: number
-): RunResume | null {
+): RunResume | "fresh" | null {
+  // the participant had not begun (the notice was up): the new window starts afresh,
+  // notice and `session_start` included
+  if (!state || state.status === "warning") return "fresh";
   const stepIndex = !state
     ? 0
     : state.status === "paused"
@@ -212,10 +216,12 @@ export function resumePoint(
     else if (m.label === "block_end" && m.meta?.step_id === state?.stepId)
       open = false;
   }
+  const held = state.status === "paused";
   return {
     stepIndex,
     seqFrom,
-    interrupted: state?.status !== "paused" && open,
+    interrupted: !held && open,
+    ...(held ? { held: true } : {}),
   };
 }
 

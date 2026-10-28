@@ -297,6 +297,33 @@ test("a participant window reloaded mid-run is booted again where the run was", 
   participant.close();
 }, 30_000);
 
+test("a participant window reloaded on the notice starts the run afresh", async () => {
+  const { participant, heard } = await startRun("run-notice");
+  // the participant had not pressed Begin yet
+  participant.postMessage({
+    type: "state",
+    state: {
+      status: "warning",
+      stepIndex: 0,
+      stepId: "free",
+      pausePending: false,
+      extendable: false,
+      attempt: 0,
+      message: null,
+    },
+  });
+  await act(() => new Promise((r) => setTimeout(r, 50)));
+  participant.postMessage({ type: "gone" });
+  await screen.findByText(messages.console.participantGone);
+  participant.postMessage({ type: "hello" });
+  await waitFor(() =>
+    expect(heard.filter((m) => m.type === "boot").length).toBe(2)
+  );
+  const again = heard.filter((m) => m.type === "boot").at(-1);
+  expect(again?.type === "boot" && again.boot.resume).toBeUndefined();
+  participant.close();
+}, 30_000);
+
 test("a dropped headband asks the runner to stop and closes on its exited", async () => {
   const { participant, heard, muse } = await startRun("run-drop");
 
