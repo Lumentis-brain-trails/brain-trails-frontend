@@ -264,6 +264,221 @@
         "failedJobs": "{loops} in a retry loop · {stale} stale",
         "restarts": "{oom} out of memory · {pods} pods"
       }
+    },
+    "betaTesters": {
+      "intro": "Who gets into the beta and who is in it. Moved here from the app's Admin pages: every decision is the product's own, made with your product account and recorded in its audit log.",
+      "sections": "Sections",
+      "applications": "Applications",
+      "people": "People",
+      "organisations": "Organisations",
+      "widgets": {
+        "pending": "{stand} from the stand · {organisations} organisations"
+      }
+    },
+    "moderation": {
+      "intro": "What is published, and who is called to the stand. Moved here from the app's Admin pages: every act is the product's own, made with your product account and recorded in its audit log.",
+      "sections": "Sections",
+      "review": "Publication review",
+      "locks": "Catalog locks",
+      "fair": "The stand",
+      "widgets": {
+        "queue": "{media} media · {protocols} protocols · {stand} at the stand"
+      }
+    }
+  },
+  "admin": {
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "active": "Active",
+      "rejected": "Rejected"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "intro": "Participants and input statistics across the prototype.",
+      "links": {
+        "fair": "The stand",
+        "protocols": "Catalog locks",
+        "review": "Publication review",
+        "applications": "Review applications",
+        "organisations": "Organisations"
+      },
+      "loadFailed": "Could not load statistics.",
+      "stats": {
+        "active": "Active participants",
+        "pending": "Pending review",
+        "rejected": "{count, plural, other {# rejected}}",
+        "recordings": "Recordings",
+        "liveSessions": "{count, plural, one {# live session} other {# live sessions}}",
+        "minutes": "Minutes of signal",
+        "failedJobs": "{count, plural, one {# failed job} other {# failed jobs}}"
+      },
+      "byTask": {
+        "title": "Recordings by task",
+        "empty": "No recordings yet."
+      },
+      "uploads": {
+        "title": "Uploads, last 14 days",
+        "empty": "No uploads yet.",
+        "aria": "Uploads per day"
+      },
+      "valueOf": "{label}: {value}",
+      "participants": {
+        "title": "Participants",
+        "participant": "Participant",
+        "status": "Status",
+        "recordings": "Recordings",
+        "minutes": "Minutes",
+        "lastActivity": "Last activity",
+        "allApplications": "All applications"
+      }
+    },
+    "applications": {
+      "title": "Applications",
+      "intro": "Who joins the beta, and in which cohort.",
+      "decision": "Decision",
+      "tabs": {
+        "pending": "Pending",
+        "waitlisted": "Waitlisted",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "Nothing pending.",
+        "waitlisted": "Nothing waitlisted.",
+        "accepted": "Nothing accepted.",
+        "rejected": "Nothing rejected."
+      },
+      "forbidden": "Admin role required.",
+      "profile": "Profile",
+      "cohort": "Cohort",
+      "allProfiles": "All profiles",
+      "allCohorts": "All cohorts",
+      "profiles": {
+        "private": "Private",
+        "therapist": "Therapist",
+        "lab_lead": "Lab lead",
+        "lab_member": "Lab member"
+      },
+      "meta": "{profile} · {email} · applied {date}{inCohort, select, yes { · {cohort}} other {}}",
+      "answers": {
+        "labels": {
+          "registration_no": "Registration no.",
+          "headband": "Headband",
+          "device": "Device",
+          "expected_subjects": "Expected subjects"
+        },
+        "webBluetooth": "Web Bluetooth",
+        "bluetoothUnknown": "Not reported",
+        "bluetoothYes": "Yes",
+        "bluetoothNo": "No - cannot pair here"
+      },
+      "verification": {
+        "manual": "Manual mail mode: send this verification link to the applicant.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "reissue": "Generate a fresh verification link"
+      },
+      "cohorts": {
+        "title": "Cohorts",
+        "empty": "No cohort yet. Create one to build the sample on purpose.",
+        "counts": "{accepted}{hasTarget, select, yes { / {target}} other {}} accepted · {waitlisted} waitlisted",
+        "new": "New cohort",
+        "anyProfile": "Any",
+        "target": "Target",
+        "add": "Add"
+      },
+      "decide": {
+        "noCohort": "No cohort",
+        "note": "Note (admins only)",
+        "accept": "Accept",
+        "waitlist": "Waitlist",
+        "reject": "Reject"
+      }
+    },
+    "fair": {
+      "title": "The stand",
+      "intro": "While the stand is open, registration asks whether someone would like to try the headband. They can then walk away: calling them sends an email saying their turn is about five minutes off.",
+      "open": "The stand is open.",
+      "closed": "The stand is closed.",
+      "openHint": "New registrations are being asked the question.",
+      "closedHint": "Closing does not empty the queue — people already in it keep their turn.",
+      "openAction": "Open the stand",
+      "closeAction": "Close the stand",
+      "stats": {
+        "waiting": "Waiting",
+        "called": "Called",
+        "done": "Done",
+        "declined": "Not any more"
+      },
+      "states": {
+        "done": "done",
+        "declined": "not any more"
+      },
+      "conversion": "{converted} of {tried} who tried the headband asked to be beta testers ({percent}%).",
+      "wantsBeta": "Asked to be a beta tester",
+      "queue": "In the queue",
+      "nobody": "Nobody is waiting.",
+      "calledAgo": "called{when, select, now { just now} minutes { {n} min ago} hours { {n} h ago} other {}}",
+      "signedUp": "{email} · signed up {when, select, now {just now} minutes {{n} min ago} hours {{n} h ago} other {}}",
+      "call": "Call",
+      "callAgain": "Call again",
+      "done": "Done",
+      "gone": "Gone",
+      "seenTo": "Seen to",
+      "toast": {
+        "emailed": "Emailed {email}.",
+        "done": "Marked done.",
+        "declined": "Taken off the queue."
+      }
+    },
+    "protocols": {
+      "title": "Catalog locks",
+      "intro": "A locked protocol is still listed — people see what is coming — but it cannot be started. Changes take effect at once; a run already under way finishes.",
+      "changeFailed": "Could not change the lock.",
+      "official": "Official protocols",
+      "startable": "{open} of {total} can be started",
+      "empty": "No official protocols yet.",
+      "locked": "locked",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "toast": {
+        "locked": "Locked.",
+        "unlocked": "Unlocked."
+      }
+    },
+    "review": {
+      "title": "Review",
+      "intro": "Protocols and items people asked to share with the community.",
+      "loadFailed": "The queue could not be loaded.",
+      "empty": "Nothing to review.",
+      "protocols": "Protocols",
+      "media": "Media",
+      "approve": "Approve",
+      "refuse": "Refuse",
+      "hide": "Hide",
+      "meta": "version {version}{timed, select, yes { · {duration}} other {}}{tagged, select, yes { · {tags}} other {}}",
+      "contentWarning": "Content warning: {warning}"
+    },
+    "organisations": {
+      "title": "Organisations",
+      "intro": "Clinics and laboratories asked for by users. Approving makes the requester the owner; it gives you nothing inside.",
+      "unavailable": "Organisations are off in this environment.",
+      "tabs": {
+        "pending": "Waiting",
+        "active": "Approved",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "No requests waiting.",
+        "active": "No approved organisations yet.",
+        "rejected": "No rejected requests."
+      },
+      "line": "{kind} · {email} · {date}",
+      "gone": "account deleted",
+      "seats": "{count, plural, one {# seat} other {# seats}}",
+      "approve": "Approve",
+      "reject": "Reject"
     }
   }
 }
