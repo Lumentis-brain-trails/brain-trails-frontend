@@ -6,7 +6,8 @@
  * Two floating columns, one per block, whose rows line up across them (one grid, each
  * column a subgrid, so a tall cell on the left pushes the same row down on the right):
  *
- * 1. the block, chosen from the ones the run actually played;
+ * 1. the block, chosen from the ones the run actually played (it opens on the protocol's
+ *    first two main segments, `defaultPair`);
  * 2. its stretch of the brain trail, on the session's terrain, with a slider through it;
  * 3. what was on screen at the slider's moment;
  * 4. then rows the reader adds and removes - band power, neurometrics, task scores -
@@ -66,12 +67,39 @@ export interface PlanStep {
   kind?: string;
   label?: string;
   config?: Record<string, unknown>;
+  /** The block node behind the step; `main` marks a main segment (the builder's). */
+  block?: { main?: boolean };
 }
 
-/** Left: the first baseline (the reference state); right: the first task, else the next. */
-export function defaultPair(blocks: readonly BlockMetrics[]): [string, string] {
+/**
+ * The two blocks the view opens on.
+ *
+ * The protocol's own main segments come first: the first two the run played, in order,
+ * each at its first repetition (a looped main segment counts once, so two marked blocks
+ * meet even when the first one repeats). With one, it goes on the right and the
+ * reference state on the left. With none (an
+ * older protocol, or one that marks nothing): the first baseline on the left, the first
+ * task on the right, else the next block.
+ */
+export function defaultPair(
+  blocks: readonly BlockMetrics[],
+  steps: Readonly<Record<string, PlanStep>> = {}
+): [string, string] {
+  const seen = new Set<string>();
+  const main = blocks.filter((b) => {
+    if (steps[b.block_id]?.block?.main !== true || seen.has(b.block_id))
+      return false;
+    seen.add(b.block_id);
+    return true;
+  });
+  if (main.length >= 2) return [main[0].key, main[1].key];
+  const others =
+    main.length === 1
+      ? blocks.filter((b) => b.block_id !== main[0].block_id)
+      : blocks;
   const left =
-    blocks.find((b) => b.kind === "baseline")?.key ?? blocks[0]?.key ?? "";
+    others.find((b) => b.kind === "baseline")?.key ?? others[0]?.key ?? "";
+  if (main.length === 1) return [left || main[0].key, main[0].key];
   const right =
     blocks.find((b) => b.key !== left && b.behaviour)?.key ??
     blocks.find((b) => b.key !== left)?.key ??
@@ -101,7 +129,7 @@ export function CompareView({
   videoAt: (t: number) => FrameVideo | null;
 }) {
   const tr = useTranslations("compare");
-  const [pair, setPair] = useState(() => defaultPair(blocks));
+  const [pair, setPair] = useState(() => defaultPair(blocks, steps));
   const [moments, setMoments] = useState<Record<string, number>>({});
   const [rows, setRows] = useState<RowId[]>(() => readRows());
   const [focus, setFocus] = useState<[Focus, Focus]>([

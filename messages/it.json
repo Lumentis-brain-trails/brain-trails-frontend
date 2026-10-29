@@ -432,7 +432,9 @@
       "total": "Totale {time}",
       "group_blocks": "Gruppo · {count, plural, one {# blocco} other {# blocchi}}",
       "errors": "{count, plural, one {# errore} other {# errori}}",
-      "warnings": "{count, plural, one {# avviso} other {# avvisi}}"
+      "warnings": "{count, plural, one {# avviso} other {# avvisi}}",
+      "main": "Principale",
+      "main_hint": "Un segmento principale: la pagina della registrazione confronta i primi due."
     },
     "bin": {
       "title": "Materiali",
@@ -480,7 +482,9 @@
       "pre_fixation_s_hint": "Mostra una croce di fissazione per questa durata prima che il blocco inizi, per stabilizzare lo sguardo.",
       "jitter_s_hint": "Aggiunge un tempo casuale, fino a questo valore, alla croce prima del blocco, così il partecipante non può prevedere l'inizio esatto.",
       "post_rest_s_hint": "Uno schermo vuoto per questa durata dopo il blocco, per lasciare che il segnale torni a riposo.",
-      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato."
+      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato.",
+      "main": "Segmento principale",
+      "main_hint": "La pagina della registrazione apre il confronto sui primi due segmenti principali eseguiti. Segna i tratti su cui si basa il protocollo."
     },
     "group_action": "Raggruppa",
     "monitor": {
