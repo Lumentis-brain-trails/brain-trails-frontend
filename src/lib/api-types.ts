@@ -1977,7 +1977,8 @@ export interface paths {
          *     The timeline is the stored parts plus any events re-sent here, de-duplicated on
          *     `(t, type, seq)` and sorted by `t`; the parts are then removed. When an operator's
          *     console drove the run, `summary.operator_commands` counts its commands by kind
-         *     (V3-0007); it is absent otherwise.
+         *     (V3-0007); it is absent otherwise, and each command is one `live.command` in the usage
+         *     log. `bt_sessions_total` is labelled with the session's `console`.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
         delete?: never;
@@ -2971,7 +2972,8 @@ export interface components {
          *     `prestimulus`, its windows' trial `labels` (one per window whose start falls in the
          *     block, null where no trial onset falls in the window) and the average person's
          *     `norm`; any block may carry `cardiac` and `dynamics`, and a heartbeat-counting block
-         *     `interoception`. All are null where they do not apply and on older analyses.
+         *     `interoception`, and a neurofeedback block `neurofeedback`. All are null where they
+         *     do not apply and on older analyses.
          */
         BlockMetricsOut: {
             /** Artefact */
@@ -3013,6 +3015,7 @@ export interface components {
             n_windows: number;
             /** Node Path */
             node_path: string | null;
+            neurofeedback?: components["schemas"]["NeurofeedbackOut"] | null;
             norm?: components["schemas"]["BlockNormOut"] | null;
             prestimulus?: components["schemas"]["PrestimulusOut"] | null;
             /** Ratios */
@@ -3401,6 +3404,8 @@ export interface components {
                 library_v2: boolean;
                 /** @description TOTP enforced for anyone who can see another person's data (S26). */
                 mfa_required: boolean;
+                /** @description Live neurofeedback block: band power drives a video (V4-0009, T5b). */
+                neurofeedback: boolean;
                 /** @description Protocol model, runtime, official templates, protocol from media (S18). */
                 protocols: boolean;
                 /** @description Recording review with annotations (S20). */
@@ -4387,6 +4392,107 @@ export interface components {
             };
         };
         /**
+         * NeurofeedbackOut
+         * @description What a neurofeedback block did (V4-0009), from its own timeline events.
+         *
+         *     Shares are over the training's updates (~10.7 a second); `time_in_target_s` counts
+         *     in-target updates as 24 samples each. `trajectory` is `[t, threshold]` per change.
+         *     The value is relative power for a band, the ratio itself for a ratio.
+         */
+        NeurofeedbackOut: {
+            /** Baseline Extended */
+            baseline_extended: boolean;
+            /** Baseline Failed */
+            baseline_failed: boolean;
+            /** Baseline Updates */
+            baseline_updates: number;
+            /** Channels */
+            channels: string[] | null;
+            /** Clean Updates */
+            clean_updates: number;
+            /** Direction */
+            direction: string | null;
+            /** Gated */
+            gated: {
+                [key: string]: number;
+            };
+            /** Gated Share */
+            gated_share: number | null;
+            /** In Target Share */
+            in_target_share: number | null;
+            latency_ms: components["schemas"]["NfLatencyOut"];
+            replay?: components["schemas"]["NfReplayOut"] | null;
+            /** Signal */
+            signal: string | null;
+            threshold: components["schemas"]["NfThresholdOut"];
+            /** Time In Target S */
+            time_in_target_s: number;
+            /** Training Updates */
+            training_updates: number;
+            /** Trajectory */
+            trajectory: (number | null)[][];
+            value: components["schemas"]["NfQuantilesOut"];
+        };
+        /**
+         * NfLatencyOut
+         * @description Measured `age_ms` of the updates: packet arrival to the frame that showed it.
+         */
+        NfLatencyOut: {
+            /** Median */
+            median: number | null;
+            /** P95 */
+            p95: number | null;
+        };
+        /**
+         * NfQuantilesOut
+         * @description Median and 10th/90th percentiles of the smoothed value over clean training.
+         */
+        NfQuantilesOut: {
+            /** Median */
+            median: number | null;
+            /** P10 */
+            p10: number | null;
+            /** P90 */
+            p90: number | null;
+        };
+        /**
+         * NfReplayOut
+         * @description The browser's values recomputed from the uploaded EEG (V4-0009, hazard H12).
+         *
+         *     `gate_agreement` is the share of compared updates whose gate matches; for the clean
+         *     ones, `value_agreement` the share within 0.1% and `max_relative_error` the worst.
+         */
+        NfReplayOut: {
+            /** Compared */
+            compared: number;
+            /** Gate Agreement */
+            gate_agreement: number;
+            /** Max Relative Error */
+            max_relative_error: number | null;
+            /** Updates */
+            updates: number;
+            /** Value Agreement */
+            value_agreement: number | null;
+        };
+        /**
+         * NfThresholdOut
+         * @description The threshold over the block: first and last value, range, changes and nudges.
+         */
+        NfThresholdOut: {
+            /** Changes */
+            changes: number;
+            /** End */
+            end: number | null;
+            /** Max */
+            max: number | null;
+            /** Min */
+            min: number | null;
+            /** Nudges */
+            nudges: number;
+            /** Start */
+            start: number | null;
+        };
+        /**
          * NogoTypeOut
          * @description One kind of no-go trial of a cued block (`red_cargo`, `green_debris`, ...).
          */
@@ -5075,7 +5181,8 @@ export interface components {
          *     subject's own account at home, or a carer in the studio; the assignment's pinned
          *     version runs and the run counts towards it when it finishes. `acknowledged` names
          *     the warnings the person read before Start: `photosensitivity` is required for a
-         *     version with visual blocks (H4).
+         *     version with visual blocks (H4). `console` says an operator's console drives the
+         *     run: `local` from the console on the same machine (T1).
          */
         SessionStartIn: {
             /** Acknowledged */
@@ -5088,6 +5195,12 @@ export interface components {
              * @enum {string}
              */
             capture: "upload" | "stream";
+            /**
+             * Console
+             * @default none
+             * @enum {string}
+             */
+            console: "none" | "local";
             /**
              * Device
              * @default muse-2

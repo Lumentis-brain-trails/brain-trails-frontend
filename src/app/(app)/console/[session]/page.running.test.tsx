@@ -18,6 +18,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import messages from "../../../../../messages/en.json";
 import { type ChannelMessage, channelName } from "@/lib/console/channel";
 import { SimulatedMuse } from "@/lib/muse/device";
+import type { Marker } from "@/lib/protocol/marker";
 import ConsolePage from "./page";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -177,6 +178,11 @@ async function startRun(runKey: string) {
       screen.getByRole("button", { name: messages.run.preflight.start })
     );
   });
+  // a console run says so, for the stats (T1)
+  expect(post).toHaveBeenCalledWith(
+    "sessions",
+    expect.objectContaining({ console: "local" })
+  );
   // the console boots the participant's window once the headband clock is fitted
   await waitFor(() => expect(heard.some((m) => m.type === "boot")).toBe(true), {
     timeout: 8000,
@@ -188,6 +194,8 @@ async function startRun(runKey: string) {
       stepIndex: 0,
       stepId: "free",
       pausePending: false,
+      extendable: false,
+      attempt: 0,
       message: null,
     },
   });
@@ -203,17 +211,10 @@ async function startRun(runKey: string) {
 const finishCalls = () =>
   post.mock.calls.filter(([path]) => path === "sessions/s1/finish");
 
-test("a participant window reloaded mid-run stays lost, and stop-and-save still works", async () => {
+test("a participant window closed mid-run is lost until it is opened again; stop-and-save works", async () => {
   const { participant, heard } = await startRun("run-lost");
 
-  // the window reloads: it goes, then a new one says hello
   participant.postMessage({ type: "gone" });
-  participant.postMessage({ type: "hello" });
-
-  // the new window is told it cannot resume, and the console does not look healthy
-  await waitFor(() =>
-    expect(heard.some((m) => m.type === "detached")).toBe(true)
-  );
   expect(
     await screen.findByText(messages.console.participantGone)
   ).toBeInTheDocument();
@@ -222,15 +223,9 @@ test("a participant window reloaded mid-run stays lost, and stop-and-save still 
     screen.getByRole("button", { name: messages.console.commands.endBlock })
   ).toBeDisabled();
   expect(
-    screen.getByRole("button", { name: messages.console.commands.abort })
-  ).toBeDisabled();
-
-  // another hello does not bring it back
-  participant.postMessage({ type: "hello" });
-  await act(() => new Promise((r) => setTimeout(r, 50)));
-  expect(
-    screen.getByText(messages.console.participantGone)
+    screen.getByRole("button", { name: messages.console.participant.reopen })
   ).toBeInTheDocument();
+  expect(heard.some((m) => m.type === "detached")).toBe(false);
 
   await act(async () => {
     fireEvent.click(
@@ -241,6 +236,97 @@ test("a participant window reloaded mid-run stays lost, and stop-and-save still 
     timeout: 5000,
   });
   expect(finishCalls()[0][1]).toMatchObject({ aborted: true });
+  participant.close();
+}, 30_000);
+
+test("a participant window reloaded mid-run is booted again where the run was", async () => {
+  const { participant, heard } = await startRun("run-reload");
+  const stamp = (seq: number, label: string, meta = {}) => ({
+    label,
+    kind: "stage",
+    tMonotonicMs: seq,
+    tRunMs: seq,
+    tSessionS: seq / 1000,
+    seq,
+    meta: { step_id: "free", ...meta },
+  });
+  participant.postMessage({ type: "marker", marker: stamp(0, "block_start") });
+  participant.postMessage({ type: "marker", marker: stamp(1, "rest_start") });
+  // the lost window had its first marker acknowledged before it went
+  participant.postMessage({ type: "acked", seqs: [0] });
+
+  // the window reloads: it goes, then the new one says hello
+  participant.postMessage({ type: "gone" });
+  await screen.findByText(messages.console.participantGone);
+  participant.postMessage({ type: "hello" });
+
+  await waitFor(() =>
+    expect(heard.filter((m) => m.type === "boot" && m.boot.resume).length).toBe(
+      1
+    )
+  );
+  const boot = heard.find((m) => m.type === "boot" && m.boot.resume);
+  expect(boot?.type === "boot" && boot.boot.resume).toEqual({
+    stepIndex: 0,
+    seqFrom: 2,
+    interrupted: true,
+  });
+  expect(
+    await screen.findByText(messages.console.participantResumed)
+  ).toBeInTheDocument();
+  expect(screen.queryByText(messages.console.participantGone)).toBeNull();
+  expect(heard.some((m) => m.type === "detached")).toBe(false);
+
+  // a second window while this one runs cannot take over
+  participant.postMessage({ type: "hello" });
+  await waitFor(() =>
+    expect(heard.some((m) => m.type === "detached")).toBe(true)
+  );
+
+  // the end: the timeline is both windows', once each
+  participant.postMessage({
+    type: "finished",
+    results: [],
+    markers: [
+      stamp(2, "block_end", { ended_by: "reload" }),
+      stamp(3, "block_start"),
+    ],
+  });
+  await waitFor(() => expect(finishCalls()).toHaveLength(1), {
+    timeout: 5000,
+  });
+  // a reloaded run sends what neither window had acknowledged, through the events endpoint
+  const sent = post.mock.calls
+    .filter(([path]) => path === "sessions/s1/events")
+    .flatMap(([, body]) => (body as { events: { seq: number }[] }).events);
+  expect(sent.map((e) => e.seq)).toEqual([1, 2, 3]);
+  participant.close();
+}, 30_000);
+
+test("a participant window reloaded on the notice starts the run afresh", async () => {
+  const { participant, heard } = await startRun("run-notice");
+  // the participant had not pressed Begin yet
+  participant.postMessage({
+    type: "state",
+    state: {
+      status: "warning",
+      stepIndex: 0,
+      stepId: "free",
+      pausePending: false,
+      extendable: false,
+      attempt: 0,
+      message: null,
+    },
+  });
+  await act(() => new Promise((r) => setTimeout(r, 50)));
+  participant.postMessage({ type: "gone" });
+  await screen.findByText(messages.console.participantGone);
+  participant.postMessage({ type: "hello" });
+  await waitFor(() =>
+    expect(heard.filter((m) => m.type === "boot").length).toBe(2)
+  );
+  const again = heard.filter((m) => m.type === "boot").at(-1);
+  expect(again?.type === "boot" && again.boot.resume).toBeUndefined();
   participant.close();
 }, 30_000);
 
@@ -279,5 +365,41 @@ test("a dropped headband with a silent runner still closes after the grace perio
   await waitFor(() => expect(finishCalls()).toHaveLength(1), {
     timeout: 6000,
   });
+  participant.close();
+}, 30_000);
+
+test("a finished run sends only what no window had acknowledged", async () => {
+  const { participant } = await startRun("run-acked");
+  const stamp = (seq: number, label: string): Marker => ({
+    label,
+    kind: "stage",
+    tSessionS: seq,
+    tMonotonicMs: seq,
+    tRunMs: seq,
+    seq,
+    meta: {},
+  });
+  // the console mirrored four markers; the window's sink had three acknowledged
+  for (const [seq, label] of [
+    [0, "session_start"],
+    [1, "block_start"],
+    [2, "nf_update"],
+    [3, "block_end"],
+  ] as const)
+    participant.postMessage({ type: "marker", marker: stamp(seq, label) });
+  participant.postMessage({ type: "acked", seqs: [0, 1, 2] });
+  participant.postMessage({
+    type: "finished",
+    results: [],
+    markers: [0, 1, 2, 3].map((n) => stamp(n, "x")),
+  });
+  await waitFor(() => expect(finishCalls()).toHaveLength(1), {
+    timeout: 5000,
+  });
+  const sent = post.mock.calls
+    .filter(([path]) => path === "sessions/s1/events")
+    .flatMap(([, body]) => (body as { events: { seq: number }[] }).events);
+  expect(sent.map((e) => e.seq)).toEqual([3]);
+  expect(finishCalls()[0][1]).not.toHaveProperty("events");
   participant.close();
 }, 30_000);

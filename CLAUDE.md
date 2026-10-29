@@ -138,3 +138,16 @@ recording link). The **client shell** is the `(client)` route group (`ClientShel
 account whose `GET /auth/me` says `shell: client` is sent there by `AppShell` and has no
 other page. `/join` opens a subject's invitation into a client account
 (`POST /invitations/register`).
+
+## Neurofeedback (backend V4-0009, sprint T5b)
+
+Behind the flag `neurofeedback` (dev and beta; never prod clinics, by the backend's code).
+The kind is `src/components/protocol/kinds/NeurofeedbackTask.tsx`; everything it computes
+is in `src/lib/neurofeedback/` (pure): `spectrum.ts` (FFT, bands), `engine.ts` (value,
+artefact gate, smoothing, baseline threshold, nudges; clocked by the device sample index),
+`picture.ts` (the level and the luminance limit, H4), `panel.ts` (the console's fold of
+the `nf_*` events). It is the only kind that gets `TaskContext.signal` (the live EEG) and
+`TaskContext.adjustments` (`nudge_threshold`). In Play the packets come from `useMuse`'s
+`eegFeed`; with the console they cross the channel (`eeg` messages, `eegFeedFrom`).
+`schemas/neurofeedback-golden.json` is written by `engine.test.ts` (`npm run schemas`) and
+pins the backend's Python twin (`make schemas-sync` copies it).

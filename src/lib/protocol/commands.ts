@@ -20,9 +20,12 @@ export const COMMAND_TYPES = [
   "resume",
   "end_block",
   "skip_block",
+  "repeat_block",
+  "extend_rest",
   "message",
   "flag",
   "abort",
+  "nudge_threshold",
 ] as const;
 
 export type CommandType = (typeof COMMAND_TYPES)[number];
@@ -33,6 +36,12 @@ export const MESSAGE_MAX_CHARS = 280;
 /** How long a message stays on the participant's screen. */
 export const MESSAGE_SHOWN_MS = 10_000;
 
+/** How much one `extend_rest` adds to a timed rest. */
+export const EXTEND_REST_S = 30;
+
+/** The most steps one `nudge_threshold` may move a neurofeedback threshold (5% each). */
+export const NUDGE_MAX_STEPS = 5;
+
 /** The event type every command is logged under, whatever it did. */
 export const OPERATOR_COMMAND_EVENT = "operator_command";
 
@@ -42,6 +51,8 @@ export const operatorCommandSchema = z.object({
   type: z.enum(COMMAND_TYPES),
   /** The words of a `message`, or an optional note on a `flag`. */
   text: z.string().max(MESSAGE_MAX_CHARS).optional(),
+  /** `nudge_threshold`: how many 5% steps, up (positive) or down (V4-0009). */
+  steps: z.number().int().min(-NUDGE_MAX_STEPS).max(NUDGE_MAX_STEPS).optional(),
   /** Who asked: the console on this machine for now; a remote console from T5. */
   source: z.enum(["console"]).default("console"),
 });
@@ -51,7 +62,8 @@ export type OperatorCommand = z.infer<typeof operatorCommandSchema>;
 /**
  * Where a command takes effect.
  *
- * - `now`: as soon as it arrives (a message, a flag, abort, ending or skipping the block).
+ * - `now`: as soon as it arrives (a message, a flag, abort, ending, skipping or repeating
+ *   the block, adding time to a rest).
  * - `block_end`: when the block on screen ends by itself. A pause holds the run
  *   *between* blocks: no kind is cut in the middle of a stimulus, and no kind has to
  *   know how to freeze its own timers. Pausing inside a block is a later step: it needs
@@ -65,9 +77,12 @@ export const SAFE_POINTS: Record<CommandType, SafePoint> = {
   resume: "now",
   end_block: "now",
   skip_block: "now",
+  repeat_block: "now",
+  extend_rest: "now",
   message: "now",
   flag: "now",
   abort: "now",
+  nudge_threshold: "now",
 };
 
 /** What the runner did with a command, as the log records it. */
@@ -81,8 +96,29 @@ export interface RunnerState {
   stepId: string | null;
   /** A pause was asked for and waits for the block to end. */
   pausePending: boolean;
+  /** The step on screen is a timed rest, which `extend_rest` can lengthen. */
+  extendable: boolean;
+  /** How many times the operator repeated the step on screen (0 the first time). */
+  attempt: number;
   /** The operator's message on the participant's screen, if any. */
   message: string | null;
+  /** The step on screen is a neurofeedback block, whose threshold `nudge_threshold` moves. */
+  nudgeable?: boolean;
+}
+
+/** Where a reloaded participant window picks a console run up (`ProtocolRunner`). */
+export interface RunResume {
+  stepIndex: number;
+  /** The first marker `seq` the new window may use. */
+  seqFrom: number;
+  /** The block on screen started and never ended: close it before running it again. */
+  interrupted: boolean;
+  /**
+   * The run was held between blocks (a pause) when the window went: the new one starts
+   * held before `stepIndex`, and only `resume` moves it on (logging `run_resumed`, which
+   * closes the pause the lost window opened).
+   */
+  held?: boolean;
 }
 
 /** Where a runner receives commands from. */
@@ -112,7 +148,11 @@ export function createLocalCommandPort(): LocalCommandPort {
 let counter = 0;
 
 /** A command with a fresh id; `text` is trimmed and capped. */
-export function makeCommand(type: CommandType, text?: string): OperatorCommand {
+export function makeCommand(
+  type: CommandType,
+  text?: string,
+  steps?: number
+): OperatorCommand {
   counter += 1;
   const random =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -124,5 +164,6 @@ export function makeCommand(type: CommandType, text?: string): OperatorCommand {
     type,
     source: "console",
     ...(trimmed ? { text: trimmed } : {}),
+    ...(steps !== undefined ? { steps } : {}),
   };
 }

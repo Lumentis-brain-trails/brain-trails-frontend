@@ -9,6 +9,8 @@
  * stamps every marker on the EEG clock the console fitted (shifted into this window's
  * time frame, `shiftFit`) and posts the timeline to the session as a plain run does. Every
  * marker is also mirrored to the console, which re-sends the whole timeline at finish.
+ * Reloaded mid-run, this window says hello again and the console boots it with
+ * `resume`: the run continues from the block that was on screen (T1).
  *
  * `[session]` is the run's key: the name of the channel both windows share, not a
  * stimulus session id - the session opens on the console's Start, once the headband is
@@ -24,6 +26,7 @@ import {
   type ConsoleChannel,
   type RunBoot,
   commandPortFrom,
+  eegFeedFrom,
   openChannel,
   shiftFit,
   teeSink,
@@ -35,6 +38,7 @@ import {
   eegAnchor,
 } from "@/lib/protocol/clock";
 import type { CommandPort } from "@/lib/protocol/commands";
+import type { EegFeed } from "@/lib/protocol/types";
 import { type MarkerSink, createSessionSink } from "@/lib/protocol/sink";
 
 /** One run, made when the console's boot arrives. */
@@ -44,6 +48,7 @@ interface Run {
   sink: MarkerSink;
   anchor: ClockAnchor;
   commands: CommandPort;
+  signal: EegFeed;
 }
 
 export default function ParticipantRunPage({
@@ -85,8 +90,17 @@ export default function ParticipantRunPage({
             current ?? {
               boot,
               channel,
-              sink: teeSink(createSessionSink(boot.sessionId), (marker) =>
-                channel.post({ type: "marker", marker })
+              sink: teeSink(
+                createSessionSink(boot.sessionId, {
+                  onAck: (batch) =>
+                    channel.post({
+                      type: "acked",
+                      seqs: batch.flatMap((m) =>
+                        m.seq === undefined ? [] : [m.seq]
+                      ),
+                    }),
+                }),
+                (marker) => channel.post({ type: "marker", marker })
               ),
               anchor: eegAnchor(
                 performance.now(),
@@ -94,6 +108,7 @@ export default function ParticipantRunPage({
                 boot.firstSampleIndex
               ),
               commands: commandPortFrom(channel),
+              signal: eegFeedFrom(channel, boot.origin),
             }
         );
       }
@@ -138,13 +153,23 @@ export default function ParticipantRunPage({
         sink={sink}
         anchor={run.anchor}
         commands={run.commands}
+        signal={run.signal}
+        resume={boot.resume}
         onState={(state) => channel.post({ type: "state", state })}
         onFinish={(results, markers) => {
-          channel.post({ type: "finished", results, markers: [...markers] });
+          channel.post({
+            type: "finished",
+            results,
+            markers: [...markers],
+          });
           setEnded(true);
         }}
         onExit={(reason) => {
-          channel.post({ type: "exited", reason, markers: [...sink.all()] });
+          channel.post({
+            type: "exited",
+            reason,
+            markers: [...sink.all()],
+          });
           setEnded(true);
         }}
       />

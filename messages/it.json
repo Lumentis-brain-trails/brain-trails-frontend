@@ -365,6 +365,11 @@
       "inhale": "Inspira",
       "hold": "Trattieni",
       "exhale": "Espira"
+    },
+    "neurofeedback": {
+      "needsHeadband": "Questa parte ha bisogno della fascia, e nessuna sta trasmettendo. Verrà saltata.",
+      "baselineFailed": "Il segnale era troppo disturbato per iniziare questa parte. Andiamo avanti.",
+      "timeout": "Il segnale della fascia non è arrivato. Andiamo avanti."
     }
   },
   "builder": {
@@ -484,7 +489,10 @@
       "pre_fixation_s_hint": "Mostra una croce di fissazione per questa durata prima che il blocco inizi, per stabilizzare lo sguardo.",
       "jitter_s_hint": "Aggiunge un tempo casuale, fino a questo valore, alla croce prima del blocco, così il partecipante non può prevedere l'inizio esatto.",
       "post_rest_s_hint": "Uno schermo vuoto per questa durata dopo il blocco, per lasciare che il segnale torni a riposo.",
-      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato."
+      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato.",
+      "video": "Video",
+      "video_hint": "Il video che la persona guarda durante il blocco, in loop e senza audio.",
+      "video_none": "Scegli un video"
     },
     "group_action": "Raggruppa",
     "monitor": {
@@ -607,6 +615,10 @@
       "prompt": {
         "label": "Messaggio",
         "hint": "Una riga breve sullo schermo, poi la sessione prosegue."
+      },
+      "neurofeedback": {
+        "label": "Neurofeedback",
+        "hint": "Un video che si illumina quando il ritmo cerebrale scelto è nella sua zona bersaglio."
       }
     },
     "palette": {
@@ -661,6 +673,10 @@
       },
       "heartbeat": {
         "label": "Conteggio dei battiti"
+      },
+      "neurofeedback": {
+        "label": "Neurofeedback",
+        "hint": "Scegli il video nelle impostazioni. Prima c'è una baseline che fissa la soglia."
       }
     },
     "fields": {
@@ -1159,6 +1175,104 @@
         "feedback": {
           "label": "Indica se la risposta era giusta",
           "help": "Se è disattivato, il partecipante non impara durante il quiz."
+        }
+      },
+      "neurofeedback": {
+        "signal": {
+          "label": "Ritmo cerebrale",
+          "help": "Ciò che il feedback segue, misurato nel browser dalla fascia. Una banda è la sua quota di tutta la potenza tra 1 e 45 Hz; un rapporto divide una banda per l'altra.",
+          "options": {
+            "alpha": "Alfa (8-13 Hz)",
+            "theta": "Theta (4-8 Hz)",
+            "smr": "SMR (12-15 Hz)",
+            "beta": "Beta (13-30 Hz)",
+            "theta_beta": "Rapporto theta/beta",
+            "alpha_theta": "Rapporto alfa/theta"
+          }
+        },
+        "direction": {
+          "label": "Premia quando il valore è",
+          "help": "Sopra o sotto la soglia. Se lo lasci vuoto, theta, beta e theta/beta si allenano verso il basso e gli altri verso l'alto.",
+          "options": {
+            "up": "Sopra la soglia",
+            "down": "Sotto la soglia"
+          }
+        },
+        "channels": {
+          "label": "Elettrodi",
+          "help": "Se lo lasci vuoto, theta e theta/beta si leggono sulla fronte (AF7, AF8) e gli altri dietro le orecchie (TP9, TP10): sulla fronte, beta e SMR sono soprattutto il muscolo sopra le sopracciglia.",
+          "options": {
+            "TP9": "TP9, dietro l'orecchio sinistro",
+            "AF7": "AF7, fronte a sinistra",
+            "AF8": "AF8, fronte a destra",
+            "TP10": "TP10, dietro l'orecchio destro"
+          }
+        },
+        "effect": {
+          "label": "L'immagine",
+          "help": "Solo luminosità, oppure luminosità più una sfocatura che si schiarisce nel bersaglio.",
+          "options": {
+            "brightness": "Si illumina e si scurisce",
+            "clarity": "Si illumina e si mette a fuoco"
+          }
+        },
+        "duration_s": {
+          "label": "Tempo di allenamento (secondi)",
+          "help": "Quanto dura il feedback dopo la baseline. Fino a 30 minuti; i blocchi lunghi stancano."
+        },
+        "baseline_s": {
+          "label": "Baseline (secondi)",
+          "help": "Il video a luminosità costante mentre si misura il segnale; fissa la soglia. 0 per nessuna, che richiede una soglia fissa."
+        },
+        "threshold": {
+          "label": "Soglia"
+        },
+        "threshold/mode": {
+          "label": "Soglia da",
+          "help": "Dalla baseline di questa persona oggi, oppure un numero fisso che resta uguale tra le sessioni.",
+          "options": {
+            "baseline": "La baseline",
+            "fixed": "Un valore fisso"
+          }
+        },
+        "threshold/target_fraction": {
+          "label": "Quota della baseline nel bersaglio",
+          "help": "0,4 fissa la soglia in modo che il 40% della baseline sarebbe stato premiato."
+        },
+        "threshold/value": {
+          "label": "Soglia fissa",
+          "help": "Una quota tra 0 e 1 per una banda (0,25 è un quarto della potenza), oppure il rapporto stesso."
+        },
+        "window_s": {
+          "label": "Finestra di analisi (secondi)",
+          "help": "Ogni valore si calcola su questo tratto di segnale. Più lunga è più stabile e più lenta.",
+          "options": {
+            "1": "1 secondo",
+            "2": "2 secondi"
+          }
+        },
+        "smoothing_s": {
+          "label": "Smussatura (secondi)",
+          "help": "Quanto il valore viene mediato nel tempo prima di confrontarlo con la soglia."
+        },
+        "ramp_s": {
+          "label": "Risposta dell'immagine (secondi)",
+          "help": "Quanto dura un passaggio completo da scuro a luminoso. La luminosità non cambia mai abbastanza in fretta da lampeggiare, qualunque sia questo valore."
+        },
+        "min_level": {
+          "label": "Luminosità fuori dal bersaglio",
+          "help": "Quanto si scurisce l'immagine: 0,4 è il 40% della luminosità piena."
+        },
+        "artefact": {
+          "label": "Limiti degli artefatti"
+        },
+        "artefact/max_ptp_uv": {
+          "label": "Escursione massima (µV)",
+          "help": "Una finestra con un'escursione più grande (un battito di ciglia, un movimento) ferma l'immagine invece di muoverla."
+        },
+        "artefact/max_muscle": {
+          "label": "Limite di attività muscolare",
+          "help": "Una finestra con più di questa quota di potenza sopra 30 Hz (mascella, fronte aggrottata) ferma l'immagine."
         }
       }
     }
@@ -3271,7 +3385,8 @@
     "syncing": "Sincronizzazione con la fascia…",
     "headband": "{name} · batteria {battery}",
     "headbandLost": "Fascia disconnessa",
-    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato e la sessione non può continuare lì. Ferma la sessione per conservare quanto registrato.",
+    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato. Riaprilo per continuare dal blocco che era in corso, oppure ferma la sessione per conservare quanto registrato.",
+    "participantResumed": "Lo schermo del partecipante si è riaperto: la sessione continua dal blocco che era in corso.",
     "stopAndSave": "Ferma e salva",
     "participant": {
       "title": "Schermo del partecipante",
@@ -3282,7 +3397,8 @@
       "waiting": "In attesa che l'operatore inizi…",
       "ended": "La sessione è terminata. Grazie.",
       "unsupported": "Questo browser non può collegarsi alla console.",
-      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà."
+      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà.",
+      "reopen": "Riapri lo schermo del partecipante"
     },
     "commands": {
       "title": "Comandi",
@@ -3297,7 +3413,9 @@
       "pausePending": "La pausa inizia quando finisce questo blocco.",
       "messageLabel": "Messaggio al partecipante",
       "messagePlaceholder": "Compare sul suo schermo per qualche secondo",
-      "send": "Invia"
+      "send": "Invia",
+      "repeatBlock": "Ripeti il blocco",
+      "extendRest": "+{s} s di pausa"
     },
     "plan": {
       "title": "Piano",
@@ -3321,6 +3439,38 @@
       "title": "Eventi",
       "none": "Ancora nessun evento.",
       "seconds": "{s} s"
+    },
+    "headbandPanel": {
+      "title": "Cuffia",
+      "packets": "Pacchetti persi: {lost} ({pct} %) · {rate} pacchetti/s"
+    },
+    "neurofeedback": {
+      "title": "Neurofeedback",
+      "baseline": "Baseline: misura in corso, l'immagine resta ferma",
+      "inTarget": "Nel bersaglio: l'immagine si illumina",
+      "outOfTarget": "Fuori dal bersaglio: l'immagine si scurisce",
+      "waiting": "In attesa del segnale",
+      "gated": "In pausa: {reason}",
+      "gate": {
+        "amplitude": "un battito di ciglia o un movimento",
+        "muscle": "muscoli della mascella o del viso",
+        "flat": "nessun contatto",
+        "gap": "pacchetti persi"
+      },
+      "value": "Valore (smussato)",
+      "threshold": "Soglia",
+      "timeInTarget": "Tempo nel bersaglio",
+      "latency": "Latenza",
+      "alert": {
+        "baseline_failed": "La baseline è stata troppo disturbata due volte: il blocco è finito senza allenamento.",
+        "baseline_extended": "La baseline era troppo disturbata: ripete una volta.",
+        "signal_lost": "Nessun segnale dalla fascia da 5 secondi."
+      },
+      "thresholdLabel": "Soglia",
+      "lower": "Abbassa la soglia del 5%",
+      "raise": "Alza la soglia del 5%",
+      "nudges": "{n, plural, one {# modifica} other {# modifiche}}",
+      "disclaimer": "Il valore è quello che calcola lo schermo del partecipante, in diretta. Non è una misura clinica."
     }
   },
   "subjects": {

@@ -32,6 +32,8 @@ import {
   type SessionCapture,
 } from "./session";
 import { PacketTimeline, type TimelineStats } from "./timeline";
+import type { EegPacket } from "@/lib/neurofeedback/engine";
+import type { EegFeed } from "@/lib/protocol/types";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
 
@@ -160,6 +162,9 @@ export function useMuse(createDevice: () => MuseDevice) {
   const batteryRef = useRef<number | null>(null);
   const packetsSinceRefresh = useRef(0);
   const unsubscribe = useRef<(() => void)[]>([]);
+  // Who wants every EEG packet as it arrives: a neurofeedback block (V4-0009), or the
+  // console forwarding them to the participant's window.
+  const eegListeners = useRef(new Set<(packet: EegPacket) => void>());
 
   const teardown = useCallback(() => {
     for (const off of unsubscribe.current) off();
@@ -189,6 +194,13 @@ export function useMuse(createDevice: () => MuseDevice) {
       }),
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
+        for (const listener of eegListeners.current)
+          listener({
+            channel,
+            sampleIndex: packet.sampleIndex,
+            samples: packet.samples,
+            hostMs,
+          });
         recorderRef.current?.feed(channel, packet.sampleIndex, packet.samples);
         // The four electrodes are stamped alike; anchor the timeline on the first.
         if (channel === EEG_CHANNELS[0]) {
@@ -378,6 +390,17 @@ export function useMuse(createDevice: () => MuseDevice) {
     []
   );
 
+  /** Every EEG packet as it arrives, without a render; one identity per hook. */
+  const eegFeed = useMemo<EegFeed>(
+    () => ({
+      subscribe(listener) {
+        eegListeners.current.add(listener);
+        return () => void eegListeners.current.delete(listener);
+      },
+    }),
+    []
+  );
+
   const allGood = EEG_CHANNELS.every((c) => state.quality[c].level === "good");
   return {
     ...state,
@@ -390,5 +413,6 @@ export function useMuse(createDevice: () => MuseDevice) {
     stopRecording,
     readTimelineFit,
     readFirstSampleIndex,
+    eegFeed,
   };
 }

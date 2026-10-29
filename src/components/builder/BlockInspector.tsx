@@ -18,8 +18,9 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { InfoTip } from "@/components/InfoTip";
 import { KindCover } from "@/components/builder/KindCover";
-import { Button, Field as FieldShell, Input } from "@/components/ui";
+import { Button, Field as FieldShell, Input, Select } from "@/components/ui";
 import { SchemaForm } from "@/components/builder/SchemaForm";
+import type { BinMedia } from "@/lib/builder/draft";
 import type { JsonSchema } from "@/lib/builder/fields";
 import { useKindText } from "@/lib/builder/kinds";
 import type { BlockNode } from "@/lib/protocol/tree";
@@ -31,7 +32,12 @@ export interface BlockInspectorProps {
   onChange: (next: BlockNode) => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  /** The bin's media by id: a neurofeedback block picks its video from them. */
+  media?: Record<string, BinMedia>;
 }
+
+/** Kinds whose medium is chosen here rather than dragged in from the bin. */
+const PICKS_VIDEO = new Set(["neurofeedback"]);
 
 /** The block's timing fields, in the order they happen around the block. */
 const TIMING = ["pre_fixation_s", "jitter_s", "post_rest_s"] as const;
@@ -52,6 +58,7 @@ export function BlockInspector({
   onChange,
   onDelete,
   onDuplicate,
+  media = {},
 }: BlockInspectorProps) {
   const t = useTranslations("builder.inspector");
   const schema = kindSchemas[block.kind];
@@ -104,6 +111,33 @@ export function BlockInspector({
           />
         )}
       </FieldShell>
+
+      {PICKS_VIDEO.has(block.kind) && (
+        <FieldShell label={t("video")} hint={t("video_hint")}>
+          <Select
+            value={
+              typeof block.config.media_id === "string"
+                ? block.config.media_id
+                : ""
+            }
+            onChange={(event) => {
+              const config: Record<string, unknown> = { ...block.config };
+              if (event.target.value) config.media_id = event.target.value;
+              else delete config.media_id;
+              onChange({ ...block, config });
+            }}
+          >
+            <option value="">{t("video_none")}</option>
+            {Object.values(media)
+              .filter((item) => item.kind === "video")
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+          </Select>
+        </FieldShell>
+      )}
 
       <div className="space-y-4 border-t border-hairline pt-5">
         <h3 className="text-[13px] font-medium text-ink-2">{t("settings")}</h3>
