@@ -3271,7 +3271,8 @@
     "syncing": "Syncing with the headband…",
     "headband": "{name} · battery {battery}",
     "headbandLost": "Headband disconnected",
-    "participantGone": "The participant's screen was closed or reloaded, and the run cannot continue there. Stop the session to keep what was recorded.",
+    "participantGone": "The participant's screen was closed or reloaded. Open it again to continue from the block that was on screen, or stop the session to keep what was recorded.",
+    "participantResumed": "The participant's screen reopened: the run continues from the block that was on screen.",
     "stopAndSave": "Stop and save",
     "participant": {
       "title": "Participant's screen",
@@ -3282,7 +3283,8 @@
       "waiting": "Waiting for the operator to start…",
       "ended": "The session has ended. Thank you.",
       "unsupported": "This browser cannot connect to the console.",
-      "detached": "This session cannot continue in this window. The operator will stop it."
+      "detached": "This session cannot continue in this window. The operator will stop it.",
+      "reopen": "Open participant's screen again"
     },
     "commands": {
       "title": "Commands",
@@ -3297,7 +3299,9 @@
       "pausePending": "The pause starts when this block ends.",
       "messageLabel": "Message to the participant",
       "messagePlaceholder": "Shown on their screen for a few seconds",
-      "send": "Send"
+      "send": "Send",
+      "repeatBlock": "Repeat block",
+      "extendRest": "+{s} s rest"
     },
     "plan": {
       "title": "Plan",
@@ -3321,6 +3325,10 @@
       "title": "Events",
       "none": "No events yet.",
       "seconds": "{s} s"
+    },
+    "headbandPanel": {
+      "title": "Headband",
+      "packets": "Packets lost: {lost} ({pct} %) · {rate} packets/s"
     }
   },
   "subjects": {
