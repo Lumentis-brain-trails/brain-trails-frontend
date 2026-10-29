@@ -437,7 +437,9 @@
       "total": "Totale {time}",
       "group_blocks": "Gruppo · {count, plural, one {# blocco} other {# blocchi}}",
       "errors": "{count, plural, one {# errore} other {# errori}}",
-      "warnings": "{count, plural, one {# avviso} other {# avvisi}}"
+      "warnings": "{count, plural, one {# avviso} other {# avvisi}}",
+      "main": "Principale",
+      "main_hint": "Un segmento principale: la pagina della registrazione confronta i primi due."
     },
     "bin": {
       "title": "Materiali",
@@ -465,6 +467,8 @@
       "nothing_to_set": "Niente da impostare: questo blocco funziona così com'è."
     },
     "inspector": {
+      "main": "Segmento principale",
+      "main_hint": "La pagina della registrazione apre il confronto sui primi due segmenti principali eseguiti. Segna i tratti su cui si basa il protocollo.",
       "title": "Blocco",
       "label": "Nome",
       "kind": "Tipo",

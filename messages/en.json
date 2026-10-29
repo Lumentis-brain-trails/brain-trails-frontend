@@ -437,7 +437,9 @@
       "total": "Total {time}",
       "group_blocks": "Group · {count, plural, one {# block} other {# blocks}}",
       "errors": "{count, plural, one {# error} other {# errors}}",
-      "warnings": "{count, plural, one {# warning} other {# warnings}}"
+      "warnings": "{count, plural, one {# warning} other {# warnings}}",
+      "main": "Main",
+      "main_hint": "A main segment: the recording page compares the first two."
     },
     "bin": {
       "title": "Bin",
@@ -465,6 +467,8 @@
       "nothing_to_set": "Nothing to set: this block works as it is."
     },
     "inspector": {
+      "main": "Main segment",
+      "main_hint": "The recording page opens its comparison on the first two main segments the run played. Mark the stretches the protocol is about.",
       "title": "Block",
       "label": "Name",
       "kind": "Type",

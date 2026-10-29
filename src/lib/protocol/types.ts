@@ -124,6 +124,8 @@ export interface StepBlock {
   iteration: number | null;
   /** The block's condition after `$var` substitution; BIDS `trial_type`. */
   condition?: string;
+  /** Present (true) only on a block marked as a main segment in the builder. */
+  main?: true;
 }
 
 /**

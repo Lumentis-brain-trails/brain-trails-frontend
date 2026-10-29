@@ -85,6 +85,20 @@ describe("resolvePlan", () => {
     );
   });
 
+  test("carries a main segment's flag onto its step, and only onto its own", () => {
+    const plan = resolvePlan(
+      tree([block("a", { main: true, pre_fixation_s: 1 }), block("b")]),
+      1,
+      META
+    );
+    expect(plan.steps.map((s) => [s.id, s.block?.main])).toEqual([
+      ["a__pre", undefined],
+      ["a", true],
+      ["b", undefined],
+    ]);
+    expect(plan.steps[2].block).not.toHaveProperty("main");
+  });
+
   test("inserts a seeded, jittered fixation before and a timed rest after", () => {
     const t = tree([
       block("v", { pre_fixation_s: 1, jitter_s: 0.5, post_rest_s: 20 }),
