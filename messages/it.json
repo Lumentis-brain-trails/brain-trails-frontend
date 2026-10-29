@@ -158,7 +158,8 @@
       "stopBody": "Quello che hai fatto finora viene conservato. Non puoi riprendere questa sessione.",
       "keepGoing": "Continua",
       "stopSession": "Ferma la sessione",
-      "paused": "Una breve pausa. La sessione riprende tra poco."
+      "paused": "Una breve pausa. La sessione riprende tra poco.",
+      "observed": "Chi ti segue sta guardando la sessione."
     },
     "results": {
       "hits": "Bersagli colti",
@@ -3271,7 +3272,8 @@
     "syncing": "Sincronizzazione con la fascia…",
     "headband": "{name} · batteria {battery}",
     "headbandLost": "Fascia disconnessa",
-    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato e la sessione non può continuare lì. Ferma la sessione per conservare quanto registrato.",
+    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato. Riaprilo per continuare dal blocco che era in corso, oppure ferma la sessione per conservare quanto registrato.",
+    "participantResumed": "Lo schermo del partecipante si è riaperto: la sessione continua dal blocco che era in corso.",
     "stopAndSave": "Ferma e salva",
     "participant": {
       "title": "Schermo del partecipante",
@@ -3282,7 +3284,8 @@
       "waiting": "In attesa che l'operatore inizi…",
       "ended": "La sessione è terminata. Grazie.",
       "unsupported": "Questo browser non può collegarsi alla console.",
-      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà."
+      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà.",
+      "reopen": "Riapri lo schermo del partecipante"
     },
     "commands": {
       "title": "Comandi",
@@ -3297,7 +3300,9 @@
       "pausePending": "La pausa inizia quando finisce questo blocco.",
       "messageLabel": "Messaggio al partecipante",
       "messagePlaceholder": "Compare sul suo schermo per qualche secondo",
-      "send": "Invia"
+      "send": "Invia",
+      "repeatBlock": "Ripeti il blocco",
+      "extendRest": "+{s} s di pausa"
     },
     "plan": {
       "title": "Piano",
@@ -3321,6 +3326,10 @@
       "title": "Eventi",
       "none": "Ancora nessun evento.",
       "seconds": "{s} s"
+    },
+    "headbandPanel": {
+      "title": "Cuffia",
+      "packets": "Pacchetti persi: {lost} ({pct} %) · {rate} pacchetti/s"
     }
   },
   "subjects": {
@@ -3507,7 +3516,8 @@
     },
     "run": {
       "saved": "Salvata. Grazie!",
-      "back": "Torna alle tue sessioni"
+      "back": "Torna alle tue sessioni",
+      "carerWaiting": "Chi ti segue è nella sala d'attesa e vedrà il controllo della cuffia."
     },
     "account": {
       "title": "Account",
@@ -3521,6 +3531,81 @@
       "confirm": "Elimina",
       "deleting": "Elimino…",
       "done": "Il tuo account è stato eliminato."
+    }
+  },
+  "live": {
+    "remoteSession": "Sessione a distanza",
+    "watch": "In diretta",
+    "wait": {
+      "title": "Sala d'attesa",
+      "intro": "La sala d'attesa è aperta. Di' alla persona di aprire questa assegnazione e premere Play: il controllo della cuffia appare qui, e la sessione parte quando preme Inizia.",
+      "unavailable": "La console a distanza non è ancora disponibile qui.",
+      "opening": "Apertura della sala…",
+      "patientAway": "In attesa che la persona apra l'assegnazione.",
+      "patientHere": "La persona è collegata.",
+      "headbandOn": "Cuffia {model} collegata · batteria {battery}%",
+      "headbandOff": "Cuffia non ancora collegata.",
+      "contactGood": "Tutti gli elettrodi hanno un buon contatto.",
+      "close": "Chiudi la sala d'attesa",
+      "back": "Torna alla persona"
+    },
+    "console": {
+      "title": "Console a distanza",
+      "unavailable": "La console a distanza non è ancora disponibile qui.",
+      "connection": {
+        "connecting": "Connessione…",
+        "open": "Collegato",
+        "reconnecting": "Riconnessione…",
+        "closed": "Scollegato"
+      },
+      "producer": {
+        "on": "La sessione è in corso",
+        "lost": "Lo schermo della persona si è scollegato; può tornare",
+        "ended": "La sessione è terminata",
+        "none": "In attesa della sessione"
+      },
+      "observers": "{n, plural, one {# collegato} other {# collegati}}",
+      "notAnalysed": "Nessuna traccia dal vivo: l'analisi arriva dopo il caricamento",
+      "take": "Prendi il controllo",
+      "heldByOther": "Il controllo è di un altro curante",
+      "release": "Lascia il controllo",
+      "takeToCommand": "Prendi il controllo per inviare comandi.",
+      "pauseOnLostSight": "Pausa se perdo il collegamento",
+      "headband": "Cuffia",
+      "views": {
+        "title": "Traccia",
+        "trail": "Questa sessione",
+        "landscape": "Il suo paesaggio"
+      },
+      "noTrail": "La traccia compare dopo i primi secondi.",
+      "trailAria": "La traccia dal vivo, {n} finestre",
+      "liveMark": "dal vivo",
+      "final": "definitiva",
+      "ack": {
+        "pending": "{command}: inviato, in attesa della sessione…",
+        "applied": "{command}: eseguito",
+        "deferred": "{command}: a fine blocco",
+        "ignored": "{command}: non applicabile ora",
+        "timeout": "{command}: nessuna risposta dalla sessione"
+      },
+      "errors": {
+        "not_commander": "Il controllo è di un altro curante.",
+        "commander_taken": "Un altro curante ha preso il controllo prima.",
+        "cannot_command": "Puoi seguire questa sessione ma non inviare comandi.",
+        "error": "Qualcosa è andato storto."
+      },
+      "ended": "La sessione è terminata. L'analisi arriva con il caricamento.",
+      "openRecording": "Apri la registrazione",
+      "results": {
+        "title": "Blocchi",
+        "none": "Nessun blocco è ancora finito.",
+        "hits": "risposte corrette {v}",
+        "falseAlarms": "falsi allarmi {v}",
+        "medianRt": "TR mediano {v}",
+        "skipped": "saltato",
+        "ended": "terminato dall'operatore",
+        "done": "completato"
+      }
     }
   }
 }

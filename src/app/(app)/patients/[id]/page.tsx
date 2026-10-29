@@ -52,6 +52,7 @@ import {
   SectionTitle,
   Select,
   Skeleton,
+  buttonClass,
 } from "@/components/ui";
 
 type Member = components["schemas"]["MemberOut"];
@@ -133,6 +134,13 @@ export default function SubjectPage({
       </div>
     </main>
   );
+}
+
+/** The remote console's two flags (T5): the room and the service it runs on. */
+function useRemoteConsole(): boolean {
+  const remote = useFeature("console_remote");
+  const live = useFeature("live");
+  return remote && live;
 }
 
 function Notice({ title, text }: { title: string; text: string }) {
@@ -355,6 +363,8 @@ function CareTeam({
 
 function Assignments({ subject: s }: { subject: Subject }) {
   const t = useTranslations("assignments");
+  const tLive = useTranslations("live");
+  const remote = useRemoteConsole();
   const locale = useFormatLocale();
   const errorMessage = useErrorMessage();
   const official = useOfficialTexts();
@@ -419,6 +429,14 @@ function Assignments({ subject: s }: { subject: Subject }) {
                   </span>
                 )}
               </span>
+              {a.open && remote && (
+                <Link
+                  href={`/live/wait/${a.id}`}
+                  className={buttonClass("secondary", "sm")}
+                >
+                  {tLive("remoteSession")}
+                </Link>
+              )}
               {a.open && (
                 <Button
                   variant="ghost"
@@ -517,6 +535,8 @@ function Invite({ subject: s }: { subject: Subject }) {
 
 function Sessions({ subject: s }: { subject: Subject }) {
   const t = useTranslations("subjects.sessionsCard");
+  const tLive = useTranslations("live");
+  const remote = useRemoteConsole();
   const tPage = useTranslations("subjects.page");
   const locale = useFormatLocale();
   const [choosing, setChoosing] = useState(false);
@@ -549,7 +569,12 @@ function Sessions({ subject: s }: { subject: Subject }) {
         {(sessions.data ?? []).map((x) => (
           <Link
             key={x.id}
-            href={`/recordings/${x.recording_id}`}
+            // a run going on now opens its live room (T5), a finished one its recording
+            href={
+              remote && x.status === "running"
+                ? `/live/${x.id}`
+                : `/recordings/${x.recording_id}`
+            }
             className="pressable flex items-center gap-4 border-b border-hairline px-5 py-3.5 last:border-b-0 hover:bg-surface-2"
           >
             <span className="min-w-0 flex-1">
@@ -559,6 +584,7 @@ function Sessions({ subject: s }: { subject: Subject }) {
                   formatDate(x.started_at, locale),
                   t(`status.${x.status as "done"}`),
                   x.assignment_id ? t("assigned") : null,
+                  remote && x.status === "running" ? tLive("watch") : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}

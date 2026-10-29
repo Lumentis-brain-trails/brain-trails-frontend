@@ -158,7 +158,8 @@
       "stopBody": "What you have done so far is kept. You cannot resume this run.",
       "keepGoing": "Keep going",
       "stopSession": "Stop session",
-      "paused": "A short pause. The session continues in a moment."
+      "paused": "A short pause. The session continues in a moment.",
+      "observed": "Your carer is following the session."
     },
     "results": {
       "hits": "Hits",
@@ -3271,7 +3272,8 @@
     "syncing": "Syncing with the headband…",
     "headband": "{name} · battery {battery}",
     "headbandLost": "Headband disconnected",
-    "participantGone": "The participant's screen was closed or reloaded, and the run cannot continue there. Stop the session to keep what was recorded.",
+    "participantGone": "The participant's screen was closed or reloaded. Open it again to continue from the block that was on screen, or stop the session to keep what was recorded.",
+    "participantResumed": "The participant's screen reopened: the run continues from the block that was on screen.",
     "stopAndSave": "Stop and save",
     "participant": {
       "title": "Participant's screen",
@@ -3282,7 +3284,8 @@
       "waiting": "Waiting for the operator to start…",
       "ended": "The session has ended. Thank you.",
       "unsupported": "This browser cannot connect to the console.",
-      "detached": "This session cannot continue in this window. The operator will stop it."
+      "detached": "This session cannot continue in this window. The operator will stop it.",
+      "reopen": "Open participant's screen again"
     },
     "commands": {
       "title": "Commands",
@@ -3297,7 +3300,9 @@
       "pausePending": "The pause starts when this block ends.",
       "messageLabel": "Message to the participant",
       "messagePlaceholder": "Shown on their screen for a few seconds",
-      "send": "Send"
+      "send": "Send",
+      "repeatBlock": "Repeat block",
+      "extendRest": "+{s} s rest"
     },
     "plan": {
       "title": "Plan",
@@ -3321,6 +3326,10 @@
       "title": "Events",
       "none": "No events yet.",
       "seconds": "{s} s"
+    },
+    "headbandPanel": {
+      "title": "Headband",
+      "packets": "Packets lost: {lost} ({pct} %) · {rate} packets/s"
     }
   },
   "subjects": {
@@ -3507,7 +3516,8 @@
     },
     "run": {
       "saved": "Saved. Thank you!",
-      "back": "Back to your sessions"
+      "back": "Back to your sessions",
+      "carerWaiting": "Your carer is in the waiting room and will see your headband check."
     },
     "account": {
       "title": "Account",
@@ -3521,6 +3531,81 @@
       "confirm": "Delete",
       "deleting": "Deleting…",
       "done": "Your account was deleted."
+    }
+  },
+  "live": {
+    "remoteSession": "Remote session",
+    "watch": "Live now",
+    "wait": {
+      "title": "Waiting room",
+      "intro": "The waiting room is open. Tell the patient to open this assignment and press Play: their headband check appears here, and the session starts when they press Start.",
+      "unavailable": "The remote console is not available here yet.",
+      "opening": "Opening the room…",
+      "patientAway": "Waiting for the patient to open the assignment.",
+      "patientHere": "The patient is here.",
+      "headbandOn": "Headband {model} connected · battery {battery}%",
+      "headbandOff": "Headband not connected yet.",
+      "contactGood": "Every electrode has good contact.",
+      "close": "Close the waiting room",
+      "back": "Back to the patient"
+    },
+    "console": {
+      "title": "Remote console",
+      "unavailable": "The remote console is not available here yet.",
+      "connection": {
+        "connecting": "Connecting…",
+        "open": "Connected",
+        "reconnecting": "Reconnecting…",
+        "closed": "Disconnected"
+      },
+      "producer": {
+        "on": "The run is going on",
+        "lost": "The patient's screen dropped; it may come back",
+        "ended": "The run has ended",
+        "none": "Waiting for the run"
+      },
+      "observers": "{n, plural, one {# watching} other {# watching}}",
+      "notAnalysed": "No live trail: its analysis follows the upload",
+      "take": "Take control",
+      "heldByOther": "Another carer has control",
+      "release": "Let go of control",
+      "takeToCommand": "Take control to send commands.",
+      "pauseOnLostSight": "Pause if I lose sight",
+      "headband": "Headband",
+      "views": {
+        "title": "Trail",
+        "trail": "This session",
+        "landscape": "Their landscape"
+      },
+      "noTrail": "The trail appears after the first seconds.",
+      "trailAria": "The live trail, {n} windows",
+      "liveMark": "live",
+      "final": "final",
+      "ack": {
+        "pending": "{command}: sent, waiting for the run…",
+        "applied": "{command}: done",
+        "deferred": "{command}: at the end of the block",
+        "ignored": "{command}: not applicable now",
+        "timeout": "{command}: no answer from the run"
+      },
+      "errors": {
+        "not_commander": "Another carer has control.",
+        "commander_taken": "Another carer took control first.",
+        "cannot_command": "You can watch this session but not send commands.",
+        "error": "Something went wrong."
+      },
+      "ended": "The session has ended. Its analysis arrives with the upload.",
+      "openRecording": "Open the recording",
+      "results": {
+        "title": "Blocks",
+        "none": "No block has finished yet.",
+        "hits": "hits {v}",
+        "falseAlarms": "false alarms {v}",
+        "medianRt": "median RT {v}",
+        "skipped": "skipped",
+        "ended": "ended by the operator",
+        "done": "done"
+      }
     }
   }
 }

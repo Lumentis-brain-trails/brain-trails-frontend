@@ -20,6 +20,8 @@ export const COMMAND_TYPES = [
   "resume",
   "end_block",
   "skip_block",
+  "repeat_block",
+  "extend_rest",
   "message",
   "flag",
   "abort",
@@ -33,6 +35,9 @@ export const MESSAGE_MAX_CHARS = 280;
 /** How long a message stays on the participant's screen. */
 export const MESSAGE_SHOWN_MS = 10_000;
 
+/** How much one `extend_rest` adds to a timed rest. */
+export const EXTEND_REST_S = 30;
+
 /** The event type every command is logged under, whatever it did. */
 export const OPERATOR_COMMAND_EVENT = "operator_command";
 
@@ -42,8 +47,11 @@ export const operatorCommandSchema = z.object({
   type: z.enum(COMMAND_TYPES),
   /** The words of a `message`, or an optional note on a `flag`. */
   text: z.string().max(MESSAGE_MAX_CHARS).optional(),
-  /** Who asked: the console on this machine for now; a remote console from T5. */
-  source: z.enum(["console"]).default("console"),
+  /**
+   * Who asked: the console on this machine (T1), a remote console over the live service
+   * (T5), or the run itself (`auto`: "pause when I lose sight" fired).
+   */
+  source: z.enum(["console", "remote", "auto"]).default("console"),
 });
 
 export type OperatorCommand = z.infer<typeof operatorCommandSchema>;
@@ -51,7 +59,8 @@ export type OperatorCommand = z.infer<typeof operatorCommandSchema>;
 /**
  * Where a command takes effect.
  *
- * - `now`: as soon as it arrives (a message, a flag, abort, ending or skipping the block).
+ * - `now`: as soon as it arrives (a message, a flag, abort, ending, skipping or repeating
+ *   the block, adding time to a rest).
  * - `block_end`: when the block on screen ends by itself. A pause holds the run
  *   *between* blocks: no kind is cut in the middle of a stimulus, and no kind has to
  *   know how to freeze its own timers. Pausing inside a block is a later step: it needs
@@ -65,6 +74,8 @@ export const SAFE_POINTS: Record<CommandType, SafePoint> = {
   resume: "now",
   end_block: "now",
   skip_block: "now",
+  repeat_block: "now",
+  extend_rest: "now",
   message: "now",
   flag: "now",
   abort: "now",
@@ -81,8 +92,27 @@ export interface RunnerState {
   stepId: string | null;
   /** A pause was asked for and waits for the block to end. */
   pausePending: boolean;
+  /** The step on screen is a timed rest, which `extend_rest` can lengthen. */
+  extendable: boolean;
+  /** How many times the operator repeated the step on screen (0 the first time). */
+  attempt: number;
   /** The operator's message on the participant's screen, if any. */
   message: string | null;
+}
+
+/** Where a reloaded participant window picks a console run up (`ProtocolRunner`). */
+export interface RunResume {
+  stepIndex: number;
+  /** The first marker `seq` the new window may use. */
+  seqFrom: number;
+  /** The block on screen started and never ended: close it before running it again. */
+  interrupted: boolean;
+  /**
+   * The run was held between blocks (a pause) when the window went: the new one starts
+   * held before `stepIndex`, and only `resume` moves it on (logging `run_resumed`, which
+   * closes the pause the lost window opened).
+   */
+  held?: boolean;
 }
 
 /** Where a runner receives commands from. */
@@ -112,7 +142,11 @@ export function createLocalCommandPort(): LocalCommandPort {
 let counter = 0;
 
 /** A command with a fresh id; `text` is trimmed and capped. */
-export function makeCommand(type: CommandType, text?: string): OperatorCommand {
+export function makeCommand(
+  type: CommandType,
+  text?: string,
+  source: OperatorCommand["source"] = "console"
+): OperatorCommand {
   counter += 1;
   const random =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -122,7 +156,7 @@ export function makeCommand(type: CommandType, text?: string): OperatorCommand {
   return {
     id: random,
     type,
-    source: "console",
+    source,
     ...(trimmed ? { text: trimmed } : {}),
   };
 }

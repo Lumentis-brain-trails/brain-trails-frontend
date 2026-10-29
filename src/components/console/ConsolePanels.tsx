@@ -2,21 +2,27 @@
 
 /**
  * The operator console's panels (backend V3-0007, step 1): the command bar, the plan as
- * a timeline with the current block, the live notes and the event ticker.
+ * a timeline with the current block, the live notes, the event ticker and the headband
+ * (contact, the four channels, packets lost).
  *
  * Panels read props, never the channel: what feeds them is the console page's business,
  * so the remote console (plan V4, T5) can feed the same panels from the live service.
  */
 
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 import { Button, Card, Input, Textarea, cn } from "@/components/ui";
 import {
   type CommandType,
+  EXTEND_REST_S,
   MESSAGE_MAX_CHARS,
   type RunnerState,
 } from "@/lib/protocol/commands";
 import { NOTE_MAX_CHARS } from "@/lib/console/notes";
+import { ContactLights } from "@/components/ContactLights";
+import type { EegChannel } from "@/lib/muse/protocol";
+import type { ChannelQuality } from "@/lib/muse/quality";
 
 /** The command bar. `send` asks the runner; what it did comes back as state and events. */
 export function CommandBar({
@@ -42,6 +48,15 @@ export function CommandBar({
     if (!state || ending) return;
     setEndedIndex(state.stepIndex);
     send(type);
+  };
+  // A Repeat stays off until the runner reports the new attempt, for the same reason.
+  const [repeatedAt, setRepeatedAt] = useState<string | null>(null);
+  const attemptKey = state ? `${state.stepIndex}#${state.attempt}` : null;
+  const repeating = repeatedAt !== null && repeatedAt === attemptKey;
+  const repeat = () => {
+    if (!state || repeating || ending) return;
+    setRepeatedAt(attemptKey);
+    send("repeat_block");
   };
 
   return (
@@ -74,6 +89,20 @@ export function CommandBar({
           onClick={() => end("skip_block")}
         >
           {t("skipBlock")}
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={disabled || !inBlock || ending || repeating}
+          onClick={repeat}
+        >
+          {t("repeatBlock")}
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={disabled || !inBlock || !state?.extendable}
+          onClick={() => send("extend_rest")}
+        >
+          {t("extendRest", { s: EXTEND_REST_S })}
         </Button>
         <Button
           variant="secondary"
@@ -297,3 +326,56 @@ export function EventTicker({
     </Card>
   );
 }
+
+/**
+ * The headband while the run goes on: contact per electrode, the four channels as they
+ * arrive, and how many packets Bluetooth lost. What the participant's EEG looks like is
+ * the operator's to watch, never the participant's (their window shows the protocol
+ * only).
+ */
+export function HeadbandPanel({
+  quality,
+  getRecent,
+  connected,
+  packets,
+  lostPackets,
+  packetRate,
+}: {
+  quality: Record<EegChannel, ChannelQuality>;
+  getRecent: (seconds: number) => Record<EegChannel, Float32Array>;
+  connected: boolean;
+  packets: number;
+  lostPackets: number;
+  packetRate: number;
+}) {
+  const t = useTranslations("console.headbandPanel");
+  const total = packets + lostPackets;
+  const share = total > 0 ? lostPackets / total : 0;
+  return (
+    <section aria-label={t("title")} className="space-y-3">
+      <ContactLights quality={quality} active={connected} />
+      <LiveSignal getRecent={getRecent} active={connected} height={160} />
+      <p
+        className={cn(
+          "type-caption tabular-nums",
+          share > LOSS_WARN_SHARE ? "text-danger" : "text-ink-3"
+        )}
+      >
+        {t("packets", {
+          lost: lostPackets,
+          pct: (share * 100).toFixed(1),
+          rate: Math.round(packetRate),
+        })}
+      </p>
+    </section>
+  );
+}
+
+/** The chart library touches `window` when it loads: only ever in the browser. */
+const LiveSignal = dynamic(
+  () => import("@/components/LiveSignal").then((m) => m.LiveSignal),
+  { ssr: false }
+);
+
+/** Above this share of packets lost the console shows the count in red. */
+export const LOSS_WARN_SHARE = 0.02;
