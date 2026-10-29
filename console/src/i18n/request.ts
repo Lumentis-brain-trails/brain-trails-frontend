@@ -3,13 +3,13 @@
  *
  * The language is picked by the product's rule (`@/i18n/locales`: the `bt-locale`
  * cookie, then `Accept-Language`, then English) and the console speaks the product's two
- * languages. Its own words live under `console.*` in `console/messages/`; the product's
- * `common` namespace is added from the product's files, because the shared primitives
- * (`@/components/ui`) read it - shared, not copied.
+ * languages. What it reads is `catalogue`: its own files plus the product namespaces it
+ * shares.
  */
 import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 import { LOCALE_COOKIE, resolveLocale } from "@/i18n/locales";
+import { catalogue } from "./catalogue";
 
 export default getRequestConfig(async () => {
   const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
@@ -21,8 +21,5 @@ export default getRequestConfig(async () => {
     import(`../../messages/${locale}.json`),
     import(`../../../messages/${locale}.json`),
   ]);
-  return {
-    locale,
-    messages: { ...own.default, common: product.default.common },
-  };
+  return { locale, messages: catalogue(own.default, product.default) };
 });

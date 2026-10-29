@@ -194,16 +194,49 @@ describe("the product proxy", () => {
     expect(res.status).toBe(403);
   });
 
-  test("PUT and DELETE go through too", async () => {
+  test("PUT, PATCH and DELETE go through too", async () => {
     await productProxy.PUT(
       new NextRequest("http://c/x", { method: "PUT", body: "{}" }),
       ctx(["admin", "x"])
+    );
+    await productProxy.PATCH(
+      new NextRequest("http://c/x", { method: "PATCH", body: "{}" }),
+      ctx(["admin", "protocols", "p", "access"])
     );
     await productProxy.DELETE(
       new NextRequest("http://c/x", { method: "DELETE" }),
       ctx(["admin", "x"])
     );
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(call(1).init.method).toBe("PATCH");
+  });
+
+  test("the catalog and the flags are read, never written", async () => {
+    jar.set("bto_product", "product-token");
+    const read = await productProxy.GET(
+      new NextRequest(
+        "http://c/api/product/protocols?circle=official&include_locked=true"
+      ),
+      ctx(["protocols"])
+    );
+    expect(read.status).toBe(200);
+    expect(call(0).url).toBe(
+      "http://localhost:8000/protocols?circle=official&include_locked=true"
+    );
+    for (const path of [
+      ["protocols", "p", "publish"],
+      ["config"],
+      // encoded, the guard reads it decoded: still the catalog
+      ["%70rotocols", "p", "publish"],
+      ["%63onfig"],
+    ]) {
+      const write = await productProxy.POST(
+        new NextRequest("http://c/x", { method: "POST", body: "{}" }),
+        ctx(path)
+      );
+      expect(write.status).toBe(403);
+    }
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
 
