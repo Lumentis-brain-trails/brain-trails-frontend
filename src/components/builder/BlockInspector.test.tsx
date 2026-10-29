@@ -147,6 +147,14 @@ describe("BlockInspector", () => {
     expect(seen.block).not.toHaveProperty("skippable");
   });
 
+  test("marks and unmarks the block as a main segment", () => {
+    const seen = renderInspector();
+    fireEvent.click(screen.getByLabelText("Main segment"));
+    expect(seen.block.main).toBe(true);
+    fireEvent.click(screen.getByLabelText("Main segment"));
+    expect(seen.block).not.toHaveProperty("main");
+  });
+
   test("editing the config replaces the config, not the block's own fields", () => {
     const seen = renderInspector();
     fireEvent.change(screen.getByLabelText("Duration (s)"), {

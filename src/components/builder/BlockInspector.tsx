@@ -66,7 +66,7 @@ export function BlockInspector({
 
   /** Replace one optional property; an empty value drops it from the block. */
   const patch = (
-    key: TimingKey | "skippable" | "condition",
+    key: TimingKey | "skippable" | "condition" | "main",
     value: unknown
   ) => {
     const next: Record<string, unknown> = { ...block };
@@ -190,6 +190,20 @@ export function BlockInspector({
             </div>
           </div>
         )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-t border-hairline pt-5">
+        <label className="flex items-center gap-2 text-[15px] text-ink">
+          <input
+            type="checkbox"
+            checked={block.main === true}
+            onChange={(event) =>
+              patch("main", event.target.checked ? true : undefined)
+            }
+          />
+          <span>{t("main")}</span>
+        </label>
+        <InfoTip text={t("main_hint")} label={t("main")} />
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t border-hairline pt-5">

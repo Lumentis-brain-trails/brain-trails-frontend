@@ -56,6 +56,11 @@ export const blockNodeSchema = z.strictObject({
   jitter_s: z.number().min(0).optional(),
   post_rest_s: z.number().min(0).optional(),
   skippable: z.boolean().optional(),
+  /**
+   * A main segment: one of the stretches the protocol is about. The recording page
+   * opens its comparison on the first two main segments the run played.
+   */
+  main: z.boolean().optional(),
   config: z.record(z.string(), z.unknown()),
 });
 
