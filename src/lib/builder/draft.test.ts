@@ -218,9 +218,11 @@ test("the clock reads minutes, and hours when there are any", () => {
 test("every element the bin offers is a block its own kind accepts", () => {
   registerBuiltInKinds();
   for (const element of ELEMENTS) {
-    const parsed = getTaskKind(element.kind).configSchema.safeParse(
-      element.config
-    );
+    // a block whose video is picked in the inspector is complete once it has one
+    const config = element.picksVideo
+      ? { ...element.config, media_id: "00000000-0000-0000-0000-000000000001" }
+      : element.config;
+    const parsed = getTaskKind(element.kind).configSchema.safeParse(config);
     expect(parsed.success, element.kind).toBe(true);
   }
 });

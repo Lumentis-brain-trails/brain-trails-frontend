@@ -19,7 +19,7 @@
     "ios:open": "cap open ios",
     "api:types": "node scripts/api-types.mjs",
     "e2e": "playwright test",
-    "schemas": "SCHEMAS_WRITE=1 vitest run src/lib/protocol/jsonSchema.test.ts"
+    "schemas": "SCHEMAS_WRITE=1 vitest run src/lib/protocol/jsonSchema.test.ts src/lib/neurofeedback/engine.test.ts"
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "^8.3.0",

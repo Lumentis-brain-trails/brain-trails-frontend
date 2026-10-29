@@ -26,6 +26,17 @@ describe("operator commands", () => {
     expect(makeCommand("message", "   ")).not.toHaveProperty("text");
   });
 
+  test("a threshold nudge carries its steps, five at most either way", () => {
+    const nudge = makeCommand("nudge_threshold", undefined, -2);
+    expect(nudge).toMatchObject({ type: "nudge_threshold", steps: -2 });
+    expect(operatorCommandSchema.parse(nudge)).toEqual(nudge);
+    expect(SAFE_POINTS.nudge_threshold).toBe("now");
+    expect(
+      operatorCommandSchema.safeParse({ ...nudge, steps: 6 }).success
+    ).toBe(false);
+    expect(makeCommand("flag")).not.toHaveProperty("steps");
+  });
+
   test("the schema fills the source and refuses unknown commands", () => {
     expect(operatorCommandSchema.parse({ id: "1", type: "pause" }).source).toBe(
       "console"
