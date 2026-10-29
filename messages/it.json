@@ -3476,6 +3476,105 @@
       "confirm": "Elimina",
       "deleting": "Elimino…",
       "done": "Il tuo account è stato eliminato."
+    },
+    "results": "I tuoi risultati"
+  },
+  "therapy": {
+    "timeline": {
+      "title": "Le ultime otto settimane",
+      "adherence": "{done} esecuzioni fatte su {assigned} assegnate ({pct}%).",
+      "adherenceNone": "Niente assegnato in queste settimane.",
+      "late": "{n, plural, one {# assegnazione in ritardo} other {# assegnazioni in ritardo}}",
+      "axisAria": "{n, plural, one {# sessione} other {# sessioni}} in {weeks} settimane",
+      "today": "oggi",
+      "sessionsTitle": "Sessioni",
+      "none": "Nessuna sessione in queste settimane.",
+      "minutes": "{n} min",
+      "notes": "{n, plural, one {# nota} other {# note}}",
+      "new": "non aperta"
+    },
+    "verdict": {
+      "good": "segnale buono",
+      "usable": "segnale utilizzabile",
+      "poor": "segnale scarso",
+      "unknown": "non ancora analizzata"
+    },
+    "changes": {
+      "title": "Dall'ultima sessione",
+      "none": "Una sola sessione finora: niente da confrontare.",
+      "up": "più alto",
+      "down": "più basso",
+      "same": "più o meno uguale",
+      "better": "meglio",
+      "worse": "peggio"
+    },
+    "metrics": {
+      "good_minutes": "minuti di segnale buono",
+      "d_prime": "accuratezza (d′)",
+      "rt_median_ms": "tempo di reazione mediano",
+      "rt_cv": "variabilità dei tempi di reazione",
+      "accuracy": "accuratezza",
+      "throughput_per_min": "ritmo",
+      "alpha_relative": "alfa relativo"
+    },
+    "families": {
+      "session": "Sessione",
+      "go-no-go": "Go/no-go",
+      "flanker": "Flanker",
+      "n-back": "N-back",
+      "coding": "Codifica",
+      "baseline": "Baseline a riposo"
+    },
+    "landscape": {
+      "title": "Il suo paesaggio",
+      "intro": "Ogni sessione sulla mappa della persona; l'ultima è in evidenza.",
+      "notReady": "Il paesaggio compare dopo le prime sessioni analizzate.",
+      "aria": "Il paesaggio cerebrale della persona con tutte le tracce"
+    },
+    "share": {
+      "title": "Cosa vede la persona dei suoi risultati",
+      "intro": "Il suo account non vede mai le tue note. Puoi cambiarlo quando vuoi.",
+      "nothing": "Niente",
+      "summary": "Un riepilogo",
+      "full": "Tutto",
+      "nothingHint": "Vede che una sessione è conclusa, e nient'altro.",
+      "summaryHint": "Dopo ogni sessione vede che è conclusa, la serie di giorni e un'immagine del suo paesaggio che cambia - senza numeri. Compare solo quando il riepilogo è attivo per questa organizzazione.",
+      "fullHint": "Può anche aprire la traccia di ogni sua sessione.",
+      "noAccount": "La persona non ha ancora un account: vale da quando lo crea."
+    },
+    "home": {
+      "review": "Da rivedere",
+      "reviewNone": "Niente in attesa: hai aperto tutte le sessioni recenti.",
+      "today": "In scadenza oggi",
+      "todayNone": "Niente in scadenza oggi.",
+      "late": "in ritardo",
+      "patients": "I tuoi pazienti",
+      "patientsNone": "Nessun paziente in carico per ora.",
+      "never": "nessuna sessione"
+    },
+    "words": {
+      "title": "Questa sessione a parole",
+      "verdict": {
+        "good": "Il segnale è stato buono per tutta la sessione.",
+        "usable": "Il segnale è stato utilizzabile, con qualche interruzione.",
+        "poor": "Il segnale è stato scarso: leggi le misure con cautela.",
+        "unknown": "L'analisi non è ancora pronta."
+      },
+      "before": "(la sessione precedente: {value})",
+      "full": "Le metriche complete sono qui sotto."
+    },
+    "after": {
+      "title": "La tua ultima sessione",
+      "done": "Sessione completata. Ben fatto.",
+      "streak": "Sessione completata: {n} giorni di fila.",
+      "before": "Prima",
+      "after": "Dopo",
+      "changed": "Il tuo paesaggio dopo questa sessione"
+    },
+    "results": {
+      "title": "I tuoi risultati",
+      "back": "Indietro",
+      "notShared": "Al momento i tuoi risultati non sono condivisi con te."
     }
   }
 }

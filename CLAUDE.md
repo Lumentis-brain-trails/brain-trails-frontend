@@ -74,6 +74,17 @@ npm run e2e                              # Playwright; needs the local backend (
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).
 - Conventional Commits; PR title becomes the squash commit.
 
+## The therapy edition (backend plan V4, sprint T6)
+
+Behind `therapy` (practices): `src/components/therapy/` holds the patient page's
+`PatientTimeline` (eight weeks, adherence, changes in words, the named measures, sessions
+with notes and "not opened", the landscape with every trail, what the patient may see),
+the clinic home (`ClinicHome` on `/home`: waiting for review, due today, my patients) and
+`SessionInWords` on a recording. The patient's `/my` shows `AfterSession` (done, streak,
+the map before and after - behind `client_summary`, off) and, when shared in full,
+`/my/results/[recording]`. `src/lib/therapy.ts` reads the backend's measures; labels are
+`therapy.metrics.*` and `therapy.families.*`.
+
 ## The console (backend plan OPS, sprint O1)
 
 Staff pages live there, not here: the user app has no `/admin` since O2 (Beta testers,

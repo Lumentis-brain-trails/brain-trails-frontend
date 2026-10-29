@@ -3476,6 +3476,105 @@
       "confirm": "Delete",
       "deleting": "Deleting…",
       "done": "Your account was deleted."
+    },
+    "results": "Your results"
+  },
+  "therapy": {
+    "timeline": {
+      "title": "The last eight weeks",
+      "adherence": "{done} of {assigned} assigned runs done ({pct}%).",
+      "adherenceNone": "Nothing assigned in these weeks.",
+      "late": "{n, plural, one {# assignment late} other {# assignments late}}",
+      "axisAria": "{n, plural, one {# session} other {# sessions}} over {weeks} weeks",
+      "today": "today",
+      "sessionsTitle": "Sessions",
+      "none": "No session in these weeks.",
+      "minutes": "{n} min",
+      "notes": "{n, plural, one {# note} other {# notes}}",
+      "new": "not opened"
+    },
+    "verdict": {
+      "good": "good signal",
+      "usable": "usable signal",
+      "poor": "poor signal",
+      "unknown": "not analysed yet"
+    },
+    "changes": {
+      "title": "Since the last session",
+      "none": "One session so far: nothing to compare yet.",
+      "up": "higher",
+      "down": "lower",
+      "same": "about the same",
+      "better": "better",
+      "worse": "worse"
+    },
+    "metrics": {
+      "good_minutes": "minutes of good signal",
+      "d_prime": "accuracy (d′)",
+      "rt_median_ms": "median reaction time",
+      "rt_cv": "reaction time variability",
+      "accuracy": "accuracy",
+      "throughput_per_min": "pace",
+      "alpha_relative": "relative alpha"
+    },
+    "families": {
+      "session": "Session",
+      "go-no-go": "Go/no-go",
+      "flanker": "Flanker",
+      "n-back": "N-back",
+      "coding": "Coding",
+      "baseline": "Resting baseline"
+    },
+    "landscape": {
+      "title": "Their landscape",
+      "intro": "Every session on the person's own map; the latest stands out.",
+      "notReady": "The landscape appears after their first analysed sessions.",
+      "aria": "The person's brain landscape with every trail"
+    },
+    "share": {
+      "title": "What the person sees of their results",
+      "intro": "Their own account never sees your notes. You can change this at any time.",
+      "nothing": "Nothing",
+      "summary": "A summary",
+      "full": "Everything",
+      "nothingHint": "They see that a session is done, and nothing else.",
+      "summaryHint": "After each session they see that it is done, their streak and a picture of their landscape changing - no numbers. Shown only once the summary is switched on for this organisation.",
+      "fullHint": "They can also open the trail of each of their sessions.",
+      "noAccount": "The person has no account yet: this applies once they join."
+    },
+    "home": {
+      "review": "Waiting for your review",
+      "reviewNone": "Nothing waiting: you have opened every recent session.",
+      "today": "Due today",
+      "todayNone": "Nothing due today.",
+      "late": "late",
+      "patients": "Your patients",
+      "patientsNone": "No patients in your care yet.",
+      "never": "no session yet"
+    },
+    "words": {
+      "title": "This session in plain words",
+      "verdict": {
+        "good": "The signal was good throughout.",
+        "usable": "The signal was usable, with some gaps.",
+        "poor": "The signal was poor: read the measures with care.",
+        "unknown": "The analysis is not ready yet."
+      },
+      "before": "(the session before: {value})",
+      "full": "The full metrics follow below."
+    },
+    "after": {
+      "title": "Your last session",
+      "done": "Session complete. Well done.",
+      "streak": "Session complete: {n} days in a row.",
+      "before": "Before",
+      "after": "After",
+      "changed": "Your landscape after this session"
+    },
+    "results": {
+      "title": "Your results",
+      "back": "Back",
+      "notShared": "Your results are not shared with you at the moment."
     }
   }
 }
