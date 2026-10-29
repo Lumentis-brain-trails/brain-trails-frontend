@@ -15,9 +15,15 @@
  * Start, as on the plain run page, because the device model is only known once the
  * headband is connected. `?protocol=` names what to run.
  *
- * Not yet (T1 minimum): the Window Management API (the window is opened, not placed),
- * the headband panels while running (only status and battery), `end_block` at a trial
- * boundary, `repeat_block` and `extend_rest`.
+ * While it runs the console shows the headband (contact, the four channels, packets
+ * lost) beside the plan and the commands. A participant window that reloads or is
+ * reopened mid-run says hello again and is booted with `resume` (`resumePoint`): the
+ * block that was on screen runs again there, and the timeline at the end is what the
+ * console mirrored from both windows (`mergeMarkers`). The step summaries of the lost
+ * window are not recovered: the analysis reads the timeline, not them.
+ *
+ * Not yet: the Window Management API (the window is opened, not placed) and `end_block`
+ * at a trial boundary.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +42,7 @@ import {
 import {
   CommandBar,
   EventTicker,
+  HeadbandPanel,
   LiveNotes,
   PlanTimeline,
 } from "@/components/console/ConsolePanels";
@@ -65,7 +72,10 @@ import {
   type ChannelMessage,
   type ConsoleChannel,
   EXIT_GRACE_MS,
+  type RunBoot,
+  mergeMarkers,
   openChannel,
+  resumePoint,
 } from "@/lib/console/channel";
 import { saveLiveNote } from "@/lib/console/notes";
 import { devToolsAllowed } from "@/lib/env";
@@ -117,9 +127,9 @@ type Phase =
   | "failed";
 
 /**
- * The participant's window as the console knows it. `lost` is for good: once the run
- * has started there, a window that closed or reloaded took the runner and its state with
- * it, and a new window cannot pick the run up.
+ * The participant's window as the console knows it. `lost` once the run has started
+ * there and the window closed or reloaded; a window that says hello then is booted to
+ * continue the run, and the participant is `open` again.
  */
 type Participant = "closed" | "open" | "lost";
 
@@ -235,8 +245,12 @@ function Console({
   const ending = useRef<Ending | null>(null);
   const closing = useRef(false);
   const syncStarted = useRef(0);
-  // The participant's window has the run: from here a reload cannot be recovered.
+  // The participant's window has the run; `bootRef` is what it was booted with, sent
+  // again with `resume` when that window reloads.
   const booted = useRef(false);
+  const bootRef = useRef<RunBoot | null>(null);
+  // A participant window was booted again mid-run: the timeline at the end is merged.
+  const resumed = useRef(false);
   // Why the run is ending, when the console decided it (the headband dropped).
   const endReason = useRef<"dropped" | undefined>(undefined);
   const dropHandled = useRef(false);
@@ -251,7 +265,15 @@ function Console({
     () => true
   );
   const [participant, setParticipant] = useState<Participant>("closed");
+  const [resumedNotice, setResumedNotice] = useState(false);
   const [runner, setRunner] = useState<RunnerState | null>(null);
+  // what the channel handler reads: the latest, not the render it was made in
+  const participantRef = useRef(participant);
+  const runnerRef = useRef(runner);
+  useEffect(() => {
+    participantRef.current = participant;
+    runnerRef.current = runner;
+  });
   const markers = useRef<Marker[]>([]);
   const [ticker, setTicker] = useState<
     { seq: number; label: string; tS: number }[]
@@ -309,16 +331,45 @@ function Console({
   useEffect(() => {
     onMessage.current = (message) => {
       switch (message.type) {
-        case "hello":
-          if (booted.current) {
-            // a window opened or reloaded mid-run: it cannot resume, so say so there
-            // and keep offering stop-and-save here
-            channelRef.current?.post({ type: "detached" });
-            setParticipant("lost");
+        case "hello": {
+          if (!booted.current) {
+            setParticipant("open");
             return;
           }
+          // a second window while the first still runs: it cannot take over
+          if (participantRef.current === "open" || closing.current) {
+            channelRef.current?.post({ type: "detached" });
+            return;
+          }
+          // the participant's window reloaded (or was reopened): it continues the run
+          const boot = bootRef.current;
+          const resume = boot
+            ? resumePoint(
+                runnerRef.current,
+                markers.current,
+                boot.plan.steps.length
+              )
+            : null;
+          if (!boot || !resume) {
+            channelRef.current?.post({ type: "detached" });
+            return;
+          }
+          const fresh = resume === "fresh";
+          if (!fresh) resumed.current = true;
+          channelRef.current?.post({
+            type: "boot",
+            boot: {
+              ...boot,
+              fit: muse.readTimelineFit() ?? boot.fit,
+              origin: performance.timeOrigin,
+              // a run not begun yet starts over: the notice, then session_start
+              ...(fresh ? {} : { resume }),
+            },
+          });
           setParticipant("open");
+          setResumedNotice(true);
           return;
+        }
         case "gone":
           setParticipant(booted.current ? "lost" : "closed");
           return;
@@ -341,11 +392,15 @@ function Console({
           return;
         }
         case "finished":
-          markers.current = message.markers;
+          markers.current = resumed.current
+            ? mergeMarkers(markers.current, message.markers)
+            : message.markers;
           void close(summaryOf(message.results), false);
           return;
         case "exited":
-          markers.current = message.markers;
+          markers.current = resumed.current
+            ? mergeMarkers(markers.current, message.markers)
+            : message.markers;
           void close({}, true, endReason.current);
           return;
       }
@@ -394,6 +449,7 @@ function Console({
         ...(acknowledged
           ? { acknowledged: ["photosensitivity" as const] }
           : {}),
+        console: "local",
       });
       const resolved = planFor(started);
       if (!resolved.ok) {
@@ -448,19 +504,17 @@ function Console({
       window.clearInterval(timer);
       setAnchor(eegAnchor(performance.now(), muse.readTimelineFit, first));
       booted.current = true;
-      channelRef.current?.post({
-        type: "boot",
-        boot: {
-          sessionId: session.id,
-          plan,
-          seed: session.seed,
-          officialSlug: slug,
-          warningShown: needsConsentGate(manifest),
-          firstSampleIndex: first,
-          fit,
-          origin: performance.timeOrigin,
-        },
-      });
+      bootRef.current = {
+        sessionId: session.id,
+        plan,
+        seed: session.seed,
+        officialSlug: slug,
+        warningShown: needsConsentGate(manifest),
+        firstSampleIndex: first,
+        fit,
+        origin: performance.timeOrigin,
+      };
+      channelRef.current?.post({ type: "boot", boot: bootRef.current });
       setPhase("running");
     }, 100);
     return () => window.clearInterval(timer);
@@ -630,10 +684,22 @@ function Console({
         {participant === "lost" && (
           <div className="mb-6 space-y-3">
             <ErrorBanner message={t("participantGone")} />
-            <Button variant="danger" onClick={() => void close({}, true)}>
-              {t("stopAndSave")}
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={openParticipant}>
+                {t("participant.reopen")}
+              </Button>
+              <Button variant="danger" onClick={() => void close({}, true)}>
+                {t("stopAndSave")}
+              </Button>
+            </div>
           </div>
+        )}
+        {participant === "open" && resumedNotice && (
+          <Card className="mb-6">
+            <p role="status" className="text-ink-2">
+              {t("participantResumed")}
+            </p>
+          </Card>
         )}
         <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <PlanTimeline
@@ -656,6 +722,14 @@ function Console({
               />
             )}
             <EventTicker events={ticker} />
+            <HeadbandPanel
+              quality={muse.quality}
+              getRecent={muse.getRecent}
+              connected={muse.status === "connected"}
+              packets={muse.timeline?.packets ?? 0}
+              lostPackets={muse.timeline?.lostPackets ?? 0}
+              packetRate={muse.packetRate}
+            />
           </div>
         </div>
       </main>

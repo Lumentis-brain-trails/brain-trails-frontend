@@ -3267,7 +3267,8 @@
     "syncing": "Sincronizzazione con la fascia…",
     "headband": "{name} · batteria {battery}",
     "headbandLost": "Fascia disconnessa",
-    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato e la sessione non può continuare lì. Ferma la sessione per conservare quanto registrato.",
+    "participantGone": "Lo schermo del partecipante è stato chiuso o ricaricato. Riaprilo per continuare dal blocco che era in corso, oppure ferma la sessione per conservare quanto registrato.",
+    "participantResumed": "Lo schermo del partecipante si è riaperto: la sessione continua dal blocco che era in corso.",
     "stopAndSave": "Ferma e salva",
     "participant": {
       "title": "Schermo del partecipante",
@@ -3278,7 +3279,8 @@
       "waiting": "In attesa che l'operatore inizi…",
       "ended": "La sessione è terminata. Grazie.",
       "unsupported": "Questo browser non può collegarsi alla console.",
-      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà."
+      "detached": "La sessione non può continuare in questa finestra. L'operatore la fermerà.",
+      "reopen": "Riapri lo schermo del partecipante"
     },
     "commands": {
       "title": "Comandi",
@@ -3293,7 +3295,9 @@
       "pausePending": "La pausa inizia quando finisce questo blocco.",
       "messageLabel": "Messaggio al partecipante",
       "messagePlaceholder": "Compare sul suo schermo per qualche secondo",
-      "send": "Invia"
+      "send": "Invia",
+      "repeatBlock": "Ripeti il blocco",
+      "extendRest": "+{s} s di pausa"
     },
     "plan": {
       "title": "Piano",
@@ -3317,6 +3321,10 @@
       "title": "Eventi",
       "none": "Ancora nessun evento.",
       "seconds": "{s} s"
+    },
+    "headbandPanel": {
+      "title": "Cuffia",
+      "packets": "Pacchetti persi: {lost} ({pct} %) · {rate} pacchetti/s"
     }
   },
   "subjects": {

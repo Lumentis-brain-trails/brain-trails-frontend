@@ -39,6 +39,8 @@ export interface StartSessionOptions {
    * with visual blocks without `photosensitivity` and records it in the timeline (H4).
    */
   acknowledged?: "photosensitivity"[];
+  /** The operator console on this machine drives the run (T1): labels it for the stats. */
+  console?: "local";
 }
 
 /**
@@ -63,6 +65,7 @@ export function startSession(
     ...(options.acknowledged?.length
       ? { acknowledged: options.acknowledged }
       : {}),
+    ...(options.console ? { console: options.console } : {}),
   });
 }
 
