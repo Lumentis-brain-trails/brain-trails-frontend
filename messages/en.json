@@ -462,6 +462,8 @@
       "nothing_to_set": "Nothing to set: this block works as it is."
     },
     "inspector": {
+      "main": "Main segment",
+      "main_hint": "The recording page opens its comparison on the first two main segments the run played. Mark the stretches the protocol is about.",
       "title": "Block",
       "label": "Name",
       "kind": "Type",
@@ -482,9 +484,7 @@
       "pre_fixation_s_hint": "Shows a fixation cross for this long before the block starts, to settle the eyes.",
       "jitter_s_hint": "Adds a random time, up to this much, to the cross before the block, so the participant cannot predict the exact start.",
       "post_rest_s_hint": "An empty screen for this long after the block, to let the signal come back to rest.",
-      "skippable_hint": "Shows a Skip button. The skip is written in the timeline, so you know the block was not completed.",
-      "main": "Main segment",
-      "main_hint": "The recording page opens its comparison on the first two main segments the run played. Mark the stretches the protocol is about."
+      "skippable_hint": "Shows a Skip button. The skip is written in the timeline, so you know the block was not completed."
     },
     "group_action": "Group",
     "monitor": {

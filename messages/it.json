@@ -462,6 +462,8 @@
       "nothing_to_set": "Niente da impostare: questo blocco funziona così com'è."
     },
     "inspector": {
+      "main": "Segmento principale",
+      "main_hint": "La pagina della registrazione apre il confronto sui primi due segmenti principali eseguiti. Segna i tratti su cui si basa il protocollo.",
       "title": "Blocco",
       "label": "Nome",
       "kind": "Tipo",
@@ -482,9 +484,7 @@
       "pre_fixation_s_hint": "Mostra una croce di fissazione per questa durata prima che il blocco inizi, per stabilizzare lo sguardo.",
       "jitter_s_hint": "Aggiunge un tempo casuale, fino a questo valore, alla croce prima del blocco, così il partecipante non può prevedere l'inizio esatto.",
       "post_rest_s_hint": "Uno schermo vuoto per questa durata dopo il blocco, per lasciare che il segnale torni a riposo.",
-      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato.",
-      "main": "Segmento principale",
-      "main_hint": "La pagina della registrazione apre il confronto sui primi due segmenti principali eseguiti. Segna i tratti su cui si basa il protocollo."
+      "skippable_hint": "Mostra un pulsante Salta. Il salto viene scritto nella timeline, così sai che il blocco non è stato completato."
     },
     "group_action": "Raggruppa",
     "monitor": {

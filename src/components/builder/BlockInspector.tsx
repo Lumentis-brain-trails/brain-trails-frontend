@@ -105,20 +105,6 @@ export function BlockInspector({
         )}
       </FieldShell>
 
-      <div className="flex items-center justify-between gap-2">
-        <label className="flex items-center gap-2 text-[15px] text-ink">
-          <input
-            type="checkbox"
-            checked={block.main === true}
-            onChange={(event) =>
-              patch("main", event.target.checked ? true : undefined)
-            }
-          />
-          <span>{t("main")}</span>
-        </label>
-        <InfoTip text={t("main_hint")} label={t("main")} />
-      </div>
-
       <div className="space-y-4 border-t border-hairline pt-5">
         <h3 className="text-[13px] font-medium text-ink-2">{t("settings")}</h3>
         {schema ? (
@@ -204,6 +190,20 @@ export function BlockInspector({
             </div>
           </div>
         )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-t border-hairline pt-5">
+        <label className="flex items-center gap-2 text-[15px] text-ink">
+          <input
+            type="checkbox"
+            checked={block.main === true}
+            onChange={(event) =>
+              patch("main", event.target.checked ? true : undefined)
+            }
+          />
+          <span>{t("main")}</span>
+        </label>
+        <InfoTip text={t("main_hint")} label={t("main")} />
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t border-hairline pt-5">
