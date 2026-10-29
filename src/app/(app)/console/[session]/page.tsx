@@ -74,6 +74,7 @@ import {
   EXIT_GRACE_MS,
   type RunBoot,
   mergeMarkers,
+  owedMarkers,
   openChannel,
   resumePoint,
 } from "@/lib/console/channel";
@@ -282,10 +283,9 @@ function Console({
     runnerRef.current = runner;
   });
   const markers = useRef<Marker[]>([]);
-  // What the participant's window says its sink never delivered; null when it could not
-  // say (a reloaded window, a run closed without its last word): then every marker the
-  // console mirrored is sent again, in batches, and the backend drops the duplicates.
-  const unsent = useRef<Marker[] | null>(null);
+  // Every marker a participant's window says the server acknowledged, across reloads:
+  // the finish sends only the others (`owedMarkers`).
+  const acked = useRef(new Set<number>());
   // The neurofeedback panel, folded from the runner's `nf_*` events as they arrive and
   // drawn four times a second: `nf_update` comes ten times a second.
   const nfRef = useRef<NfPanel>(EMPTY_PANEL);
@@ -308,7 +308,7 @@ function Console({
         summary: end.summary,
         aborted: end.aborted || capture === undefined,
         capture,
-        events: (unsent.current ?? markers.current).map(toWireEvent),
+        events: owedMarkers(markers.current, acked.current).map(toWireEvent),
       });
       setPhase("saved");
     } catch (e) {
@@ -391,6 +391,9 @@ function Console({
         case "state":
           setRunner(message.state);
           return;
+        case "acked":
+          for (const seq of message.seqs) acked.current.add(seq);
+          return;
         case "marker": {
           const m = message.marker;
           markers.current.push(m);
@@ -412,14 +415,12 @@ function Console({
           markers.current = resumed.current
             ? mergeMarkers(markers.current, message.markers)
             : message.markers;
-          unsent.current = resumed.current ? null : (message.unsent ?? null);
           void close(summaryOf(message.results), false);
           return;
         case "exited":
           markers.current = resumed.current
             ? mergeMarkers(markers.current, message.markers)
             : message.markers;
-          unsent.current = resumed.current ? null : (message.unsent ?? null);
           void close({}, true, endReason.current);
           return;
       }

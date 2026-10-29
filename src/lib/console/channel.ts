@@ -75,18 +75,13 @@ export type RunMessage =
   | { type: "hello" }
   | { type: "state"; state: RunnerState }
   | { type: "marker"; marker: Marker }
+  | { type: "finished"; results: TaskResult[]; markers: Marker[] }
+  | { type: "exited"; reason: string; markers: Marker[] }
   /**
-   * The run's end. `markers` is every marker this window made (the console's resume
-   * bookkeeping reads them); `unsent` the ones its sink never had acknowledged, which
-   * is all the console's finish has to send.
+   * The `seq` of every marker in a batch the server acknowledged: what the console's
+   * finish need not send again (`owedMarkers`).
    */
-  | {
-      type: "finished";
-      results: TaskResult[];
-      markers: Marker[];
-      unsent?: Marker[];
-    }
-  | { type: "exited"; reason: string; markers: Marker[]; unsent?: Marker[] }
+  | { type: "acked"; seqs: number[] }
   | { type: "gone" };
 
 export type ChannelMessage = ConsoleMessage | RunMessage;
@@ -265,6 +260,20 @@ export function resumePoint(
     interrupted: !held && open,
     ...(held ? { held: true } : {}),
   };
+}
+
+/**
+ * What a console's finish still has to send: every marker no window had acknowledged.
+ *
+ * Re-sending the whole timeline would count every event twice against the session's
+ * 100,000 (an hour of neurofeedback is ~38,000 `nf_update`), and the finish of a run
+ * after a reload would be refused; a marker with no `seq` is always sent.
+ */
+export function owedMarkers(
+  markers: readonly Marker[],
+  acked: ReadonlySet<number>
+): Marker[] {
+  return markers.filter((m) => m.seq === undefined || !acked.has(m.seq));
 }
 
 /**

@@ -57,6 +57,12 @@ export interface SessionSinkOptions {
   highWater?: number;
   post?: (path: string, body: unknown) => Promise<unknown>;
   beacon?: (path: string, body: unknown) => boolean;
+  /**
+   * Told each batch the server acknowledged: the participant's window reports them to
+   * the console, so the console's finish sends only what no window delivered - also
+   * after a reload, when the lost window's sink is gone.
+   */
+  onAck?: (markers: readonly Marker[]) => void;
 }
 
 /**
@@ -119,6 +125,7 @@ export function createSessionSink(
     // Only drop the batch once the server has acknowledged it; a failed post leaves the
     // buffer untouched so the next attempt resends the same events, never a second part.
     buffer = buffer.slice(batch.length);
+    options.onAck?.(batch);
   }
 
   async function drain(): Promise<void> {

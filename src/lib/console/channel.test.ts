@@ -6,6 +6,7 @@ import {
   commandPortFrom,
   eegFeedFrom,
   mergeMarkers,
+  owedMarkers,
   openChannel,
   resumePoint,
   shiftFit,
@@ -200,5 +201,26 @@ describe("resuming a reloaded participant window", () => {
       [marker(1, "y"), marker(2, "z")]
     );
     expect(merged.map((m) => m.seq)).toEqual([0, 1, 2]);
+  });
+});
+
+describe("what a console's finish still owes", () => {
+  const m = (seq: number | undefined): Marker =>
+    ({
+      label: "x",
+      kind: "stage",
+      tSessionS: 0,
+      tMonotonicMs: 0,
+      tRunMs: 0,
+      seq,
+      meta: {},
+    }) as Marker;
+
+  test("only markers no window had acknowledged, and any without a seq", () => {
+    const owed = owedMarkers(
+      [m(0), m(1), m(2), m(undefined), m(7)],
+      new Set([0, 2, 7])
+    );
+    expect(owed.map((x) => x.seq)).toEqual([1, undefined]);
   });
 });

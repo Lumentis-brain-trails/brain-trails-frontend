@@ -136,6 +136,27 @@ describe("createSessionSink", () => {
       .toEqual(["a", "b"]);
   });
 
+  test("tells onAck each batch the server acknowledged, and not a failed one", async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error("offline"));
+    const onAck = vi.fn();
+    const sink = createSessionSink("s", {
+      post,
+      batchMax: 2,
+      highWater: 99,
+      onAck,
+    });
+    for (const label of ["a", "b", "c"]) sink.push(marker(label));
+    await expect(sink.flush()).rejects.toThrow("offline");
+    expect(onAck).toHaveBeenCalledTimes(1);
+    expect(onAck.mock.calls[0][0].map((x: Marker) => x.label)).toEqual([
+      "a",
+      "b",
+    ]);
+  });
+
   test("only what no batch delivered is still owed", async () => {
     const post = vi
       .fn()

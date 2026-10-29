@@ -90,8 +90,17 @@ export default function ParticipantRunPage({
             current ?? {
               boot,
               channel,
-              sink: teeSink(createSessionSink(boot.sessionId), (marker) =>
-                channel.post({ type: "marker", marker })
+              sink: teeSink(
+                createSessionSink(boot.sessionId, {
+                  onAck: (batch) =>
+                    channel.post({
+                      type: "acked",
+                      seqs: batch.flatMap((m) =>
+                        m.seq === undefined ? [] : [m.seq]
+                      ),
+                    }),
+                }),
+                (marker) => channel.post({ type: "marker", marker })
               ),
               anchor: eegAnchor(
                 performance.now(),
@@ -152,7 +161,6 @@ export default function ParticipantRunPage({
             type: "finished",
             results,
             markers: [...markers],
-            unsent: [...sink.unacknowledged()],
           });
           setEnded(true);
         }}
@@ -161,7 +169,6 @@ export default function ParticipantRunPage({
             type: "exited",
             reason,
             markers: [...sink.all()],
-            unsent: [...sink.unacknowledged()],
           });
           setEnded(true);
         }}
