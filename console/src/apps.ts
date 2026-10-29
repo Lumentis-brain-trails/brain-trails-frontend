@@ -8,10 +8,14 @@ import { manifest as betaTesters } from "@apps/beta-testers/manifest";
 import { manifest as health } from "@apps/health/manifest";
 import { manifest as moderation } from "@apps/moderation/manifest";
 import { manifest as overview } from "@apps/overview/manifest";
+import { manifest as statistics } from "@apps/statistics/manifest";
 import { manifest as worklog } from "@apps/worklog/manifest";
 
 export const APPS: Record<string, AppManifest> = Object.fromEntries(
-  [betaTesters, health, moderation, overview, worklog].map((m) => [m.slug, m])
+  [betaTesters, health, moderation, overview, statistics, worklog].map((m) => [
+    m.slug,
+    m,
+  ])
 );
 
 /** The app called `slug`, if this build draws it. */
