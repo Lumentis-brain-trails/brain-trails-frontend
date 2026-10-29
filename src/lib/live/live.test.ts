@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ChunkAssembler } from "./chunks";
 import { FakeSocket } from "./fakeSocket";
 import { LiveProducer } from "./producer";
-import { applyFrame, emptyRoom, holdsCommands } from "./room";
+import { applyFrame, emptyRoom, holdsCommands, later } from "./room";
 import { LiveSocket, backoffMs, wsUrl } from "./socket";
 
 const Impl = FakeSocket as unknown as typeof WebSocket;
@@ -60,6 +60,28 @@ describe("LiveSocket", () => {
     FakeSocket.last().drop(4409);
     await new Promise((r) => setTimeout(r, 10));
     expect(FakeSocket.all).toHaveLength(1);
+    expect(socket.state).toBe("closed");
+  });
+
+  test("4423 (another tab holds the room) stops; 4408 (re-ticket) reconnects", async () => {
+    const Impl = FakeSocket as unknown as typeof WebSocket;
+    const tickets = vi.fn(async () => ({ ticket: "t", ws_path: "/p" }));
+    const socket = new LiveSocket({
+      baseUrl: "http://localhost:8000",
+      ticket: tickets,
+      onFrame: () => undefined,
+      WebSocketImpl: Impl,
+      backoff: () => 1,
+    });
+    socket.start();
+    await flush();
+    FakeSocket.last().drop(4408);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(tickets).toHaveBeenCalledTimes(2); // a fresh ticket: they are single-use
+    expect(FakeSocket.all).toHaveLength(2);
+    FakeSocket.last().drop(4423);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(FakeSocket.all).toHaveLength(2);
     expect(socket.state).toBe("closed");
   });
 
@@ -183,6 +205,33 @@ describe("LiveProducer", () => {
 });
 
 describe("the room an observer sees", () => {
+  test("since never goes back, and a snapshot outranks older points", () => {
+    expect(later("5-1", "5-0")).toBe("5-1");
+    expect(later("5-1", "6-0")).toBe("6-0");
+    expect(later(undefined, "1-0")).toBe("1-0");
+    let room = emptyRoom();
+    room = applyFrame(room, { id: "9-0", type: "window", i: 3, x: 9, y: 9 });
+    // a snapshot names the entry before its mark: older than the point just seen
+    room = applyFrame(room, {
+      id: "8-0",
+      type: "trail",
+      n: 3,
+      final: false,
+      points: [
+        [0, 0],
+        [1, 1],
+        [2, 2],
+      ],
+    });
+    expect(room.since.windows).toBe("9-0");
+    // a point the snapshot already re-projected keeps the snapshot's value
+    room = applyFrame(room, { id: "10-0", type: "window", i: 1, x: 7, y: 7 });
+    expect(room.trail.x).toEqual([0, 1, 2]);
+    expect(room.since.windows).toBe("10-0");
+    room = applyFrame(room, { id: "11-0", type: "window", i: 3, x: 3, y: 3 });
+    expect(room.trail.x).toEqual([0, 1, 2, 3]);
+  });
+
   test("hello, trail, points, places, acks, results and the commander", () => {
     let room = emptyRoom();
     room = applyFrame(room, {

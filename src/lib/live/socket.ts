@@ -23,8 +23,14 @@ export interface Ticket {
   ws_path: string;
 }
 
-/** Close codes after which trying again would be refused the same way. */
-export const FINAL_CLOSE_CODES = new Set([4401, 4404, 4409]);
+/**
+ * Close codes after which trying again would be refused the same way: a bad ticket,
+ * live off, the session finished, and 4423 - another tab of the same person (or another
+ * person) holds the room as producer. `4408` is not one of them: the gateway asks an
+ * observer to come back with a fresh ticket every 15 minutes, which the next
+ * connection does by itself.
+ */
+export const FINAL_CLOSE_CODES = new Set([4401, 4404, 4409, 4423]);
 
 /** Milliseconds to wait before attempt `n` (0-based): 0.5 s doubling to 15 s, +-20 %. */
 export function backoffMs(attempt: number, random: () => number = Math.random) {

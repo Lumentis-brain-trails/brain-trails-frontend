@@ -533,9 +533,10 @@ export interface paths {
          * Open Waiting Room
          * @description Open the assignment's waiting room for a remote session, and a ticket to wait in it.
          *
-         *     Opening an open room again only hands out a new ticket. The room closes by itself
-         *     after two hours, when its session starts and ends, or with `DELETE`. 404 when the
-         *     live service is off here, 409 when the assignment is closed.
+         *     Opening an open room again only hands out a new ticket (a carer reconnecting asks
+         *     here again: tickets are single-use). The room closes by itself after two hours, when
+         *     its session starts and ends, or with `DELETE`. 404 when the live service is off here,
+         *     409 when the assignment is closed.
          */
         post: operations["open_waiting_room_assignments__assignment_id__live_room_post"];
         /**
@@ -1022,8 +1023,9 @@ export interface paths {
          * My Waiting Room
          * @description Whether the caller's own assignment has a waiting room open, with a ticket to join it.
          *
-         *     Asked once, when the patient opens the run - never polled (0014). 404 when the
-         *     assignment is not the caller's open one or the live service is off here.
+         *     Asked when the patient opens the run and again on a reconnect (tickets are
+         *     single-use) - never polled (0014). 404 when the assignment is not the caller's open
+         *     one or the live service is off here.
          */
         get: operations["my_waiting_room_me_assignments__assignment_id__live_room_get"];
         put?: never;
@@ -2049,9 +2051,9 @@ export interface paths {
          * Live Landscape
          * @description The recorded person's brain landscape, the ground of the console's second view (T5).
          *
-         *     The live windows are placed on it by the worker (`window.mx`, `window.my`). 409
-         *     `not_ready` when the person has no landscape yet: the console then shows the
-         *     session's own trail only. Never builds one - that is the batch's, after a session.
+         *     The live windows are placed on it by the worker (`place` frames). 409 `not_ready`
+         *     when the person has no landscape yet: the console then shows the session's own trail
+         *     only. Never builds one - that is the batch's, after a session.
          */
         get: operations["live_landscape_sessions__session_id__live_landscape_get"];
         put?: never;
@@ -2073,10 +2075,11 @@ export interface paths {
         put?: never;
         /**
          * Observer Ticket
-         * @description A 5-minute ticket to watch this session; it may command when the caller `can_command`.
+         * @description A 5-minute, single-use ticket to watch this session; it commands if `can_command`.
          *
-         *     Each one is a `live.joined` in the usage log (asked for, so about to join). 404 when
-         *     the live service is off here, 409 once the session has finished.
+         *     Each one is a `live.joined` in the usage log (asked for, so about to join), and,
+         *     when the person is someone else, a `live.observe` in the audit log, as a read of
+         *     their data is. 404 when the live service is off here, 409 once it has finished.
          */
         post: operations["observer_ticket_sessions__session_id__live_observer_ticket_post"];
         delete?: never;
@@ -2096,9 +2099,12 @@ export interface paths {
         put?: never;
         /**
          * Producer Ticket
-         * @description A 5-minute ticket to send this session's signal (whoever runs it, T3's client too).
+         * @description A 5-minute, single-use ticket to send this session's signal.
          *
-         *     404 when the live service is off here, 409 once the session has finished.
+         *     Only for the person who started the session - its recording's operator, the
+         *     patient's own account included: a carer who may run the session still may not put
+         *     a signal into someone else's run. 403 `not_the_runner` otherwise, 404 when the live
+         *     service is off here, 409 once the session has finished.
          */
         post: operations["producer_ticket_sessions__session_id__live_producer_ticket_post"];
         delete?: never;

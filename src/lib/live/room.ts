@@ -63,6 +63,8 @@ export interface RoomView {
   /** The windows on the person's landscape. */
   map: { x: number[]; y: number[] };
   trailFinal: boolean;
+  /** Rows in the last whole trail: a `window` below it is older than the trail shown. */
+  trailBase: number;
   events: LiveEvent[];
   results: BlockResult[];
   acks: Record<string, Ack>;
@@ -71,6 +73,18 @@ export interface RoomView {
   since: { signal?: string; windows?: string };
   error: string | null;
   ended: boolean;
+}
+
+/**
+ * The later of two stream ids (`<ms>-<seq>`). A trail snapshot names the entry before
+ * its mark, which can be older than a point already seen; `since` never goes back.
+ */
+export function later(seen: string | undefined, id: string | undefined) {
+  if (!id) return seen;
+  if (!seen) return id;
+  const [am, as] = seen.split("-").map(Number);
+  const [bm, bs] = id.split("-").map(Number);
+  return bm > am || (bm === am && bs > as) ? id : seen;
 }
 
 /** Events kept for the ticker. */
@@ -91,6 +105,7 @@ export function emptyRoom(): RoomView {
     trail: { x: [], y: [] },
     map: { x: [], y: [] },
     trailFinal: false,
+    trailBase: 0,
     events: [],
     results: [],
     acks: {},
@@ -147,15 +162,26 @@ export function applyFrame(
         ...room,
         analysed: true,
         trail: { x: points.map((p) => p[0]), y: points.map((p) => p[1]) },
+        trailBase: points.length,
         map: map.length
           ? { x: map.map((p) => p[0]), y: map.map((p) => p[1]) }
           : room.map,
         trailFinal: frame.final === true,
-        since: { ...room.since, windows: frame.id ?? room.since.windows },
+        since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     }
     case "window": {
       const i = Number(frame.i);
+      // a point the last whole trail already re-projected: keep the trail's
+      if (i < room.trailBase) {
+        return {
+          ...room,
+          since: {
+            ...room.since,
+            windows: later(room.since.windows, frame.id),
+          },
+        };
+      }
       const x = [...room.trail.x];
       const y = [...room.trail.y];
       x[i] = Number(frame.x);
@@ -164,7 +190,7 @@ export function applyFrame(
         ...room,
         analysed: true,
         trail: { x, y },
-        since: { ...room.since, windows: frame.id ?? room.since.windows },
+        since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     }
     case "place": {
@@ -176,14 +202,14 @@ export function applyFrame(
       return {
         ...room,
         map: { x, y },
-        since: { ...room.since, windows: frame.id ?? room.since.windows },
+        since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     }
     case "end":
       return {
         ...room,
         ended: true,
-        since: { ...room.since, windows: frame.id ?? room.since.windows },
+        since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     case "plan":
       return { ...room, plan: planSteps(frame.plan) };
