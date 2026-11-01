@@ -168,4 +168,5 @@ export const nBackTaskKind: TaskKind<NBackConfig> = {
   name: "n-back",
   configSchema: nBackConfigSchema,
   Renderer: NBackRenderer,
+  photosensitive: true,
 };

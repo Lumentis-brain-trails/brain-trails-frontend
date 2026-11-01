@@ -19,9 +19,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useSignOut } from "@/lib/signOut";
 import type { ConsentData } from "@/components/account/PrivacyCard";
 import { Button, Card, ErrorBanner, SectionTitle } from "@/components/ui";
 
@@ -29,7 +29,7 @@ import { Button, Card, ErrorBanner, SectionTitle } from "@/components/ui";
 const PRIVACY_EMAIL = "privacy@lumentis.ca";
 
 export function PolicyUpdateGate({ consent }: { consent: ConsentData }) {
-  const router = useRouter();
+  const signOut = useSignOut();
   const t = useTranslations("shell");
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
@@ -80,13 +80,7 @@ export function PolicyUpdateGate({ consent }: { consent: ConsentData }) {
               ? t("policyUpdate.saving")
               : t("policyUpdate.agree")}
           </Button>
-          <Button
-            variant="secondary"
-            onClick={async () => {
-              await api.logout();
-              router.push("/login");
-            }}
-          >
+          <Button variant="secondary" onClick={() => void signOut()}>
             {t("signOut")}
           </Button>
         </div>

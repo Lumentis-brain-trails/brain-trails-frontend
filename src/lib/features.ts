@@ -31,5 +31,5 @@ export function useAppConfig() {
  */
 export function useFeature(name: FeatureName): boolean {
   const config = useAppConfig();
-  return config.data?.features[name] === true;
+  return config.data?.features?.[name] === true;
 }

@@ -12,12 +12,20 @@ import {
   readSeenEpoch,
   subscribeSeenEpoch,
 } from "@/lib/landscapeStatus";
+import { useFeature } from "@/lib/features";
+import { useSignOut } from "@/lib/signOut";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
+import {
+  type Edition,
+  useEdition,
+  useReloadOnWorkspaceChange,
+} from "@/lib/workspace";
 import { Logo } from "@/components/Logo";
 import { BRAND, cn, Icon, type IconName } from "@/components/ui";
 import { type ConsentData } from "@/components/account/PrivacyCard";
 import { PolicyUpdateGate } from "@/components/PolicyUpdateGate";
+import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 
 /** A section's name, as a key of `shell.nav` in the message catalogue. */
 type SectionKey =
@@ -26,6 +34,10 @@ type SectionKey =
   | "media"
   | "recordings"
   | "landscape"
+  | "patients"
+  | "participants"
+  | "people"
+  | "my"
   | "account"
   | "admin";
 
@@ -40,6 +52,32 @@ const MAIN: Section[] = [
   { href: "/recordings", key: "recordings", icon: "recordings" },
   { href: "/landscape", key: "landscape", icon: "graph" },
 ];
+
+/**
+ * An organisation's rail (V4-0006): the same work, plus the people it records and its
+ * staff; the Brain Landscape is a person's own map and stays in the personal workspace.
+ * The people recorded are patients in a clinic and participants in a laboratory (T3):
+ * one page, two words.
+ */
+function organisation(edition: Edition): Section[] {
+  return [
+    { href: "/home", key: "home", icon: "home" },
+    { href: "/protocols", key: "protocols", icon: "protocol" },
+    { href: "/media", key: "media", icon: "library" },
+    { href: "/recordings", key: "recordings", icon: "recordings" },
+    {
+      href: "/patients",
+      key: edition === "therapy" ? "patients" : "participants",
+      icon: "person",
+    },
+    { href: "/people", key: "people", icon: "people" },
+  ];
+}
+
+/** The sections an edition shows, in order (one place decides, V4-0006). */
+export function sectionsFor(edition: Edition): Section[] {
+  return edition === "personal" ? MAIN : organisation(edition);
+}
 
 /**
  * A section owns its page and everything below it. A prefix match alone would
@@ -63,6 +101,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("shell");
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
+  useReloadOnWorkspaceChange();
 
   // Whether this account still agrees to the note as published (V3-0011). Deliberately
   // fails open: while this is loading, or if the call fails, the app renders as usual.
@@ -78,6 +117,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     consent.data !== undefined &&
     consent.data.core_version !== consent.data.current_version;
 
+  // Someone's patient or participant with no seat anywhere has one surface, `/my`
+  // (V4-0006): the app's pages are not theirs, and the API would refuse their lists.
+  const router = useRouter();
+  const me = useMe();
+  const client = me.data?.shell === "client";
+  useEffect(() => {
+    if (client) router.replace("/my");
+  }, [client, router]);
+
   // Following a link inside the drawer closes it: the state resets when the path
   // it was opened on is no longer the current one.
   if (open && openedAt !== pathname) setOpen(false);
@@ -89,6 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  if (client) return null;
   if (stale && consent.data) return <PolicyUpdateGate consent={consent.data} />;
 
   return (
@@ -133,6 +182,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** The signed-in account, shared by the shell's checks (one request, cached). */
+function useMe() {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.get<UserInfo>("auth/me"),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
 /**
  * Whether the Brain Landscape was redrawn since this browser last showed it. Asked once
  * per page load and kept for a while, never polled: the status is a database read, and
@@ -155,18 +214,20 @@ function useLandscapeRedrawn(): boolean {
 }
 
 function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
-  const router = useRouter();
+  const signOut = useSignOut();
   const theme = useTheme();
   const t = useTranslations("shell");
   const tLandscape = useTranslations("landscape");
   const redrawn = useLandscapeRedrawn();
-  const me = useQuery({
-    queryKey: ["me"],
-    queryFn: () => api.get<UserInfo>("auth/me"),
-    staleTime: 60_000,
-    retry: false,
-  });
+  const multi = useFeature("workspaces_multi");
+  const edition = useEdition();
+  const me = useMe();
+  const assignments = useFeature("assignments");
   const secondary: Section[] = [
+    // a private user or a therapist who is also somebody's patient (V4 question A8)
+    ...(assignments && me.data?.is_client
+      ? [{ href: "/my", key: "my", icon: "protocol" } as const]
+      : []),
     { href: "/account", key: "account", icon: "person" },
     ...(me.data?.role === "admin"
       ? [{ href: "/admin", key: "admin", icon: "shield" } as const]
@@ -193,8 +254,10 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
         </span>
       </Link>
 
+      {multi && <WorkspaceSwitcher />}
+
       <nav className="flex flex-col items-center gap-1">
-        {MAIN.map((s) => (
+        {sectionsFor(multi ? edition : "personal").map((s) => (
           <RailLink
             key={s.href}
             section={s}
@@ -231,10 +294,7 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
         <RailButton
           icon="signout"
           label={t("signOut")}
-          onClick={async () => {
-            await api.logout();
-            router.push("/login");
-          }}
+          onClick={() => void signOut()}
         />
         {me.data && (
           <div className="relative mt-2 flex h-10 w-10 items-center justify-center">

@@ -143,4 +143,5 @@ export const imageSequenceTaskKind: TaskKind<ImageSequenceConfig> = {
   configSchema: imageSequenceConfigSchema,
   Renderer: ImageSequenceRenderer,
   motionSensitive: true,
+  photosensitive: true,
 };

@@ -30,6 +30,15 @@ export interface StartSessionOptions {
   title?: string;
   device?: string;
   params?: Record<string, unknown>;
+  /** Record someone else, in their organisation (operator mode, backend T3). */
+  subjectId?: string;
+  /** Run an assignment: its pinned version, counted when the run finishes (T3). */
+  assignmentId?: string;
+  /**
+   * The warnings the person acknowledged before Start. The backend refuses a protocol
+   * with visual blocks without `photosensitivity` and records it in the timeline (H4).
+   */
+  acknowledged?: "photosensitivity"[];
 }
 
 /**
@@ -49,6 +58,11 @@ export function startSession(
     ...(options.title ? { title: options.title } : {}),
     device: options.device ?? "muse-2",
     params: options.params ?? {},
+    ...(options.subjectId ? { subject_id: options.subjectId } : {}),
+    ...(options.assignmentId ? { assignment_id: options.assignmentId } : {}),
+    ...(options.acknowledged?.length
+      ? { acknowledged: options.acknowledged }
+      : {}),
   });
 }
 

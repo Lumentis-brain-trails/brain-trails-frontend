@@ -74,6 +74,13 @@ export interface UserInfo {
   email_verified_at: string | null;
   /** The language chosen for the account; null until someone chooses (backend V3-0018). */
   locale?: string | null;
+  /**
+   * Where the account lands (backend V4-0006, T3): `client` for someone's patient or
+   * participant with no seat anywhere - `/my` and nothing else - `app` for everyone else.
+   */
+  shell?: "app" | "client";
+  /** Whether the account is somebody's subject at all, so `/my` is offered beside the app. */
+  is_client?: boolean;
 }
 
 export const TASK_LABELS = [

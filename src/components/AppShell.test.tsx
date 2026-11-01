@@ -9,24 +9,47 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import messages from "../../messages/en.json";
-import { AppShell, isCurrentSection } from "./AppShell";
+import { AppShell, isCurrentSection, sectionsFor } from "./AppShell";
+import { SELECTED_WORKSPACE_KEY, resetPinnedWorkspace } from "@/lib/workspace";
 import { LANDSCAPE_SEEN_KEY } from "@/lib/landscapeStatus";
 
 const pathname = vi.fn(() => "/");
+const replace = vi.fn();
 vi.mock("next/navigation", () => ({
   usePathname: () => pathname(),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace }),
 }));
-const me = vi.fn(async () => ({ email: "ada@lab.org", role: "user" }));
+const me = vi.fn(async (): Promise<Record<string, unknown>> => ({
+  email: "ada@lab.org",
+  role: "user",
+}));
 const landscapeStatus = vi.fn(async () => ({
   epoch: null as number | null,
   built_at: null,
   pending: false,
 }));
+const features = vi.fn(async () => ({
+  features: {} as Record<string, boolean>,
+}));
+const workspaces = vi.fn(async () => [
+  {
+    id: "p",
+    kind: "personal",
+    name: "Personal",
+    status: "active",
+    relations: ["owner"],
+  },
+]);
 vi.mock("@/lib/api", () => ({
   api: {
     get: (path: string) =>
-      path === "landscape/status" ? landscapeStatus() : me(),
+      path === "landscape/status"
+        ? landscapeStatus()
+        : path === "config"
+          ? features()
+          : path === "workspaces"
+            ? workspaces()
+            : me(),
     logout: async () => {},
   },
 }));
@@ -52,6 +75,7 @@ function renderAt(path: string) {
 afterEach(cleanup);
 beforeEach(() => {
   window.localStorage.clear();
+  resetPinnedWorkspace();
   document.documentElement.dataset.theme = "light";
 });
 
@@ -119,4 +143,88 @@ test("the Brain Landscape is marked when its map was redrawn since last seen", a
     built_at: null,
     pending: false,
   });
+});
+
+test("an organisation's rail has its people and no personal map", () => {
+  const keys = (e: Parameters<typeof sectionsFor>[0]) =>
+    sectionsFor(e).map((s) => s.key);
+  expect(keys("personal")).toContain("landscape");
+  expect(keys("personal")).not.toContain("people");
+  expect(keys("therapy")).toEqual([
+    "home",
+    "protocols",
+    "media",
+    "recordings",
+    "patients",
+    "people",
+  ]);
+  // one page, the laboratory's word for the people it records
+  expect(keys("research")).toEqual(
+    keys("therapy").map((k) => (k === "patients" ? "participants" : k))
+  );
+});
+
+test("with organisations on, the switcher shows the chosen clinic", async () => {
+  features.mockResolvedValue({ features: { workspaces_multi: true } });
+  workspaces.mockResolvedValue([
+    {
+      id: "p",
+      kind: "personal",
+      name: "Personal",
+      status: "active",
+      relations: ["owner"],
+    },
+    {
+      id: "c",
+      kind: "practice",
+      name: "Studio Uno",
+      status: "active",
+      relations: ["member"],
+    },
+  ]);
+  window.localStorage.setItem(SELECTED_WORKSPACE_KEY, "c");
+  renderAt("/home");
+  expect(await screen.findByRole("link", { name: "People" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Patients" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Brain Landscape" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /Change workspace/ }));
+  expect(
+    screen.getByRole("menuitemradio", { name: /Clinic · Member/ })
+  ).toBeTruthy();
+  features.mockResolvedValue({ features: {} });
+  workspaces.mockResolvedValue([
+    {
+      id: "p",
+      kind: "personal",
+      name: "Personal",
+      status: "active",
+      relations: ["owner"],
+    },
+  ]);
+});
+
+test("someone's patient with no seat is sent to /my and sees no rail", async () => {
+  me.mockResolvedValueOnce({
+    email: "pat@example.com",
+    role: "user",
+    shell: "client",
+    is_client: true,
+  });
+  renderAt("/protocols");
+  await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/my"));
+  expect(screen.queryByText("page")).toBeNull();
+});
+
+test("a private user who is also a patient gets a way to /my", async () => {
+  features.mockResolvedValue({ features: { assignments: true } });
+  me.mockResolvedValue({
+    email: "ada@lab.org",
+    role: "user",
+    shell: "app",
+    is_client: true,
+  });
+  renderAt("/home");
+  expect(await screen.findByRole("link", { name: "My sessions" })).toBeTruthy();
+  features.mockResolvedValue({ features: {} });
+  me.mockResolvedValue({ email: "ada@lab.org", role: "user" });
 });

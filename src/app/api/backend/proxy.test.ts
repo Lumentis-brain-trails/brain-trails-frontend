@@ -137,6 +137,37 @@ describe("BFF proxy", () => {
     );
   });
 
+  test("allows opening an invitation link", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/backend/invitations/lookup",
+      { method: "POST", body: JSON.stringify({ token: "t".repeat(32) }) }
+    );
+    const res = await POST(req, ctx(["invitations", "lookup"]));
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(
+      "http://localhost:8000/invitations/lookup"
+    );
+  });
+
+  test("allows subjects, assignments and the client's own reads (T3)", async () => {
+    for (const path of [
+      ["subjects", "s1", "carers"],
+      ["assignments", "a1"],
+      ["me", "assignments"],
+    ]) {
+      const req = new NextRequest(
+        `http://localhost/api/backend/${path.join("/")}`
+      );
+      const res = await GET(req, ctx(path));
+      expect(res.status).toBe(200);
+    }
+    expect(fetchSpy.mock.calls.map((c) => String(c[0]))).toEqual([
+      "http://localhost:8000/subjects/s1/carers",
+      "http://localhost:8000/assignments/a1",
+      "http://localhost:8000/me/assignments",
+    ]);
+  });
+
   // Left off the allow-list once, and every closed-list menu in the app rendered
   // disabled with no way to tell why: the registration form needs these before anyone
   // has an account, so they cannot ride on an authenticated path.

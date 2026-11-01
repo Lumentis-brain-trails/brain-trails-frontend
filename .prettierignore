@@ -6,6 +6,9 @@ assets
 # native iOS shell: Xcode and Capacitor own these files
 /ios
 src/lib/api-types.ts
+console/src/lib/ops-types.ts
+console/.next
+console/next-env.d.ts
 schemas/*.schema.json
 
 # Source documents kept exactly as they were written, not reflowed by a formatter

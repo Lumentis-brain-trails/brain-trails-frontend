@@ -36,6 +36,8 @@ import { FindingsList } from "@/components/builder/Findings";
 import { PublishDialog } from "@/components/builder/PublishDialog";
 import { type DragPayload, Timeline } from "@/components/builder/Timeline";
 import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
+import { ConsentGate } from "@/components/run/ConsentGate";
+import { hasPhotosensitiveStep } from "@/lib/protocol/registry";
 import "@/components/protocol/kinds";
 import {
   Button,
@@ -271,6 +273,9 @@ export default function BuilderPage({
       if (sentRef.current === tree) return;
       if (unsaved) {
         if (!hasContent(tree)) return;
+        // Not before the workspace is known: without it the API files the protocol in
+        // the personal library, whichever workspace the person is working in.
+        if (workspace === undefined) return;
         sentRef.current = tree;
         createRef.current.mutate(tree);
         return;
@@ -279,7 +284,7 @@ export default function BuilderPage({
       saveRef.current.mutate(tree);
     }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [conflict, rev, tree, unsaved]);
+  }, [conflict, rev, tree, unsaved, workspace]);
 
   const check = useMutation({
     mutationFn: () =>
@@ -820,7 +825,16 @@ function useMediaIndex(): Record<string, BinMedia> {
  * Media are bound exactly as a real run binds them, from a map built by
  * `usePreviewMedia` instead of the session start. Without that step a video reached the
  * runner with an id and no file, and the preview fell over at the first video block.
+ * A draft with visual blocks opens on the photosensitivity warning first, as a real run
+ * does (H4): the games run here at their real timing.
  */
+/** The Preview's gate shows only the photosensitivity warning: no author's words. */
+const NO_MANIFEST = {
+  content_warning: null,
+  requires_consent: false,
+  consent_text: null,
+};
+
 function Preview({
   tree,
   onClose,
@@ -830,6 +844,7 @@ function Preview({
 }) {
   const t = useTranslations("builder");
   const sink = useMemo(() => createMemorySink(), []);
+  const [warned, setWarned] = useState(false);
   const plan = useMemo(() => {
     try {
       return resolvePlan(tree, 1, {
@@ -870,6 +885,18 @@ function Preview({
       </div>
     );
   if (!bound.plan) return notice(bound.error ?? t("previewFailed"));
+  if (!warned && hasPhotosensitiveStep(bound.plan.steps))
+    return (
+      <div className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-(--scrim) p-6">
+        <ConsentGate
+          manifest={NO_MANIFEST}
+          photosensitive
+          title={t("preview")}
+          onAccept={() => setWarned(true)}
+          onDecline={onClose}
+        />
+      </div>
+    );
 
   return (
     <div className="fixed inset-0 z-100 bg-black">

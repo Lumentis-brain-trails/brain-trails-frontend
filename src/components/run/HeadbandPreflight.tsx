@@ -26,6 +26,8 @@ interface Props {
   override: boolean;
   onOverride: (value: boolean) => void;
   starting: boolean;
+  /** Start waits for something else on the page (who is being recorded, T3). */
+  blocked?: boolean;
   onStart: () => void;
   onBack: () => void;
 }
@@ -39,6 +41,7 @@ export function HeadbandPreflight({
   override,
   onOverride,
   starting,
+  blocked = false,
   onStart,
   onBack,
 }: Props) {
@@ -108,7 +111,9 @@ export function HeadbandPreflight({
       <div className="flex gap-3">
         <Button
           onClick={onStart}
-          disabled={!connected || starting || !(muse.allGood || override)}
+          disabled={
+            !connected || starting || blocked || !(muse.allGood || override)
+          }
         >
           {starting ? t("starting") : t("start")}
         </Button>

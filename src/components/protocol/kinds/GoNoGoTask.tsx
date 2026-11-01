@@ -269,4 +269,5 @@ export const goNoGoTaskKind: TaskKind<GoNoGoConfig> = {
   configSchema: goNoGoConfigSchema,
   Renderer: GoNoGoRenderer,
   motionSensitive: true,
+  photosensitive: true,
 };

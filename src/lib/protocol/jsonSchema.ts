@@ -23,7 +23,10 @@ export const BLOCKS_SCHEMA_VERSION = 1;
 export const BLOCKS_SCHEMA_PATH = "schemas/blocks.schema.json";
 export const TREE_SCHEMA_PATH = "schemas/tree.schema.json";
 
-/** `{schema_version, kinds: {<name>: <JSON Schema of its config>}}`, kinds sorted. */
+/**
+ * `{schema_version, kinds: {<name>: <JSON Schema of its config>}, photosensitive: [...]}`,
+ * kinds sorted; `photosensitive` names the kinds that need the H4 warning.
+ */
 export function blocksJsonSchema(kinds: readonly TaskKind<never>[]) {
   const sorted = [...kinds].sort((a, b) => a.name.localeCompare(b.name));
   return {
@@ -34,6 +37,7 @@ export function blocksJsonSchema(kinds: readonly TaskKind<never>[]) {
         z.toJSONSchema(kind.configSchema, { io: "input" }),
       ])
     ),
+    photosensitive: sorted.filter((k) => k.photosensitive).map((k) => k.name),
   };
 }
 

@@ -1,0 +1,10 @@
+/*
+ * The console wears the product's design system: its tokens, type scale and motion come
+ * from the product's stylesheet, imported (backend plan OPS: "one source, imported - not
+ * copied"). Tailwind scans the console's own sources by itself; the shared primitives
+ * live in the product's tree, so they are named here.
+ */
+@import "../../../src/app/globals.css";
+
+@source "../../../src/components/ui.tsx";
+@source "../../../src/components/InfoTip.tsx";

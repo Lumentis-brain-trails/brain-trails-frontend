@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -15,6 +16,7 @@ import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 
 function LoginForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useSearchParams();
   const t = useTranslations("public.login");
   const tStatus = useTranslations("auth.status");
@@ -41,6 +43,8 @@ function LoginForm() {
     setError(null);
     try {
       await api.login(values.email, values.password);
+      // a session that expired never signed out: nothing of it may show to this one
+      queryClient.clear();
       router.push(params.get("from") ?? "/home");
     } catch (e) {
       if (e instanceof ApiRequestError && e.error.code === "account_pending") {

@@ -416,6 +416,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Organisations
+         * @description Clinics and laboratories, oldest first; `?status=` defaults to `pending` (admin only).
+         *
+         *     Personal workspaces are never listed. Keyset-paged on `(created_at, id)`.
+         */
+        get: operations["list_organisations_admin_workspaces_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/workspaces/{workspace_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide
+         * @description Approve (the requester becomes owner) or reject a pending request (admin only).
+         *
+         *     404 for an unknown workspace, 409 `invalid_state` unless it is a pending request.
+         */
+        post: operations["decide_admin_workspaces__workspace_id__decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/annotations/{annotation_id}": {
         parameters: {
             query?: never;
@@ -440,6 +484,40 @@ export interface paths {
          *     422 `bad_span` when the edit would leave the range ending before it starts.
          */
         patch: operations["update_annotation_annotations__annotation_id__patch"];
+        trace?: never;
+    };
+    "/assignments/{assignment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Assignment
+         * @description One assignment (whoever reads its subject).
+         */
+        get: operations["get_assignment_assignments__assignment_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Cancel Assignment
+         * @description Cancel an assignment: it leaves the person's list, its reminder is dropped.
+         *
+         *     The row stays, so the sessions it produced keep their link. Idempotent.
+         */
+        delete: operations["cancel_assignment_assignments__assignment_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit Assignment
+         * @description Change the due date, the note or the allowance of an open assignment.
+         *
+         *     The reminder scheduled for the old due date stays as it was: the provider cannot
+         *     move a scheduled message, and a second reminder would be noise. 409
+         *     `assignment_closed`.
+         */
+        patch: operations["edit_assignment_assignments__assignment_id__patch"];
         trace?: never;
     };
     "/auth/login": {
@@ -474,7 +552,7 @@ export interface paths {
         };
         /**
          * Me
-         * @description Return the caller's own account record.
+         * @description Return the caller's own account record, with the shell it lands in (T3).
          */
         get: operations["me_auth_me_get"];
         put?: never;
@@ -702,6 +780,10 @@ export interface paths {
          *     Public on purpose: the sign-in and application screens are flag-dependent too, and
          *     nothing here is secret - the flag names are in the frontend bundle anyway. It reads
          *     settings only, so it costs no database query (decision 0014).
+         *
+         *     With `?workspace=` the flags are those of that workspace's kind (V4-0006): the
+         *     edition a shell mounts. That form needs a bearer token and one query, and answers
+         *     404 `not_found` for a workspace the caller holds no seat in.
          */
         get: operations["config_config_get"];
         put?: never;
@@ -758,6 +840,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept
+         * @description Take the seat the invitation offers; returns the workspace now joined.
+         *
+         *     A subject's invitation links the account to that subject instead (`subject#client`,
+         *     T3); the workspace comes back with no relation, because the account holds no seat.
+         *     410 `invitation_closed` (accepted, revoked or expired), 403 `wrong_account` when
+         *     signed in with another address, 409 `already_member` / `already_client`.
+         */
+        post: operations["accept_invitations_accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lookup Invitation
+         * @description What an invitation link offers and whether it is still open (unauthenticated).
+         *
+         *     404 `not_found` for a token no invitation was issued with.
+         */
+        post: operations["lookup_invitation_invitations_lookup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register From Invitation
+         * @description Open the invited subject's own account from the link (unauthenticated; T3).
+         *
+         *     Active at once - the link reached the address - with no personal workspace: it is a
+         *     client account and lands in `/my`. 422 `adult_required` (accounts are 18+, V3-0011),
+         *     `consent_required`; 503 `consent_unavailable` while no consent text is published;
+         *     409 `client_only` for a seat invitation, `email_taken` when the address has an
+         *     account (sign in and accept instead); 410 `invitation_closed`.
+         */
+        post: operations["register_from_invitation_invitations_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/landscape": {
         parameters: {
             query?: never;
@@ -798,6 +953,74 @@ export interface paths {
          *     first map is `GET /landscape`'s, when the person opens it.
          */
         get: operations["my_landscape_status_landscape_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Assignments
+         * @description The open assignments of the caller's own subjects, soonest due first.
+         *
+         *     Empty for an account that is nobody's subject. Not paged: a person has a handful.
+         */
+        get: operations["my_assignments_me_assignments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/assignments/{assignment_id}/protocol": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Assigned Protocol
+         * @description The protocol of one of the caller's open assignments, at its pinned version.
+         *
+         *     What the run page needs before Play - title, outline, content warning and consent
+         *     text - for an account that cannot open the protocol itself (`runner` is not
+         *     `can_view`, V4-0002).
+         */
+        get: operations["my_assigned_protocol_me_assignments__assignment_id__protocol_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Sessions
+         * @description The sessions recorded of the caller's own subjects, newest first, keyset-paged.
+         *
+         *     A plain list (V4-0006): no trail, no metric, no link to the recording.
+         */
+        get: operations["my_sessions_me_sessions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1246,6 +1469,7 @@ export interface paths {
          *     `?workspace=` narrows to one workspace. Keyset pagination on `(created_at, id)`: the
          *     next page's cursor comes back in the `X-Next-Cursor` header, absent on the last page.
          *     Abandoned browser sessions are closed first, so none is listed as still capturing.
+         *     A page holding other people's recordings is audited, once per person (T3).
          */
         get: operations["list_recordings_recordings_get"];
         put?: never;
@@ -1636,12 +1860,19 @@ export interface paths {
         /**
          * List Sessions
          * @description Sessions the caller may see, newest first; `?workspace=` narrows to one.
+         *
+         *     Other people's sessions in the page are audited, once per person (T3).
          */
         get: operations["list_sessions_sessions_get"];
         put?: never;
         /**
          * Start Session
-         * @description Start a session running a protocol, recorded in `?workspace=` (201).
+         * @description Start a session running a protocol (201).
+         *
+         *     Recorded in `?workspace=` for the caller themself, or - with `subject_id` or
+         *     `assignment_id` (T3) - in the subject's organisation, for that subject (see
+         *     `run_target`). An assignment runs its pinned version, and `protocol_id` must be the
+         *     assignment's; its subject's own account may run it with upload capture only.
          *
          *     The protocol's current version runs unless `version` names an earlier one. With
          *     `capture: upload` (the default, V3-0005) the recording waits for its files and the
@@ -1653,8 +1884,16 @@ export interface paths {
          *     (`est_duration_s` + 30 min; `/media-urls` renews them).
          *     404 when the protocol is not visible (or archived), 403 when it is locked or the
          *     caller may not record in the workspace, 409 when it was never published, 422
-         *     `profile_required` when the caller has not filled their profile yet: the run is about
-         *     to produce EEG, and EEG without handedness and year of birth is not interpretable.
+         *     `profile_required` when the caller records themself and has not filled their profile
+         *     yet: the run is about to produce EEG, and EEG without handedness and year of birth is
+         *     not interpretable. A subject of an organisation carries those on their own row.
+         *
+         *     A version with visual blocks starts only when `acknowledged` holds
+         *     `photosensitivity` (422 `photosensitivity_ack_required`, hazard H4): the warning
+         *     screen is a control only if it cannot be skipped. The server then writes the
+         *     acknowledgement as the timeline's first event (`photosensitivity_ack` at `t` 0, with
+         *     the run's mode and the wall-clock time), so the record does not depend on the
+         *     browser that showed the screen.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -1736,7 +1975,9 @@ export interface paths {
          *     aborted run with no capture closes with its recording marked `empty`.
          *
          *     The timeline is the stored parts plus any events re-sent here, de-duplicated on
-         *     `(t, type, seq)` and sorted by `t`; the parts are then removed.
+         *     `(t, type, seq)` and sorted by `t`; the parts are then removed. When an operator's
+         *     console drove the run, `summary.operator_commands` counts its commands by kind
+         *     (V3-0007); it is absent otherwise.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
         delete?: never;
@@ -1755,6 +1996,9 @@ export interface paths {
         /**
          * Renew Media Links
          * @description Fresh links to the session's media, for a run that outlived the first ones.
+         *
+         *     409 `session_closed` once the run has ended: the links are for running it, and a
+         *     finished session's media are its readers' to open from the review.
          */
         get: operations["renew_media_links_sessions__session_id__media_urls_get"];
         put?: never;
@@ -1783,6 +2027,142 @@ export interface paths {
          *     closed session 409 `session_closed`.
          */
         post: operations["store_plan_sessions__session_id__plan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subject
+         * @description One subject: in full for its carers, as a roster row for an owner or admin.
+         */
+        get: operations["get_subject_subjects__subject_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit Subject
+         * @description Change a subject's details (its carers). Audited, by field name only.
+         */
+        patch: operations["edit_subject_subjects__subject_id__patch"];
+        trace?: never;
+    };
+    "/subjects/{subject_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive Subject
+         * @description Archive a subject - closing its open assignments - or restore it.
+         */
+        post: operations["archive_subject_subjects__subject_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}/carers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Carers
+         * @description Who cares for the subject, oldest first (carers, owners, admins).
+         */
+        get: operations["list_carers_subjects__subject_id__carers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}/carers/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Carer
+         * @description Add a member of staff to the care team (a carer, an owner or an admin). Audited.
+         *
+         *     This is also how an owner hands over a subject left with no carer. Idempotent.
+         *     409 `lab_by_study` in a laboratory, `archived`; 422 `not_member`.
+         */
+        put: operations["put_carer_subjects__subject_id__carers__user_id__put"];
+        post?: never;
+        /**
+         * Delete Carer
+         * @description End someone's care (an owner or an admin; a carer adds, never removes). Audited.
+         *
+         *     403 `forbidden` for anyone else; 404 when the user is not a carer.
+         */
+        delete: operations["delete_carer_subjects__subject_id__carers__user_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite Subject
+         * @description Invite the subject to an account of their own (`subject#client`), 14-day link.
+         *
+         *     The account sees only what is assigned to it. A new invitation replaces an open one.
+         *     409 `already_client`, `archived`; 502 `mail_failed`.
+         */
+        post: operations["invite_subject_subjects__subject_id__invite_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Subject Sessions
+         * @description The subject's sessions, newest first (its carers). Audited as a read of them.
+         */
+        get: operations["subject_sessions_subjects__subject_id__sessions_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1847,11 +2227,203 @@ export interface paths {
         };
         /**
          * List Workspaces
-         * @description Every workspace the caller holds a relation in, personal first, then by creation.
+         * @description Every workspace the caller holds a relation in, plus their open or refused requests.
+         *
+         *     Personal first, then by creation. Not paged: a person holds a handful of seats.
          */
         get: operations["list_workspaces_workspaces_get"];
         put?: never;
+        /**
+         * Request Organisation
+         * @description Ask for a clinic or a laboratory; it is `pending` until an admin decides.
+         *
+         *     409 `too_many_requests` with three requests already open.
+         */
+        post: operations["request_organisation_workspaces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Assignments
+         * @description The organisation's assignments the caller may see, newest first, keyset-paged.
+         *
+         *     Narrow with `subject`, `protocol`, `open=true`.
+         */
+        get: operations["list_assignments_workspaces__workspace_id__assignments_get"];
+        put?: never;
+        /**
+         * Assign
+         * @description Give a protocol to a subject of this organisation (its carers; lab owners, admins).
+         *
+         *     Writes `protocol#runner@subject#client`, so the person's own account may run it.
+         *     404 for a subject or protocol the caller may not see; 403 without `can_assign`; 409
+         *     `archived`, `not_published`; 403 `protocol_locked`.
+         */
+        post: operations["assign_workspaces__workspace_id__assignments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Invitations
+         * @description The organisation's invitations, oldest first (owner or admin).
+         *
+         *     `?open=false` includes accepted, revoked and expired ones. Keyset-paged.
+         */
+        get: operations["list_invitations_workspaces__workspace_id__invitations_get"];
+        put?: never;
+        /**
+         * Create Invitation
+         * @description Invite someone to a seat and mail them a 14-day link (owner or admin).
+         *
+         *     A second invitation to the same address replaces the first. 409 `already_member`;
+         *     502 `mail_failed` when the provider refused the mail (nothing is kept).
+         */
+        post: operations["create_invitation_workspaces__workspace_id__invitations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/invitations/{invitation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         post?: never;
+        /**
+         * Delete Invitation
+         * @description Revoke an open invitation: its link stops working (owner or admin). Audited.
+         */
+        delete: operations["delete_invitation_workspaces__workspace_id__invitations__invitation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Leave Workspace
+         * @description Give up your own seat (any seat; the last owner hands over first, 409 `last_owner`).
+         */
+        post: operations["leave_workspace_workspaces__workspace_id__leave_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Members
+         * @description The organisation's staff, oldest seat first (any member of staff).
+         *
+         *     Every seat sees the others: a carer adds a colleague to a care team by name (T3).
+         *     Keyset-paged on `(since, user_id)` like every list.
+         */
+        get: operations["list_members_workspaces__workspace_id__members_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/members/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Member
+         * @description Change someone's seat (owner or admin; only an owner touches an owner's seat).
+         *
+         *     Audited. 404 for someone without a seat here; 409 `last_owner` when it would leave
+         *     the organisation without an owner.
+         */
+        put: operations["set_member_workspaces__workspace_id__members__member_id__put"];
+        post?: never;
+        /**
+         * Remove Member
+         * @description Take a seat away (owner or admin; an owner's seat, owner only).
+         *
+         *     Their care relations in this organisation end with the seat; the subjects stay.
+         *     Audited, and logged as `member.removed`. 409 `last_owner` for the last owner.
+         */
+        delete: operations["remove_member_workspaces__workspace_id__members__member_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subjects
+         * @description The subjects the caller may know of, newest first, keyset-paged.
+         *
+         *     `view=mine` keeps those the caller reads (their patients); `all` adds the roster
+         *     rows an owner or admin sees. `q` matches the code, and the name of readable rows.
+         *     `archived=true` lists the archived ones instead.
+         */
+        get: operations["list_subjects_workspaces__workspace_id__subjects_get"];
+        put?: never;
+        /**
+         * Create
+         * @description Create a subject. In a clinic any member of staff may, and becomes its carer.
+         *
+         *     In a laboratory only owners and admins may until studies arrive (T7). 409
+         *     `personal_workspace`, `code_taken`; 422 `display_name_not_allowed` in a lab, 422
+         *     `consent_version` when attesting without naming the text.
+         */
+        post: operations["create_workspaces__workspace_id__subjects_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1872,6 +2444,36 @@ export interface components {
              * @enum {string}
              */
             access: "open" | "locked";
+        };
+        /**
+         * AdminWorkspaceRow
+         * @description One organisation as the queue shows it: who asked, when, what was decided.
+         */
+        AdminWorkspaceRow: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Region */
+            region: string;
+            /** Requested By */
+            requested_by: string | null;
+            /** Seats */
+            seats: number;
+            /** Status */
+            status: string;
         };
         /**
          * AnalysisOut
@@ -2152,6 +2754,113 @@ export interface components {
             user: components["schemas"]["UserOut"];
             /** Verification Url */
             verification_url?: string | null;
+        };
+        /**
+         * ArchiveIn
+         * @description Archive (true) or restore (false).
+         */
+        ArchiveIn: {
+            /**
+             * Archived
+             * @default true
+             */
+            archived: boolean;
+        };
+        /**
+         * AssignmentIn
+         * @description Give `protocol_id` (its current version) to `subject_id`.
+         *
+         *     `runs_allowed` null means as often as they like; `due_at` sets the reminder.
+         */
+        AssignmentIn: {
+            /** Due At */
+            due_at?: string | null;
+            /** Note */
+            note?: string | null;
+            /**
+             * Protocol Id
+             * Format: uuid
+             */
+            protocol_id: string;
+            /**
+             * Runs Allowed
+             * @default 1
+             */
+            runs_allowed: number | null;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+        };
+        /**
+         * AssignmentOut
+         * @description An assignment as its carers see it. `open` false once closed or used up.
+         */
+        AssignmentOut: {
+            /** Close Reason */
+            close_reason: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Due At */
+            due_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string | null;
+            /** Open */
+            open: boolean;
+            /**
+             * Protocol Id
+             * Format: uuid
+             */
+            protocol_id: string;
+            /** Protocol Slug */
+            protocol_slug: string;
+            /** Protocol Title */
+            protocol_title: string;
+            /** Protocol Version */
+            protocol_version: number;
+            /** Protocol Visibility */
+            protocol_visibility: string;
+            /** Reminder */
+            reminder: boolean;
+            /** Runs Allowed */
+            runs_allowed: number | null;
+            /** Runs Done */
+            runs_done: number;
+            /** Subject Code */
+            subject_code: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /**
+         * AssignmentPatch
+         * @description What may change once given: the due date, the note, the allowance.
+         */
+        AssignmentPatch: {
+            /** Due At */
+            due_at?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Runs Allowed */
+            runs_allowed?: number | null;
         };
         /**
          * BehaviourOut
@@ -2512,6 +3221,75 @@ export interface components {
             sdnn_ms: number | null;
         };
         /**
+         * CarerOut
+         * @description A member of staff caring for the subject, and since when.
+         */
+        CarerOut: {
+            /** Email */
+            email: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** You */
+            you: boolean;
+        };
+        /**
+         * ClientInvitationIn
+         * @description The person's own address.
+         */
+        ClientInvitationIn: {
+            /** Email */
+            email: string;
+        };
+        /**
+         * ClientInvitationOut
+         * @description The invitation sent; `link` only in manual-mailer mode, for the carer to pass on.
+         */
+        ClientInvitationOut: {
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Link */
+            link?: string | null;
+            /** State */
+            state: string;
+        };
+        /**
+         * ClientRegisterIn
+         * @description A new account from a subject's invitation: password, age, consent, language.
+         */
+        ClientRegisterIn: {
+            /** Adult */
+            adult: boolean;
+            /** Consent */
+            consent: boolean;
+            /** Locale */
+            locale?: ("en" | "it") | null;
+            /** Password */
+            password: string;
+            /** Token */
+            token: string;
+        };
+        /**
+         * ClientRegistered
+         * @description The account opened; the client signs in with this address and its password.
+         */
+        ClientRegistered: {
+            /** Email */
+            email: string;
+        };
+        /**
          * CohortIn
          * @description Create or change a cohort: a name, the profile it is for, and a target size.
          */
@@ -2601,7 +3379,7 @@ export interface components {
             env: string;
             /** Features */
             features: {
-                /** @description Assignments, reminders and the client shell (S22). */
+                /** @description Assignments, reminders and the client shell (V4 T3). */
                 assignments: boolean;
                 /** @description Registration is a beta application; admin board with cohorts (S15). */
                 beta_applications: boolean;
@@ -2631,11 +3409,13 @@ export interface components {
                 run_capture: boolean;
                 /** @description Studies, participants and arms (S24). */
                 studies: boolean;
-                /** @description Practices and labs, invitations, subjects (S22). */
+                /** @description Clinics and laboratories: requests, seats, invitations (V4 T2). */
                 workspaces_multi: boolean;
             };
             /** Version */
             version: string;
+            /** Workspace Kind */
+            workspace_kind?: string | null;
         };
         /**
          * ConsentIn
@@ -3071,6 +3851,106 @@ export interface components {
             n_scored: number;
         };
         /**
+         * InvitationCreated
+         * @description A new invitation; `link` only in manual-mailer mode, for an admin to pass on.
+         */
+        InvitationCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Link */
+            link?: string | null;
+            /** Relation */
+            relation: string;
+            /** State */
+            state: string;
+        };
+        /**
+         * InvitationIn
+         * @description Whom to invite, and to which seat.
+         */
+        InvitationIn: {
+            /** Email */
+            email: string;
+            /**
+             * Relation
+             * @default member
+             * @enum {string}
+             */
+            relation: "admin" | "member";
+        };
+        /**
+         * InvitationOut
+         * @description An invitation as its organisation's managers see it. The token never comes back.
+         */
+        InvitationOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Relation */
+            relation: string;
+            /** State */
+            state: string;
+        };
+        /**
+         * InvitationPreview
+         * @description What a link offers, before anyone signs in.
+         *
+         *     `email` is the address it was sent to, so the page can say which account to use;
+         *     `has_account` whether one exists for it, so the page offers sign-in or a password
+         *     (only the link's holder learns it, and the link went to that mailbox).
+         */
+        InvitationPreview: {
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Has Account
+             * @default false
+             */
+            has_account: boolean;
+            /** Relation */
+            relation: string;
+            /** State */
+            state: string;
+            /** Workspace Kind */
+            workspace_kind: string;
+            /** Workspace Name */
+            workspace_name: string;
+        };
+        /**
          * IssueOut
          * @description One validation finding; `rule` is stable, `path` points into the tree.
          */
@@ -3365,12 +4245,106 @@ export interface components {
          */
         MediaVisibility: "workspace" | "public" | "official";
         /**
+         * MemberOut
+         * @description One seat: who holds it, which relation, since when. `you` marks the caller.
+         */
+        MemberOut: {
+            /** Email */
+            email: string;
+            /** Relation */
+            relation: string;
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** You */
+            you: boolean;
+        };
+        /**
          * MessageOut
          * @description Minimal status acknowledgement.
          */
         MessageOut: {
             /** Status */
             status: string;
+        };
+        /**
+         * MyAssignment
+         * @description One card of the client shell: what to run, for whom, by when.
+         *
+         *     Only what the person needs to press Play: the protocol's title, card text and cover,
+         *     the organisation's name, the allowance and the due date. `est_duration_s` lets the
+         *     card say how long it takes.
+         */
+        MyAssignment: {
+            /** Cover Url */
+            cover_url: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Due At */
+            due_at: string | null;
+            /** Est Duration S */
+            est_duration_s: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string | null;
+            /** Organisation */
+            organisation: string;
+            /**
+             * Protocol Id
+             * Format: uuid
+             */
+            protocol_id: string;
+            /** Runs Allowed */
+            runs_allowed: number | null;
+            /** Runs Done */
+            runs_done: number;
+            /** Slug */
+            slug: string;
+            /** Summary */
+            summary: string | null;
+            /** Title */
+            title: string;
+            /** Visibility */
+            visibility: string;
+        };
+        /**
+         * MySession
+         * @description A past run, as the person who ran it sees it: when, what, and whether it finished.
+         */
+        MySession: {
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug?: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            status: components["schemas"]["SessionStatus"];
+            /** Title */
+            title: string;
+            /** Visibility */
+            visibility?: string | null;
         };
         /**
          * NeuroMetricsOut
@@ -3706,6 +4680,10 @@ export interface components {
         /**
          * ProtocolDetail
          * @description The detail page: description, outline, the published tree and, for editors, the draft.
+         *
+         *     `photosensitive` says the published tree shows flashing, high-contrast or moving
+         *     stimuli (H4): the host shows the photosensitivity warning before Start, and
+         *     `POST /sessions` wants it acknowledged.
          */
         ProtocolDetail: {
             access: components["schemas"]["MediaAccess"];
@@ -3747,6 +4725,11 @@ export interface components {
             mine: boolean;
             /** Outline */
             outline: components["schemas"]["OutlineItem"][];
+            /**
+             * Photosensitive
+             * @default false
+             */
+            photosensitive: boolean;
             /** Preview Url */
             preview_url: string | null;
             review_state: components["schemas"]["ReviewState"];
@@ -3976,6 +4959,17 @@ export interface components {
          */
         ReviewState: "none" | "pending" | "approved" | "refused";
         /**
+         * SeatIn
+         * @description The seat to hold from now on.
+         */
+        SeatIn: {
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "owner" | "admin" | "member";
+        };
+        /**
          * SelectionOut
          * @description A block's metrics recomputed for part of it (`pipeline.features.selection`).
          *
@@ -4022,6 +5016,8 @@ export interface components {
          *     which may have moved on. Null for a session that never posted one.
          */
         SessionOut: {
+            /** Assignment Id */
+            assignment_id?: string | null;
             /** Ended At */
             ended_at: string | null;
             /** Events Url */
@@ -4058,6 +5054,11 @@ export interface components {
              */
             started_at: string;
             status: components["schemas"]["SessionStatus"];
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
             /** Summary */
             summary: {
                 [key: string]: unknown;
@@ -4068,8 +5069,19 @@ export interface components {
         /**
          * SessionStartIn
          * @description Start a session: a protocol, at its current version unless `version` names one.
+         *
+         *     `subject_id` records someone else (operator mode, T3): a subject the caller may
+         *     record, in that subject's organisation. `assignment_id` runs an assignment: the
+         *     subject's own account at home, or a carer in the studio; the assignment's pinned
+         *     version runs and the run counts towards it when it finishes. `acknowledged` names
+         *     the warnings the person read before Start: `photosensitivity` is required for a
+         *     version with visual blocks (H4).
          */
         SessionStartIn: {
+            /** Acknowledged */
+            acknowledged?: "photosensitivity"[];
+            /** Assignment Id */
+            assignment_id?: string | null;
             /**
              * Capture
              * @default upload
@@ -4090,6 +5102,8 @@ export interface components {
              * Format: uuid
              */
             protocol_id: string;
+            /** Subject Id */
+            subject_id?: string | null;
             /** Task Label */
             task_label?: string | null;
             /** Title */
@@ -4109,6 +5123,8 @@ export interface components {
         SessionStartOut: {
             /** Analysis Id */
             analysis_id?: string | null;
+            /** Assignment Id */
+            assignment_id?: string | null;
             /** Capture */
             capture: string;
             /** Definition */
@@ -4169,6 +5185,11 @@ export interface components {
              */
             started_at: string;
             status: components["schemas"]["SessionStatus"];
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
             /** Summary */
             summary: {
                 [key: string]: unknown;
@@ -4241,6 +5262,130 @@ export interface components {
             recording_id: string;
             /** Ws Path */
             ws_path: string;
+        };
+        /**
+         * SubjectIn
+         * @description A new subject. `code` is generated when left out; `display_name` is clinics only.
+         *
+         *     `consent_attested` true means the operator attests that the person signed the
+         *     consent text named by `consent_version`; the attestation, its time and its author
+         *     are stored. Nothing here collects consent.
+         */
+        SubjectIn: {
+            /** Birth Year */
+            birth_year?: number | null;
+            /** Code */
+            code?: string | null;
+            /**
+             * Consent Attested
+             * @default false
+             */
+            consent_attested: boolean;
+            /** Consent Version */
+            consent_version?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Handedness */
+            handedness?: ("right" | "left" | "ambidextrous") | null;
+            /**
+             * Language
+             * @default en
+             * @enum {string}
+             */
+            language: "en" | "it";
+            /** Sex At Birth */
+            sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
+        };
+        /**
+         * SubjectOut
+         * @description A subject as the caller may see it.
+         *
+         *     `readable` false is a roster row (an owner or admin who is not a carer): the code,
+         *     the carers, the counts and the dates, every identifying field null. `no_carer` flags
+         *     a clinic's subject nobody cares for any more, waiting to be handed over.
+         *     `has_account` says the person has their own account (`subject#client`).
+         */
+        SubjectOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Birth Year */
+            birth_year?: number | null;
+            /** Carers */
+            carers: components["schemas"]["CarerOut"][];
+            /** Code */
+            code: string;
+            /** Consent At */
+            consent_at?: string | null;
+            /** Consent Version */
+            consent_version?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Display Name */
+            display_name?: string | null;
+            /** Handedness */
+            handedness?: string | null;
+            /**
+             * Has Account
+             * @default false
+             */
+            has_account: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Language */
+            language?: string | null;
+            /** Last Session At */
+            last_session_at: string | null;
+            /** No Carer */
+            no_carer: boolean;
+            /** Open Assignments */
+            open_assignments: number;
+            /** Readable */
+            readable: boolean;
+            /** Sessions */
+            sessions: number;
+            /** Sex At Birth */
+            sex_at_birth?: string | null;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /**
+         * SubjectPatch
+         * @description Fields to change; those left out stay as they are.
+         */
+        SubjectPatch: {
+            /** Birth Year */
+            birth_year?: number | null;
+            /** Code */
+            code?: string | null;
+            /** Consent Attested */
+            consent_attested?: boolean | null;
+            /** Consent Version */
+            consent_version?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Handedness */
+            handedness?: ("right" | "left" | "ambidextrous") | null;
+            /** Language */
+            language?: ("en" | "it") | null;
+            /** Sex At Birth */
+            sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
+        };
+        /**
+         * TokenIn
+         * @description The token from an invitation link.
+         */
+        TokenIn: {
+            /** Token */
+            token: string;
         };
         /**
          * TokenOut
@@ -4332,6 +5477,12 @@ export interface components {
          *
          *     `locale` is the language the person chose, null until they choose one: a client
          *     adopts it when set and otherwise follows the browser.
+         *
+         *     `shell` is the surface the account lands in (V4-0006, T3): `client` for an account
+         *     that is someone's subject and holds no seat anywhere - the client shell `/my` and
+         *     nothing else - `app` for everyone else. `is_client` says the account is somebody's
+         *     subject at all, so a private user who is also a clinic's patient gets a way to `/my`.
+         *     Both are answered by `GET /auth/me` only.
          */
         UserOut: {
             /**
@@ -4353,10 +5504,21 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Is Client
+             * @default false
+             */
+            is_client: boolean;
             /** Locale */
             locale?: string | null;
             /** Role */
             role: string;
+            /**
+             * Shell
+             * @default app
+             * @enum {string}
+             */
+            shell: "app" | "client";
             /** Status */
             status: string;
         };
@@ -4388,8 +5550,22 @@ export interface components {
             warnings: components["schemas"]["IssueOut"][];
         };
         /**
+         * WorkspaceDecisionIn
+         * @description The admin's answer to a request.
+         */
+        WorkspaceDecisionIn: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "reject";
+        };
+        /**
          * WorkspaceOut
-         * @description A workspace the caller belongs to, with the relations they hold in it.
+         * @description A workspace the caller belongs to or asked for, with the relations they hold in it.
+         *
+         *     `relations` is empty for a request still `pending` (or `rejected`): no seat exists
+         *     until an admin approves it.
          */
         WorkspaceOut: {
             /**
@@ -4406,12 +5582,27 @@ export interface components {
             kind: string;
             /** Name */
             name: string;
+            /** Region */
+            region: string;
             /** Relations */
             relations: string[];
             /** Slug */
             slug: string;
             /** Status */
             status: string;
+        };
+        /**
+         * WorkspaceRequestIn
+         * @description A request for a clinic (`practice`) or a laboratory (`lab`).
+         */
+        WorkspaceRequestIn: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "practice" | "lab";
+            /** Name */
+            name: string;
         };
         /**
          * PresignForm
@@ -5046,6 +6237,75 @@ export interface operations {
             };
         };
     };
+    list_organisations_admin_workspaces_get: {
+        parameters: {
+            query?: {
+                status?: "pending" | "active" | "rejected" | "archived" | "all";
+                kind?: ("practice" | "lab") | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkspaceRow"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_admin_workspaces__workspace_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkspaceRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_annotation_annotations__annotation_id__delete: {
         parameters: {
             query?: never;
@@ -5099,6 +6359,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnotationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_assignment_assignments__assignment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOut"];
+                };
+            };
+        };
+    };
+    cancel_assignment_assignments__assignment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOut"];
+                };
+            };
+        };
+    };
+    edit_assignment_assignments__assignment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOut"];
                 };
             };
             /** @description Validation Error */
@@ -5480,7 +6813,9 @@ export interface operations {
     };
     config_config_get: {
         parameters: {
-            query?: never;
+            query?: {
+                workspace?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5494,6 +6829,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5540,6 +6884,105 @@ export interface operations {
             };
         };
     };
+    accept_invitations_accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_invitation_invitations_lookup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_from_invitation_invitations_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientRegisterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientRegistered"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     my_landscape_landscape_get: {
         parameters: {
             query?: never;
@@ -5576,6 +7019,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrainLandscapeStatusOut"];
+                };
+            };
+        };
+    };
+    my_assignments_me_assignments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyAssignment"][];
+                };
+            };
+        };
+    };
+    my_assigned_protocol_me_assignments__assignment_id__protocol_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtocolDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_sessions_me_sessions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySession"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -7197,6 +8723,238 @@ export interface operations {
             };
         };
     };
+    get_subject_subjects__subject_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectOut"];
+                };
+            };
+        };
+    };
+    edit_subject_subjects__subject_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_subject_subjects__subject_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_carers_subjects__subject_id__carers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarerOut"][];
+                };
+            };
+        };
+    };
+    put_carer_subjects__subject_id__carers__user_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarerOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_carer_subjects__subject_id__carers__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarerOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_subject_subjects__subject_id__invite_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientInvitationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientInvitationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subject_sessions_subjects__subject_id__sessions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     taxonomies_taxonomies_get: {
         parameters: {
             query?: never;
@@ -7266,6 +9024,386 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceOut"][];
+                };
+            };
+        };
+    };
+    request_organisation_workspaces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_assignments_workspaces__workspace_id__assignments_get: {
+        parameters: {
+            query?: {
+                subject?: string | null;
+                protocol?: string | null;
+                open?: boolean;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_workspaces__workspace_id__assignments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invitations_workspaces__workspace_id__invitations_get: {
+        parameters: {
+            query?: {
+                open?: boolean;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_invitation_workspaces__workspace_id__invitations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_invitation_workspaces__workspace_id__invitations__invitation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leave_workspace_workspaces__workspace_id__leave_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_members_workspaces__workspace_id__members_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_member_workspaces__workspace_id__members__member_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_member_workspaces__workspace_id__members__member_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subjects_workspaces__workspace_id__subjects_get: {
+        parameters: {
+            query?: {
+                view?: "mine" | "all";
+                archived?: boolean;
+                q?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_workspaces__workspace_id__subjects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

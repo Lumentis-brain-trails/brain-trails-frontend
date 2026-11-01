@@ -289,6 +289,14 @@ function ClipCard({
       <span className="type-caption flex items-center gap-1 tabular-nums text-ink-3">
         {clip.variable ? "~" : ""}
         {formatClock(clip.seconds)}
+        {clip.node.type === "block" && clip.node.main && (
+          <span
+            className="rounded-full bg-accent-soft px-1.5 text-[10px] font-semibold text-accent"
+            title={t("main_hint")}
+          >
+            {t("main")}
+          </span>
+        )}
         {issues?.errors ? (
           <span
             className="ml-auto rounded-full bg-danger px-1.5 text-[10px] font-semibold text-white"

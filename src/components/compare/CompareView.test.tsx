@@ -198,6 +198,38 @@ describe("defaultPair", () => {
     const b = { ...settle, key: "b", kind: "video" } as BlockMetrics;
     expect(defaultPair([a, b])).toEqual(["a", "b"]);
   });
+
+  test("the first two main segments, in the order the run played them", () => {
+    const at = (key: string, block_id: string, kind = "video") =>
+      ({ ...settle, key, block_id, kind }) as BlockMetrics;
+    const blocks = [
+      at("settle#0", "settle", "baseline"),
+      at("watch#0", "watch"),
+      at("watch#1", "watch"),
+      at("calm#0", "calm"),
+      at("dock#0", "dock"),
+    ];
+    const main = { block: { main: true } };
+    expect(
+      defaultPair(blocks, { watch: main, calm: main, dock: main })
+    ).toEqual(["watch#0", "calm#0"]);
+    // one main segment: the reference state on the left, the segment on the right
+    expect(defaultPair(blocks, { calm: main })).toEqual(["settle#0", "calm#0"]);
+    // a looped one counts once
+    expect(defaultPair(blocks, { watch: main })).toEqual([
+      "settle#0",
+      "watch#0",
+    ]);
+    // the only block marked main is the baseline itself
+    expect(defaultPair(blocks, { settle: main })).toEqual([
+      "watch#0",
+      "settle#0",
+    ]);
+    // nothing marked: as before
+    expect(defaultPair(blocks, { settle: {}, dock: {} })).toEqual(
+      defaultPair(blocks)
+    );
+  });
 });
 
 describe("CompareView", () => {

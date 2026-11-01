@@ -26,6 +26,13 @@ const ALLOWED_PREFIXES = [
   "landscape",
   // the browser's batched page views and feature uses (backend V4-0007)
   "usage",
+  // opening an invitation link: what it offers (public) and taking the seat (V4-0001)
+  "invitations/",
+  // an organisation's patients or participants, their care team, assignments (T3)
+  "subjects/",
+  "assignments/",
+  // the client shell's own reads: what was assigned, what was run (V4-0006)
+  "me/",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];

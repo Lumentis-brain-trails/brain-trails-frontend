@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useState } from "react";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useFeature } from "@/lib/features";
+import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import {
   type ProtocolDetail,
   type ValidationResult,
@@ -25,11 +27,14 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { AssignDialog } from "@/components/subjects/AssignDialog";
 
 /**
  * A protocol's page (V3-0004, S16-S18): what it does, how long it takes, the blocks in
  * plain words, the content warning - then Play, which goes through consent and the
  * headband pre-flight to the run. A locked protocol is shown but cannot be played.
+ * With the `console` flag, "Run with console" opens the operator console instead
+ * (backend V3-0007): a fresh run key names the channel to the participant's window.
  *
  * For its author it is also where a draft is checked and published (the timeline
  * builder is S19): Publish validates and freezes the draft as the next version, and the
@@ -56,6 +61,19 @@ export default function ProtocolPage({
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const consoleOn = useFeature("console");
+  // The workspace being worked in: where a copy is filed, and - in an organisation -
+  // whom it can be assigned to (backend T3).
+  const workspace = useCurrentWorkspace();
+  const assignmentsOn = useFeature("assignments");
+  const multi = useFeature("workspaces_multi");
+  const assignOn =
+    assignmentsOn &&
+    multi &&
+    workspace !== undefined &&
+    workspace.kind !== "personal";
+  const [assigning, setAssigning] = useState(false);
+  const tAssign = useTranslations("assignments");
   const item = useQuery({
     queryKey: ["protocol", id],
     queryFn: () => api.get<ProtocolDetail>(`protocols/${id}`),
@@ -77,8 +95,14 @@ export default function ProtocolPage({
     },
     onError: () => check.mutate(),
   });
+  // The copy goes to the library being worked in, a clinic's included; before that
+  // workspace is known the API would file it in the personal one (`workspace` above).
   const duplicate = useMutation({
-    mutationFn: () => api.post<ProtocolDetail>(`protocols/${id}/duplicate`, {}),
+    mutationFn: () =>
+      api.post<ProtocolDetail>(
+        inWorkspace(`protocols/${id}/duplicate`, workspace),
+        {}
+      ),
     onSuccess: (copy) => router.push(`/protocols/${copy.id}`),
   });
   const share = useMutation({
@@ -177,13 +201,40 @@ export default function ProtocolPage({
           </p>
         </div>
         {playable ? (
-          <Link
-            href={`/protocols/${p.id}/run`}
-            onClick={() => trackFeature("protocol.play")}
-            className={buttonClass()}
-          >
-            {t("play")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {consoleOn && (
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  router.push(
+                    `/console/${crypto.randomUUID()}?protocol=${encodeURIComponent(p.id)}`
+                  )
+                }
+              >
+                {t("runWithConsole")}
+              </Button>
+            )}
+            {assignOn && (
+              <Button variant="secondary" onClick={() => setAssigning(true)}>
+                {tAssign("fromProtocol")}
+              </Button>
+            )}
+            <Link
+              href={`/protocols/${p.id}/run`}
+              onClick={() => trackFeature("protocol.play")}
+              className={buttonClass()}
+            >
+              {t("play")}
+            </Link>
+            {assigning && workspace && (
+              <AssignDialog
+                workspaceId={workspace.id}
+                protocolId={p.id}
+                onClose={() => setAssigning(false)}
+                onDone={() => toast("success", tAssign("done"))}
+              />
+            )}
+          </div>
         ) : (
           <Button disabled title={locked ? t("lockedHint") : undefined}>
             {locked ? t("locked") : t("notPublished")}
@@ -301,7 +352,11 @@ export default function ProtocolPage({
 
       {!p.mine && p.current_version !== null && (
         <div className="mt-6">
-          <Button variant="secondary" onClick={() => duplicate.mutate()}>
+          <Button
+            variant="secondary"
+            onClick={() => duplicate.mutate()}
+            disabled={duplicate.isPending || workspace === undefined}
+          >
             {t("actions.copy")}
           </Button>
         </div>

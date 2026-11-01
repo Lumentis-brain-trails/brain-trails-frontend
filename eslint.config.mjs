@@ -30,6 +30,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated from the backend's OpenAPI schema (npm run api:types).
     "src/lib/api-types.ts",
+    // The console is its own app with its own lint config (console/eslint.config.mjs).
+    "console/**",
     // Playwright's reports and traces.
     "playwright-report/**",
     "test-results/**",

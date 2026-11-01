@@ -1,9 +1,10 @@
-# Only the owner merges into beta and main (decision 0013, v2). GitHub Free has no branch
-# protection for private repositories, so nothing can stop it from happening; this makes
+# Only the owner merges into main; beta takes reviewed merges (decision 0013, amended
+# 2026-10-20). GitHub Free has no branch protection for private repositories, so nothing can stop it from happening; this makes
 # sure it never happens quietly. Each finding opens an issue assigned to the owner and
 # fails the run, so it shows red in Actions too.
 #
 # - a pull request into beta or main merged by anyone else;
+# - a merge into beta whose head had no green `review` status, or that was squashed;
 # - a promotion into main that was squashed: it cuts main off from beta's history and the
 #   next promotion conflicts on every file changed since;
 # - a push to beta or main that no merged pull request accounts for;
@@ -34,6 +35,7 @@ jobs:
       BASE: ${{ github.event.pull_request.base.ref }}
       BY: ${{ github.event.pull_request.merged_by.login }}
       MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: Who merged, and how
         run: |
@@ -41,6 +43,17 @@ jobs:
           problems=""
           if [ "$BY" != "$OWNER" ]; then
             problems="$problems- merged by **@$BY**; only @$OWNER merges into \`$BASE\`.\n"
+          fi
+          if [ "$BASE" = "beta" ]; then
+            # decision 0013, amended 2026-10-20: beta takes only reviewed heads, as a merge commit
+            REVIEW=$(gh api "repos/$REPO/commits/$HEAD_SHA/status" -q '[.statuses[] | select(.context == "review")][0].state // "missing"')
+            if [ "$REVIEW" != "success" ]; then
+              problems="$problems- merged without a green \`review\` status on its head ($REVIEW): it skipped the pre-merge review, or a commit came after it.\n"
+            fi
+            PARENTS=$(gh api "repos/$REPO/commits/$MERGE_SHA" -q '.parents | length')
+            if [ "$PARENTS" != "2" ]; then
+              problems="$problems- merged with a **squash or rebase** (1 parent) instead of a merge commit.\n"
+            fi
           fi
           if [ "$BASE" = "main" ]; then
             PARENTS=$(gh api "repos/$REPO/commits/$MERGE_SHA" -q '.parents | length')
