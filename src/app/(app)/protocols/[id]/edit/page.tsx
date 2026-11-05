@@ -645,6 +645,7 @@ export default function BuilderPage({
               key={selectedNode.id}
               block={selectedNode}
               kindSchemas={KIND_SCHEMAS}
+              media={mediaById}
               onChange={(next) =>
                 edit((current) => replaceAt(current, selected[0], next))
               }

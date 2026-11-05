@@ -4,7 +4,9 @@ import {
   type ChannelMessage,
   channelName,
   commandPortFrom,
+  eegFeedFrom,
   mergeMarkers,
+  owedMarkers,
   openChannel,
   resumePoint,
   shiftFit,
@@ -115,6 +117,31 @@ describe("console channel", () => {
   });
 });
 
+describe("the EEG feed to the participant's window (V4-0009)", () => {
+  test("carries packets, with arrival times moved into this window's frame", () => {
+    const [a, b] = pair();
+    const console_ = openChannel("k", () => a)!;
+    const participant = openChannel("k", () => b)!;
+    const heard: { hostMs: number; sampleIndex: number }[] = [];
+    // the console's clock started 250 ms before this window's
+    const off = eegFeedFrom(participant, 1000, 1250).subscribe((p) =>
+      heard.push({ hostMs: p.hostMs, sampleIndex: p.sampleIndex })
+    );
+    console_.post({ type: "hello" });
+    console_.post({
+      type: "eeg",
+      packet: { channel: "TP9", sampleIndex: 24, samples: [1, 2], hostMs: 500 },
+    });
+    expect(heard).toEqual([{ hostMs: 250, sampleIndex: 24 }]);
+    off();
+    console_.post({
+      type: "eeg",
+      packet: { channel: "TP9", sampleIndex: 36, samples: [1], hostMs: 600 },
+    });
+    expect(heard).toHaveLength(1);
+  });
+});
+
 describe("resuming a reloaded participant window", () => {
   const marker = (seq: number, label: string, stepId = "a"): Marker => ({
     label,
@@ -174,5 +201,26 @@ describe("resuming a reloaded participant window", () => {
       [marker(1, "y"), marker(2, "z")]
     );
     expect(merged.map((m) => m.seq)).toEqual([0, 1, 2]);
+  });
+});
+
+describe("what a console's finish still owes", () => {
+  const m = (seq: number | undefined): Marker =>
+    ({
+      label: "x",
+      kind: "stage",
+      tSessionS: 0,
+      tMonotonicMs: 0,
+      tRunMs: 0,
+      seq,
+      meta: {},
+    }) as Marker;
+
+  test("only markers no window had acknowledged, and any without a seq", () => {
+    const owed = owedMarkers(
+      [m(0), m(1), m(2), m(undefined), m(7)],
+      new Set([0, 2, 7])
+    );
+    expect(owed.map((x) => x.seq)).toEqual([1, undefined]);
   });
 });
