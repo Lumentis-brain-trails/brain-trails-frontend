@@ -146,6 +146,12 @@
         "pdf": "PDF",
         "markdown": "Markdown"
       },
+      "status": {
+        "title": "Stato del progetto",
+        "updated": "Aggiornato il {date}",
+        "download": "Markdown",
+        "none": "Nessun rapporto sullo stato importato finora."
+      },
       "entry": {
         "done": "fatto",
         "inProgress": "in corso",

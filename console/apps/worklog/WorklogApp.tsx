@@ -38,6 +38,7 @@ import {
   reportHref,
   splitDetail,
 } from "./lib/worklog";
+import { StatusPanel } from "./sections/Status";
 
 const PAGE = 30;
 
@@ -585,7 +586,8 @@ function EntryList({ filters }: { filters: Filters }) {
 
 /**
  * Work log ("Registro lavori"): what Alessio and Claude did together, with the tokens it
- * took. Filters narrow the totals, the list and the report alike.
+ * took. The status report leads (where the project stands); the filters below it narrow
+ * the totals, the list and the report alike.
  */
 export function WorklogApp({ semver }: AppPageProps) {
   const t = useTranslations("console.worklog");
@@ -593,6 +595,7 @@ export function WorklogApp({ semver }: AppPageProps) {
   return (
     <div data-version={semver} className="space-y-8">
       <p className="max-w-2xl text-ink-2">{t("intro")}</p>
+      <StatusPanel />
       <FilterBar value={filters} onChange={setFilters} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ExportBar filters={filters} />

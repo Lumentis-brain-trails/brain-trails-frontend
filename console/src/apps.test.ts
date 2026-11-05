@@ -15,7 +15,7 @@ const BACKEND = {
     version: "1.0.0",
     widgets: ["active_week", "sessions_week", "signups_14d"],
   },
-  worklog: { version: "1.0.0", widgets: ["tokens_week", "work_week"] },
+  worklog: { version: "1.1.0", widgets: ["tokens_week", "work_week"] },
 };
 
 describe("the app registry", () => {
