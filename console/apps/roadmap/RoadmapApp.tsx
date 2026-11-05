@@ -3,13 +3,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
-import { Card, ErrorBanner, Skeleton, cn } from "@/components/ui";
+import { Button, Card, ErrorBanner, Skeleton, cn } from "@/components/ui";
 import { useErrorText } from "@console/components/useErrorText";
 import { ops } from "@console/lib/client";
 import type { AppPageProps } from "@console/lib/manifest";
+import { ItemForm, MilestoneForm } from "./Editor";
+import {
+  itemDraft,
+  milestoneDraft,
+  newItemDraft,
+  newMilestoneDraft,
+} from "./lib/edit";
 import {
   type Item,
-  type Milestone,
   type Roadmap,
   type Status,
   STATUSES,
@@ -345,12 +351,15 @@ function Detail({
   item,
   roadmap,
   today,
+  onEdit,
 }: {
   item: Item;
   roadmap: Roadmap;
   today: string;
+  onEdit?: () => void;
 }) {
   const t = useTranslations("console.roadmap.detail");
+  const te = useTranslations("console.roadmap.edit");
   const format = useFormatter();
   const day = (d: string) =>
     format.dateTime(new Date(`${d}T12:00:00Z`), { dateStyle: "medium" });
@@ -365,6 +374,16 @@ function Detail({
         <StatusBadge status={item.status} late={isLate(item, today)} />
         {item.tentative && (
           <span className="text-[12px] text-ink-3">{t("tentative")}</span>
+        )}
+        {onEdit && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="ml-auto"
+            onClick={onEdit}
+          >
+            {te("edit")}
+          </Button>
         )}
       </div>
       <h2 className="type-heading mt-1">{item.name}</h2>
@@ -430,20 +449,58 @@ function Detail({
 }
 
 function Milestones({
-  milestones,
+  roadmap,
   today,
+  editing,
+  onEditing,
 }: {
-  milestones: Milestone[];
+  roadmap: Roadmap;
   today: string;
+  editing: string | null;
+  onEditing: ((id: string | null) => void) | null;
 }) {
   const t = useTranslations("console.roadmap");
+  const te = useTranslations("console.roadmap.edit");
   const format = useFormatter();
+  const milestones = roadmap.milestones ?? [];
   const sorted = [...milestones].sort((a, b) => a.date.localeCompare(b.date));
   return (
     <Card>
-      <h2 className="type-heading mb-3">{t("milestones")}</h2>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="type-heading">{t("milestones")}</h2>
+        {onEditing && editing !== "new" && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onEditing("new")}
+          >
+            {te("addMilestone")}
+          </Button>
+        )}
+      </div>
+      {onEditing && editing === "new" && (
+        <div className="mb-3">
+          <MilestoneForm
+            roadmap={roadmap}
+            initial={newMilestoneDraft(roadmap, today)}
+            isNew
+            onDone={() => onEditing(null)}
+          />
+        </div>
+      )}
       <ul className="space-y-2">
         {sorted.map((m) => {
+          if (onEditing && editing === m.id)
+            return (
+              <li key={m.id}>
+                <MilestoneForm
+                  roadmap={roadmap}
+                  initial={milestoneDraft(m)}
+                  isNew={false}
+                  onDone={() => onEditing(null)}
+                />
+              </li>
+            );
           const days = daysBetween(today, m.date);
           return (
             <li key={m.id} className="flex items-baseline gap-3 text-[14px]">
@@ -468,6 +525,16 @@ function Milestones({
                       ? t("today")
                       : t("inDays", { days })}
               </span>
+              {onEditing && (
+                <button
+                  type="button"
+                  className="text-[12px] font-medium text-ink-2 underline-offset-2 hover:underline"
+                  aria-label={`${te("edit")} ${m.name}`}
+                  onClick={() => onEditing(m.id)}
+                >
+                  {te("edit")}
+                </button>
+              )}
             </li>
           );
         })}
@@ -477,16 +544,19 @@ function Milestones({
 }
 
 /**
- * Product roadmap: the plans (V4, OPS), the phone app and the platform work as a Gantt,
- * from the file committed with the backend (`console/apps/roadmap/roadmap.json`). A
- * click on a row opens the item: dates, size, dependencies, its tasks day by day, the
- * open questions and links.
+ * Product roadmap: the plans (V4, OPS), the phone app and the platform work as a Gantt.
+ * A click on a row opens the item: dates, size, dependencies, its tasks day by day, the
+ * open questions and links. People who may edit (`editable`) change an item or a
+ * milestone in place and add new ones; the first edit turns the committed file
+ * (`console/apps/roadmap/roadmap.json`) into the console's own copy.
  */
 export function RoadmapApp({ semver }: AppPageProps) {
   const t = useTranslations("console.roadmap");
   const format = useFormatter();
   const errorText = useErrorText();
   const [selected, setSelected] = useState<string | null>(null);
+  const [form, setForm] = useState<"none" | "edit" | "new">("none");
+  const [milestone, setMilestone] = useState<string | null>(null);
   const today = todayIso();
   const roadmap = useQuery({
     queryKey: ["roadmap"],
@@ -497,34 +567,88 @@ export function RoadmapApp({ semver }: AppPageProps) {
   if (roadmap.isPending) return <Skeleton className="h-96" />;
   const data = roadmap.data;
   const item = data.items.find((i) => i.id === selected) ?? null;
+  const editable = data.editable;
+  const done = (id: string | null) => {
+    setForm("none");
+    setSelected(id);
+  };
+  let side: React.ReactNode;
+  if (editable && form === "new")
+    side = (
+      <Card>
+        <ItemForm
+          key={`new-${data.revision}`}
+          roadmap={data}
+          initial={newItemDraft(data, today)}
+          isNew
+          onDone={done}
+        />
+      </Card>
+    );
+  else if (editable && form === "edit" && item)
+    side = (
+      <Card>
+        <ItemForm
+          key={`edit-${item.id}`}
+          roadmap={data}
+          initial={itemDraft(item)}
+          isNew={false}
+          onDone={done}
+        />
+      </Card>
+    );
+  else if (item)
+    side = (
+      <Detail
+        item={item}
+        roadmap={data}
+        today={today}
+        onEdit={editable ? () => setForm("edit") : undefined}
+      />
+    );
+  else
+    side = (
+      <Card>
+        <p className="text-[14px] text-ink-3">{t("pick")}</p>
+      </Card>
+    );
   return (
     <div data-version={semver} className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <p className="max-w-2xl text-ink-2">{t("intro")}</p>
-        <p className="text-[13px] text-ink-3">
-          {t("updated", {
-            date: format.dateTime(new Date(`${data.updated}T12:00:00Z`), {
-              dateStyle: "long",
-            }),
-          })}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-[13px] text-ink-3">
+            {t("updated", {
+              date: format.dateTime(new Date(`${data.updated}T12:00:00Z`), {
+                dateStyle: "long",
+              }),
+            })}
+          </p>
+          {editable && (
+            <Button size="sm" onClick={() => setForm("new")}>
+              {t("edit.addItem")}
+            </Button>
+          )}
+        </div>
       </div>
       <Legend />
       <Gantt
         roadmap={data}
         today={today}
         selected={selected}
-        onSelect={setSelected}
+        onSelect={(id) => {
+          setSelected(id);
+          setForm("none");
+        }}
       />
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        {item ? (
-          <Detail item={item} roadmap={data} today={today} />
-        ) : (
-          <Card>
-            <p className="text-[14px] text-ink-3">{t("pick")}</p>
-          </Card>
-        )}
-        <Milestones milestones={data.milestones ?? []} today={today} />
+        {side}
+        <Milestones
+          roadmap={data}
+          today={today}
+          editing={milestone}
+          onEditing={editable ? setMilestone : null}
+        />
       </div>
       <details className="text-[13px] text-ink-3">
         <summary className="cursor-pointer">{t("assumptions")}</summary>

@@ -8,7 +8,7 @@
  */
 import type { components } from "@console/lib/ops-types";
 
-export type Roadmap = components["schemas"]["RoadmapOut"];
+export type Roadmap = components["schemas"]["RoadmapPageOut"];
 export type Item = components["schemas"]["ItemOut"];
 export type Track = components["schemas"]["TrackOut"];
 export type Milestone = components["schemas"]["RoadmapMilestoneOut"];

@@ -11,7 +11,7 @@ const BACKEND = {
   health: { version: "0.1.0", widgets: ["failed_jobs", "restarts_24h"] },
   moderation: { version: "1.0.0", widgets: ["review_queue"] },
   overview: { version: "1.1.0", widgets: ["recordings_14d"] },
-  roadmap: { version: "1.0.0", widgets: ["next_milestone"] },
+  roadmap: { version: "1.1.0", widgets: ["next_milestone"] },
   statistics: {
     version: "1.0.0",
     widgets: ["active_week", "sessions_week", "signups_14d"],
