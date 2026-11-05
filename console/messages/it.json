@@ -195,6 +195,41 @@
       "minutes": "Minuti registrati",
       "jobs": "Job {status}"
     },
+    "roadmap": {
+      "intro": "Dove va il prodotto: gli sprint dei piani, l'app per il telefono e i lavori di piattaforma come barre datate, dalla roadmap versionata con il backend. Clicca una riga per leggere la voce.",
+      "updated": "Aggiornata il {date}",
+      "chartLabel": "Gantt della roadmap",
+      "today": "oggi",
+      "tentative": "date incerte",
+      "milestone": "traguardo",
+      "milestones": "Traguardi",
+      "pick": "Scegli una voce nel grafico per leggerne date, dipendenze, attività e domande aperte.",
+      "assumptions": "Come leggere le date",
+      "inDays": "tra {days} giorni",
+      "daysAgo": "{days} giorni fa",
+      "status": {
+        "done": "fatto",
+        "in_progress": "in corso",
+        "review": "in revisione",
+        "planned": "pianificato",
+        "proposed": "proposto",
+        "late": "in ritardo"
+      },
+      "detail": {
+        "dates": "{start} – {end} ({days} giorni)",
+        "size": "stima {size}",
+        "dependsOn": "Dipende da:",
+        "tasks": "Attività, giorno per giorno",
+        "questions": "Domande aperte",
+        "tentative": "date incerte"
+      },
+      "widget": {
+        "none": "Nessun traguardo davanti.",
+        "today": "oggi",
+        "inDays": "{days} g",
+        "counts": "{review} in revisione · {planned} pianificati"
+      }
+    },
     "panel": {
       "refresh": "Aggiorna",
       "never": "Non ancora aggiornato."

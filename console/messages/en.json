@@ -195,6 +195,41 @@
       "minutes": "Minutes recorded",
       "jobs": "Jobs {status}"
     },
+    "roadmap": {
+      "intro": "Where the product is going: the plans' sprints, the phone app and the platform work as dated bars, from the roadmap committed with the backend. Click a row to read the item.",
+      "updated": "Updated {date}",
+      "chartLabel": "Gantt of the roadmap",
+      "today": "today",
+      "tentative": "tentative dates",
+      "milestone": "milestone",
+      "milestones": "Milestones",
+      "pick": "Pick an item on the chart to read its dates, dependencies, tasks and open questions.",
+      "assumptions": "How to read the dates",
+      "inDays": "in {days} days",
+      "daysAgo": "{days} days ago",
+      "status": {
+        "done": "done",
+        "in_progress": "in progress",
+        "review": "in review",
+        "planned": "planned",
+        "proposed": "proposed",
+        "late": "late"
+      },
+      "detail": {
+        "dates": "{start} – {end} ({days} days)",
+        "size": "size {size}",
+        "dependsOn": "Depends on:",
+        "tasks": "Tasks, day by day",
+        "questions": "Open questions",
+        "tentative": "tentative dates"
+      },
+      "widget": {
+        "none": "No milestone ahead.",
+        "today": "today",
+        "inDays": "{days} d",
+        "counts": "{review} in review · {planned} planned"
+      }
+    },
     "panel": {
       "refresh": "Refresh",
       "never": "Not refreshed yet."

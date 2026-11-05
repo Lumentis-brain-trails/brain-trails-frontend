@@ -219,6 +219,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/roadmap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Roadmap
+         * @description The committed roadmap: tracks, items with their dates and status, milestones.
+         */
+        get: operations["get_roadmap_ops_v1_roadmap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/session": {
         parameters: {
             query?: never;
@@ -829,6 +849,52 @@ export interface components {
             started_local: string | null;
         };
         /**
+         * ItemOut
+         * @description A bar of the Gantt: a sprint or a piece of work with its dates and status.
+         */
+        ItemOut: {
+            /** Depends On */
+            depends_on?: string[];
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Links */
+            links?: components["schemas"]["RoadmapLinkOut"][];
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /** Questions */
+            questions?: string[];
+            /** Size */
+            size?: string | null;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress" | "review" | "planned" | "proposed";
+            /** Tasks */
+            tasks?: components["schemas"]["TaskOut"][];
+            /**
+             * Tentative
+             * @default false
+             */
+            tentative: boolean;
+            /** Track */
+            track: string;
+        };
+        /**
          * LayoutIn
          * @description The whole strip, in order.
          */
@@ -977,6 +1043,57 @@ export interface components {
             };
         };
         /**
+         * RoadmapLinkOut
+         * @description A link of an item: a pull request, a plan page, a paper.
+         */
+        RoadmapLinkOut: {
+            /** Label */
+            label: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * RoadmapMilestoneOut
+         * @description A dated point of the Gantt: something the plans promise on a day.
+         */
+        RoadmapMilestoneOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress" | "review" | "planned" | "proposed";
+            /** Track */
+            track: string;
+        };
+        /**
+         * RoadmapOut
+         * @description The whole roadmap as the page draws it.
+         */
+        RoadmapOut: {
+            /** Assumptions */
+            assumptions: string;
+            /** Items */
+            items: components["schemas"]["ItemOut"][];
+            /** Milestones */
+            milestones?: components["schemas"]["RoadmapMilestoneOut"][];
+            /** Tracks */
+            tracks: components["schemas"]["TrackOut"][];
+            /**
+             * Updated
+             * Format: date
+             */
+            updated: string;
+        };
+        /**
          * SessionIn
          * @description The product token the BFF obtained by signing the person in to the product.
          */
@@ -1103,6 +1220,16 @@ export interface components {
             widget: string;
         };
         /**
+         * TaskOut
+         * @description One step of an item's task list, as the ten days of the phone app.
+         */
+        TaskOut: {
+            /** Day */
+            day: string;
+            /** Text */
+            text: string;
+        };
+        /**
          * TotalOut
          * @description Tokens, entries and minutes of one day, week (its Monday) or area.
          *
@@ -1146,6 +1273,18 @@ export interface components {
             tokens_cache: number;
             /** Tokens New */
             tokens_new: number;
+        };
+        /**
+         * TrackOut
+         * @description A row group of the Gantt: a plan, or a theme outside the plans.
+         */
+        TrackOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Plan */
+            plan?: string | null;
         };
         /**
          * UsageOut
@@ -1569,6 +1708,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PinOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_roadmap_ops_v1_roadmap_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapOut"];
                 };
             };
             /** @description Validation Error */
