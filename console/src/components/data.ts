@@ -86,26 +86,58 @@ export function useSetLayout() {
   });
 }
 
+/** A panel's parameters as one stable string: keys sorted, as the backend hashes them. */
+export function paramsKey(params: Record<string, unknown> = {}): string {
+  const sorted = Object.fromEntries(
+    Object.entries(params)
+      .filter(([, v]) => v !== null && v !== undefined && v !== "")
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+  return JSON.stringify(sorted);
+}
+
+/** What a refresh names: a panel, and its parameters when it takes any. */
+export type RefreshTarget =
+  string | { key: string; params?: Record<string, unknown> };
+
+function target(t: RefreshTarget): { key: string; params: string } {
+  return typeof t === "string"
+    ? { key: t, params: paramsKey() }
+    : { key: t.key, params: paramsKey(t.params) };
+}
+
 /** Run one panel now and store its snapshot: a person's click, the only refresh there is. */
 export function useRefresh() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (key: string) =>
-      ops.post<Snapshot>(`snapshots/${encodeURIComponent(key)}/refresh`, {}),
-    onSuccess: (snapshot) => {
-      client.setQueryData(["snapshot", snapshot.key], snapshot);
+    mutationFn: (t: RefreshTarget) => {
+      const { key, params } = target(t);
+      return ops.post<Snapshot>(
+        `snapshots/${encodeURIComponent(key)}/refresh`,
+        {
+          params: JSON.parse(params),
+        }
+      );
+    },
+    onSuccess: (snapshot, t) => {
+      const { key, params } = target(t);
+      client.setQueryData(["snapshot", key, params], snapshot);
       void client.invalidateQueries({ queryKey: ["strip"] });
     },
   });
 }
 
-/** The newest snapshot of a panel; `null` when it was never taken. */
-export const useSnapshot = (key: string) =>
-  useQuery({
-    queryKey: ["snapshot", key],
+/** The newest snapshot of a panel for these parameters; `null` when never taken. */
+export const useSnapshot = (key: string, params?: Record<string, unknown>) => {
+  const p = paramsKey(params);
+  return useQuery({
+    queryKey: ["snapshot", key, p],
     queryFn: async () => {
       try {
-        return await ops.get<Snapshot>(`snapshots/${encodeURIComponent(key)}`);
+        const q = p === "{}" ? "" : `?params=${encodeURIComponent(p)}`;
+        return await ops.get<Snapshot>(
+          `snapshots/${encodeURIComponent(key)}${q}`
+        );
       } catch (e) {
         if (e instanceof OpsRequestError && e.code === "no_snapshot")
           return null;
@@ -113,3 +145,4 @@ export const useSnapshot = (key: string) =>
       }
     },
   });
+};

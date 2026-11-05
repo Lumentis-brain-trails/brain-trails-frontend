@@ -99,6 +99,16 @@ describe("the bt-ops proxy", () => {
     expect(init.headers["X-Client-IP"]).toBeUndefined();
   });
 
+  test("reaches Statistics' definitions", async () => {
+    jar.set("bto_session", "ops-token");
+    const res = await opsProxy.GET(
+      new NextRequest("http://c/api/ops/stats/definitions"),
+      ctx(["stats", "definitions"])
+    );
+    expect(res.status).toBe(200);
+    expect(call(0).url).toBe("http://localhost:8100/ops/v1/stats/definitions");
+  });
+
   test("reaches Health's log route with its query", async () => {
     jar.set("bto_session", "ops-token");
     const res = await opsProxy.GET(
