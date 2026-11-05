@@ -21,6 +21,7 @@ import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { useErrorMessage } from "@/lib/errorMessage";
 import { useFeature } from "@/lib/features";
+import { PatientTimeline } from "@/components/therapy/PatientTimeline";
 import { formatDate } from "@/lib/format";
 import { type ProtocolCard, isPlayable } from "@/lib/protocol/catalog";
 import type { StimulusSession } from "@/lib/protocol/session";
@@ -77,6 +78,8 @@ export default function SubjectPage({
   );
   const words = subjectWords(editionOf(workspace?.kind));
   const assignmentsOn = useFeature("assignments");
+  // the therapy edition's reading of a patient (T6): a practice's, behind `therapy`
+  const therapyOn = useFeature("therapy");
 
   if (subject.isLoading)
     return (
@@ -125,6 +128,14 @@ export default function SubjectPage({
         {s.readable && <Details subject={s} lab={workspace?.kind === "lab"} />}
         {workspace?.kind !== "lab" && (
           <CareTeam subject={s} manager={manager} />
+        )}
+        {s.readable && therapyOn && workspace?.kind === "practice" && (
+          <PatientTimeline
+            subjectId={s.id}
+            share={s.share_results}
+            canShare={s.archived_at == null}
+            hasAccount={s.has_account ?? false}
+          />
         )}
         {s.readable && assignmentsOn && <Assignments subject={s} />}
         {s.readable && assignmentsOn && <Invite subject={s} />}
