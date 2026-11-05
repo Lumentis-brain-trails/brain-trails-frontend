@@ -17,6 +17,8 @@
  * instructions, the block rows. When the session ran an official protocol they are
  * shown in the reader's language instead (`lib/protocol/official.ts`), by block id.
  */
+import { useWorkspaceConfig } from "@/lib/workspace";
+import { SessionInWords } from "@/components/therapy/SessionInWords";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useFormatLocale } from "@/i18n/formatLocale";
@@ -107,6 +109,7 @@ export default function RecordingDetailPage({
     enabled: done,
     retry: false,
   });
+  const therapyOn = useWorkspaceConfig().data?.features?.therapy === true;
   const session = useQuery({
     queryKey: ["session", sessionId],
     queryFn: () => api.get<SessionDetail>(`sessions/${sessionId}`),
@@ -289,6 +292,14 @@ export default function RecordingDetailPage({
           {rec && <StatusBadge status={rec.status} />}
         </div>
       </header>
+
+      {/* the therapy edition's plain words first; the full metrics follow (T6) */}
+      {therapyOn && session.data?.subject_id && sessionId && (
+        <SessionInWords
+          subjectId={session.data.subject_id}
+          sessionId={sessionId}
+        />
+      )}
 
       {busy && (
         <Card className="enter-up mb-6 flex items-center gap-4">
