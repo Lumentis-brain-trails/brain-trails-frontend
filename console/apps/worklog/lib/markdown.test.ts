@@ -61,7 +61,11 @@ describe("the status report's Markdown", () => {
       )
     ).toEqual([
       { kind: "text", text: "See " },
-      { kind: "link", text: "the paper", url: "https://arxiv.org/abs/2312.04528" },
+      {
+        kind: "link",
+        text: "the paper",
+        url: "https://arxiv.org/abs/2312.04528",
+      },
       { kind: "text", text: ", " },
       { kind: "strong", text: "bold" },
       { kind: "text", text: ", " },

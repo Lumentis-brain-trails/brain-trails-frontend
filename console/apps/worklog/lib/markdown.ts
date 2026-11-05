@@ -62,7 +62,10 @@ export function parseMarkdown(text: string): Block[] {
 
   const flushParagraph = () => {
     if (paragraph.length) {
-      blocks.push({ kind: "paragraph", inlines: parseInline(paragraph.join(" ")) });
+      blocks.push({
+        kind: "paragraph",
+        inlines: parseInline(paragraph.join(" ")),
+      });
       paragraph = [];
     }
   };
