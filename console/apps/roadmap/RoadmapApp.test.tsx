@@ -49,11 +49,22 @@ const ROADMAP: Roadmap = {
       note: "Not the app store.",
       tasks: [{ day: "Day 1 · 6 Nov", text: "Add the Android platform." }],
       questions: ["Where does the file live?"],
-      links: [{ label: "Capacitor Android", url: "https://capacitorjs.com/docs/android" }],
+      links: [
+        {
+          label: "Capacitor Android",
+          url: "https://capacitorjs.com/docs/android",
+        },
+      ],
     },
   ],
   milestones: [
-    { id: "m-apk", track: "mobile", date: "2026-11-15", name: "Phone app on the site", status: "planned" },
+    {
+      id: "m-apk",
+      track: "mobile",
+      date: "2026-11-15",
+      name: "Phone app on the site",
+      status: "planned",
+    },
   ],
 };
 
@@ -81,12 +92,16 @@ afterEach(() => {
 
 test("the chart draws every track and item, and the milestones list", async () => {
   renderPage();
-  const chart = await screen.findByRole("img", { name: "Gantt of the roadmap" });
+  const chart = await screen.findByRole("img", {
+    name: "Gantt of the roadmap",
+  });
   expect(chart).toBeTruthy();
   expect(get).toHaveBeenCalledWith("roadmap");
   expect(screen.getByText("Plan V4")).toBeTruthy();
   expect(screen.getByText("Phone app")).toBeTruthy();
-  expect(screen.getByRole("button", { name: "T2 Organisations and care teams" })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "T2 Organisations and care teams" })
+  ).toBeTruthy();
   expect(screen.getByText("Phone app on the site")).toBeTruthy();
   expect(screen.getByText(/Pick an item on the chart/)).toBeTruthy();
 });
@@ -97,14 +112,19 @@ test("a click on a row opens the item with its tasks, questions and dependencies
     name: "APK Android app downloadable from the site",
   });
   fireEvent.click(row);
-  expect(screen.getByRole("heading", { name: "Android app downloadable from the site" })).toBeTruthy();
+  expect(
+    screen.getByRole("heading", {
+      name: "Android app downloadable from the site",
+    })
+  ).toBeTruthy();
   expect(screen.getByText("Add the Android platform.")).toBeTruthy();
   expect(screen.getByText("Where does the file live?")).toBeTruthy();
   expect(screen.getByText(/Depends on:/)).toBeTruthy();
-  expect(screen.getByText("T2 Organisations and care teams", { selector: "p" })).toBeTruthy();
-  expect(screen.getByRole("link", { name: "Capacitor Android" })).toHaveAttribute(
-    "href",
-    "https://capacitorjs.com/docs/android"
-  );
+  expect(
+    screen.getByText("T2 Organisations and care teams", { selector: "p" })
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("link", { name: "Capacitor Android" })
+  ).toHaveAttribute("href", "https://capacitorjs.com/docs/android");
   expect(screen.getByText("planned", { selector: "span" })).toBeTruthy();
 });
