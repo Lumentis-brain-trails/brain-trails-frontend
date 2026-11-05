@@ -146,6 +146,12 @@
         "pdf": "PDF",
         "markdown": "Markdown"
       },
+      "status": {
+        "title": "Status report",
+        "updated": "Updated {date}",
+        "download": "Markdown",
+        "none": "No status report imported yet."
+      },
       "entry": {
         "done": "done",
         "inProgress": "in progress",
