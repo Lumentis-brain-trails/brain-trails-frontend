@@ -5,6 +5,8 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const jar = new Map<string, string>();
 vi.mock("next/headers", () => ({
@@ -408,4 +410,23 @@ describe("the visitor's address", () => {
     await opsProxy.GET(new NextRequest("http://c/api/ops/me"), ctx(["me"]));
     expect(call(3).init.headers["X-Client-IP"]).toBeUndefined();
   });
+});
+
+test("every bt-ops route the apps read is on the proxy's allow-list", () => {
+  // A new app's route left off the list fails in the browser before reaching bt-ops,
+  // with nothing in its logs; the contract names every route, so check against it.
+  const types = readFileSync(
+    path.resolve(__dirname, "../../lib/ops-types.ts"),
+    "utf8"
+  );
+  const first = new Set(
+    [...types.matchAll(/"\/ops\/v1\/([a-z_-]+)/g)].map((m) => m[1])
+  );
+  first.delete("session"); // sign-in has its own routes
+  expect(first.size).toBeGreaterThan(5);
+  expect(
+    [...first].filter(
+      (s) => !(opsProxy.OPS_ALLOWED as readonly string[]).includes(s)
+    )
+  ).toEqual([]);
 });
