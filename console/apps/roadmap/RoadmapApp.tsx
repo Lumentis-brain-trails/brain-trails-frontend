@@ -29,7 +29,7 @@ import {
   weekStarts,
 } from "./lib/gantt";
 
-const LABEL_W = 232;
+const LABEL_W = 252;
 const PX_PER_DAY = 13;
 const ROW_H = 30;
 const TRACK_H = 34;
@@ -231,16 +231,18 @@ function Gantt({
                       fontSize={11}
                       fontFamily="var(--font-mono, monospace)"
                     >
-                      {item.label}
+                      {item.label.length > 8
+                        ? `${item.label.slice(0, 8)}…`
+                        : item.label}
                     </text>
                     <text
-                      x={52}
+                      x={76}
                       y={iy + ROW_H / 2 + 4}
                       className={cn("fill-ink", active && "font-semibold")}
                       fontSize={12}
                     >
-                      {item.name.length > 30
-                        ? `${item.name.slice(0, 29)}…`
+                      {item.name.length > 26
+                        ? `${item.name.slice(0, 25)}…`
                         : item.name}
                     </text>
                     <rect
