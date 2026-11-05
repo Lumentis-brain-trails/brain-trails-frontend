@@ -284,6 +284,90 @@
       "widgets": {
         "queue": "{media} media · {protocols} protocols · {stand} at the stand"
       }
+    },
+    "statistics": {
+      "intro": "How the product is used, and by whom. Every number is defined once, in the backend, and the Definitions tab says what each one counts. Staff and test accounts never count.",
+      "period": "Period",
+      "weeks": "{n} weeks",
+      "cohort": "Cohort",
+      "everyone": "Everyone",
+      "reports": "Reports",
+      "refreshAll": "Refresh all",
+      "refreshing": "Refreshing {step} of {total}…",
+      "snapshotsNote": "Each report shows its last refresh for this period and cohort. Refresh one, or all of them one after the other; nothing refreshes on its own.",
+      "steps": {
+        "registered": "Registered",
+        "accepted": "Accepted",
+        "verified": "Verified",
+        "first_session": "First session",
+        "second_session": "Second session"
+      },
+      "acquisition": {
+        "title": "Acquisition",
+        "funnel": "From registration to a second session",
+        "ofPrevious": "{share} of the step before",
+        "perWeek": "Per registration week",
+        "times": "Time between steps (median)",
+        "timeTo": {
+          "accepted": "Registration to acceptance:",
+          "verified": "Acceptance to verified email:",
+          "first_session": "Acceptance to first session:",
+          "second_session": "First to second session:"
+        },
+        "hours": "{n} h",
+        "days": "{n} days",
+        "ofPeople": "({people} people)",
+        "byProfile": "By requested profile",
+        "byCohort": "By cohort",
+        "noCohort": "No cohort"
+      },
+      "engagement": {
+        "title": "Engagement",
+        "perWeek": "Active people per week",
+        "perMonth": "Per month",
+        "active": "Active people",
+        "sessions": "Finished sessions",
+        "perPerson": "Finished sessions per active person, in the period",
+        "sessionsBucket": "{bucket, select, 1 {1 session} other {{bucket} sessions}}",
+        "retention": "Retention by first-session week",
+        "noRetention": "Nobody finished a first session in this period.",
+        "firstWeek": "First week",
+        "people": "People",
+        "weekN": "W{n}",
+        "idle": "Days since the last session (everyone who ever finished one)",
+        "daysBucket": "{bucket} days"
+      },
+      "consent": {
+        "title": "Consent",
+        "people": "People",
+        "summary": "{people} people; {newsletter} ticked the newsletter.",
+        "versions": "Privacy consent version",
+        "research": "Research consent version",
+        "none": "Not given",
+        "peopleColumn": "People",
+        "erasures": "Erased accounts per month, in the period",
+        "erasuresColumn": "Erasures",
+        "noErasures": "No account was erased in this period."
+      },
+      "definitions": {
+        "title": "Definitions",
+        "people": "People are product accounts that are neither staff nor test accounts. Staff: platform admins and anyone with console access. Test: emails matching {patterns}.",
+        "session": "A session is a protocol run. It counts for the person who ran it, who for a self-recording is the person recorded. A finished session reached its end (status done); aborted runs are not counted.",
+        "active": "Active in a week or month: finished at least one session in it.",
+        "retained": "Retained at week N: active in the N-th week after the week of the first finished session (week 0 is that week). The table shows weeks 0 to {last}; a dash is a week not reached yet.",
+        "weeks": "Weeks start on Monday, Rome time. A period of N weeks ends with the current week, which is still running.",
+        "verified": "Verified: the person proved their email address. The acceptance sends the link, so this step comes after it. Environments that do not ask for verification leave it empty, so the step reads 0 there.",
+        "accepted": "Accepted: the beta application was decided 'accepted'.",
+        "sessionsSteps": "The funnel counts the people who registered in the period; the session steps count their first and second finished sessions, whenever they happened.",
+        "small": "Small numbers: a group of fewer than {min} people is shown to collaborators as a dash, never as a number. Core people see every number.",
+        "erasures": "Erasures are counted from the product's audit log: the account is gone, so staff and test accounts cannot be told apart there."
+      },
+      "widgets": {
+        "signups": "Sign-ups per day, last 14 days",
+        "lastWeek": "week of {week}",
+        "sessions": "Finished sessions per week",
+        "active": "Active people per week"
+      }
     }
   },
   "admin": {

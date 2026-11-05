@@ -284,6 +284,90 @@
       "widgets": {
         "queue": "{media} media · {protocols} protocolli · {stand} allo stand"
       }
+    },
+    "statistics": {
+      "intro": "Come si usa il prodotto, e chi lo usa. Ogni numero è definito una volta sola, nel backend, e la scheda Definizioni dice cosa conta. Staff e account di test non contano mai.",
+      "period": "Periodo",
+      "weeks": "{n} settimane",
+      "cohort": "Coorte",
+      "everyone": "Tutti",
+      "reports": "Report",
+      "refreshAll": "Aggiorna tutti",
+      "refreshing": "Aggiorno {step} di {total}…",
+      "snapshotsNote": "Ogni report mostra il suo ultimo aggiornamento per questo periodo e questa coorte. Aggiornane uno, o tutti uno dopo l'altro; niente si aggiorna da solo.",
+      "steps": {
+        "registered": "Registrati",
+        "accepted": "Accettati",
+        "verified": "Email verificata",
+        "first_session": "Prima sessione",
+        "second_session": "Seconda sessione"
+      },
+      "acquisition": {
+        "title": "Acquisizione",
+        "funnel": "Dalla registrazione alla seconda sessione",
+        "ofPrevious": "{share} del passo prima",
+        "perWeek": "Per settimana di registrazione",
+        "times": "Tempo tra i passi (mediana)",
+        "timeTo": {
+          "accepted": "Dalla registrazione all'accettazione:",
+          "verified": "Dall'accettazione all'email verificata:",
+          "first_session": "Dall'accettazione alla prima sessione:",
+          "second_session": "Dalla prima alla seconda sessione:"
+        },
+        "hours": "{n} h",
+        "days": "{n} giorni",
+        "ofPeople": "({people} persone)",
+        "byProfile": "Per profilo richiesto",
+        "byCohort": "Per coorte",
+        "noCohort": "Nessuna coorte"
+      },
+      "engagement": {
+        "title": "Coinvolgimento",
+        "perWeek": "Persone attive per settimana",
+        "perMonth": "Per mese",
+        "active": "Persone attive",
+        "sessions": "Sessioni finite",
+        "perPerson": "Sessioni finite per persona attiva, nel periodo",
+        "sessionsBucket": "{bucket, select, 1 {1 sessione} other {{bucket} sessioni}}",
+        "retention": "Ritorno per settimana della prima sessione",
+        "noRetention": "Nessuno ha finito una prima sessione in questo periodo.",
+        "firstWeek": "Prima settimana",
+        "people": "Persone",
+        "weekN": "S{n}",
+        "idle": "Giorni dall'ultima sessione (chiunque ne abbia mai finita una)",
+        "daysBucket": "{bucket} giorni"
+      },
+      "consent": {
+        "title": "Consensi",
+        "people": "Persone",
+        "summary": "{people} persone; {newsletter} hanno spuntato la newsletter.",
+        "versions": "Versione del consenso privacy",
+        "research": "Versione del consenso alla ricerca",
+        "none": "Non dato",
+        "peopleColumn": "Persone",
+        "erasures": "Account cancellati per mese, nel periodo",
+        "erasuresColumn": "Cancellazioni",
+        "noErasures": "Nessun account cancellato in questo periodo."
+      },
+      "definitions": {
+        "title": "Definizioni",
+        "people": "Le persone sono gli account del prodotto che non sono né staff né di test. Staff: gli admin della piattaforma e chiunque abbia accesso alla console. Test: le email che corrispondono a {patterns}.",
+        "session": "Una sessione è un'esecuzione di un protocollo. Conta per chi l'ha condotta, che in un'autoregistrazione è la persona registrata. Una sessione finita è arrivata alla fine (stato done); quelle interrotte non contano.",
+        "active": "Attiva in una settimana o in un mese: ha finito almeno una sessione in quel periodo.",
+        "retained": "Tornata alla settimana N: attiva nella N-esima settimana dopo quella della prima sessione finita (la settimana 0 è quella). La tabella mostra le settimane da 0 a {last}; un trattino è una settimana non ancora arrivata.",
+        "weeks": "Le settimane iniziano il lunedì, ora di Roma. Un periodo di N settimane finisce con la settimana in corso, che non è ancora finita.",
+        "verified": "Email verificata: la persona ha confermato il suo indirizzo. Il link parte con l'accettazione, quindi questo passo viene dopo. Gli ambienti che non chiedono la verifica lo lasciano vuoto, e lì il passo vale 0.",
+        "accepted": "Accettati: la candidatura alla beta è stata decisa 'accettata'.",
+        "sessionsSteps": "L'imbuto conta le persone registrate nel periodo; i passi delle sessioni contano la loro prima e seconda sessione finita, in qualunque momento.",
+        "small": "Numeri piccoli: un gruppo di meno di {min} persone appare ai collaboratori come un trattino, mai come numero. Le persone core vedono tutti i numeri.",
+        "erasures": "Le cancellazioni si contano dall'audit log del prodotto: l'account non c'è più, quindi lì staff e account di test non si distinguono."
+      },
+      "widgets": {
+        "signups": "Registrazioni al giorno, ultimi 14 giorni",
+        "lastWeek": "settimana del {week}",
+        "sessions": "Sessioni finite per settimana",
+        "active": "Persone attive per settimana"
+      }
     }
   },
   "admin": {
