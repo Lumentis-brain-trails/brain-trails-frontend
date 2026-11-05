@@ -38,8 +38,7 @@ type SectionKey =
   | "participants"
   | "people"
   | "my"
-  | "account"
-  | "admin";
+  | "account";
 
 /** The words are not here: a module has no locale, so the rail resolves `key`. */
 type Section = { href: string; key: SectionKey; icon: IconName };
@@ -229,9 +228,6 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
       ? [{ href: "/my", key: "my", icon: "protocol" } as const]
       : []),
     { href: "/account", key: "account", icon: "person" },
-    ...(me.data?.role === "admin"
-      ? [{ href: "/admin", key: "admin", icon: "shield" } as const]
-      : []),
   ];
   const next = theme === "dark" ? "light" : "dark";
 

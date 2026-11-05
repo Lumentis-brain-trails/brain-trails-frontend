@@ -2034,7 +2034,6 @@
       "recordings": "Registrazioni",
       "landscape": "Paesaggio cerebrale",
       "account": "Account",
-      "admin": "Admin",
       "people": "Persone",
       "patients": "Pazienti",
       "participants": "Partecipanti",
@@ -2281,206 +2280,16 @@
     }
   },
   "admin": {
-    "shared": {
-      "backToAdmin": "Torna all'admin"
-    },
     "statuses": {
       "pending": "In attesa",
       "approved": "Approvato",
       "active": "Attivo",
       "rejected": "Rifiutato"
     },
-    "dashboard": {
-      "title": "Panoramica",
-      "intro": "Partecipanti e statistiche sui dati in ingresso in tutto il prototipo.",
-      "links": {
-        "fair": "Lo stand",
-        "protocols": "Blocchi del catalogo",
-        "review": "Revisione delle pubblicazioni",
-        "applications": "Esamina le candidature",
-        "organisations": "Organizzazioni"
-      },
-      "loadFailed": "Non è stato possibile caricare le statistiche.",
-      "stats": {
-        "active": "Partecipanti attivi",
-        "pending": "In attesa di esame",
-        "rejected": "{count, plural, one {# rifiutato} other {# rifiutati}}",
-        "recordings": "Registrazioni",
-        "liveSessions": "{count, plural, one {# sessione in diretta} other {# sessioni in diretta}}",
-        "minutes": "Minuti di segnale",
-        "failedJobs": "{count, plural, one {# elaborazione non riuscita} other {# elaborazioni non riuscite}}"
-      },
-      "byTask": {
-        "title": "Registrazioni per compito",
-        "empty": "Ancora nessuna registrazione."
-      },
-      "uploads": {
-        "title": "Caricamenti, ultimi 14 giorni",
-        "empty": "Ancora nessun caricamento.",
-        "aria": "Caricamenti al giorno"
-      },
-      "valueOf": "{label}: {value}",
-      "participants": {
-        "title": "Partecipanti",
-        "participant": "Partecipante",
-        "status": "Stato",
-        "recordings": "Registrazioni",
-        "minutes": "Minuti",
-        "lastActivity": "Ultima attività",
-        "allApplications": "Tutte le candidature"
-      }
-    },
-    "applications": {
-      "title": "Candidature",
-      "intro": "Chi entra nella beta, e in quale coorte.",
-      "decision": "Decisione",
-      "tabs": {
-        "pending": "In attesa",
-        "waitlisted": "In lista d'attesa",
-        "accepted": "Accettate",
-        "rejected": "Rifiutate"
-      },
-      "empty": {
-        "pending": "Nessuna candidatura in attesa.",
-        "waitlisted": "Nessuna candidatura in lista d'attesa.",
-        "accepted": "Nessuna candidatura accettata.",
-        "rejected": "Nessuna candidatura rifiutata."
-      },
-      "forbidden": "È richiesto il ruolo di admin.",
-      "profile": "Profilo",
-      "cohort": "Coorte",
-      "allProfiles": "Tutti i profili",
-      "allCohorts": "Tutte le coorti",
-      "profiles": {
-        "private": "Privato",
-        "therapist": "Terapeuta",
-        "lab_lead": "Responsabile di laboratorio",
-        "lab_member": "Membro di laboratorio"
-      },
-      "meta": "{profile} · {email} · candidatura del {date}{inCohort, select, yes { · {cohort}} other {}}",
-      "answers": {
-        "labels": {
-          "registration_no": "N. di iscrizione all'albo",
-          "headband": "Fascia",
-          "device": "Dispositivo",
-          "expected_subjects": "Persone previste"
-        },
-        "webBluetooth": "Web Bluetooth",
-        "bluetoothUnknown": "Non indicato",
-        "bluetoothYes": "Sì",
-        "bluetoothNo": "No - qui non può associare la fascia"
-      },
-      "verification": {
-        "manual": "Modalità email manuale: invia questo link di verifica al candidato.",
-        "copy": "Copia",
-        "copied": "Copiato",
-        "reissue": "Genera un nuovo link di verifica"
-      },
-      "cohorts": {
-        "title": "Coorti",
-        "empty": "Ancora nessuna coorte. Creane una per costruire il campione con criterio.",
-        "counts": "{accepted}{hasTarget, select, yes { / {target}} other {}} accettati · {waitlisted} in lista d'attesa",
-        "new": "Nuova coorte",
-        "anyProfile": "Qualsiasi",
-        "target": "Obiettivo",
-        "add": "Aggiungi"
-      },
-      "decide": {
-        "noCohort": "Nessuna coorte",
-        "note": "Nota (solo admin)",
-        "accept": "Accetta",
-        "waitlist": "Metti in lista d'attesa",
-        "reject": "Rifiuta"
-      }
-    },
-    "fair": {
-      "title": "Lo stand",
-      "intro": "Finché lo stand è aperto, la registrazione chiede se si vuole provare la fascia. Poi ci si può allontanare: quando chiami una persona, le arriva un'email che dice che il suo turno è tra circa cinque minuti.",
-      "open": "Lo stand è aperto.",
-      "closed": "Lo stand è chiuso.",
-      "openHint": "Alle nuove registrazioni viene posta la domanda.",
-      "closedHint": "Chiudere non svuota la coda — chi è già in coda mantiene il turno.",
-      "openAction": "Apri lo stand",
-      "closeAction": "Chiudi lo stand",
-      "stats": {
-        "waiting": "In attesa",
-        "called": "Chiamati",
-        "done": "Fatti",
-        "declined": "Non più in coda"
-      },
-      "states": {
-        "done": "fatto",
-        "declined": "non più in coda"
-      },
-      "conversion": "Tra chi ha provato la fascia, {converted} su {tried} hanno chiesto di diventare beta tester ({percent}%).",
-      "wantsBeta": "Ha chiesto di diventare beta tester",
-      "queue": "In coda",
-      "nobody": "Nessuno è in attesa.",
-      "calledAgo": "chiamato{when, select, now { adesso} minutes { {n} min fa} hours { {n} h fa} other {}}",
-      "signedUp": "{email} · iscrizione {when, select, now {adesso} minutes {{n} min fa} hours {{n} h fa} other {}}",
-      "call": "Chiama",
-      "callAgain": "Chiama di nuovo",
-      "done": "Fatto",
-      "gone": "Assente",
-      "seenTo": "Conclusi",
-      "toast": {
-        "emailed": "Email inviata a {email}.",
-        "done": "Segnato come fatto.",
-        "declined": "Tolto dalla coda."
-      }
-    },
-    "protocols": {
-      "title": "Blocchi del catalogo",
-      "intro": "Un protocollo bloccato resta in elenco — le persone vedono cosa è in arrivo — ma non può essere avviato. Le modifiche hanno effetto subito; una sessione già in corso arriva alla fine.",
-      "changeFailed": "Non è stato possibile cambiare il blocco.",
-      "official": "Protocolli ufficiali",
-      "startable": "Avviabili: {open} su {total}",
-      "empty": "Ancora nessun protocollo ufficiale.",
-      "locked": "bloccato",
-      "lock": "Blocca",
-      "unlock": "Sblocca",
-      "toast": {
-        "locked": "Bloccato.",
-        "unlocked": "Sbloccato."
-      }
-    },
-    "review": {
-      "title": "Revisione",
-      "intro": "Protocolli ed elementi che le persone hanno chiesto di condividere con la community.",
-      "loadFailed": "Non è stato possibile caricare la coda.",
-      "empty": "Niente da revisionare.",
-      "protocols": "Protocolli",
-      "media": "Media",
-      "approve": "Approva",
-      "refuse": "Rifiuta",
-      "hide": "Nascondi",
-      "meta": "versione {version}{timed, select, yes { · {duration}} other {}}{tagged, select, yes { · {tags}} other {}}",
-      "contentWarning": "Avviso sui contenuti: {warning}"
-    },
     "probe": {
       "fps": "fps {fps}",
       "dropped": "persi {count}",
       "onset": "onset p95 {p95} ms (max {max}, n {count})"
-    },
-    "organisations": {
-      "title": "Organizzazioni",
-      "intro": "Cliniche e laboratori richiesti dagli utenti. Approvare rende titolare chi ha fatto la richiesta; a te non dà niente al suo interno.",
-      "unavailable": "Le organizzazioni sono disattivate in questo ambiente.",
-      "tabs": {
-        "pending": "In attesa",
-        "active": "Approvate",
-        "rejected": "Rifiutate"
-      },
-      "empty": {
-        "pending": "Nessuna richiesta in attesa.",
-        "active": "Ancora nessuna organizzazione approvata.",
-        "rejected": "Nessuna richiesta rifiutata."
-      },
-      "line": "{kind} · {email} · {date}",
-      "gone": "account eliminato",
-      "seats": "{count, plural, one {# posto} other {# posti}}",
-      "approve": "Approva",
-      "reject": "Rifiuta"
     }
   },
   "official": {
