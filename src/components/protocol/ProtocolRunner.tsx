@@ -38,9 +38,11 @@ import { type ClockAnchor, runAnchor } from "@/lib/protocol/clock";
 import {
   type CommandOutcome,
   type CommandPort,
+  EXTEND_REST_S,
   MESSAGE_SHOWN_MS,
   OPERATOR_COMMAND_EVENT,
   type OperatorCommand,
+  type RunResume,
   type RunnerState,
   SAFE_POINTS,
 } from "@/lib/protocol/commands";
@@ -59,12 +61,23 @@ import type { MarkerSink } from "@/lib/protocol/sink";
 import { pageProbe } from "@/lib/timing/probe";
 import {
   type ProtocolDefinition,
+  type ProtocolStep,
   type TaskResult,
   protocolMeta,
 } from "@/lib/protocol/types";
 
 /** One empty soundtrack for every plan without one, so `stopAll` keeps its identity. */
 const NO_CUES: NonNullable<ProtocolDefinition["soundtrack"]> = [];
+
+/** A rest that counts down a fixed time: the only step `extend_rest` lengthens. */
+function isTimedRest(step: ProtocolStep): boolean {
+  const config = step.config as { mode?: unknown; duration_s?: unknown };
+  return (
+    step.kind === "rest" &&
+    (config.mode ?? "timed") === "timed" &&
+    typeof config.duration_s === "number"
+  );
+}
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -116,6 +129,13 @@ export interface ProtocolRunnerProps {
   commands?: CommandPort;
   /** Told the runner's state after every change, for a console to show. */
   onState?: (state: RunnerState) => void;
+  /**
+   * Pick up a console run whose participant window reloaded (T1): start at `stepIndex`
+   * with no notice screen, number markers from `seqFrom` so none collides with what the
+   * lost window sent, log `run_reloaded`, and - when `interrupted` - close the block that
+   * was on screen with `block_end` (`ended_by: "reload"`) before running it again.
+   */
+  resume?: RunResume;
   onFinish: (results: TaskResult[], markers: readonly Marker[]) => void;
   onExit: (reason: "user" | "operator" | "error") => void;
 }
@@ -131,6 +151,7 @@ export function ProtocolRunner({
   warningShown = false,
   commands,
   onState,
+  resume,
   onFinish,
   onExit,
 }: ProtocolRunnerProps) {
@@ -143,11 +164,32 @@ export function ProtocolRunner({
     [protocol.steps]
   );
   const [screen, setScreen] = useState<Screen>(
-    (protocol.contentWarning && !warningShown) || movesOnScreen
+    !resume && ((protocol.contentWarning && !warningShown) || movesOnScreen)
       ? "warning"
       : "running"
   );
-  const [stepIndex, setStepIndex] = useState(0);
+  // A run resumed while held stays on the block it had finished, as a live hold does.
+  const [stepIndex, setStepIndex] = useState(
+    resume?.held ? Math.max(0, resume.stepIndex - 1) : (resume?.stepIndex ?? 0)
+  );
+  // A repeated block runs again under a new key; `attemptRef` lets a kind's timer from
+  // the attempt the operator cut short see that it is no longer the one on screen.
+  const [attempt, setAttempt] = useState(0);
+  const attemptRef = useRef(0);
+  // Seconds `extend_rest` added to the step on screen, and which step that was.
+  const [extension, setExtension] = useState({ step: -1, s: 0 });
+  const extraS = extension.step === stepIndex ? extension.s : 0;
+  // Held between blocks: a pause, or a window resumed during one (`resume.held`).
+  const [hold, setHold] = useState<{
+    next: number;
+    since: number;
+    reloaded?: boolean;
+  } | null>(() =>
+    resume?.held
+      ? { next: resume.stepIndex, since: performance.now(), reloaded: true }
+      : null
+  );
+  const holdRef = useRef(hold);
   // The participant can override the OS preference on the notice screen.
   const osReducedMotion = useOsReducedMotion();
   const [motionOverride, setMotionOverride] = useState<boolean | null>(null);
@@ -186,7 +228,7 @@ export function ProtocolRunner({
     anchorRef.current = anchor ?? runAnchor(t0Ref.current);
   }, [anchor, screen]);
 
-  const seqRef = useRef(0);
+  const seqRef = useRef(resume?.seqFrom ?? 0);
   const stamp = useCallback(
     (
       draft: MarkerDraft,
@@ -272,11 +314,22 @@ export function ProtocolRunner({
   // session_start, then each step's own start marker as it mounts - once each: closing
   // the stop prompt returns to `running` and must not start the run or the step again.
   const sessionStartedRef = useRef(false);
-  const startedStepRef = useRef<number | null>(null);
+  const startedStepRef = useRef<string | null>(null);
   useLayoutEffect(() => {
     if (screen !== "running" || sessionStartedRef.current) return;
     sessionStartedRef.current = true;
-    if (protocol.startMarker) {
+    if (resume) {
+      // the run began in a window that is gone: this one continues it
+      emitRun({
+        label: "run_reloaded",
+        kind: "system",
+        meta: {
+          step_index: resume.stepIndex,
+          step_id: protocol.steps[resume.stepIndex]?.id ?? null,
+          wall_clock_iso: new Date().toISOString(),
+        },
+      });
+    } else if (protocol.startMarker) {
       emitRun({
         label: protocol.startMarker,
         kind: "system",
@@ -296,22 +349,46 @@ export function ProtocolRunner({
    * `duration` in seconds, the BIDS `events.tsv` column.
    */
   const blockStartRef = useRef<number | null>(null);
+  const reloadedBlockRef = useRef(resume?.interrupted ?? false);
   useLayoutEffect(() => {
-    if (screen !== "running" || !step || startedStepRef.current === stepIndex)
+    const key = `${stepIndex}#${attempt}`;
+    // held between blocks (a pause, or a window resumed during one): nothing starts
+    if (
+      screen !== "running" ||
+      !step ||
+      holdRef.current ||
+      startedStepRef.current === key
+    )
       return;
-    startedStepRef.current = stepIndex;
+    startedStepRef.current = key;
     // trial ids restart with each block
     lastTrialRef.current = null;
     overlappedRef.current.clear();
+    if (step.block && reloadedBlockRef.current) {
+      // the lost window started this block and never ended it
+      emitForStep({
+        label: "block_end",
+        kind: "stage",
+        meta: { duration: null, ended_by: "reload" },
+      });
+    }
+    reloadedBlockRef.current = false;
     if (step.block && blockStartRef.current === null) {
       const now = performance.now();
       blockStartRef.current = now;
-      emitForStep({ label: "block_start", kind: "stage" }, now);
+      emitForStep(
+        {
+          label: "block_start",
+          kind: "stage",
+          meta: attempt > 0 ? { attempt } : undefined,
+        },
+        now
+      );
     }
     if (step.startMarker)
       emitForStep({ label: step.startMarker, kind: "stage" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, stepIndex]);
+  }, [screen, stepIndex, attempt, hold]);
 
   /**
    * A backgrounded tab throttles rAF to nothing, so a protocol that kept counting would
@@ -374,10 +451,6 @@ export function ProtocolRunner({
    * (`pausePendingRef`); the run then holds before the next block (`hold`) until
    * `resume`. Refs mirror the state so two commands in the same tick see each other.
    */
-  const [hold, setHold] = useState<{ next: number; since: number } | null>(
-    null
-  );
-  const holdRef = useRef(hold);
   const [pausePending, setPausePending] = useState(false);
   const pausePendingRef = useRef(false);
   const [message, setMessage] = useState<{ id: string; text: string } | null>(
@@ -448,9 +521,14 @@ export function ProtocolRunner({
     ]
   );
 
+  // Bound to the attempt it was rendered for: a repeated block's first attempt may
+  // still fire its own timer in the tick before it unmounts.
   const onComplete = useCallback(
-    (result: TaskResult) => completeStep(result),
-    [completeStep]
+    (result: TaskResult) => {
+      if (attempt !== attemptRef.current) return;
+      completeStep(result);
+    },
+    [attempt, completeStep]
   );
 
   const abort = useCallback(
@@ -523,7 +601,11 @@ export function ProtocolRunner({
             {
               label: "run_resumed",
               kind: "system",
-              meta: { paused_ms: Math.round(now - held.since) },
+              meta: {
+                paused_ms: Math.round(now - held.since),
+                // the lost window opened this pause; only its end is timed here
+                ...(held.reloaded ? { after_reload: true } : {}),
+              },
             },
             now
           );
@@ -561,6 +643,48 @@ export function ProtocolRunner({
         );
         return;
       }
+      case "repeat_block": {
+        if (held || !step || doneStepRef.current === stepIndex)
+          return log("ignored");
+        log(
+          "applied",
+          lastTrialRef.current === null
+            ? {}
+            : { trial_in_flight: lastTrialRef.current }
+        );
+        // the attempt cut short is closed on the timeline, then the block runs again
+        if (step.block && blockStartRef.current !== null) {
+          const now = performance.now();
+          emitForStep(
+            {
+              label: "block_end",
+              kind: "stage",
+              meta: {
+                duration: Math.round(now - blockStartRef.current) / 1000,
+                ended_by: "operator",
+                repeated: true,
+              },
+            },
+            now
+          );
+          blockStartRef.current = null;
+        }
+        attemptRef.current += 1;
+        setAttempt(attemptRef.current);
+        setExtension({ step: -1, s: 0 });
+        return;
+      }
+      case "extend_rest": {
+        if (held || !step || !isTimedRest(step)) return log("ignored");
+        const added = extraS + EXTEND_REST_S;
+        setExtension({ step: stepIndex, s: added });
+        return log("applied", {
+          extended_s: EXTEND_REST_S,
+          total_s:
+            Number((step.config as { duration_s?: unknown }).duration_s) +
+            added,
+        });
+      }
       case "message":
         if (!command.text) return log("ignored");
         setMessage({ id: command.id, text: command.text });
@@ -589,15 +713,20 @@ export function ProtocolRunner({
   const status: RunnerState["status"] =
     screen === "warning" ? "warning" : hold ? "paused" : "running";
   const messageText = message?.text ?? null;
+  const extendable = step ? isTimedRest(step) : false;
   useEffect(() => {
     onStateRef.current?.({
       status,
       stepIndex,
       stepId: protocol.steps[stepIndex]?.id ?? null,
       pausePending,
+      extendable,
+      attempt,
       message: messageText,
     });
   }, [
+    attempt,
+    extendable,
     messageText,
     onStateRef,
     pausePending,
@@ -649,10 +778,22 @@ export function ProtocolRunner({
    * stays the stored one for everything that is recorded: `protocolMeta`, the start and
    * end markers, the results.
    */
-  const shownStep = useMemo(
-    () => (step ? official.step(officialSlug, step) : step),
-    [official, officialSlug, step]
-  );
+  const shownStep = useMemo(() => {
+    if (!step) return step;
+    const shown = official.step(officialSlug, step);
+    // `extend_rest` lengthens what the rest counts down, never the stored step
+    return extraS > 0
+      ? {
+          ...shown,
+          config: {
+            ...(shown.config as Record<string, unknown>),
+            duration_s:
+              Number((shown.config as { duration_s?: unknown }).duration_s) +
+              extraS,
+          },
+        }
+      : shown;
+  }, [extraS, official, officialSlug, step]);
 
   if (screen === "warning") {
     return (
@@ -704,7 +845,7 @@ export function ProtocolRunner({
         </div>
       ) : (
         <Renderer
-          key={step.id}
+          key={`${step.id}#${attempt}`}
           config={shownStep.config as never}
           stepId={step.id}
           phase={step.phase ?? step.id}

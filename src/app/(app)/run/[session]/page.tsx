@@ -9,6 +9,8 @@
  * stamps every marker on the EEG clock the console fitted (shifted into this window's
  * time frame, `shiftFit`) and posts the timeline to the session as a plain run does. Every
  * marker is also mirrored to the console, which re-sends the whole timeline at finish.
+ * Reloaded mid-run, this window says hello again and the console boots it with
+ * `resume`: the run continues from the block that was on screen (T1).
  *
  * `[session]` is the run's key: the name of the channel both windows share, not a
  * stimulus session id - the session opens on the console's Start, once the headband is
@@ -138,6 +140,7 @@ export default function ParticipantRunPage({
         sink={sink}
         anchor={run.anchor}
         commands={run.commands}
+        resume={boot.resume}
         onState={(state) => channel.post({ type: "state", state })}
         onFinish={(results, markers) => {
           channel.post({ type: "finished", results, markers: [...markers] });
