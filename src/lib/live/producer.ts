@@ -3,7 +3,7 @@
  * and its events go out; commands come in.
  *
  * Everything here is a copy: the run records locally and uploads at finish whatever
- * happens to this socket (V3-0005). A chunk is kept for `RESEND_CHUNKS` seconds, so a
+ * happens to this socket (V3-0005). A chunk is kept for `RESEND_SECONDS`, so a
  * reconnect (the gateway restarting, the line dropping) re-sends what the room did not
  * keep - the room says its last `seq` in `hello` and drops anything at or below it.
  *
@@ -23,7 +23,7 @@ import {
   operatorCommandSchema,
 } from "@/lib/protocol/commands";
 import type { Marker } from "@/lib/protocol/marker";
-import { ChunkAssembler, type LiveChunk } from "./chunks";
+import { ChunkAssembler, LIVE_CHUNK_SAMPLES, type LiveChunk } from "./chunks";
 import {
   type LiveFrame,
   LiveSocket,
@@ -32,7 +32,7 @@ import {
 } from "./socket";
 
 /** Seconds of signal kept for a re-send after a reconnect. */
-export const RESEND_CHUNKS = 120;
+export const RESEND_SECONDS = 120;
 
 export interface Presence {
   observers: number;
@@ -54,6 +54,7 @@ export class LiveProducer {
   private readonly socket: LiveSocket;
   private readonly assembler: ChunkAssembler;
   private readonly sent: LiveChunk[] = [];
+  private readonly keep: number;
   private readonly port: LocalCommandPort = createLocalCommandPort();
   private plan: unknown = null;
   private runner: unknown = null;
@@ -61,7 +62,9 @@ export class LiveProducer {
   private ended = false;
 
   constructor(private readonly options: LiveProducerOptions) {
-    this.assembler = new ChunkAssembler(options.sfreq ?? 256);
+    const sfreq = options.sfreq ?? 256;
+    this.assembler = new ChunkAssembler(sfreq);
+    this.keep = Math.ceil((RESEND_SECONDS * sfreq) / LIVE_CHUNK_SAMPLES);
     this.socket = new LiveSocket({
       baseUrl: options.baseUrl,
       ticket:
@@ -96,7 +99,7 @@ export class LiveProducer {
     if (this.ended) return;
     for (const chunk of this.assembler.push(channel, sampleIndex, samples)) {
       this.sent.push(chunk);
-      if (this.sent.length > RESEND_CHUNKS) this.sent.shift();
+      if (this.sent.length > this.keep) this.sent.shift();
       this.socket.send(chunk as unknown as LiveFrame);
     }
   }

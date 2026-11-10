@@ -3576,6 +3576,7 @@
       "noTrail": "The trail appears after the first seconds.",
       "trailAria": "The live trail, {n} windows",
       "liveMark": "live",
+      "liveLag": "live · {s, number} s behind",
       "final": "final",
       "ack": {
         "pending": "{command}: sent, waiting for the run…",

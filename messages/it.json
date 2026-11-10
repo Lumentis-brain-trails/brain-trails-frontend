@@ -3576,6 +3576,7 @@
       "noTrail": "La traccia compare dopo i primi secondi.",
       "trailAria": "La traccia dal vivo, {n} finestre",
       "liveMark": "dal vivo",
+      "liveLag": "dal vivo · {s, number} s di ritardo",
       "final": "definitiva",
       "ack": {
         "pending": "{command}: inviato, in attesa della sessione…",

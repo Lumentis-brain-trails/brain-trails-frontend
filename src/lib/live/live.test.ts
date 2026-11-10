@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ChunkAssembler } from "./chunks";
+import { ChunkAssembler, LIVE_CHUNK_SAMPLES } from "./chunks";
 import { FakeSocket } from "./fakeSocket";
 import { LiveProducer } from "./producer";
 import { applyFrame, emptyRoom, holdsCommands, later } from "./room";
@@ -117,6 +117,28 @@ describe("ChunkAssembler", () => {
     expect(out[0].eeg[0][1]).toBe(0.3); // one decimal
   });
 
+  test("by default a chunk is a quarter second, and four still fit in 8 KB", () => {
+    const assembler = new ChunkAssembler();
+    const out = [];
+    for (let packet = 0; packet < 22; packet++)
+      for (const c of channels)
+        out.push(
+          ...assembler.push(
+            c,
+            packet * 12,
+            Array.from({ length: 12 }, () => (Math.random() - 0.5) * 400)
+          )
+        );
+    expect(out.map((c) => c.first)).toEqual([0, 64, 128, 192]);
+    expect(out.map((c) => c.seq)).toEqual([0, 1, 2, 3]);
+    expect(out[0].eeg[0]).toHaveLength(LIVE_CHUNK_SAMPLES);
+    const bytes = out.reduce(
+      (n, c) => n + new TextEncoder().encode(JSON.stringify(c)).length,
+      0
+    );
+    expect(bytes).toBeLessThan(7 * 1024);
+  });
+
   test("the feed stays under 8 KB a second", () => {
     const assembler = new ChunkAssembler(256, 256);
     let chunk = null;
@@ -160,18 +182,19 @@ describe("LiveProducer", () => {
     socket.open();
     socket.receive({ type: "hello", last_seq: -1 });
     producer.setPlan({ steps: [] });
+    // a second is four chunks of a quarter second
     for (let i = 0; i < 3; i++) second(producer, i * 256);
-    expect(socket.sent.filter((f) => f.type === "chunk")).toHaveLength(3);
+    expect(socket.sent.filter((f) => f.type === "chunk")).toHaveLength(12);
 
-    // the gateway restarted: a new socket, and the room had kept seq 0 only
+    // the gateway restarted: a new socket, and the room had kept the first second only
     socket.drop();
     await new Promise((r) => setTimeout(r, 1200));
     const again = FakeSocket.last();
     expect(again).not.toBe(socket);
     again.open();
-    again.receive({ type: "hello", last_seq: 0, observers: 0 });
+    again.receive({ type: "hello", last_seq: 3, observers: 0 });
     const resent = again.sent.filter((f) => f.type === "chunk");
-    expect(resent.map((f) => f.seq)).toEqual([1, 2]);
+    expect(resent.map((f) => f.seq)).toEqual([4, 5, 6, 7, 8, 9, 10, 11]);
     expect(again.sent.some((f) => f.type === "plan")).toBe(true);
     producer.close();
   });
@@ -230,6 +253,48 @@ describe("the room an observer sees", () => {
     expect(room.since.windows).toBe("10-0");
     room = applyFrame(room, { id: "11-0", type: "window", i: 3, x: 3, y: 3 });
     expect(room.trail.x).toEqual([0, 1, 2, 3]);
+  });
+
+  test("the tip follows the newest windows and goes once the trail is final", () => {
+    let room = emptyRoom();
+    room = applyFrame(room, {
+      id: "1-0",
+      type: "tip",
+      from: 2,
+      points: [
+        [5, 5],
+        [6, 6],
+      ],
+      lag_ms: 40,
+    });
+    expect(room.tip).toEqual({ from: 2, x: [5, 6], y: [5, 6] });
+    expect(room.tipLagMs).toBe(40);
+    // the next tick's tip replaces it whole; a tip without a lag keeps the last one
+    room = applyFrame(room, {
+      id: "2-0",
+      type: "tip",
+      from: 3,
+      points: [[7, 7]],
+    });
+    expect(room.tip).toEqual({ from: 3, x: [7], y: [7] });
+    expect(room.tipLagMs).toBe(40);
+    expect(room.since.windows).toBe("2-0");
+    room = applyFrame(room, {
+      id: "3-0",
+      type: "trail",
+      n: 1,
+      final: true,
+      points: [[0, 0]],
+    });
+    expect(room.tip).toBeNull();
+    // a late tip after the final trail is dropped
+    room = applyFrame(room, {
+      id: "4-0",
+      type: "tip",
+      from: 1,
+      points: [[1, 1]],
+    });
+    expect(room.tip).toBeNull();
   });
 
   test("hello, trail, points, places, acks, results and the commander", () => {

@@ -1,6 +1,10 @@
 /**
- * The producer's feed: the headband's packets, four channels, cut into chunks of one
- * second with the device's own sample counter (T5).
+ * The producer's feed: the headband's packets, four channels, cut into chunks of a
+ * quarter second with the device's own sample counter (T5, T4b).
+ *
+ * A chunk's last sample waits for the chunk to fill before it leaves, so the chunk is
+ * the part of the live trail's lag the browser adds: a second-long chunk alone made the
+ * trail's tip up to a second late, a quarter second keeps it near 0.3 s.
  *
  * The four electrodes are stamped alike, so a chunk is ready when every channel holds
  * `size` samples. Values go out in uV at one decimal: the feed budget is 8 KB a second,
@@ -9,6 +13,9 @@
  */
 
 import { EEG_CHANNELS, type EegChannel } from "@/lib/muse/protocol";
+
+/** Samples per chunk: a quarter second at the Muse's 256 Hz. */
+export const LIVE_CHUNK_SAMPLES = 64;
 
 export interface LiveChunk {
   type: "chunk";
@@ -25,7 +32,7 @@ export class ChunkAssembler {
 
   constructor(
     private readonly sfreq = 256,
-    private readonly size = 256
+    private readonly size = LIVE_CHUNK_SAMPLES
   ) {
     this.buffers = Object.fromEntries(
       EEG_CHANNELS.map((c) => [c, [] as number[]])

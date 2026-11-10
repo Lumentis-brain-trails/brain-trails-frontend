@@ -65,6 +65,15 @@ export interface RoomView {
   trailFinal: boolean;
   /** Rows in the last whole trail: a `window` below it is older than the trail shown. */
   trailBase: number;
+  /**
+   * The trail's tip (T4b): the newest windows, not final yet, drawn at once with the
+   * batch's shrinking edge. `from` is the first one's index; the final points replace
+   * them as they come (the smoothing's 4 s later), so only indices past the final trail
+   * are drawn. Null before the first tip and once the trail is final.
+   */
+  tip: { from: number; x: number[]; y: number[] } | null;
+  /** The worker's lag for the last tip: its newest sample reaching the gateway to it. */
+  tipLagMs: number | null;
   events: LiveEvent[];
   results: BlockResult[];
   acks: Record<string, Ack>;
@@ -106,6 +115,8 @@ export function emptyRoom(): RoomView {
     map: { x: [], y: [] },
     trailFinal: false,
     trailBase: 0,
+    tip: null,
+    tipLagMs: null,
     events: [],
     results: [],
     acks: {},
@@ -167,6 +178,23 @@ export function applyFrame(
           ? { x: map.map((p) => p[0]), y: map.map((p) => p[1]) }
           : room.map,
         trailFinal: frame.final === true,
+        tip: frame.final === true ? null : room.tip,
+        since: { ...room.since, windows: later(room.since.windows, frame.id) },
+      };
+    }
+    case "tip": {
+      const points = (frame.points as number[][]) ?? [];
+      const lag = frame.lag_ms;
+      return {
+        ...room,
+        tip: room.trailFinal
+          ? null
+          : {
+              from: Number(frame.from),
+              x: points.map((p) => p[0]),
+              y: points.map((p) => p[1]),
+            },
+        tipLagMs: typeof lag === "number" ? lag : room.tipLagMs,
         since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     }
@@ -209,6 +237,7 @@ export function applyFrame(
       return {
         ...room,
         ended: true,
+        tip: null,
         since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     case "plan":

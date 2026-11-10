@@ -42,6 +42,7 @@ import { api } from "@/lib/api";
 import type { BrainLandscape } from "@/lib/brainLandscape";
 import { saveLiveNote } from "@/lib/console/notes";
 import { useFeature } from "@/lib/features";
+import { LIVE_CHUNK_SAMPLES } from "@/lib/live/chunks";
 import { holdsCommands } from "@/lib/live/room";
 import { useLiveRoom } from "@/lib/live/useLiveRoom";
 import { EEG_CHANNELS } from "@/lib/muse/protocol";
@@ -50,6 +51,9 @@ import type { StimulusSession } from "@/lib/protocol/session";
 import { useChartTheme, trailHexAt } from "@/lib/theme";
 
 const UNKNOWN = { level: "unknown", stdUv: null } as ChannelQuality;
+
+/** One chunk of the producer's feed, in ms: the longest a sample waits to leave. */
+const CHUNK_MS = (LIVE_CHUNK_SAMPLES / 256) * 1000;
 
 export default function RemoteConsolePage({
   params,
@@ -215,6 +219,9 @@ export default function RemoteConsolePage({
                 x={room.trail.x}
                 y={room.trail.y}
                 final={room.trailFinal}
+                tip={room.tip}
+                // the worker's lag plus, at most, the chunk the browser filled first
+                lagMs={room.tipLagMs === null ? null : room.tipLagMs + CHUNK_MS}
               />
             )}
           </Card>
