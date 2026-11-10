@@ -1,6 +1,7 @@
 /**
  * The work log's pure helpers: the API's shapes, the filter state as a query string,
- * the report's address, entries grouped by day, a detail split into prose and bullets.
+ * the report's and the status file's addresses, entries grouped by day, a detail split
+ * into prose and bullets.
  */
 import type { components } from "@console/lib/ops-types";
 import { query } from "@console/lib/client";
@@ -12,6 +13,10 @@ export type Grouping = Totals["by"];
 export type HoursDay = components["schemas"]["HoursDayOut"];
 export type Milestone = components["schemas"]["MilestoneOut"];
 export type Plan = components["schemas"]["PlanOut"];
+export type Status = components["schemas"]["StatusOut"];
+
+/** The BFF address of the status report as a Markdown file. */
+export const STATUS_FILE_HREF = "/api/ops/worklog/status.md";
 
 /**
  * Minutes as hours with two decimals in the reader's language (`0,65` in Italian):
