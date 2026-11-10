@@ -219,6 +219,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/roadmap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Roadmap
+         * @description The roadmap as it stands: tracks, items with their dates and status, milestones.
+         */
+        get: operations["get_roadmap_ops_v1_roadmap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Item
+         * @description Add an item.
+         *
+         *     Raises:
+         *         OpsError: 409 `stale_roadmap` or `duplicate_id`; 422 `invalid_roadmap` (unknown
+         *             track or dependency, end before start).
+         */
+        post: operations["add_item_ops_v1_roadmap_items_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Item
+         * @description Replace an item: its dates, status, name, tasks, anything but its id.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`; 422 `id_mismatch`, `invalid_roadmap`.
+         */
+        put: operations["put_item_ops_v1_roadmap_items__item_id__put"];
+        post?: never;
+        /**
+         * Delete Item
+         * @description Remove an item no other item depends on.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`, `depended_on`.
+         */
+        delete: operations["delete_item_ops_v1_roadmap_items__item_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Milestone
+         * @description Add a milestone.
+         *
+         *     Raises:
+         *         OpsError: 409 `stale_roadmap` or `duplicate_id`; 422 `invalid_roadmap`.
+         */
+        post: operations["add_milestone_ops_v1_roadmap_milestones_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/milestones/{milestone_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Milestone
+         * @description Replace a milestone: its date, name, track or status.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`; 422 `id_mismatch`, `invalid_roadmap`.
+         */
+        put: operations["put_milestone_ops_v1_roadmap_milestones__milestone_id__put"];
+        post?: never;
+        /**
+         * Delete Milestone
+         * @description Remove a milestone.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`.
+         */
+        delete: operations["delete_milestone_ops_v1_roadmap_milestones__milestone_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/session": {
         parameters: {
             query?: never;
@@ -346,6 +473,49 @@ export interface paths {
          *         OpsError: 404 `no_panel`, 403 `forbidden`, 503 `read_unavailable`.
          */
         post: operations["refresh_snapshot_ops_v1_snapshots__key__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/stats/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Cohorts
+         * @description The beta cohorts, by name: one small read of the product, for the picker.
+         *
+         *     Raises:
+         *         OpsError: 503 `read_unavailable` without a read connection.
+         */
+        get: operations["get_cohorts_ops_v1_stats_cohorts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/stats/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Definitions
+         * @description What every number means (`definitions`); reads nothing.
+         */
+        get: operations["get_definitions_ops_v1_stats_definitions_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -699,6 +869,18 @@ export interface components {
             code: string;
         };
         /**
+         * CohortOut
+         * @description A beta cohort the reports can be narrowed to.
+         */
+        CohortOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Profile */
+            profile: string | null;
+        };
+        /**
          * EnrollOut
          * @description What an authenticator app needs: the URI as a QR code, and the secret to type.
          */
@@ -829,6 +1011,61 @@ export interface components {
             started_local: string | null;
         };
         /**
+         * ItemOut
+         * @description A bar of the Gantt: a sprint or a piece of work with its dates and status.
+         */
+        ItemOut: {
+            /** Depends On */
+            depends_on?: string[];
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Links */
+            links?: components["schemas"]["RoadmapLinkOut"][];
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /** Questions */
+            questions?: string[];
+            /** Size */
+            size?: string | null;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress" | "review" | "planned" | "proposed";
+            /** Tasks */
+            tasks?: components["schemas"]["TaskOut"][];
+            /**
+             * Tentative
+             * @default false
+             */
+            tentative: boolean;
+            /** Track */
+            track: string;
+        };
+        /**
+         * ItemWrite
+         * @description An item to add or to put in place of one, made on `revision`.
+         */
+        ItemWrite: {
+            item: components["schemas"]["ItemOut"];
+            /** Revision */
+            revision: number;
+        };
+        /**
          * LayoutIn
          * @description The whole strip, in order.
          */
@@ -919,6 +1156,15 @@ export interface components {
             title: string;
         };
         /**
+         * MilestoneWrite
+         * @description A milestone to add or to put in place of one, made on `revision`.
+         */
+        MilestoneWrite: {
+            milestone: components["schemas"]["RoadmapMilestoneOut"];
+            /** Revision */
+            revision: number;
+        };
+        /**
          * OpenIn
          * @description Which version was opened; null is the current one.
          */
@@ -975,6 +1221,61 @@ export interface components {
             params?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * RoadmapLinkOut
+         * @description A link of an item: a pull request, a plan page, a paper.
+         */
+        RoadmapLinkOut: {
+            /** Label */
+            label: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * RoadmapMilestoneOut
+         * @description A dated point of the Gantt: something the plans promise on a day.
+         */
+        RoadmapMilestoneOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress" | "review" | "planned" | "proposed";
+            /** Track */
+            track: string;
+        };
+        /**
+         * RoadmapPageOut
+         * @description The roadmap, its revision (0 = the committed file) and whether the caller edits.
+         */
+        RoadmapPageOut: {
+            /** Assumptions */
+            assumptions: string;
+            /** Editable */
+            editable: boolean;
+            /** Items */
+            items: components["schemas"]["ItemOut"][];
+            /** Milestones */
+            milestones?: components["schemas"]["RoadmapMilestoneOut"][];
+            /** Revision */
+            revision: number;
+            /** Tracks */
+            tracks: components["schemas"]["TrackOut"][];
+            /**
+             * Updated
+             * Format: date
+             */
+            updated: string;
         };
         /**
          * SessionIn
@@ -1103,6 +1404,16 @@ export interface components {
             widget: string;
         };
         /**
+         * TaskOut
+         * @description One step of an item's task list, as the ten days of the phone app.
+         */
+        TaskOut: {
+            /** Day */
+            day: string;
+            /** Text */
+            text: string;
+        };
+        /**
          * TotalOut
          * @description Tokens, entries and minutes of one day, week (its Monday) or area.
          *
@@ -1146,6 +1457,18 @@ export interface components {
             tokens_cache: number;
             /** Tokens New */
             tokens_new: number;
+        };
+        /**
+         * TrackOut
+         * @description A row group of the Gantt: a plan, or a theme outside the plans.
+         */
+        TrackOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Plan */
+            plan?: string | null;
         };
         /**
          * UsageOut
@@ -1582,6 +1905,258 @@ export interface operations {
             };
         };
     };
+    get_roadmap_ops_v1_roadmap_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_item_ops_v1_roadmap_items_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_item_ops_v1_roadmap_items__item_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_item_ops_v1_roadmap_items__item_id__delete: {
+        parameters: {
+            query: {
+                revision: number;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_milestone_ops_v1_roadmap_milestones_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MilestoneWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_milestone_ops_v1_roadmap_milestones__milestone_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                milestone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MilestoneWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_milestone_ops_v1_roadmap_milestones__milestone_id__delete: {
+        parameters: {
+            query: {
+                revision: number;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                milestone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     open_session_ops_v1_session_post: {
         parameters: {
             query?: never;
@@ -1776,6 +2351,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapshotOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cohorts_ops_v1_stats_cohorts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_definitions_ops_v1_stats_definitions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
