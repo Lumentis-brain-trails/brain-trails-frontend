@@ -94,16 +94,22 @@ and `common` messages from `../src`. See `console/README.md`.
    `integration` status: in dev, or left out because it conflicts with an older one.
 3. PRs to `beta` are merged **after the pre-merge review** (backend 0013, amendment
    2026-10-20): the coordinating session reviews the diff and checks the PR on dev, sets
-   a green `review` commit status on the PR's head, and merges with `gh pr merge <n>
---merge` (merge commit only). Alessio may merge reviewed PRs too. A commit pushed after
-   the review drops the status. Vercel deploys beta on the merge.
-4. `beta -> main`: Alessio opens it by hand and merges it **with a merge commit, never a
-   squash**. Vercel deploys production on the merge.
+   a green `review` commit status on the PR's head, asks Alessio in the chat, and merges
+   with `gh pr merge <n> --merge` (merge commit only) **only after his explicit word
+   naming the PR**, e.g. "unisci #157" (backend 0013, amendment 2026-11-10; a generic
+   "ok" is not consent). Alessio may merge reviewed PRs too. A commit pushed after the
+   review drops the status. Vercel deploys beta on the merge.
+4. `beta -> main`: the promotion, opened by Alessio or, when he asks, by the coordinating
+   session, and merged **with a merge commit, never a squash**, once its checks are green
+   and Alessio's latest message asks for it by number (backend 0013, amendments
+   2026-11-01 and 2026-11-10). Vercel deploys production on the merge.
 5. `vercel.json` deploys only `dev`, `beta` and `main` - no preview per PR: what a PR
    looks like next to the others is dev.
-6. `dev` belongs to `integrate`: never push to it, never merge into it. Claude never
-   merges into `main`, merges into `beta` only a reviewed head as a merge commit, and
-   nobody merges on a red or running `ci`.
+6. `dev` belongs to `integrate`: never push to it, never merge into it. Claude merges
+   into `main` only the `beta -> main` promotion, merges into `beta` only a reviewed head
+   as a merge commit, merges into either only when Alessio's latest message names the PR
+   and asks for the merge (the guard reads it from the transcript), and nobody merges on
+   a red or running `ci`.
    `.claude/hooks/guard-git.py` enforces this in Claude Code sessions (it is a copy of
    the backend's - change both); `merge-watch` flags anyone else; the repository's
    rulesets protect `dev`, `beta` and `main` server-side (this repo is public).

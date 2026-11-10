@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Claude Code PreToolUse hook: no merge into main, reviewed merges only into beta, no push.
+"""Claude Code PreToolUse hook: merges into beta and main only on Alessio's word, no push.
 
-Claude never merges into `main`, merges into `beta` only what the coordinating session
-has reviewed, never pushes to `dev`, `beta` or `main`, and never merges anything on a red
+Claude merges into `main` only the `beta -> main` promotion (amendment 2026-11-01),
+merges into `beta` only what the coordinating session has reviewed, merges into either
+only when Alessio's latest message in the chat asks for that PR by number (amendment
+2026-11-10), never pushes to `dev`, `beta` or `main`, and never merges anything on a red
 or pending CI.
 
 The repository is private on GitHub's free plan, so branch protection is not available
@@ -10,13 +12,22 @@ server-side (the API answers 403). This hook enforces working method 0013 (v2) w
 work actually happens: in Claude Code sessions. It reads the tool call from stdin and, for
 a Bash command, blocks (exit 2, reason on stderr, which Claude sees) when:
 
-- the command merges a pull request into `main` of a code repository - only the owner
-  does, by hand (the wiki's `main` is not an environment: its PRs merge on green);
+- the command merges a pull request into `main` of a code repository that is not the
+  `beta -> main` promotion, or merges the promotion other than as a merge commit
+  (the wiki's `main` is not an environment: its PRs merge on green);
 - the command merges a pull request into `beta` of a code repository that has not passed
   review: its head commit must carry a green `review` status (set by the coordinating
   session after the pre-merge review, so a commit pushed after the review drops it), and
   the merge must keep a merge commit (`--merge`; no squash, rebase, `--auto`, `--admin`)
   - decision 0013, amendment 2026-10-20;
+- the command merges a pull request into `beta` or `main` of a code repository and
+  Alessio's latest message does not consent to it: it must name the PR (`#157`, or the
+  bare number) beside a word that asks for the merge (`unisci`, `merge`, ...), with no
+  negation, outside any pasted text - decision 0013, amendment 2026-11-10. The message is
+  read from the session's transcript, and only an entry the app marks as typed by the
+  person (`origin.kind == "human"`) counts: another session's message, a notification,
+  a tool result or a subagent's prompt never does, so no text Claude reads or writes can
+  stand in for his word. An unreadable transcript is no consent;
 - the command merges any other pull request whose checks are not all green, or cannot be
   read;
 - the command merges through `gh api .../pulls/N/merge`, which would skip both checks;
@@ -40,9 +51,23 @@ import sys
 
 PROTECTED = ("dev", "beta", "main")
 OWNER_MERGES = ("main",)
-"""Bases only the owner merges into, by hand (decision 0013, v2)."""
+"""Bases that take only the promotion from `beta` (decision 0013, amended 2026-11-01)."""
 REVIEWED_MERGES = ("beta",)
 """Bases Claude may merge into once the PR passed review (decision 0013, amended 2026-10-20)."""
+PROMOTION_HEAD = "beta"
+"""The one branch a session may merge into main (amendment 2026-11-01): the promotion."""
+CONSENT_MERGES = ("beta", "main")
+"""Bases a merge reaches only on Alessio's explicit word (decision 0013, amended 2026-11-10)."""
+CONSENT_VERB = re.compile(
+    r"\b(unisc\w*|unir\w*|uniamo|unite|merg\w*|fai\s+il\s+merge)\b", re.IGNORECASE
+)
+"""Words that ask for a merge, in Italian and English (`unisci`, `unire`, `merge`, ...)."""
+CONSENT_NEGATION = re.compile(
+    r"\b(non|mai|don'?t|do\s+not|never|not)\s+(\w+\s+){0,2}?(unisc|unir|merg)", re.IGNORECASE
+)
+"""`non unire #157` names the PR beside the verb and is the opposite of consent."""
+PASTED = re.compile(r"<pasted_content\b.*?</pasted_content[^>]*>", re.IGNORECASE | re.DOTALL)
+"""Text he pasted is someone else's words, not his consent."""
 REVIEW_CONTEXT = "review"
 """The commit status the coordinating session sets on a PR's head after its review."""
 FORBIDDEN_MERGE_FLAGS = {"--squash", "-s", "--rebase", "-r", "--auto", "--admin"}
@@ -241,24 +266,94 @@ def repo_name(pr: dict[str, object]) -> str | None:
     return parts[4].lower() if len(parts) > 4 else None
 
 
-def merge_verdict(pr: dict[str, object], flags: list[str] | None = None) -> str | None:
+def last_human_message(transcript_path: str | None) -> str | None:
+    """The text of the latest message Alessio typed in this session, or None.
+
+    The transcript is the session's JSONL log. Only `user` entries the app marks with
+    `origin.kind == "human"` are his: tool results, another session's messages (`peer`),
+    task notifications and a subagent's prompts (`isSidechain`) carry another origin or
+    none. None when the file cannot be read or holds no such entry - no consent.
+    """
+    if not transcript_path:
+        return None
+    latest: str | None = None
+    try:
+        with open(transcript_path, encoding="utf-8", errors="replace") as log:
+            for line in log:
+                if '"human"' not in line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except ValueError:
+                    continue
+                origin = entry.get("origin")
+                if (
+                    entry.get("type") != "user"
+                    or entry.get("isSidechain")
+                    or not isinstance(origin, dict)
+                    or origin.get("kind") != "human"
+                ):
+                    continue
+                content = (entry.get("message") or {}).get("content")
+                if isinstance(content, str):
+                    latest = content
+                elif isinstance(content, list):
+                    latest = " ".join(
+                        b.get("text", "")
+                        for b in content
+                        if isinstance(b, dict) and b.get("type") == "text"
+                    )
+    except OSError:
+        return None
+    return latest
+
+
+def consents(number: object, message: str | None) -> bool:
+    """Whether `message` asks for the merge of PR `number`.
+
+    It must name the PR (`#157` or `157`, not inside another number or a path) and hold
+    a word asking for a merge, with no negation in front of it. Pasted text is dropped
+    first. Deliberately literal: a generic "ok" or "vai" is not consent to a merge.
+    """
+    if message is None or number is None:
+        return False
+    text = PASTED.sub(" ", message)
+    if not CONSENT_VERB.search(text) or CONSENT_NEGATION.search(text):
+        return False
+    return re.search(rf"(?<![\w/.#-])#?{re.escape(str(number))}(?![\w/-])", text) is not None
+
+
+def merge_verdict(
+    pr: dict[str, object], flags: list[str] | None = None, consent: str | None = None
+) -> str | None:
     """Why a merge of `pr` must not happen, or None when it may.
 
-    The owner-only rule binds `main` of the code repositories, where it deploys prod; an
-    unreadable repository is treated as one of them. `beta` of a code repository takes a
-    merge only after review (a green `review` status on the head) and only as a merge
-    commit. The green-CI rule binds everywhere. `flags` are the `gh pr merge` options.
+    `main` of the code repositories, where a merge deploys prod, takes only the promotion
+    from `beta`; an unreadable repository is treated as one of them. `beta` of a code
+    repository takes a merge only after review (a green `review` status on the head).
+    Both take only a merge commit, and only when `consent` - Alessio's latest message in
+    the chat - asks for this PR. The green-CI rule binds everywhere. `flags` are the
+    `gh pr merge` options.
     """
     number = pr.get("number")
     base = pr.get("baseRefName")
     repo = repo_name(pr)
     code = repo is None or repo in CODE_REPOS
-    if base in OWNER_MERGES and code:
-        return (
-            f"PR #{number} goes into `{base}`: only the owner merges into main, by hand "
-            "(decision 0013, v2). Tell him it is ready; he merges it with a merge commit."
-        )
     checks = pr.get("statusCheckRollup") or []
+    if base in OWNER_MERGES and code:
+        if pr.get("headRefName") != PROMOTION_HEAD:
+            return (
+                f"PR #{number} goes into `{base}` from `{pr.get('headRefName')}`: a session "
+                f"merges into main only the `{PROMOTION_HEAD} -> {base}` promotion (decision "
+                "0013, amended 2026-11-01). Anything else goes to beta first."
+            )
+        used = [f for f in (flags or []) if f.split("=", 1)[0] in FORBIDDEN_MERGE_FLAGS]
+        if used or ("--merge" not in (flags or []) and "-m" not in (flags or [])):
+            return (
+                f"PR #{number} promotes `{PROMOTION_HEAD}` into `{base}`: merge it with "
+                f"`--merge` only, never {', '.join(used) or 'a squash or rebase'} (a squash "
+                "cuts main off from beta's history, decision 0013)."
+            )
     if base in REVIEWED_MERGES and code:
         used = [f for f in (flags or []) if f.split("=", 1)[0] in FORBIDDEN_MERGE_FLAGS]
         if used or ("--merge" not in (flags or []) and "-m" not in (flags or [])):
@@ -278,6 +373,13 @@ def merge_verdict(pr: dict[str, object], flags: list[str] | None = None) -> str 
                 "Review it, set the status on the head, then merge (decision 0013, amended "
                 "2026-10-20)."
             )
+    if base in CONSENT_MERGES and code and not consents(number, consent):
+        return (
+            f"PR #{number} goes into `{base}` and Alessio's latest message does not ask for "
+            f"it: a merge into beta or main needs his explicit word, naming the PR (for "
+            f'example "unisci #{number}"). Ask him in the chat and wait for his answer; '
+            "only a message he typed counts (decision 0013, amended 2026-11-10)."
+        )
     if not isinstance(checks, list) or not checks:
         return f"PR #{number} has no CI checks yet; wait for `ci` to run."
     bad = []
@@ -293,10 +395,10 @@ def merge_verdict(pr: dict[str, object], flags: list[str] | None = None) -> str 
     return None
 
 
-def check_merge(words: list[str], env: dict[str, str]) -> None:
-    """Allow `gh pr merge` never into main, into beta only after review, and on green CI."""
+def check_merge(words: list[str], env: dict[str, str], transcript_path: str | None) -> None:
+    """Allow `gh pr merge` per `merge_verdict`, with Alessio's latest message as consent."""
     target, repo = parse_merge(words)
-    cmd = ["gh", "pr", "view", "--json", "number,statusCheckRollup,baseRefName,url"]
+    cmd = ["gh", "pr", "view", "--json", "number,statusCheckRollup,baseRefName,headRefName,url"]
     if target:
         cmd.insert(3, target)
     if repo:
@@ -307,7 +409,7 @@ def check_merge(words: list[str], env: dict[str, str]) -> None:
     except Exception as exc:
         block(f"could not read the PR ({exc}); merge only what the guard can check.")
     flags = [w for w in words[words.index("merge") + 1 :] if w.startswith("-")]
-    reason = merge_verdict(pr, flags)
+    reason = merge_verdict(pr, flags, last_human_message(transcript_path))
     if reason:
         block(reason)
 
@@ -344,7 +446,7 @@ def main() -> None:
     command = (event.get("tool_input") or {}).get("command", "")
     for words in commands(command):
         if words[:3] == ["gh", "pr", "merge"]:
-            check_merge(words, gh_env(command))
+            check_merge(words, gh_env(command), event.get("transcript_path"))
         if words[:2] == ["gh", "api"] and any(re.search(r"pulls/\d+/merge\b", w) for w in words):
             block("merging through `gh api` skips the guard; use `gh pr merge` so it can check.")
         if git_subcommand(words) == "push":
