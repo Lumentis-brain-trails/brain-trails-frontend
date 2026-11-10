@@ -121,7 +121,8 @@
       "recording": "Recording",
       "fullscreen_failed": "Full screen was refused; the session runs in the window.",
       "fullscreen": "Full screen",
-      "selfTrail": "Your live trail"
+      "selfTrail": "Your live trail",
+      "selfMap": "Where you are on your landscape"
     },
     "upload": {
       "title": "Saving the session",
@@ -3716,7 +3717,8 @@
       "views": {
         "title": "Trail",
         "trail": "This session",
-        "landscape": "Their landscape"
+        "landscape": "Their landscape",
+        "growing": "Growing with this session: {n, number} windows on the map. The map after the session replaces it."
       },
       "noTrail": "The trail appears after the first seconds.",
       "trailAria": "The live trail, {n} windows",

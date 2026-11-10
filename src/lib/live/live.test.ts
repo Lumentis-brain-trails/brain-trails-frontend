@@ -3,6 +3,7 @@ import { ChunkAssembler, LIVE_CHUNK_SAMPLES } from "./chunks";
 import { FakeSocket } from "./fakeSocket";
 import { LiveProducer } from "./producer";
 import { applyFrame, emptyRoom, holdsCommands, later } from "./room";
+import { trailingMean } from "./smoothPath";
 import { LiveSocket, backoffMs, wsUrl } from "./socket";
 
 const Impl = FakeSocket as unknown as typeof WebSocket;
@@ -228,6 +229,45 @@ describe("LiveProducer", () => {
 });
 
 describe("the room an observer sees", () => {
+  test("a grown landscape replaces the map, and places go on after its trail", () => {
+    let room = emptyRoom();
+    room = applyFrame(room, { id: "3-0", type: "place", i: 0, mx: 9, my: 9 });
+    room = applyFrame(room, { id: "4-0", type: "place", i: 2, mx: 7, my: 7 });
+    room = applyFrame(room, {
+      id: "5-0",
+      type: "landscape",
+      live: true,
+      bounds: [0, 1, 0, 1],
+      grid: { nx: 1, ny: 1, z: [[1]] },
+      categories: [],
+      cells: [],
+      epoch: 2,
+      n_windows: 40,
+      trail: { t: [0, 1], x: [0.1, 0.2], y: [0.3, 0.4] },
+    });
+    expect(room.landscape).toMatchObject({
+      epoch: 2,
+      n_windows: 40,
+      change: "live",
+    });
+    // the session's windows placed again on the new geometry; a later one is kept
+    expect(room.map.x).toEqual([0.1, 0.2, 7]);
+    room = applyFrame(room, {
+      id: "6-0",
+      type: "place",
+      i: 3,
+      mx: 0.5,
+      my: 0.5,
+    });
+    expect(room.map.x).toEqual([0.1, 0.2, 7, 0.5]);
+    expect(room.since.windows).toBe("6-0");
+  });
+
+  test("the map's windows are smoothed the way the live trail is", () => {
+    expect(trailingMean([4, 0, 2, 6, 8], 2)).toEqual([4, 2, 1, 4, 7]);
+    expect(trailingMean([], 4)).toEqual([]);
+  });
+
   test("since never goes back, and a snapshot outranks older points", () => {
     expect(later("5-1", "5-0")).toBe("5-1");
     expect(later("5-1", "6-0")).toBe("6-0");

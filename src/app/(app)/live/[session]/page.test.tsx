@@ -14,6 +14,20 @@ import { FakeSocket } from "@/lib/live/fakeSocket";
 import RemoteConsolePage from "./page";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("@/components/compare/LandscapeSurface", () => ({
+  LandscapeSurface: ({
+    title,
+    cursor,
+  }: {
+    title: string;
+    cursor: { x: number; y: number } | null;
+  }) => (
+    <div
+      aria-label={title}
+      data-cursor={cursor ? `${cursor.x},${cursor.y}` : ""}
+    />
+  ),
+}));
 const get = vi.fn();
 const post = vi.fn();
 vi.mock("@/lib/api", async (orig) => ({
@@ -224,4 +238,42 @@ test("a dropped room says so and reconnects from where it stopped", async () => 
   );
   expect(again.sent.at(-1)).toEqual({ type: "take_command" });
   vi.useRealTimers();
+});
+
+test("a session with no map grows one, and the carer sees where it is on it", async () => {
+  const socket = await renderPage();
+  await act(async () => {
+    socket.receive({
+      type: "hello",
+      you: "u1",
+      command: false,
+      observers: 1,
+      landscape: false,
+      producer: "on",
+    });
+  });
+  expect(screen.queryByRole("radio", { name: t.views.landscape })).toBeNull();
+  await act(async () => {
+    socket.receive({
+      id: "4-0",
+      type: "landscape",
+      live: true,
+      bounds: [0, 4, 0, 4],
+      grid: { nx: 1, ny: 1, z: [[1]] },
+      categories: [],
+      cells: [],
+      epoch: 1,
+      n_windows: 30,
+      trail: { t: [0, 1], x: [2, 4], y: [2, 2] },
+    });
+  });
+  fireEvent.click(screen.getByRole("radio", { name: t.views.landscape }));
+  const surface = screen.getByLabelText(t.views.landscape);
+  // the cursor is the newest window, averaged as the trail is: (2 + 4) / 2
+  expect(surface.getAttribute("data-cursor")).toBe("3,2");
+  expect(
+    screen.getByText(/Growing with this session: 30 windows/)
+  ).toBeTruthy();
+  // a carer never asks for a stored map the person does not have
+  expect(get).not.toHaveBeenCalledWith("sessions/s1/live/landscape");
 });

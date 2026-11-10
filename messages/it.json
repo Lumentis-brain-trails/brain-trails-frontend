@@ -121,7 +121,8 @@
       "recording": "Registrazione in corso",
       "fullscreen_failed": "Lo schermo intero è stato rifiutato; la sessione prosegue nella finestra.",
       "fullscreen": "Schermo intero",
-      "selfTrail": "La tua traccia dal vivo"
+      "selfTrail": "La tua traccia dal vivo",
+      "selfMap": "Dove sei nel tuo paesaggio"
     },
     "upload": {
       "title": "Salvataggio della sessione",
@@ -3716,7 +3717,8 @@
       "views": {
         "title": "Traccia",
         "trail": "Questa sessione",
-        "landscape": "Il suo paesaggio"
+        "landscape": "Il suo paesaggio",
+        "growing": "Cresce con questa sessione: {n, number} finestre sulla mappa. La mappa dopo la sessione la sostituisce."
       },
       "noTrail": "La traccia compare dopo i primi secondi.",
       "trailAria": "La traccia dal vivo, {n} finestre",

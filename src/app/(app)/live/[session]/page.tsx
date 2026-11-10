@@ -39,11 +39,11 @@ import {
   buttonClass,
 } from "@/components/ui";
 import { api } from "@/lib/api";
-import type { BrainLandscape } from "@/lib/brainLandscape";
 import { saveLiveNote } from "@/lib/console/notes";
 import { useFeature } from "@/lib/features";
 import { LIVE_CHUNK_SAMPLES } from "@/lib/live/chunks";
 import { holdsCommands } from "@/lib/live/room";
+import { useLiveGround } from "@/lib/live/useLiveGround";
 import { useLiveRoom } from "@/lib/live/useLiveRoom";
 import { EEG_CHANNELS } from "@/lib/muse/protocol";
 import type { ChannelQuality } from "@/lib/muse/quality";
@@ -75,14 +75,10 @@ export default function RemoteConsolePage({
     queryFn: () => api.get<StimulusSession>(`sessions/${sessionId}`),
     enabled,
   });
-  const landscape = useQuery({
-    queryKey: ["live-landscape", sessionId],
-    queryFn: () =>
-      api.get<BrainLandscape>(`sessions/${sessionId}/live/landscape`),
-    enabled: enabled && room.hasLandscape,
-    retry: false,
-    staleTime: Infinity,
-  });
+  const ground = useLiveGround(sessionId, room, enabled);
+  const here = ground.x.length
+    ? { x: ground.x[ground.x.length - 1], y: ground.y[ground.y.length - 1] }
+    : null;
 
   const labels = useMemo(() => room.plan.map((s) => s.label), [room.plan]);
   const labelOf = useMemo(
@@ -184,7 +180,7 @@ export default function RemoteConsolePage({
           <Card>
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="type-subhead">{t("views.title")}</h2>
-              {room.hasLandscape && landscape.data && (
+              {ground.landscape && (
                 <Segmented
                   label={t("views.title")}
                   value={view}
@@ -196,24 +192,33 @@ export default function RemoteConsolePage({
                 />
               )}
             </div>
-            {view === "landscape" && landscape.data ? (
-              <LandscapeSurface
-                landscape={landscape.data}
-                height={360}
-                title={t("views.landscape")}
-                trails={[
-                  {
-                    x: room.map.x,
-                    y: room.map.y,
-                    colors: room.map.x.map((_, i) =>
-                      trailHexAt(
-                        theme.trail,
-                        i / Math.max(1, room.map.x.length - 1)
-                      )
-                    ),
-                  },
-                ]}
-              />
+            {view === "landscape" && ground.landscape ? (
+              <>
+                <LandscapeSurface
+                  landscape={ground.landscape}
+                  height={360}
+                  title={t("views.landscape")}
+                  hover={!ground.growing}
+                  cursor={here}
+                  trails={[
+                    {
+                      x: ground.x,
+                      y: ground.y,
+                      colors: ground.x.map((_, i) =>
+                        trailHexAt(
+                          theme.trail,
+                          i / Math.max(1, ground.x.length - 1)
+                        )
+                      ),
+                    },
+                  ]}
+                />
+                {ground.growing && (
+                  <p className="type-caption mt-2 text-ink-3">
+                    {t("views.growing", { n: ground.landscape.n_windows })}
+                  </p>
+                )}
+              </>
             ) : (
               <LiveTrail
                 x={room.trail.x}

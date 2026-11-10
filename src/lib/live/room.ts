@@ -7,6 +7,7 @@
  * only its last stream id, so a reconnect resumes where it stopped.
  */
 
+import type { BrainLandscape } from "@/lib/brainLandscape";
 import type { ChannelQuality } from "@/lib/muse/quality";
 import type { EegChannel } from "@/lib/muse/protocol";
 import type { RunnerState } from "@/lib/protocol/commands";
@@ -62,6 +63,12 @@ export interface RoomView {
   trail: { x: number[]; y: number[] };
   /** The windows on the person's landscape. */
   map: { x: number[]; y: number[] };
+  /**
+   * The person's landscape as this session has grown it (V4-0004, amended 2026-11-11):
+   * every 30 windows, or a first one of the session's own after 30 windows. Null until
+   * the worker sends one; the stored map (`hasLandscape`) is the ground until then.
+   */
+  landscape: BrainLandscape | null;
   trailFinal: boolean;
   /** Rows in the last whole trail: a `window` below it is older than the trail shown. */
   trailBase: number;
@@ -106,6 +113,7 @@ export function emptyRoom(): RoomView {
     runner: null,
     trail: { x: [], y: [] },
     map: { x: [], y: [] },
+    landscape: null,
     trailFinal: false,
     trailBase: 0,
     lagMs: null,
@@ -130,6 +138,24 @@ function planSteps(plan: unknown): PlanStep[] {
       kind: String(step.kind ?? ""),
     };
   });
+}
+
+/** A `landscape` frame as the map the 3D surface draws (the stored map's shape). */
+export function liveLandscape(frame: LiveFrame): BrainLandscape {
+  return {
+    version: 0,
+    built_at: "",
+    n_recordings: 0,
+    n_windows: Number(frame.n_windows ?? 0),
+    pending: false,
+    epoch: Number(frame.epoch ?? 1),
+    change: "live",
+    bounds: (frame.bounds as number[]) ?? [0, 1, 0, 1],
+    grid: frame.grid as BrainLandscape["grid"],
+    categories: (frame.categories as BrainLandscape["categories"]) ?? [],
+    cells: (frame.cells as BrainLandscape["cells"]) ?? [],
+    trail: null,
+  };
 }
 
 /** The room after one more frame. `now` dates a quality frame's arrival. */
@@ -194,6 +220,22 @@ export function applyFrame(
         analysed: true,
         trail: { x, y },
         lagMs: typeof frame.lag_ms === "number" ? frame.lag_ms : room.lagMs,
+        since: { ...room.since, windows: later(room.since.windows, frame.id) },
+      };
+    }
+    case "landscape": {
+      const trail = (frame.trail as { x?: number[]; y?: number[] }) ?? {};
+      const x = trail.x ?? [];
+      const y = trail.y ?? [];
+      // place frames after it go on from the trail's length; any already here stay
+      const after = (values: number[], mine: number[]) => [
+        ...values,
+        ...mine.slice(values.length),
+      ];
+      return {
+        ...room,
+        landscape: liveLandscape(frame),
+        map: { x: after(x, room.map.x), y: after(y, room.map.y) },
         since: { ...room.since, windows: later(room.since.windows, frame.id) },
       };
     }

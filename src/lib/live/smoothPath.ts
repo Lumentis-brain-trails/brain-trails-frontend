@@ -63,3 +63,19 @@ export function curveSegments(
   }
   return out;
 }
+
+/**
+ * Each value the mean of the last `k` up to it (fewer at the start): the live trail's
+ * own smoothing (backend V4-0004, 2026-11-10), for the windows placed on a landscape,
+ * which come one by one, unsmoothed.
+ */
+export function trailingMean(values: readonly number[], k: number): number[] {
+  const out: number[] = [];
+  let sum = 0;
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i];
+    if (i >= k) sum -= values[i - k];
+    out.push(sum / Math.min(i + 1, k));
+  }
+  return out;
+}

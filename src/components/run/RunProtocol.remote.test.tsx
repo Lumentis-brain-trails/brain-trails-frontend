@@ -266,4 +266,28 @@ test("on yourself, the run can show your own live trail in the corner", async ()
   });
   const corner = screen.getByLabelText(messages.run.surface.selfTrail);
   expect(corner.querySelectorAll("path")).toHaveLength(2);
+  // no map yet: once the session has grown one, where you are on it, under the trail
+  expect(screen.queryByLabelText(messages.run.surface.selfMap)).toBeNull();
+  await act(async () => {
+    watcher!.receive({
+      id: "2-0",
+      type: "landscape",
+      live: true,
+      bounds: [0, 1, 0, 1],
+      grid: {
+        nx: 2,
+        ny: 2,
+        z: [
+          [0, 0.5],
+          [0.5, 1],
+        ],
+      },
+      categories: [],
+      cells: [],
+      epoch: 1,
+      n_windows: 30,
+      trail: { t: [0, 1], x: [0.2, 0.4], y: [0.2, 0.6] },
+    });
+  });
+  expect(screen.getByLabelText(messages.run.surface.selfMap)).toBeTruthy();
 });
