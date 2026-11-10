@@ -54,6 +54,8 @@ import {
   HeadbandPreflight,
   type HeadbandSource,
 } from "@/components/run/HeadbandPreflight";
+import { SelfTrail } from "@/components/live/SelfTrail";
+import { useFeature } from "@/lib/features";
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
 import { useRemoteRun } from "@/components/run/useRemoteRun";
@@ -212,8 +214,14 @@ export function RunProtocol({
   const syncStarted = useRef(0);
   useFocusMode(phase === "syncing" || phase === "running");
 
+  // Your own trail over a run on yourself (T4b): never a patient's, never someone else's
+  const liveOn = useFeature("live");
+  const selfRun =
+    !client && !remote && !target.subjectId && !target.assignmentId;
+  const [selfViewAsked, setSelfView] = useState(false);
+  const selfView = liveOn && selfRun && selfViewAsked;
   const live = useRemoteRun({
-    enabled: remote,
+    enabled: remote || selfView,
     assignmentId: target.assignmentId,
     sessionId: session?.id ?? null,
     muse,
@@ -445,6 +453,8 @@ export function RunProtocol({
           onOverride={setOverride}
           starting={starting}
           blocked={startBlocked}
+          selfView={selfViewAsked}
+          onSelfView={liveOn && selfRun ? setSelfView : undefined}
           onStart={() => void begin()}
           onBack={() => router.push(backHref)}
         />
@@ -467,13 +477,17 @@ export function RunProtocol({
             sink={sink}
             anchor={anchor}
             commands={live.commands}
-            observed={live.observed}
+            // watching yourself is not a carer following the session
+            observed={selfView ? false : live.observed}
             onState={live.onState}
             onStepResult={live.onStepResult}
             signal={muse.eegFeed}
             onFinish={onFinish}
             onExit={onExit}
           />
+        )}
+        {selfView && session && phase === "running" && (
+          <SelfTrail sessionId={session.id} />
         )}
       </RunSurface>
     );

@@ -1,49 +1,86 @@
 "use client";
 
 /**
- * The live trail (T5): the session's own adaptive PCA as the worker draws it, in the
- * trail's colours from the first window (warm) to the last (cool), marked live until
- * the final frame. Plain SVG: a few hundred points a second at most, nothing to load.
+ * The live trail (T5, T4b): the session's own adaptive PCA as the worker draws it, in
+ * the trail's colours from the first window (warm) to the last (cool), marked live until
+ * the final frame. Each point is the mean of the windows behind it, final when it comes
+ * (V4-0004, amended 2026-11-10), so nothing here is provisional.
  *
- * The tip (T4b) is drawn dashed after the final points: the newest windows, on screen
- * about a second after the signal, which the final points replace once the smoothing
- * has the windows after them. The caption says the worker's lag for it.
+ * Drawn as a continuous curve, gliding from one picture to the next (`smoothPath`): the
+ * projection's refresh moves every point a little each second, and the newest segment
+ * grows out of the previous end instead of appearing. No glide under reduced motion.
+ * Plain SVG: a few hundred points at most, nothing to load.
  */
 
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { type Point, curveSegments, interpolate } from "@/lib/live/smoothPath";
 import { useChartTheme, trailHexAt } from "@/lib/theme";
+
+/** How long a new picture takes to settle, in ms: under the 1 s between windows. */
+export const GLIDE_MS = 900;
+
+function reducedMotion(): boolean {
+  return (
+    typeof window === "undefined" ||
+    typeof window.requestAnimationFrame !== "function" ||
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
+  );
+}
+
+/** `target` as drawn now: gliding from the last picture drawn to it. */
+function useGlide(target: readonly Point[]): readonly Point[] {
+  const [drawn, setDrawn] = useState<readonly Point[]>(target);
+  const drawnRef = useRef(drawn);
+  useEffect(() => {
+    drawnRef.current = drawn;
+  }, [drawn]);
+  const still = reducedMotion();
+  useEffect(() => {
+    if (still) return;
+    const from = drawnRef.current;
+    const started = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const t = (now - started) / GLIDE_MS;
+      setDrawn(interpolate(from, target, t));
+      if (t < 1) frame = window.requestAnimationFrame(step);
+    };
+    frame = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(frame);
+  }, [still, target]);
+  // the first picture is drawn as it is: there is nothing to glide from
+  return still || drawn.length === 0 ? target : drawn;
+}
 
 export function LiveTrail({
   x,
   y,
   final,
-  tip = null,
   lagMs = null,
   height = 320,
+  compact = false,
 }: {
   x: readonly number[];
   y: readonly number[];
   final: boolean;
-  tip?: { from: number; x: readonly number[]; y: readonly number[] } | null;
   lagMs?: number | null;
   height?: number;
+  /** The small view over a run (no caption, no empty-state text). */
+  compact?: boolean;
 }) {
   const t = useTranslations("live.console");
   const theme = useChartTheme();
-  const finite = ([a, b]: readonly [number, number]) =>
-    Number.isFinite(a) && Number.isFinite(b);
-  const points = x.map((px, i) => [px, y[i]] as const).filter(finite);
-  // only the tip's windows the final trail has not reached yet
-  const ahead =
-    final || !tip
-      ? []
-      : tip.x
-          .map((px, k) => [tip.from + k, px, tip.y[k]] as const)
-          .filter(([i]) => i >= x.length)
-          .map(([, px, py]) => [px, py] as const)
-          .filter(finite);
-  if (points.length + ahead.length < 2)
-    return (
+  const target = useMemo<readonly Point[]>(
+    () =>
+      x
+        .map((px, i) => [px, y[i]] as const)
+        .filter(([a, b]) => Number.isFinite(a) && Number.isFinite(b)),
+    [x, y]
+  );
+  const points = useGlide(target);
+  if (points.length < 2)
+    return compact ? null : (
       <div
         className="flex items-center justify-center rounded-[var(--radius-card)] bg-surface-2 text-[14px] text-ink-3"
         style={{ height }}
@@ -51,9 +88,8 @@ export function LiveTrail({
         {t("noTrail")}
       </div>
     );
-  const all = [...points, ...ahead];
-  const xs = all.map((p) => p[0]);
-  const ys = all.map((p) => p[1]);
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
   const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
   const [y0, y1] = [Math.min(...ys), Math.max(...ys)];
   const pad = 0.06;
@@ -62,9 +98,8 @@ export function LiveTrail({
   const sx = (v: number) => ((v - x0) / w) * (1 - 2 * pad) + pad;
   const sy = (v: number) => 1 - (((v - y0) / h) * (1 - 2 * pad) + pad);
   const n = points.length;
-  const dashed = n ? [points[n - 1], ...ahead] : ahead;
-  const newest = all[all.length - 1];
-  const tipColor = trailHexAt(theme.trail, 1);
+  const segments = curveSegments(points);
+  const at = ([px, py]: Point) => `${sx(px)} ${sy(py)}`;
   return (
     <figure className="relative">
       <svg
@@ -72,56 +107,39 @@ export function LiveTrail({
         aria-label={t("trailAria", { n })}
         viewBox="0 0 1 1"
         preserveAspectRatio="none"
-        className="w-full rounded-[var(--radius-card)] bg-surface-2"
+        className={
+          compact
+            ? "w-full rounded-[var(--radius-card)]"
+            : "w-full rounded-[var(--radius-card)] bg-surface-2"
+        }
         style={{ height }}
       >
-        {points.slice(1).map(([px, py], i) => {
-          const [qx, qy] = points[i];
-          return (
-            <line
-              key={i}
-              x1={sx(qx)}
-              y1={sy(qy)}
-              x2={sx(px)}
-              y2={sy(py)}
-              stroke={trailHexAt(theme.trail, i / Math.max(1, n - 2))}
-              strokeWidth={0.006}
-              strokeLinecap="round"
-            />
-          );
-        })}
-        {dashed.slice(1).map(([px, py], i) => {
-          const [qx, qy] = dashed[i];
-          return (
-            <line
-              key={`tip-${i}`}
-              data-tip=""
-              x1={sx(qx)}
-              y1={sy(qy)}
-              x2={sx(px)}
-              y2={sy(py)}
-              stroke={tipColor}
-              strokeOpacity={0.75}
-              strokeWidth={0.005}
-              strokeDasharray="0.012 0.01"
-              strokeLinecap="round"
-            />
-          );
-        })}
+        {segments.map(([p0, c1, c2, p1], i) => (
+          <path
+            key={i}
+            d={`M ${at(p0)} C ${at(c1)} ${at(c2)} ${at(p1)}`}
+            fill="none"
+            stroke={trailHexAt(theme.trail, i / Math.max(1, n - 2))}
+            strokeWidth={compact ? 0.012 : 0.006}
+            strokeLinecap="round"
+          />
+        ))}
         <circle
-          cx={sx(newest[0])}
-          cy={sy(newest[1])}
-          r={0.012}
-          fill={tipColor}
+          cx={sx(points[n - 1][0])}
+          cy={sy(points[n - 1][1])}
+          r={compact ? 0.02 : 0.012}
+          fill={trailHexAt(theme.trail, 1)}
         />
       </svg>
-      <figcaption className="type-caption absolute top-2 right-3 text-ink-3">
-        {final
-          ? t("final")
-          : lagMs === null
-            ? t("liveMark")
-            : t("liveLag", { s: Math.round(lagMs / 100) / 10 })}
-      </figcaption>
+      {!compact && (
+        <figcaption className="type-caption absolute top-2 right-3 text-ink-3">
+          {final
+            ? t("final")
+            : lagMs === null
+              ? t("liveMark")
+              : t("liveLag", { s: Math.round(lagMs / 100) / 10 })}
+        </figcaption>
+      )}
     </figure>
   );
 }

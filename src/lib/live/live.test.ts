@@ -255,46 +255,20 @@ describe("the room an observer sees", () => {
     expect(room.trail.x).toEqual([0, 1, 2, 3]);
   });
 
-  test("the tip follows the newest windows and goes once the trail is final", () => {
+  test("every point carries the worker's lag; a point without one keeps the last", () => {
     let room = emptyRoom();
     room = applyFrame(room, {
       id: "1-0",
-      type: "tip",
-      from: 2,
-      points: [
-        [5, 5],
-        [6, 6],
-      ],
+      type: "window",
+      i: 0,
+      x: 1,
+      y: 1,
       lag_ms: 40,
     });
-    expect(room.tip).toEqual({ from: 2, x: [5, 6], y: [5, 6] });
-    expect(room.tipLagMs).toBe(40);
-    // the next tick's tip replaces it whole; a tip without a lag keeps the last one
-    room = applyFrame(room, {
-      id: "2-0",
-      type: "tip",
-      from: 3,
-      points: [[7, 7]],
-    });
-    expect(room.tip).toEqual({ from: 3, x: [7], y: [7] });
-    expect(room.tipLagMs).toBe(40);
-    expect(room.since.windows).toBe("2-0");
-    room = applyFrame(room, {
-      id: "3-0",
-      type: "trail",
-      n: 1,
-      final: true,
-      points: [[0, 0]],
-    });
-    expect(room.tip).toBeNull();
-    // a late tip after the final trail is dropped
-    room = applyFrame(room, {
-      id: "4-0",
-      type: "tip",
-      from: 1,
-      points: [[1, 1]],
-    });
-    expect(room.tip).toBeNull();
+    expect(room.lagMs).toBe(40);
+    room = applyFrame(room, { id: "2-0", type: "window", i: 1, x: 2, y: 2 });
+    expect(room.lagMs).toBe(40);
+    expect(room.trail.x).toEqual([1, 2]);
   });
 
   test("hello, trail, points, places, acks, results and the commander", () => {

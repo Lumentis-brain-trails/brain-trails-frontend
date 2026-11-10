@@ -107,6 +107,8 @@ beforeEach(() => {
       });
     if (path === "sessions/s1/live/producer-ticket")
       return Promise.resolve({ ticket: "p", ws_path: "/live/sessions/s1" });
+    if (path === "sessions/s1/live/observer-ticket")
+      return Promise.resolve({ ticket: "o", ws_path: "/live/sessions/s1" });
     return Promise.resolve(undefined);
   });
 });
@@ -162,6 +164,8 @@ test("the patient's Play joins the waiting room, then publishes the run and take
   await act(() => new Promise((r) => setTimeout(r, 1100)));
   // the carer sees the pre-flight
   expect(waiting!.sent.some((f) => f.type === "preflight")).toBe(true);
+  // a patient's run never offers the trail over the stage
+  expect(screen.queryByText(messages.run.preflight.selfView)).toBeNull();
   const override = screen.queryByLabelText(messages.run.preflight.override);
   if (override) fireEvent.click(override);
   await act(async () => {
@@ -203,3 +207,63 @@ test("the patient's Play joins the waiting room, then publishes the run and take
   );
   expect(acks).toHaveLength(1);
 }, 30_000);
+
+test("on yourself, the run can show your own live trail in the corner", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  await act(async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={client}>
+          <RunProtocol
+            protocolId="p1"
+            detailPath="protocols/p1"
+            backHref="/protocols/p1"
+          />
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    );
+  });
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: messages.run.preflight.connect },
+      { timeout: 5000 }
+    )
+  );
+  await screen.findByText(/Connected to/, {}, { timeout: 5000 });
+  fireEvent.click(screen.getByText(messages.run.preflight.selfView));
+  const override = screen.queryByLabelText(messages.run.preflight.override);
+  if (override) fireEvent.click(override);
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.run.preflight.start })
+    );
+  });
+  await act(() => new Promise((r) => setTimeout(r, 100)));
+  // the page publishes the run and watches it: two sockets on the session's room
+  const sockets = FakeSocket.all.filter((s) =>
+    s.url.endsWith("/live/sessions/s1")
+  );
+  expect(sockets).toHaveLength(2);
+  for (const socket of sockets) await act(async () => socket.open());
+  const watcher = sockets.find((s) => s.sent[0]?.ticket === "o");
+  expect(watcher).toBeTruthy();
+  await act(async () => {
+    watcher!.receive({ type: "hello", you: "me", command: true, observers: 1 });
+    watcher!.receive({
+      id: "1-0",
+      type: "trail",
+      n: 3,
+      final: false,
+      points: [
+        [0, 0],
+        [1, 1],
+        [2, 0],
+      ],
+    });
+  });
+  const corner = screen.getByLabelText(messages.run.surface.selfTrail);
+  expect(corner.querySelectorAll("path")).toHaveLength(2);
+});

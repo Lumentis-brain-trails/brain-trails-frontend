@@ -113,12 +113,15 @@
       "start": "Avvia la sessione",
       "starting": "Avvio…",
       "clock_wait": "Sincronizzazione con la fascia…",
-      "back": "Indietro"
+      "back": "Indietro",
+      "selfView": "Guarda la tua traccia dal vivo, in alto a sinistra",
+      "selfViewNote": "Per una prova su te stesso: la traccia resta sullo schermo durante i compiti, quindi la sessione non è una registrazione pulita."
     },
     "surface": {
       "recording": "Registrazione in corso",
       "fullscreen_failed": "Lo schermo intero è stato rifiutato; la sessione prosegue nella finestra.",
-      "fullscreen": "Schermo intero"
+      "fullscreen": "Schermo intero",
+      "selfTrail": "La tua traccia dal vivo"
     },
     "upload": {
       "title": "Salvataggio della sessione",

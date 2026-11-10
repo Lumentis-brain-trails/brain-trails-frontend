@@ -219,9 +219,8 @@ export default function RemoteConsolePage({
                 x={room.trail.x}
                 y={room.trail.y}
                 final={room.trailFinal}
-                tip={room.tip}
                 // the worker's lag plus, at most, the chunk the browser filled first
-                lagMs={room.tipLagMs === null ? null : room.tipLagMs + CHUNK_MS}
+                lagMs={room.lagMs === null ? null : room.lagMs + CHUNK_MS}
               />
             )}
           </Card>

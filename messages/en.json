@@ -113,12 +113,15 @@
       "start": "Start session",
       "starting": "Starting…",
       "clock_wait": "Syncing with the headband…",
-      "back": "Back"
+      "back": "Back",
+      "selfView": "Watch your own trail live, in the top-left corner",
+      "selfViewNote": "For a try on yourself: the trail stays on screen during the tasks, so the session is not a clean recording."
     },
     "surface": {
       "recording": "Recording",
       "fullscreen_failed": "Full screen was refused; the session runs in the window.",
-      "fullscreen": "Full screen"
+      "fullscreen": "Full screen",
+      "selfTrail": "Your live trail"
     },
     "upload": {
       "title": "Saving the session",

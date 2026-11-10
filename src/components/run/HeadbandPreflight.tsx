@@ -28,6 +28,9 @@ interface Props {
   starting: boolean;
   /** Start waits for something else on the page (who is being recorded, T3). */
   blocked?: boolean;
+  /** Your own live trail over the run (T4b): offered on a self run with live on. */
+  selfView?: boolean;
+  onSelfView?: (value: boolean) => void;
   onStart: () => void;
   onBack: () => void;
 }
@@ -42,6 +45,8 @@ export function HeadbandPreflight({
   onOverride,
   starting,
   blocked = false,
+  selfView = false,
+  onSelfView,
   onStart,
   onBack,
 }: Props) {
@@ -104,6 +109,22 @@ export function HeadbandPreflight({
                 className="h-4 w-4 accent-(--accent)"
               />
               {t("override")}
+            </label>
+          )}
+          {onSelfView && (
+            <label className="flex cursor-pointer items-start gap-2 text-[14px]">
+              <input
+                type="checkbox"
+                checked={selfView}
+                onChange={(e) => onSelfView(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-(--accent)"
+              />
+              <span>
+                {t("selfView")}
+                <span className="type-caption block text-ink-3">
+                  {t("selfViewNote")}
+                </span>
+              </span>
             </label>
           )}
         </div>
