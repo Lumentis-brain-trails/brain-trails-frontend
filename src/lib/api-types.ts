@@ -1977,7 +1977,8 @@ export interface paths {
          *     The timeline is the stored parts plus any events re-sent here, de-duplicated on
          *     `(t, type, seq)` and sorted by `t`; the parts are then removed. When an operator's
          *     console drove the run, `summary.operator_commands` counts its commands by kind
-         *     (V3-0007); it is absent otherwise.
+         *     (V3-0007); it is absent otherwise, and each command is one `live.command` in the usage
+         *     log. `bt_sessions_total` is labelled with the session's `console`.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
         delete?: never;
@@ -5075,7 +5076,8 @@ export interface components {
          *     subject's own account at home, or a carer in the studio; the assignment's pinned
          *     version runs and the run counts towards it when it finishes. `acknowledged` names
          *     the warnings the person read before Start: `photosensitivity` is required for a
-         *     version with visual blocks (H4).
+         *     version with visual blocks (H4). `console` says an operator's console drives the
+         *     run: `local` from the console on the same machine (T1).
          */
         SessionStartIn: {
             /** Acknowledged */
@@ -5088,6 +5090,12 @@ export interface components {
              * @enum {string}
              */
             capture: "upload" | "stream";
+            /**
+             * Console
+             * @default none
+             * @enum {string}
+             */
+            console: "none" | "local";
             /**
              * Device
              * @default muse-2

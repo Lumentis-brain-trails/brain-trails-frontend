@@ -46,9 +46,14 @@ export function useFinish(
 /** Complete after `seconds`, once, measured from mount. */
 export function useTimedFinish(seconds: number | null, finish: () => void) {
   const latest = useLatest(finish);
+  // Counted from the first render, so a longer `seconds` (an operator's `extend_rest`)
+  // moves the deadline rather than starting the whole wait again.
+  const mountedAt = useRef<number | null>(null);
   useEffect(() => {
     if (seconds === null) return;
-    const timer = setTimeout(() => latest.current(), seconds * 1000);
+    mountedAt.current ??= performance.now();
+    const left = mountedAt.current + seconds * 1000 - performance.now();
+    const timer = setTimeout(() => latest.current(), Math.max(0, left));
     return () => clearTimeout(timer);
   }, [latest, seconds]);
 }
