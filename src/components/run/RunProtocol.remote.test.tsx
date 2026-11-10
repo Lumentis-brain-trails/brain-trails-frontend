@@ -266,8 +266,12 @@ test("on yourself, the run can show your own live trail in the corner", async ()
   });
   const corner = screen.getByLabelText(messages.run.surface.selfTrail);
   expect(corner.querySelectorAll("path")).toHaveLength(2);
-  // no map yet: once the session has grown one, where you are on it, under the trail
-  expect(screen.queryByLabelText(messages.run.surface.selfMap)).toBeNull();
+  // no map yet: the landscape waits for the first one the session grows
+  const landscape = screen.getByRole("button", {
+    name: messages.run.surface.selfViewLandscape,
+  });
+  expect(landscape).toBeDisabled();
+  expect(screen.getByText(messages.run.surface.selfMapSoon)).toBeTruthy();
   await act(async () => {
     watcher!.receive({
       id: "2-0",
@@ -289,5 +293,14 @@ test("on yourself, the run can show your own live trail in the corner", async ()
       trail: { t: [0, 1], x: [0.2, 0.4], y: [0.2, 0.6] },
     });
   });
+  // then a switch: the trail in 2D or the landscape in 3D, with the dot on it
+  expect(landscape).toBeEnabled();
+  fireEvent.click(landscape);
+  expect(landscape.getAttribute("aria-pressed")).toBe("true");
   expect(screen.getByLabelText(messages.run.surface.selfMap)).toBeTruthy();
+  expect(corner.querySelectorAll("path")).toHaveLength(0);
+  fireEvent.click(
+    screen.getByRole("button", { name: messages.run.surface.selfViewTrail })
+  );
+  expect(corner.querySelectorAll("path")).toHaveLength(2);
 });

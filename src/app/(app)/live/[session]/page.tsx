@@ -200,6 +200,7 @@ export default function RemoteConsolePage({
                   title={t("views.landscape")}
                   hover={!ground.growing}
                   cursor={here}
+                  live
                   trails={[
                     {
                       x: ground.x,

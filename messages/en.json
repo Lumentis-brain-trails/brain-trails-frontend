@@ -122,7 +122,11 @@
       "fullscreen_failed": "Full screen was refused; the session runs in the window.",
       "fullscreen": "Full screen",
       "selfTrail": "Your live trail",
-      "selfMap": "Where you are on your landscape"
+      "selfMap": "Where you are on your landscape",
+      "selfView": "Your live view",
+      "selfViewTrail": "Trail",
+      "selfViewLandscape": "Landscape",
+      "selfMapSoon": "Your landscape appears after about 30 s."
     },
     "upload": {
       "title": "Saving the session",

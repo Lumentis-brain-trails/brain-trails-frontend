@@ -122,7 +122,11 @@
       "fullscreen_failed": "Lo schermo intero è stato rifiutato; la sessione prosegue nella finestra.",
       "fullscreen": "Schermo intero",
       "selfTrail": "La tua traccia dal vivo",
-      "selfMap": "Dove sei nel tuo paesaggio"
+      "selfMap": "Dove sei nel tuo paesaggio",
+      "selfView": "La tua vista dal vivo",
+      "selfViewTrail": "Traccia",
+      "selfViewLandscape": "Paesaggio",
+      "selfMapSoon": "Il tuo paesaggio compare dopo circa 30 s."
     },
     "upload": {
       "title": "Salvataggio della sessione",
