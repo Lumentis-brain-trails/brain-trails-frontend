@@ -32,6 +32,8 @@ import {
   type SessionCapture,
 } from "./session";
 import { PacketTimeline, type TimelineStats } from "./timeline";
+import type { EegPacket } from "@/lib/neurofeedback/engine";
+import type { EegFeed } from "@/lib/protocol/types";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
 
@@ -167,8 +169,9 @@ export function useMuse(createDevice: () => MuseDevice) {
   const batteryRef = useRef<number | null>(null);
   const packetsSinceRefresh = useRef(0);
   const unsubscribe = useRef<(() => void)[]>([]);
-  // Who else wants every EEG packet as it comes (the live producer, T5).
-  const eegListeners = useRef(new Set<EegListener>());
+  // Who wants every EEG packet as it arrives: a neurofeedback block (V4-0009), the
+  // console forwarding them to the participant's window, the live producer (T5).
+  const eegListeners = useRef(new Set<(packet: EegPacket) => void>());
 
   const teardown = useCallback(() => {
     for (const off of unsubscribe.current) off();
@@ -198,9 +201,14 @@ export function useMuse(createDevice: () => MuseDevice) {
       }),
       device.on("eeg", ({ channel, packet, hostMs }) => {
         rings[channel].push(packet.samples);
-        recorderRef.current?.feed(channel, packet.sampleIndex, packet.samples);
         for (const listener of eegListeners.current)
-          listener(channel, packet.sampleIndex, packet.samples);
+          listener({
+            channel,
+            sampleIndex: packet.sampleIndex,
+            samples: packet.samples,
+            hostMs,
+          });
+        recorderRef.current?.feed(channel, packet.sampleIndex, packet.samples);
         // The four electrodes are stamped alike; anchor the timeline on the first.
         if (channel === EEG_CHANNELS[0]) {
           timelineRef.current.push(
@@ -389,11 +397,23 @@ export function useMuse(createDevice: () => MuseDevice) {
     []
   );
 
+  /** Every EEG packet as it arrives, without a render; one identity per hook. */
+  const eegFeed = useMemo<EegFeed>(
+    () => ({
+      subscribe(listener) {
+        eegListeners.current.add(listener);
+        return () => void eegListeners.current.delete(listener);
+      },
+    }),
+    []
+  );
+
   /** Every EEG packet from now on, one channel at a time; returns the unsubscribe. */
-  const onEeg = useCallback((listener: EegListener) => {
-    eegListeners.current.add(listener);
-    return () => void eegListeners.current.delete(listener);
-  }, []);
+  const onEeg = useCallback(
+    (listener: EegListener) =>
+      eegFeed.subscribe((p) => listener(p.channel, p.sampleIndex, p.samples)),
+    [eegFeed]
+  );
 
   /** The packet counts so far, read when asked rather than once a second. */
   const readTimeline = useCallback(() => timelineRef.current.stats(), []);
@@ -410,6 +430,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     stopRecording,
     readTimelineFit,
     readFirstSampleIndex,
+    eegFeed,
     onEeg,
     readTimeline,
   };

@@ -99,7 +99,7 @@ export function useLiveRoom(sessionId: string, enabled = true) {
 
   const sendCommand = useCallback(
     (type: CommandType, text?: string) => {
-      const command = makeCommand(type, text, "remote");
+      const command = makeCommand(type, text, { source: "remote" });
       if (send({ type: "command", command }))
         setSent((list) => [
           ...list.slice(-19),

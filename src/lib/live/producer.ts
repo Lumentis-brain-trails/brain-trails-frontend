@@ -184,7 +184,9 @@ export class LiveProducer {
     const pauseOnLostSight = frame.pause_on_lost_sight === true;
     if (this.observers > 0 && observers === 0 && pauseOnLostSight)
       this.port.send(
-        makeCommand("pause", "lost sight", "auto") as OperatorCommand
+        makeCommand("pause", "lost sight", {
+          source: "auto",
+        }) as OperatorCommand
       );
     this.observers = observers;
     this.options.onPresence?.({ observers, pauseOnLostSight });

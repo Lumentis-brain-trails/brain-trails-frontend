@@ -185,6 +185,7 @@ export function useRemoteRun({
             flush: () => sink.flush(),
             flushBeacon: () => sink.flushBeacon(),
             all: () => sink.all(),
+            unacknowledged: () => sink.unacknowledged(),
             get pending() {
               return sink.pending;
             },

@@ -25,6 +25,7 @@ export const COMMAND_TYPES = [
   "message",
   "flag",
   "abort",
+  "nudge_threshold",
 ] as const;
 
 export type CommandType = (typeof COMMAND_TYPES)[number];
@@ -38,6 +39,9 @@ export const MESSAGE_SHOWN_MS = 10_000;
 /** How much one `extend_rest` adds to a timed rest. */
 export const EXTEND_REST_S = 30;
 
+/** The most steps one `nudge_threshold` may move a neurofeedback threshold (5% each). */
+export const NUDGE_MAX_STEPS = 5;
+
 /** The event type every command is logged under, whatever it did. */
 export const OPERATOR_COMMAND_EVENT = "operator_command";
 
@@ -47,6 +51,8 @@ export const operatorCommandSchema = z.object({
   type: z.enum(COMMAND_TYPES),
   /** The words of a `message`, or an optional note on a `flag`. */
   text: z.string().max(MESSAGE_MAX_CHARS).optional(),
+  /** `nudge_threshold`: how many 5% steps, up (positive) or down (V4-0009). */
+  steps: z.number().int().min(-NUDGE_MAX_STEPS).max(NUDGE_MAX_STEPS).optional(),
   /**
    * Who asked: the console on this machine (T1), a remote console over the live service
    * (T5), or the run itself (`auto`: "pause when I lose sight" fired).
@@ -79,6 +85,7 @@ export const SAFE_POINTS: Record<CommandType, SafePoint> = {
   message: "now",
   flag: "now",
   abort: "now",
+  nudge_threshold: "now",
 };
 
 /** What the runner did with a command, as the log records it. */
@@ -98,6 +105,8 @@ export interface RunnerState {
   attempt: number;
   /** The operator's message on the participant's screen, if any. */
   message: string | null;
+  /** The step on screen is a neurofeedback block, whose threshold `nudge_threshold` moves. */
+  nudgeable?: boolean;
 }
 
 /** Where a reloaded participant window picks a console run up (`ProtocolRunner`). */
@@ -145,7 +154,7 @@ let counter = 0;
 export function makeCommand(
   type: CommandType,
   text?: string,
-  source: OperatorCommand["source"] = "console"
+  options: { steps?: number; source?: OperatorCommand["source"] } = {}
 ): OperatorCommand {
   counter += 1;
   const random =
@@ -156,7 +165,8 @@ export function makeCommand(
   return {
     id: random,
     type,
-    source,
+    source: options.source ?? "console",
     ...(trimmed ? { text: trimmed } : {}),
+    ...(options.steps !== undefined ? { steps: options.steps } : {}),
   };
 }
