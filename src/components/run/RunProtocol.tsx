@@ -487,8 +487,12 @@ export function RunProtocol({
             sink={sink}
             anchor={anchor}
             commands={live.commands}
-            // watching yourself is not a carer following the session
-            observed={selfView ? false : live.observed}
+            // watching yourself, or the page hearing your landscape, is not a carer
+            // following the session: only observers beyond this page's own count
+            observed={
+              live.observers >
+              (selfView ? 1 : 0) + (mapFeedback && session ? 1 : 0)
+            }
             onState={live.onState}
             onStepResult={live.onStepResult}
             signal={muse.eegFeed}
