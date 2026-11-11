@@ -134,6 +134,13 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
   },
   neurofeedback: {
     signal: {},
+    feedback: {},
+    // a landscape's targets are chosen on the Neurofeedback page, on the person's map
+    targets: { hidden: true },
+    "targets.points": { hidden: true },
+    "targets.radius": { hidden: true },
+    "targets.epoch": { hidden: true },
+    "targets.preset": { hidden: true },
     direction: {},
     channels: { advanced: true },
     effect: {},

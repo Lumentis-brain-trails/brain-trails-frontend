@@ -33,6 +33,12 @@ import {
   SFREQ,
 } from "@/lib/neurofeedback/engine";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
+import { FeedbackStage } from "@/components/neurofeedback/FeedbackStage";
+import {
+  type FeedbackFrame,
+  restingFrame,
+} from "@/components/neurofeedback/frame";
+import { LandscapeRenderer } from "./LandscapeFeedback";
 import { Stage, useFinish, useLatest } from "./shared";
 
 /** No packet for this long: the headband is gone, the operator is told. */
@@ -46,7 +52,16 @@ const NOTICE_MS = 4000;
 
 type Notice = "unavailable" | "baseline_failed" | "timeout" | null;
 
+/** A band of the EEG (V4-0009), or a place of the person's landscape (V4-0010). */
 function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
+  return ctx.config.signal === "landscape_region" ? (
+    <LandscapeRenderer {...ctx} />
+  ) : (
+    <BandRenderer {...ctx} />
+  );
+}
+
+function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
   const t = useTranslations("kinds");
   const { config, signal, adjustments } = ctx;
   const finish = useFinish(ctx, "neurofeedback");
@@ -62,6 +77,10 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
     [engine]
   );
   const pictureRef = useRef<HTMLElement | null>(null);
+  // what an animation reads on every frame; the video is written to directly
+  const frameRef = useRef<FeedbackFrame>(
+    restingFrame(engine.restingBrightness)
+  );
   const [notice, setNotice] = useState<Notice>(signal ? null : "unavailable");
   const tally = useRef({
     updates: 0,
@@ -97,6 +116,7 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
       kind: "stage",
       meta: {
         signal: config.signal,
+        feedback: config.feedback,
         direction: engine.direction,
         channels: [...engine.channels],
         window_s: config.window_s,
@@ -124,6 +144,13 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
           tally.current.updates += 1;
           if (u.inTarget) tally.current.inTarget += 1;
           if (u.gated) tally.current.gated += 1;
+          frameRef.current = {
+            level: u.level,
+            brightness: u.brightness,
+            blurPx: u.blurPx,
+            inTarget: u.inTarget,
+            phase: u.phase,
+          };
           const el = pictureRef.current;
           if (el)
             el.style.filter = `brightness(${u.brightness.toFixed(4)})${u.blurPx > 0 ? ` blur(${u.blurPx.toFixed(2)}px)` : ""}`;
@@ -288,20 +315,15 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
   }
 
   return (
-    <div className="flex h-full items-center justify-center bg-black">
-      <video
-        ref={(el) => {
-          pictureRef.current = el;
-        }}
-        src={config.src}
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={style}
-        className="max-h-full max-w-full"
-      />
-    </div>
+    <FeedbackStage
+      feedback={config.feedback}
+      src={config.src}
+      frameRef={frameRef}
+      videoRef={(el) => {
+        pictureRef.current = el;
+      }}
+      videoStyle={style}
+    />
   );
 }
 

@@ -536,7 +536,8 @@ export interface paths {
          *     Opening an open room again only hands out a new ticket (a carer reconnecting asks
          *     here again: tickets are single-use). The room closes by itself after two hours, when
          *     its session starts and ends, or with `DELETE`. 404 when the live service is off here,
-         *     409 when the assignment is closed.
+         *     409 when the assignment is closed. A sync route on purpose: the database work below
+         *     runs in the threadpool, never on the event loop every live socket shares.
          */
         post: operations["open_waiting_room_assignments__assignment_id__live_room_post"];
         /**
@@ -1947,6 +1948,10 @@ export interface paths {
          *     acknowledgement as the timeline's first event (`photosensitivity_ack` at `t` 0, with
          *     the run's mode and the wall-clock time), so the record does not depend on the
          *     browser that showed the screen.
+         *
+         *     A version with a `neurofeedback` block starts only where the flag is on for the
+         *     workspace's kind (403 `feature_disabled`, V4-0009): never in a clinic in production
+         *     until the regulatory question is answered.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -3139,9 +3144,9 @@ export interface components {
             labels?: (string | null)[] | null;
             /** N Windows */
             n_windows: number;
+            neurofeedback?: components["schemas"]["NeurofeedbackOut"] | null;
             /** Node Path */
             node_path: string | null;
-            neurofeedback?: components["schemas"]["NeurofeedbackOut"] | null;
             norm?: components["schemas"]["BlockNormOut"] | null;
             prestimulus?: components["schemas"]["PrestimulusOut"] | null;
             /** Ratios */
@@ -3268,6 +3273,15 @@ export interface components {
             n_windows: number;
             /** Pending */
             pending: boolean;
+            /**
+             * Presets
+             * @default {}
+             */
+            presets: {
+                [key: string]: components["schemas"]["BrainLandscapeTargetsOut"];
+            };
+            /** Sigma */
+            sigma?: number | null;
             trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
             /** Version */
             version: number;
@@ -3288,6 +3302,25 @@ export interface components {
             epoch: number | null;
             /** Pending */
             pending: boolean;
+        };
+        /**
+         * BrainLandscapeTargetsOut
+         * @description A neurofeedback preset on the map (V4-0010): points, their radius, why them.
+         */
+        BrainLandscapeTargetsOut: {
+            /** Enrichment */
+            enrichment: number[];
+            /** Points */
+            points: [
+                number,
+                number
+            ][];
+            /** Radius */
+            radius: number;
+            /** Rule */
+            rule: string;
+            /** Windows */
+            windows: number;
         };
         /**
          * BrainLandscapeTrailOut
@@ -5313,7 +5346,8 @@ export interface components {
          *     the warnings the person read before Start: `photosensitivity` is required for a
          *     version with visual blocks (H4). `console` says an operator's console drives the
          *     run: `local` from the console on the same machine (T1); the server sets `remote`
-         *     itself when a carer waits in the assignment's room (T5).
+         *     itself when a carer waits in the assignment's room (T5) and the run has no local
+         *     console.
          */
         SessionStartIn: {
             /** Acknowledged */

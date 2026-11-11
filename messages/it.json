@@ -378,7 +378,10 @@
     "neurofeedback": {
       "needsHeadband": "Questa parte ha bisogno della fascia, e nessuna sta trasmettendo. Verrà saltata.",
       "baselineFailed": "Il segnale era troppo disturbato per iniziare questa parte. Andiamo avanti.",
-      "timeout": "Il segnale della fascia non è arrivato. Andiamo avanti."
+      "timeout": "Il segnale della fascia non è arrivato. Andiamo avanti.",
+      "needsLive": "Questa parte segue dove ti trovi nel tuo brain landscape, e il servizio live non è attivo per questa sessione. La saltiamo.",
+      "baselineFailedMap": "Il tuo landscape non è arrivato abbastanza chiaro per iniziare questa parte. Andiamo avanti.",
+      "soundOn": "Attiva il suono"
     }
   },
   "builder": {
@@ -1192,7 +1195,18 @@
             "smr": "SMR (12-15 Hz)",
             "beta": "Beta (13-30 Hz)",
             "theta_beta": "Rapporto theta/beta",
-            "alpha_theta": "Rapporto alfa/theta"
+            "alpha_theta": "Rapporto alfa/theta",
+            "landscape_region": "Un luogo del landscape della persona"
+          }
+        },
+        "feedback": {
+          "label": "Cosa guarda la persona",
+          "help": "Il video qui sotto, o un'animazione integrata che non richiede media: un aereo che decolla nel target, due note che si accordano, o i due nastri di luce che si mettono a fuoco.",
+          "options": {
+            "video": "Il video",
+            "plane": "Un aereo che decolla",
+            "tuning": "Due note che si accordano",
+            "ribbons": "I nastri che si mettono a fuoco"
           }
         },
         "direction": {
@@ -1278,6 +1292,13 @@
         "artefact/max_muscle": {
           "label": "Limite di attività muscolare",
           "help": "Una finestra con più di questa quota di potenza sopra 30 Hz (mascella, fronte aggrottata) ferma l'immagine."
+        },
+        "targets/preset": {
+          "label": "Da dove vengono i punti",
+          "options": {
+            "focus": "Il preset di concentrazione",
+            "custom": "I punti scelti dalla persona"
+          }
         }
       }
     }
@@ -2157,7 +2178,8 @@
       "people": "Persone",
       "patients": "Pazienti",
       "participants": "Partecipanti",
-      "my": "Le mie sessioni"
+      "my": "Le mie sessioni",
+      "neurofeedback": "Neurofeedback"
     },
     "sections": "Sezioni",
     "you": "Tu",
@@ -3753,6 +3775,68 @@
         "skipped": "saltato",
         "ended": "terminato dall'operatore",
         "done": "completato"
+      }
+    }
+  },
+  "neurofeedback": {
+    "title": "Neurofeedback",
+    "intro": "Allenati verso un luogo del tuo brain landscape. Il segnale della fascia viene posto sulla tua mappa ogni secondo, e ciò che guardi segue quanto sei vicino.",
+    "off": "Il neurofeedback non è ancora disponibile qui.",
+    "noMap": {
+      "title": "Prima serve un landscape",
+      "text": "Il tuo brain landscape nasce dalle tue registrazioni. Registra una sessione o due (basta una baseline a riposo), poi torna qui a scegliere dove allenarti.",
+      "building": "Il tuo landscape è in costruzione. Torna tra un minuto.",
+      "record": "Scegli un protocollo da registrare"
+    },
+    "where": {
+      "title": "Dove andare",
+      "focus": "Concentrazione (ADHD)",
+      "custom": "I miei punti",
+      "map": "Il tuo brain landscape visto dall'alto",
+      "focusHelp": "I luoghi dove il tuo rapporto theta/beta frontale era più basso, da {windows} dei tuoi secondi. Il cerchio tratteggiato è dove la ricompensa è a metà.",
+      "customHelp": "Clicca sulla mappa per aggiungere un punto (fino a tre); clicca su un punto per toglierlo.",
+      "noPreset": "Il preset di concentrazione non c'è ancora: servono alcuni minuti di registrazioni con buon contatto sulla fronte. Clicca sulla mappa per scegliere i tuoi punti (fino a tre)."
+    },
+    "what": {
+      "title": "Cosa vedi",
+      "plane": {
+        "label": "L'aereo",
+        "text": "Sulla pista quando sei lontano, decolla quando arrivi, sale finché resti."
+      },
+      "tuning": {
+        "label": "Accordatura",
+        "text": "Due note a distanza di quinta, stonate quando sei lontano, accordate quando arrivi. Puoi chiudere gli occhi."
+      },
+      "ribbons": {
+        "label": "I nastri",
+        "text": "I nostri due nastri di luce, sfocati negli angoli, che si mettono a fuoco e si avvicinano quando arrivi."
+      }
+    },
+    "long": {
+      "title": "Quanto dura",
+      "minutes": "{n} min",
+      "help": "Dopo un minuto che misura dove sei oggi. Di solito le sessioni durano da 15 a 30 minuti; inizia con poco."
+    },
+    "start": "Inizia",
+    "starting": "Preparazione…",
+    "failed": "Non è stato possibile preparare la sessione. Riprova.",
+    "evidence": {
+      "title": "Prima di iniziare",
+      "preset": "Il preset di concentrazione segue il più antico protocollo di neurofeedback per l'ADHD, theta/beta verso il basso, misurato sulle tue registrazioni. Dice dove eri più concentrato nei tuoi termini, nulla di nessun altro.",
+      "studies": "Le prove sono contrastanti: alcuni studi hanno trovato benefici, i più grandi studi in cieco e le revisioni non ne hanno trovati oltre il placebo. Il theta/beta non è un marcatore affidabile dell'ADHD.",
+      "delay": "La tua posizione viene dall'analisi di ogni secondo di segnale e arriva con circa uno o due secondi di ritardo: il feedback segue gli stati che mantieni, non i singoli istanti.",
+      "not": "È uno strumento di allenamento per uso personale. Non è una diagnosi né una cura, e non sostituisce l'assistenza."
+    },
+    "protocol": {
+      "title": "Il mio neurofeedback",
+      "label": "Preparati",
+      "ready": "Siediti comodo, rilassa viso e mascella, e resta fermo.",
+      "start": "Inizia",
+      "warning": "Immagini in movimento la cui luminosità cambia lentamente con il tuo segnale, per la durata che hai scelto. Puoi fermarti quando vuoi.",
+      "how": {
+        "plane": "Prima un minuto per vedere dove sei. Poi porta su l'aereo: decolla quando arrivi.",
+        "tuning": "Prima un minuto per vedere dove sei. Poi ascolta: le due note si accordano quando arrivi.",
+        "ribbons": "Prima un minuto per vedere dove sei. Poi i nastri si mettono a fuoco quando arrivi."
       }
     }
   }

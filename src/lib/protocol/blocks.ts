@@ -207,14 +207,27 @@ export const NF_SIGNALS = [
   "beta",
   "theta_beta",
   "alpha_theta",
+  "landscape_region",
 ] as const;
+
+/**
+ * What the person watches while they train: the author's video, or one of the built-in
+ * animations (V4-0010) - a plane that takes off, two notes that come into tune, the
+ * landing page's two ribbons of light drawing together out of their blur.
+ */
+export const NF_FEEDBACK = ["video", "plane", "tuning", "ribbons"] as const;
+
+/** Most points a landscape target may hold. */
+export const NF_MAX_TARGETS = 3;
 
 /** The Muse's electrodes, in its own order (`lib/muse/protocol.ts`). */
 const NF_CHANNELS = ["TP9", "AF7", "AF8", "TP10"] as const;
 
 /**
  * Live neurofeedback (backend V4-0009): a looped, muted video whose brightness - and, with `clarity`, sharpness - follows a band of the person's EEG
- * against a threshold. A baseline at neutral brightness comes first and, by default,
+ * against a threshold. Or (V4-0010) the closeness to points of the person's own
+ * landscape (`landscape_region`, from the live service), and an animation in place of
+ * the video (`feedback`). A baseline at neutral brightness comes first and, by default,
  * sets the threshold; the operator can nudge it from the console.
  *
  * `direction` and `channels` are left out by default and chosen from the signal
@@ -227,6 +240,25 @@ export const neurofeedbackConfigSchema = z
   .object({
     ...mediaRefShape,
     signal: z.enum(NF_SIGNALS).default("alpha"),
+    /** The video (the default, which needs `src` or `media_id`) or an animation. */
+    feedback: z.enum(NF_FEEDBACK).default("video"),
+    /**
+     * `landscape_region` only (V4-0010): points of the person's own landscape, in its
+     * coordinates, and the map's epoch they were chosen on. The reward is the closeness
+     * to the nearest point, 1 on it and 1/2 at `radius`.
+     */
+    targets: z
+      .object({
+        points: z
+          .array(z.array(z.number()).length(2))
+          .min(1)
+          .max(NF_MAX_TARGETS),
+        radius: z.number().positive(),
+        epoch: z.number().int().min(1),
+        /** Where the points came from: a preset of the map, or the person's own clicks. */
+        preset: z.enum(["focus", "custom"]).default("custom"),
+      })
+      .optional(),
     direction: z.enum(["up", "down"]).optional(),
     channels: z.array(z.enum(NF_CHANNELS)).min(1).max(4).optional(),
     effect: z.enum(["brightness", "clarity"]).default("brightness"),
@@ -261,25 +293,50 @@ export const neurofeedbackConfigSchema = z
       })
       .default({ max_ptp_uv: 100, max_muscle: 0.25 }),
   })
-  .refine(hasMediaRef, { message: MEDIA_REF_MESSAGE, path: ["src"] })
+  .refine((c) => c.feedback !== "video" || hasMediaRef(c), {
+    message: MEDIA_REF_MESSAGE,
+    path: ["src"],
+  })
   .refine((c) => c.baseline_s > 0 || c.threshold.mode === "fixed", {
     message: "without a baseline the threshold must be fixed",
     path: ["threshold"],
   })
+  .refine((c) => (c.signal === "landscape_region") === Boolean(c.targets), {
+    message: "a landscape signal needs targets, and only it",
+    path: ["targets"],
+  })
   .meta({
-    ...MEDIA_REF_JSON,
-    if: {
-      properties: { baseline_s: { const: 0 } },
-      required: ["baseline_s"],
-    },
-    then: {
-      properties: {
-        threshold: {
-          properties: { mode: { const: "fixed" } },
-          required: ["mode"],
+    allOf: [
+      {
+        if: {
+          properties: { feedback: { not: { const: "video" } } },
+          required: ["feedback"],
+        },
+        else: MEDIA_REF_JSON,
+      },
+      {
+        if: {
+          properties: { baseline_s: { const: 0 } },
+          required: ["baseline_s"],
+        },
+        then: {
+          properties: {
+            threshold: {
+              properties: { mode: { const: "fixed" } },
+              required: ["mode"],
+            },
+          },
+          required: ["threshold"],
         },
       },
-      required: ["threshold"],
-    },
+      {
+        if: {
+          properties: { signal: { const: "landscape_region" } },
+          required: ["signal"],
+        },
+        then: { required: ["targets"] },
+        else: { not: { required: ["targets"] } },
+      },
+    ],
   });
 export type NeurofeedbackConfig = z.infer<typeof neurofeedbackConfigSchema>;

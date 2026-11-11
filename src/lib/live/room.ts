@@ -155,6 +155,9 @@ export function liveLandscape(frame: LiveFrame): BrainLandscape {
     categories: (frame.categories as BrainLandscape["categories"]) ?? [],
     cells: (frame.cells as BrainLandscape["cells"]) ?? [],
     trail: null,
+    sigma: typeof frame.sigma === "number" ? frame.sigma : null,
+    // the presets are the stored map's, made after a recording
+    presets: {},
   };
 }
 
