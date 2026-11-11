@@ -22,7 +22,7 @@ import { useFeedbackCanvas } from "./useFeedbackCanvas";
 export const ROOT_HZ = 220;
 export const FIFTH = 1.5;
 /** How far out of tune the fifth is, fully out of target. */
-export const MAX_CENTS = 35;
+export const MAX_CENTS = 12;
 const VOLUME = 0.08;
 
 /** The fifth's detuning for a level: `MAX_CENTS` at 0, in tune at 1. */
@@ -65,8 +65,10 @@ function startVoice(): Voice | null {
     osc.start();
     return { osc, g };
   };
-  note(ROOT_HZ, "triangle", 0.6);
-  const fifth = note(ROOT_HZ * FIFTH, "triangle", 0.45).osc;
+  // sawtooth voices: the root's third partial and the fifth's second meet near 660 Hz,
+  // where a detuned fifth beats (12 cents there: about 4.6 beats a second)
+  note(ROOT_HZ, "sawtooth", 0.35);
+  const fifth = note(ROOT_HZ * FIFTH, "sawtooth", 0.28).osc;
   fifth.detune.value = MAX_CENTS;
   const octave = note(ROOT_HZ * 2, "sine", 0).g;
   return { ctx, fifth, octave, filter, master };

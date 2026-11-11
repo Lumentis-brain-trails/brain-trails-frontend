@@ -11,8 +11,11 @@
  * is made: a protocol's texts are its author's, and here the author is the person.
  */
 
+import { ApiRequestError, api } from "@/lib/api";
 import type { NeurofeedbackConfig } from "@/lib/protocol/blocks";
+import type { ProtocolDetail } from "@/lib/protocol/catalog";
 import type { ProtocolTree } from "@/lib/protocol/tree";
+import { inWorkspace } from "@/lib/workspace";
 
 export type Feedback = Exclude<NeurofeedbackConfig["feedback"], "video">;
 
@@ -116,4 +119,48 @@ export function storeProtocol(id: string): void {
   } catch {
     // private mode: a new protocol next time, nothing worse
   }
+}
+
+/**
+ * Update the person's neurofeedback protocol, or make it the first time.
+ *
+ * The remembered protocol is reused unless it is gone or no longer theirs (404/403) or
+ * archived (an archived protocol publishes but never starts a session); any other
+ * failure is raised, so a network error never leaves a stray copy behind. Returns the
+ * protocol's id, its draft written.
+ */
+export async function saveDraft(
+  draft: unknown,
+  title: string,
+  workspace: { id: string } | undefined
+): Promise<string> {
+  const known = storedProtocol();
+  if (known) {
+    let detail: ProtocolDetail | null = null;
+    try {
+      detail = await api.get<ProtocolDetail>(`protocols/${known}`);
+    } catch (error) {
+      // gone, or not ours any more: a new one below; anything else is a real failure
+      if (
+        !(error instanceof ApiRequestError) ||
+        (error.status !== 404 && error.status !== 403)
+      )
+        throw error;
+    }
+    // an archived protocol publishes but never starts a session: make a new one
+    if (detail && !detail.archived) {
+      await api.put(
+        `protocols/${known}/draft`,
+        { draft },
+        { ifMatch: detail.draft_rev ?? 1 }
+      );
+      return known;
+    }
+  }
+  const made = await api.post<ProtocolDetail>(
+    inWorkspace("protocols", workspace),
+    { title, draft }
+  );
+  storeProtocol(made.id);
+  return made.id;
 }

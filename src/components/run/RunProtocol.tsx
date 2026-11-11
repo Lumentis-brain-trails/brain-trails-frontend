@@ -496,7 +496,9 @@ export function RunProtocol({
             onState={live.onState}
             onStepResult={live.onStepResult}
             signal={muse.eegFeed}
-            position={mapFeedback ? positions.feed : undefined}
+            position={
+              mapFeedback && positions.available ? positions.feed : undefined
+            }
             onFinish={onFinish}
             onExit={onExit}
           />

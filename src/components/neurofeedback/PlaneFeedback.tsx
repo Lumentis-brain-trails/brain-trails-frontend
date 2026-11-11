@@ -66,6 +66,7 @@ export function PlaneFeedback({
     ctx.moveTo(0, horizon);
     ctx.lineTo(w, horizon);
     ctx.stroke();
+    ctx.globalAlpha = Math.max(0, Math.min(1, s.light));
     // the runway's centre line, under the plane
     ctx.strokeStyle = `rgba(255,255,255,${0.22 * (1 - s.alt)})`;
     ctx.lineWidth = 2;
@@ -76,7 +77,6 @@ export function PlaneFeedback({
       ctx.stroke();
     }
 
-    ctx.globalAlpha = Math.max(0, Math.min(1, s.light));
     // contrail: where the plane was, carried back by its speed
     if (s.alt > 0.04) {
       const step = (2 + 4 * s.alt) * 1.2;

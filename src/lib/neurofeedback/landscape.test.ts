@@ -197,3 +197,31 @@ test("a tree is known to need the live service when any of its blocks trains on 
   ).toBe(true);
   expect(hasLandscapeBlock(null)).toBe(false);
 });
+
+test("a burst of windows moves the picture by the clock, not by the windows (H4)", () => {
+  const fixed = {
+    baseline_s: 0,
+    ramp_s: 10,
+    threshold: { mode: "fixed", value: 0.5 },
+  };
+  // one window a second: ten seconds of training on the target
+  const spaced = new LandscapeEngine(config(fixed));
+  let spacedLevel = 0;
+  for (let i = 0; i < 10; i++)
+    spacedLevel = updates(spaced.push(at(i, 0))).at(-1)!.level;
+  // the same ten windows arriving together after the first (a reconnect's backlog)
+  const burst = new LandscapeEngine(config(fixed));
+  const first = updates(burst.push(at(0, 0, 0, { arrivalMs: 0 })))[0].level;
+  let burstLevel = first;
+  for (let i = 1; i < 10; i++)
+    burstLevel = updates(
+      burst.push(at(i, 0, 0, { hostMs: 1000 * i, arrivalMs: 1000 }))
+    ).at(-1)!.level;
+  const oneStep = new LandscapeEngine(config(fixed));
+  oneStep.push(at(0, 0, 0, { arrivalMs: 0 }));
+  const afterOneSecond = updates(
+    oneStep.push(at(1, 0, 0, { arrivalMs: 1000 }))
+  ).at(-1)!.level;
+  expect(burstLevel).toBeCloseTo(afterOneSecond);
+  expect(burstLevel).toBeLessThan(spacedLevel);
+});

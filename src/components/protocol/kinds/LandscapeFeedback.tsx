@@ -37,6 +37,11 @@ import { Stage, useFinish, useLatest } from "./shared";
 
 /** No window for this long: the live service is gone, the record says so. */
 const POSITION_LOST_MS = 10_000;
+/**
+ * No first window in this long: nobody analyses the room (the live service is full,
+ * or off), so the block says so instead of a black stage for the whole plan.
+ */
+export const FIRST_POSITION_MS = 25_000;
 /** A block that never hears enough still ends: its plan plus this much. */
 const GRACE_S = 60;
 const NOTICE_MS = 4000;
@@ -214,7 +219,14 @@ export function LandscapeRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
           else finish(summaryRef.current({ ended: "duration" }));
       }
     };
+    let heard = false;
+    const unheard = setTimeout(() => {
+      if (heard) return;
+      emit.current({ label: "nf_no_position", kind: "system" });
+      setNotice("unavailable");
+    }, FIRST_POSITION_MS);
     const unsubscribe = position.subscribe((point) => {
+      heard = true;
       last = performance.now();
       if (lost) {
         lost = false;
@@ -230,6 +242,7 @@ export function LandscapeRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
     return () => {
       unsubscribe();
       clearInterval(watchdog);
+      clearTimeout(unheard);
     };
   }, [emit, engine, finish, position, summaryRef]);
 

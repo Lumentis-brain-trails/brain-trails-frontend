@@ -43,6 +43,12 @@ export function usePositionFeed(
   const { map, hasLandscape, landscape, lagMs } = room;
   useEffect(() => {
     const now = performance.now();
+    let newest = told.current;
+    while (
+      typeof map.x[newest + 1] === "number" &&
+      typeof map.y[newest + 1] === "number"
+    )
+      newest += 1;
     for (let i = told.current + 1; i < map.x.length; i++) {
       const x = map.x[i];
       const y = map.y[i];
@@ -52,7 +58,9 @@ export function usePositionFeed(
         i,
         x,
         y,
-        hostMs: now,
+        // a burst's older windows ended a second apart before the newest
+        hostMs: now - (newest - i) * 1000,
+        arrivalMs: now,
         lagMs,
         ownMap: hasLandscape,
         epoch: landscape?.epoch ?? null,

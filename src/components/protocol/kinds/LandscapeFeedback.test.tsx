@@ -10,6 +10,7 @@ import { IntlEn } from "@/i18n/testing";
 import messages from "../../../../messages/en.json";
 import { ProtocolRunner } from "../ProtocolRunner";
 import "./index";
+import { FIRST_POSITION_MS } from "./LandscapeFeedback";
 import type { LandscapePoint } from "@/lib/neurofeedback/landscape";
 import { parseProtocol } from "@/lib/protocol/schema";
 import { toWireEvent } from "@/lib/protocol/marker";
@@ -97,6 +98,34 @@ describe("neurofeedback on the landscape, in the runner", () => {
       live_signal: false,
       epoch: 2,
     });
+  });
+
+  test("a live service that never places a window says so instead of a black stage", () => {
+    vi.useFakeTimers();
+    try {
+      const sink = createMemorySink();
+      const { feed } = handFeed();
+      render(
+        <ProtocolRunner
+          protocol={plan("tuning")}
+          seed={1}
+          sink={sink}
+          position={feed}
+          onFinish={vi.fn()}
+          onExit={vi.fn()}
+        />
+      );
+      expect(
+        screen.queryByText(messages.kinds.neurofeedback.needsLive)
+      ).toBeNull();
+      act(() => vi.advanceTimersByTime(FIRST_POSITION_MS + 1));
+      expect(
+        screen.getByText(messages.kinds.neurofeedback.needsLive)
+      ).toBeInTheDocument();
+      expect(sink.all().map((m) => m.label)).toContain("nf_no_position");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("a baseline, then the training follows the person toward the target, and ends", async () => {

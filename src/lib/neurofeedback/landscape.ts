@@ -62,8 +62,13 @@ export interface LandscapePoint {
   i: number;
   x: number;
   y: number;
-  /** `performance.now()` when the frame arrived. */
+  /**
+   * When the window's second ended, on this page's clock (`performance.now()`): its
+   * arrival, moved back a second for each newer window that came in the same burst.
+   */
   hostMs: number;
+  /** `performance.now()` when the frame arrived; a burst shares one. */
+  arrivalMs?: number;
   /** The worker's lag for its newest window, when it said (`window` frames). */
   lagMs: number | null;
   /** Whether the map is the person's own; false on a map this session fitted alone. */
@@ -170,6 +175,7 @@ export class LandscapeEngine {
   private phase: Phase;
   private firstWindow: number | null = null;
   private lastWindow: number | null = null;
+  private lastArrival: number | null = null;
   private baselineEnd: number;
   private baselineCount = 0;
   private baselineValues: number[] = [];
@@ -222,9 +228,17 @@ export class LandscapeEngine {
       }
     }
     this.firstWindow ??= point.i;
-    const dt =
+    const windowsDt =
       this.lastWindow === null ? STEP_S : (point.i - this.lastWindow) * STEP_S;
     this.lastWindow = point.i;
+    // the picture moves with the clock, not with the windows: a burst (a reconnect's
+    // backlog) must not spend several seconds of the luminance limit at once (H4)
+    const arrival = point.arrivalMs ?? point.hostMs;
+    const dt =
+      this.lastArrival === null
+        ? windowsDt
+        : Math.max(0, Math.min(windowsDt, (arrival - this.lastArrival) / 1000));
+    this.lastArrival = arrival;
 
     // the second of EEG this window was made of, on this page's clock
     const end = point.hostMs - (point.lagMs ?? 0);

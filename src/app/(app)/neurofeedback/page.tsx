@@ -37,11 +37,10 @@ import {
   type Feedback,
   MINUTES,
   personalProtocol,
-  storeProtocol,
-  storedProtocol,
+  saveDraft,
 } from "@/lib/neurofeedback/personal";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
-import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
+import { useCurrentWorkspace, useEdition } from "@/lib/workspace";
 
 type Point = [number, number];
 type Where = "focus" | "custom";
@@ -53,9 +52,12 @@ export default function NeurofeedbackPage() {
   const t = useTranslations("neurofeedback");
   const router = useRouter();
   const workspace = useCurrentWorkspace();
+  const edition = useEdition();
   const nfOn = useFeature("neurofeedback");
   const liveOn = useFeature("live");
-  const enabled = nfOn && liveOn;
+  // your own map, in your own space: a link or a workspace switch never makes it a
+  // clinic's or a lab's protocol
+  const enabled = nfOn && liveOn && edition === "personal";
   const landscape = useQuery({
     queryKey: ["my-landscape"],
     queryFn: () => api.get<BrainLandscape>("landscape"),
@@ -66,7 +68,14 @@ export default function NeurofeedbackPage() {
   const focus = map?.presets?.focus ?? null;
   const [where, setWhere] = useState<Where | null>(null);
   const shownWhere: Where = where ?? (focus ? "focus" : "custom");
-  const [custom, setCustom] = useState<Point[]>([]);
+  // points of one drawing of the map: a redrawn map (another epoch) starts them over
+  const [chosen, setChosen] = useState<{ epoch: number; points: Point[] }>({
+    epoch: 0,
+    points: [],
+  });
+  const custom = map && chosen.epoch === map.epoch ? chosen.points : [];
+  const setCustom = (points: Point[]) =>
+    setChosen({ epoch: map?.epoch ?? 0, points });
   const [feedback, setFeedback] = useState<Feedback>("plane");
   const [minutes, setMinutes] = useState<number>(10);
 
@@ -90,7 +99,7 @@ export default function NeurofeedbackPage() {
             points,
             radius,
             epoch: map.epoch,
-            preset: shownWhere,
+            preset: shownWhere === "focus" && focus ? "focus" : "custom",
           },
           feedback,
           minutes,
@@ -301,35 +310,6 @@ function Choice({
       {label}
     </button>
   );
-}
-
-/** Update the person's neurofeedback protocol, or make it the first time. */
-async function saveDraft(
-  draft: unknown,
-  title: string,
-  workspace: { id: string } | undefined
-): Promise<string> {
-  const known = storedProtocol();
-  if (known) {
-    try {
-      const detail = await api.get<ProtocolDetail>(`protocols/${known}`);
-      await api.put(
-        `protocols/${known}/draft`,
-        { draft },
-        { ifMatch: detail.draft_rev ?? 1 }
-      );
-      return known;
-    } catch (error) {
-      // gone, archived or not ours any more: a new one below
-      if (!(error instanceof ApiRequestError)) throw error;
-    }
-  }
-  const made = await api.post<ProtocolDetail>(
-    inWorkspace("protocols", workspace),
-    { title, draft }
-  );
-  storeProtocol(made.id);
-  return made.id;
 }
 
 function problemOf(error: unknown) {
