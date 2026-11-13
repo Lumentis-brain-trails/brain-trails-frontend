@@ -7,7 +7,9 @@
  * The protocol is read through the assignment (`/me/assignments/{id}/protocol`) - the
  * account cannot open the protocol itself - and the run is started with the assignment,
  * so it is recorded for them in their organisation and counts when it finishes. Back,
- * Decline and the end of the run all lead to `/my`; the end shows no score.
+ * Decline and the end of the run all lead to `/my`; the end shows no score. With the
+ * remote console on (T5) the run joins the carer's waiting room, if one is open, and is
+ * published live; the patient sees only a quiet line saying someone follows.
  */
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -18,6 +20,7 @@ import type { MyAssignment } from "@/lib/subjects";
 import { RunProtocol } from "@/components/run/RunProtocol";
 import { EmptyState, ErrorBanner, Spinner, buttonClass } from "@/components/ui";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useFeature } from "@/lib/features";
 
 export default function MyRunPage({
   params,
@@ -27,6 +30,9 @@ export default function MyRunPage({
   const { assignment } = use(params);
   const t = useTranslations("my");
   const errorMessage = useErrorMessage();
+  const remoteConsole = useFeature("console_remote");
+  const liveService = useFeature("live");
+  const remote = remoteConsole && liveService;
   // Read once for this run: after it finishes the assignment may be done and gone from
   // the list, and the end screen must not turn into "nothing to do" under the person.
   const mine = useQuery({
@@ -65,6 +71,7 @@ export default function MyRunPage({
       backHref="/my"
       target={{ assignmentId: assignment }}
       client
+      remote={remote}
     />
   );
 }
