@@ -1345,7 +1345,72 @@
     "building": "Stiamo costruendo il tuo paesaggio. Questa pagina si aggiorna da sola.",
     "redrawn": "La geometria della mappa è stata ridisegnata con la tua ultima registrazione: i punti si confrontano all'interno di questa versione, non con le precedenti.",
     "epoch": "Versione della geometria {epoch}",
-    "sidebarRedrawn": "Ridisegnato"
+    "sidebarRedrawn": "Ridisegnato",
+    "layers": {
+      "title": "Livelli",
+      "intro": "Il piano sono gli stati del tuo cervello; un livello ci solleva sopra qualcos'altro. Scegli un colore per ciascuno: sono trasparenti, così puoi confrontarli sullo stesso terreno.",
+      "ground": "Tieni sotto la mappa del tempo complessivo",
+      "failed": "Non è stato possibile caricare i livelli. Riprova tra un momento.",
+      "stale": "Stiamo ricostruendo la tua mappa per aggiungere i livelli. Questa pagina si aggiorna da sola.",
+      "empty": "Ancora niente da disegnare per questo livello.",
+      "add": "Aggiungi un livello",
+      "addButton": "Aggiungi",
+      "kind": "Cosa mostra l'altezza",
+      "task": "Compito",
+      "label": "Etichetta",
+      "noTasks": "Non hai ancora registrato nessun compito.",
+      "noLabels": "Ancora nessuna risposta ai questionari: le etichette vengono dai questionari dei tuoi protocolli.",
+      "kinds": {
+        "time": "Tempo per ogni esecuzione di un compito",
+        "reach": "Quanto spesso un compito ci è arrivato",
+        "value": "Risposta media a un'etichetta",
+        "threshold": "Risposta sopra o sotto una soglia"
+      },
+      "explain": {
+        "time": "Per un compito, i secondi che hai passato vicino a ogni punto, in media sulle volte in cui l'hai fatto.",
+        "reach": "Per un compito, la quota delle volte in cui l'hai fatto che è arrivata vicino a ogni punto.",
+        "value": "Per una domanda di un questionario (ansia, stress, valenza...), la tua risposta media vicino a ogni punto. Una risposta descrive il blocco che hai valutato.",
+        "threshold": "Per una domanda di un questionario e una soglia, quanto spesso la tua risposta vicino a ogni punto è stata sopra o sotto la soglia."
+      },
+      "name": {
+        "time": "{subject} · tempo",
+        "reach": "{subject} · raggiunto",
+        "value": "{subject} · media",
+        "threshold": "{subject} · {direction, select, below {sotto} other {sopra}} {threshold}"
+      },
+      "unit": {
+        "seconds": "{value} s per esecuzione",
+        "reach": "Raggiunto nel {value}% delle esecuzioni",
+        "threshold": "{value}% delle risposte qui",
+        "answer": "Risposta media {value}",
+        "energy": "Energia {value}"
+      },
+      "color": "Colore di {name}",
+      "remove": "Rimuovi {name}",
+      "removeShort": "Rimuovi",
+      "direction": "Sopra o sotto",
+      "above": "Sopra",
+      "below": "Sotto",
+      "threshold": "Soglia",
+      "energy": "Vista energia: −log(p + ε)",
+      "epsilon": "ε",
+      "cutoff": "Limita a",
+      "items": {
+        "sam": {
+          "valence": "Valenza (SAM)",
+          "arousal": "Attivazione (SAM)",
+          "dominance": "Controllo (SAM)"
+        },
+        "nasa_tlx": {
+          "mental": "Impegno mentale (NASA-TLX)",
+          "physical": "Impegno fisico (NASA-TLX)",
+          "temporal": "Pressione temporale (NASA-TLX)",
+          "performance": "Prestazione (NASA-TLX)",
+          "effort": "Sforzo (NASA-TLX)",
+          "frustration": "Frustrazione (NASA-TLX)"
+        }
+      }
+    }
   },
   "language": {
     "title": "Lingua",

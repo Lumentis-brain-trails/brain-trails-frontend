@@ -1345,7 +1345,72 @@
     "building": "Building your landscape. This page updates by itself.",
     "redrawn": "The map's geometry was redrawn with your latest recording: places on it compare within this version, not with earlier ones.",
     "epoch": "Geometry version {epoch}",
-    "sidebarRedrawn": "Redrawn"
+    "sidebarRedrawn": "Redrawn",
+    "layers": {
+      "title": "Layers",
+      "intro": "The plane is your brain's states; a layer raises something else over it. Pick a colour for each: they are see-through, so you can compare them on the same ground.",
+      "ground": "Keep the time-everywhere map underneath",
+      "failed": "The layers could not be loaded. Try again in a moment.",
+      "stale": "Your map is being rebuilt to add layers. This page updates by itself.",
+      "empty": "Nothing to draw yet for this layer.",
+      "add": "Add a layer",
+      "addButton": "Add",
+      "kind": "What the height shows",
+      "task": "Task",
+      "label": "Label",
+      "noTasks": "No task has been recorded yet.",
+      "noLabels": "No questionnaire answers yet: labels come from the questionnaires in your protocols.",
+      "kinds": {
+        "time": "Time per run of a task",
+        "reach": "How often a task got there",
+        "value": "Average answer to a label",
+        "threshold": "Answer above or below a threshold"
+      },
+      "explain": {
+        "time": "For one task, the seconds you spent near each place, averaged over the times you did it.",
+        "reach": "For one task, the share of the times you did it that came near each place.",
+        "value": "For one questionnaire item (anxiety, stress, valence...), your average answer near each place. An answer describes the block you rated.",
+        "threshold": "For one questionnaire item and a threshold, how often your answer near each place was above or below it."
+      },
+      "name": {
+        "time": "{subject} · time",
+        "reach": "{subject} · reached",
+        "value": "{subject} · average",
+        "threshold": "{subject} · {direction, select, below {below} other {above}} {threshold}"
+      },
+      "unit": {
+        "seconds": "{value} s per run",
+        "reach": "Reached in {value}% of runs",
+        "threshold": "{value}% of answers here",
+        "answer": "Average answer {value}",
+        "energy": "Energy {value}"
+      },
+      "color": "Colour of {name}",
+      "remove": "Remove {name}",
+      "removeShort": "Remove",
+      "direction": "Above or below",
+      "above": "Above",
+      "below": "Below",
+      "threshold": "Threshold",
+      "energy": "Energy view: −log(p + ε)",
+      "epsilon": "ε",
+      "cutoff": "Cap at",
+      "items": {
+        "sam": {
+          "valence": "Valence (SAM)",
+          "arousal": "Arousal (SAM)",
+          "dominance": "Dominance (SAM)"
+        },
+        "nasa_tlx": {
+          "mental": "Mental demand (NASA-TLX)",
+          "physical": "Physical demand (NASA-TLX)",
+          "temporal": "Time pressure (NASA-TLX)",
+          "performance": "Performance (NASA-TLX)",
+          "effort": "Effort (NASA-TLX)",
+          "frustration": "Frustration (NASA-TLX)"
+        }
+      }
+    }
   },
   "language": {
     "title": "Language",

@@ -938,6 +938,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/landscape/layers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Landscape Layers
+         * @description What the caller's other landscape layers are drawn from: runs and answers.
+         *
+         *     Asked only when the reader opens the layers, so the map itself stays light. 409
+         *     `not_ready` while there is no map. A map built before layers existed is answered
+         *     `stale` and a rebuild is queued, the way `GET /landscape` builds a first map.
+         */
+        get: operations["my_landscape_layers_landscape_layers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/landscape/status": {
         parameters: {
             query?: never;
@@ -3098,6 +3122,64 @@ export interface components {
             z: number[][];
         };
         /**
+         * BrainLandscapeLabelOut
+         * @description A self-reported label: a questionnaire item, pooled across protocols by `key`.
+         *
+         *     `text` is the protocol's question for a custom item, null for a fixed instrument's
+         *     (SAM, NASA-TLX), which the page names itself. `scale` is `[low, high]`, null when
+         *     the item was asked on more than one scale.
+         */
+        BrainLandscapeLabelOut: {
+            /** Instrument */
+            instrument: string;
+            /** Item */
+            item: string;
+            /** Key */
+            key: string;
+            /** Scale */
+            scale: number[] | null;
+            /** Text */
+            text: string | null;
+        };
+        /**
+         * BrainLandscapeLayersOut
+         * @description What the Brain Landscape's other layers are drawn from (V3-0016, amended 2026-11-13).
+         *
+         *     The page blurs `runs` on the map's grid (`bounds`, `nx` x `ny`) with the map's own
+         *     width `sigma`, for the task and label the reader picks. `answers` are `[run, label,
+         *     normalised, raw]`, `normalised` in `[0, 1]` on the item's scale. `stale` says the map
+         *     was built before layers were: the runs are empty and a rebuild has been queued.
+         */
+        BrainLandscapeLayersOut: {
+            /** Answers */
+            answers: [
+                number,
+                number,
+                number,
+                number
+            ][];
+            /** Bounds */
+            bounds: number[];
+            /** Epoch */
+            epoch: number;
+            /** Labels */
+            labels: components["schemas"]["BrainLandscapeLabelOut"][];
+            /** Nx */
+            nx: number;
+            /** Ny */
+            ny: number;
+            /** Pending */
+            pending: boolean;
+            /** Runs */
+            runs: components["schemas"]["BrainLandscapeRunOut"][];
+            /** Sigma */
+            sigma: number;
+            /** Stale */
+            stale: boolean;
+            /** Version */
+            version: number;
+        };
+        /**
          * BrainLandscapeOut
          * @description A person's brain landscape (V3-0016).
          *
@@ -3143,6 +3225,23 @@ export interface components {
             trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
             /** Version */
             version: number;
+        };
+        /**
+         * BrainLandscapeRunOut
+         * @description One run of one block, as its windows on the map: what a task layer is drawn from.
+         *
+         *     `dt` is what one window is worth in seconds. Windows outside the map's frame are
+         *     kept: the page leaves them off the grid, as the map's own height does.
+         */
+        BrainLandscapeRunOut: {
+            /** Dt */
+            dt: number;
+            /** Task */
+            task: string | null;
+            /** X */
+            x: number[];
+            /** Y */
+            y: number[];
         };
         /**
          * BrainLandscapeStatusOut
@@ -7007,6 +7106,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrainLandscapeOut"];
+                };
+            };
+        };
+    };
+    my_landscape_layers_landscape_layers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeLayersOut"];
                 };
             };
         };
