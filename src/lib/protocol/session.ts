@@ -14,7 +14,7 @@
 import { api } from "@/lib/api";
 import type { CaptureFiles } from "@/lib/muse/captureFiles";
 import { uploadToStorage } from "@/lib/upload";
-import type { WireEvent } from "./marker";
+import { MAX_EVENTS_PER_BATCH, type WireEvent } from "./marker";
 import type { components } from "@/lib/api-types";
 import type { ProtocolDefinition } from "./types";
 
@@ -120,24 +120,34 @@ export interface FinishOptions {
   aborted: boolean;
   /** The uploaded capture; omitted only for an aborted run that captured nothing. */
   capture?: CaptureKeys;
-  /** The whole timeline, re-sent; the backend drops what it already has. */
+  /**
+   * Events the batches may not have delivered; the backend drops what it already has.
+   * Posted through the events endpoint in batches before the finish itself, so no
+   * request grows with the length of the run (the BFF caps a body at 4.5 MB).
+   */
   events?: WireEvent[];
 }
 
 /**
- * Close a session: store its capture, merge its timeline, start the analysis.
+ * Close a session: send the events still owed, store the capture, merge the timeline,
+ * start the analysis.
  *
- * Idempotent on the backend, so a failed call can simply be retried.
+ * Idempotent on the backend (events are de-duplicated on `(t, type, seq)` at finish),
+ * so a failed call can simply be retried.
  */
-export function finishSession(
+export async function finishSession(
   sessionId: string,
   options: FinishOptions
 ): Promise<StimulusSession> {
+  const events = options.events ?? [];
+  for (let i = 0; i < events.length; i += MAX_EVENTS_PER_BATCH)
+    await api.post(`sessions/${sessionId}/events`, {
+      events: events.slice(i, i + MAX_EVENTS_PER_BATCH),
+    });
   return api.post<StimulusSession>(`sessions/${sessionId}/finish`, {
     summary: options.summary,
     aborted: options.aborted,
     ...(options.capture ? { capture: options.capture } : {}),
-    ...(options.events ? { events: options.events } : {}),
   });
 }
 
