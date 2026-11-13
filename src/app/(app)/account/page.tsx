@@ -33,6 +33,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { TransferCard } from "@/components/account/TransferCard";
 
 export default function AccountPage() {
   const signOut = useSignOut();
@@ -138,6 +139,8 @@ export default function AccountPage() {
         <section>
           {!application.isLoading && <BetaCard data={application.data} />}
         </section>
+
+        {me.data?.role === "admin" && <TransferCard />}
 
         <section>
           <SectionTitle>{t("data.title")}</SectionTitle>

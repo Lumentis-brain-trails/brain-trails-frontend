@@ -34,6 +34,11 @@ const ALLOWED_PREFIXES = [
   "assignments/",
   // the client shell's own reads: what was assigned, what was run (V4-0006)
   "me/",
+  // an admin's own recordings between environments: peers, links, imports (backend
+  // app.transfers); the manifest is fetched server to server, never through here
+  "transfers/peers",
+  "transfers/exports",
+  "transfers/imports",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];
