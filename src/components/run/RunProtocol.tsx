@@ -11,7 +11,9 @@
  * patient's own run: no scores at the end and no way into the recording - they see
  * neither (V4-0006).
  * Consent, the content warning and - for a protocol with visual blocks - the
- * photosensitivity warning come first (`ConsentGate`), then the headband pre-flight; Start opens a session, which returns the published version's
+ * photosensitivity warning come first (`ConsentGate`), then the context questionnaire
+ * (`ContextQuestionnaire`, flag `context_questionnaire`; its answers are stored with the
+ * session once it exists), then the headband pre-flight; Start opens a session, which returns the published version's
  * tree, the run's seed and links to its media. The tree is resolved here
  * (`resolvePlan`: loops, shuffles, jitter), the media are bound to it and the flat plan
  * is posted back before the first block, so review reads what was shown rather than what
@@ -43,6 +45,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { ContextQuestionnaire } from "@/components/context/ContextQuestionnaire";
 import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
 import "@/components/protocol/kinds";
 import {
@@ -59,6 +62,12 @@ import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
 import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
 import { useUploadErrorMessage } from "@/lib/upload";
+import {
+  type ContextAnswers,
+  saveSessionContext,
+  sessionContext,
+  useContextEnabled,
+} from "@/lib/context";
 import { useFocusMode } from "@/lib/focus";
 import {
   BluetoothMuse,
@@ -94,6 +103,7 @@ const SYNC_TIMEOUT_MS = 15_000;
 
 type Phase =
   | "consent"
+  | "context"
   | "preflight"
   | "syncing"
   | "running"
@@ -177,6 +187,16 @@ export function RunProtocol({
   const muse = useMuse(createDevice);
 
   const [phase, setPhase] = useState<Phase>("consent");
+  // The context questionnaire (flag `context_questionnaire`) comes after consent: its
+  // answers, `null` once skipped, wait here for Start to create the session they belong
+  // to, with the moment they were given.
+  const contextEnabled = useContextEnabled();
+  const afterConsent: Phase = contextEnabled ? "context" : "preflight";
+  const [context, setContext] = useState<{
+    answers: ContextAnswers | null;
+    at: Date;
+  } | null>(null);
+  const contextSent = useRef<string | null>(null);
   // The person ticked the photosensitivity warning; the session start says so (H4).
   const [acknowledged, setAcknowledged] = useState(false);
   // The detail says whether the protocol's current version is visual; a run of an
@@ -334,6 +354,17 @@ export function RunProtocol({
     return () => window.clearInterval(timer);
   }, [close, muse, phase]);
 
+  // The questionnaire's answers join the session once Start has created it. Best effort:
+  // a run is never held up or lost because its context could not be stored.
+  useEffect(() => {
+    if (!session || !context || contextSent.current === session.id) return;
+    contextSent.current = session.id;
+    saveSessionContext(
+      session.id,
+      sessionContext(context.answers, context.at)
+    ).catch(() => {});
+  }, [context, session]);
+
   const onFinish = useCallback(
     (taskResults: TaskResult[], produced: readonly Marker[]) => {
       markers.current = produced;
@@ -369,13 +400,27 @@ export function RunProtocol({
             photosensitive={photosensitive}
             onAccept={() => {
               setAcknowledged(photosensitive);
-              setPhase("preflight");
+              setPhase(afterConsent);
             }}
             onDecline={() => router.push(backHref)}
           />
         ) : (
-          <Skip onDone={() => setPhase("preflight")} />
+          <Skip onDone={() => setPhase(afterConsent)} />
         )}
+      </main>
+    );
+
+  if (phase === "context")
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <h1 className="type-title mb-6">{shown.title}</h1>
+        <ContextQuestionnaire
+          personaliseHref={client ? null : "/account#context"}
+          onDone={(answers) => {
+            setContext({ answers, at: new Date() });
+            setPhase("preflight");
+          }}
+        />
       </main>
     );
 

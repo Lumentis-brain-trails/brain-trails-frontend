@@ -19,6 +19,8 @@ const ALLOWED_PREFIXES = [
   "annotations",
   "config",
   "taxonomies",
+  // the questionnaire before every run, personal per account (context variables)
+  "context-variables",
   // public: whether the stand is open, asked by the registration form (backend V3-0013)
   "fair",
   "workspaces",

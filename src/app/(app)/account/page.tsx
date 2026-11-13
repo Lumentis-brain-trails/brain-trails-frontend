@@ -15,6 +15,8 @@ import {
 } from "@/components/account/ProfileCard";
 import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
 import { LanguageCard } from "@/components/account/LanguageCard";
+import { ContextSettingsCard } from "@/components/account/ContextSettingsCard";
+import { useContextEnabled } from "@/lib/context";
 import {
   type ConsentData,
   PrivacyCard,
@@ -41,6 +43,7 @@ export default function AccountPage() {
   const [confirm, setConfirm] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const contextEnabled = useContextEnabled();
 
   const me = useQuery({
     queryKey: ["me"],
@@ -125,6 +128,8 @@ export default function AccountPage() {
             <ProfileCard data={profile.data} missing={!profile.data} />
           )}
         </section>
+
+        {contextEnabled && <ContextSettingsCard />}
 
         <section>
           {!consent.isLoading && <PrivacyCard data={consent.data} />}
