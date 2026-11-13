@@ -1348,8 +1348,8 @@
     "sidebarRedrawn": "Redrawn",
     "layers": {
       "title": "Layers",
-      "intro": "The plane is your brain's states; a layer raises something else over it. Pick a colour for each: they are see-through, so you can compare them on the same ground.",
-      "ground": "Keep the time-everywhere map underneath",
+      "intro": "The plane is your brain's states; a layer shows something else over it. Pick a colour for each and lay two over each other: on the map they are shadows that blend where they meet; as a relief, one surface coloured by which layer is higher.",
+      "ground": "Show where all your time went underneath",
       "failed": "The layers could not be loaded. Try again in a moment.",
       "stale": "Your map is being rebuilt to add layers. This page updates by itself.",
       "empty": "Nothing to draw yet for this layer.",
@@ -1409,6 +1409,12 @@
           "effort": "Effort (NASA-TLX)",
           "frustration": "Frustration (NASA-TLX)"
         }
+      },
+      "full": "{max, plural, one {One layer} other {# layers}} at most: remove one to add another.",
+      "view": "How to show the layers",
+      "views": {
+        "map": "Map",
+        "relief": "Relief"
       }
     }
   },

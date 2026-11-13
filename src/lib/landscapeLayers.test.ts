@@ -9,7 +9,10 @@ import {
   isFrequency,
   layerTasks,
   reviveLayers,
+  mix,
+  rgba,
   shade,
+  tint,
 } from "./landscapeLayers";
 
 /** A 21 x 21 map over [0, 20] (one unit per cell), blur width 1. */
@@ -94,7 +97,7 @@ describe("computeLayer", () => {
     expect(field.z[5][5]).toBeCloseTo(1, 5);
     expect(field.value[0][19]).toBeCloseTo(0, 3);
     // empty ground is not drawn: no flat sheet over the map
-    expect(field.z[0][19]).toBeNull();
+    expect(field.z[0][19]).toBeCloseTo(0, 3);
   });
 
   it("reach: the share of the task's runs that came near each place", () => {
@@ -120,9 +123,13 @@ describe("computeLayer", () => {
     expect(field.unit).toBe("answer");
     expect(field.value[5][5]).toBeCloseTo(8, 3);
     expect(field.value[15][15]).toBeCloseTo(3, 3);
-    expect(field.z[5][5]).toBeCloseTo(0.8, 3);
+    // drawn softened: it slopes down from the answer (0.8) instead of standing as a wall
+    expect(field.z[5][5]).toBeGreaterThan(0.5);
+    expect(field.z[5][5]).toBeLessThan(0.8);
+    expect(field.z[5][7]).toBeLessThan(field.z[5][5]);
     expect(field.value[10][10]).toBeNull();
-    expect(field.z[0][0]).toBeNull();
+    // no answer there: the hover is blank and the layer lies on the floor
+    expect(field.z[0][0]).toBeCloseTo(0, 3);
   });
 
   it("threshold: how often the answer near a place was above or below it", () => {
@@ -228,6 +235,12 @@ describe("helpers", () => {
   it("darkens a colour, and leaves anything else alone", () => {
     expect(shade("#ffffff", 0.5)).toBe("#808080");
     expect(shade("red", 0.5)).toBe("red");
+    expect(tint("#000000", 0.5)).toBe("#808080");
+    expect(tint("red", 0.5)).toBe("red");
+    expect(rgba("#ff0080", 0.5)).toBe("rgba(255,0,128,0.5)");
+    expect(rgba("red", 0.5)).toBe("red");
+    expect(mix("#000000", "#ffffff", 0.5)).toBe("#808080");
+    expect(mix("red", "#ffffff", 0.5)).toBe("red");
   });
 });
 
@@ -235,7 +248,6 @@ describe("reviveLayers", () => {
   it("keeps what still applies and repairs what it can", () => {
     const kept = reviveLayers(
       [
-        spec({ id: "a", kind: "time", task: "A" }),
         { ...spec({ id: "b", kind: "value", label: "anxiety" }), energy: true },
         {
           ...spec({ id: "c", kind: "reach", task: "A" }),
@@ -251,10 +263,17 @@ describe("reviveLayers", () => {
       ],
       source()
     );
-    expect(kept.map((l) => l.id)).toEqual(["a", "b", "c"]);
-    expect(kept[1].energy).toBe(false);
-    expect(kept[2].epsilon).toBe(DEFAULT_EPSILON);
-    expect(kept[2].cutoff).toBeNull();
+    expect(kept.map((l) => l.id)).toEqual(["b", "c"]);
+    expect(kept[0].energy).toBe(false);
+    expect(kept[1].epsilon).toBe(DEFAULT_EPSILON);
+    expect(kept[1].cutoff).toBeNull();
+  });
+
+  it("keeps two layers at most", () => {
+    const three = ["a", "b", "c"].map((id) =>
+      spec({ id, kind: "time", task: "A" })
+    );
+    expect(reviveLayers(three, source()).map((l) => l.id)).toEqual(["a", "b"]);
   });
 
   it("reads nothing from something that is not a list", () => {

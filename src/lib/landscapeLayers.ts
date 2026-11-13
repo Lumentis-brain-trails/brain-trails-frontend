@@ -65,21 +65,28 @@ export interface LayerSpec {
 
 /** A layer evaluated on the grid. */
 export interface LayerField {
-  /** What is drawn, `[row][column]`, scaled to about 0..1; null where nothing is known. */
-  z: (number | null)[][];
+  /**
+   * What is drawn, `[row][column]`, scaled to about 0..1. Never blank: a layer rises
+   * from the floor and sinks back to it, so it stands on the map instead of floating
+   * as islands with cliff edges, and its contours stay smooth.
+   */
+  z: number[][];
   /** What the hover says at each point, in the layer's own units. */
   value: (number | null)[][];
   /** Which unit `value` is in. */
   unit: "seconds" | "reach" | "threshold" | "answer" | "energy";
 }
 
-/**
- * A task layer is not drawn below this share of its peak: a flat sheet at zero over the
- * whole map would hide the layers and the ground beneath it.
- */
-export const FLOOR = 0.02;
-/** Below this many windows' worth of weight near a place, an average there is not drawn. */
+/** Below this many windows' worth of weight near a place, an average there is not given. */
 export const MIN_SUPPORT = 0.5;
+/**
+ * From this many windows' worth of weight near a place, an answer layer stands at its
+ * full height; with less it sinks smoothly towards the floor, so where few windows went
+ * says little instead of ending in a cliff.
+ */
+export const FULL_SUPPORT = 2;
+/** At most this many layers at once: more stacked translucent surfaces stop reading. */
+export const MAX_LAYERS = 2;
 export const DEFAULT_EPSILON = 0.01;
 /** Kernels stop at four widths, like `scipy.ndimage.gaussian_filter`'s default. */
 const TRUNCATE = 4;
@@ -189,7 +196,9 @@ export function blurGrid(
   nx: number,
   ny: number,
   sx: number,
-  sy: number
+  sy: number,
+  /** Count windows (one is 1 at its place); false keeps the data's level (a smoothing). */
+  count = true
 ): Float64Array {
   const kx = kernel(sx);
   const ky = kernel(sy);
@@ -215,7 +224,7 @@ export function blurGrid(
         const jj = j + k;
         if (jj >= 0 && jj < ny) s += pass[jj * nx + i] * ky[k + ry];
       }
-      out[j * nx + i] = sx > 0 && sy > 0 ? s * scale : s;
+      out[j * nx + i] = count && sx > 0 && sy > 0 ? s * scale : s;
     }
   }
   return out;
@@ -262,7 +271,7 @@ function windowsOf(
   return out;
 }
 
-function rows(grid: Grid, cell: (index: number) => number | null) {
+function rows<T extends number | null>(grid: Grid, cell: (index: number) => T) {
   return Array.from({ length: grid.ny }, (_, j) =>
     Array.from({ length: grid.nx }, (_, i) => cell(j * grid.nx + i))
   );
@@ -311,9 +320,7 @@ export function computeLayer(
         ) / runs.length;
       const peak = Math.max(...perRun) || 1;
       field = {
-        z: rows(grid, (c) =>
-          perRun[c] / peak >= FLOOR ? perRun[c] / peak : null
-        ),
+        z: rows(grid, (c) => perRun[c] / peak),
         value: rows(grid, (c) => perRun[c]),
         unit: "seconds",
       };
@@ -324,7 +331,7 @@ export function computeLayer(
         total.set(reached(grid, source.runs[r]).map((v, c) => v + total[c]));
       const share = total.map((v) => v / runs.length);
       field = {
-        z: rows(grid, (c) => (share[c] >= FLOOR ? share[c] : null)),
+        z: rows(grid, (c) => share[c]),
         value: rows(grid, (c) => share[c]),
         unit: "reach",
       };
@@ -347,6 +354,20 @@ export function computeLayer(
       grid.sy
     );
     const known = (c: number) => support[c] >= MIN_SUPPORT;
+    const confidence = support.map((v) => Math.min(1, v / FULL_SUPPORT));
+    // an answer layer changes fast where its support ends; drawn, it is softened once
+    // more at the map's width so its sides slope like a hill's instead of a wall's
+    const soften = (values: Float64Array) => {
+      const drawn = blurGrid(
+        values.map((v, c) => v * confidence[c]),
+        grid.nx,
+        grid.ny,
+        grid.sx,
+        grid.sy,
+        false
+      );
+      return (c: number) => drawn[c];
+    };
     const ratio = (weight: (run: number) => number) => {
       const top = blurGrid(
         splat(grid, windowsOf(source, runs, weight)),
@@ -363,7 +384,7 @@ export function computeLayer(
       const mean = ratio((r) => answers.get(r)?.norm ?? 0);
       const [low, high] = label.scale ?? [0, 1];
       field = {
-        z: rows(grid, (c) => (known(c) ? mean[c] : null)),
+        z: rows(grid, soften(mean)),
         value: rows(grid, (c) =>
           known(c) ? low + mean[c] * (high - low) : null
         ),
@@ -381,11 +402,14 @@ export function computeLayer(
       };
       const share = ratio(passes);
       field = {
-        z: rows(grid, (c) => (known(c) ? share[c] : null)),
+        z: rows(grid, soften(share)),
         value: rows(grid, (c) => (known(c) ? share[c] : null)),
         unit: "threshold",
       };
-      frequency = { p: share, mask: known };
+      frequency = {
+        p: share.map((v, c) => v * confidence[c]),
+        mask: known,
+      };
     }
   }
 
@@ -440,7 +464,7 @@ function energy(grid: Grid, frequency: Frequency, spec: LayerSpec): LayerField {
   };
   const shown = (c: number) => !frequency.mask || frequency.mask(c);
   return {
-    z: rows(grid, (c) => (shown(c) ? u(c) / (ceiling || 1) : null)),
+    z: rows(grid, (c) => u(c) / (ceiling || 1)),
     value: rows(grid, (c) => (shown(c) ? u(c) : null)),
     unit: "energy",
   };
@@ -465,43 +489,46 @@ export function reviveLayers(raw: unknown, source: LayerSource): LayerSpec[] {
   if (!Array.isArray(raw)) return [];
   const tasks = new Set(layerTasks(source));
   const labels = new Set(source.labels.map((l) => l.key));
-  return raw.flatMap((entry): LayerSpec[] => {
-    if (typeof entry !== "object" || entry === null) return [];
-    const s = entry as Partial<LayerSpec>;
-    if (
-      typeof s.id !== "string" ||
-      !LAYER_KINDS.includes(s.kind as LayerKind) ||
-      typeof s.color !== "string" ||
-      !/^#[0-9a-f]{6}$/i.test(s.color)
-    )
-      return [];
-    const kind = s.kind as LayerKind;
-    if ((kind === "time" || kind === "reach") && !tasks.has(s.task ?? ""))
-      return [];
-    if (
-      (kind === "value" || kind === "threshold") &&
-      !labels.has(s.label ?? "")
-    )
-      return [];
-    return [
-      {
-        id: s.id,
-        kind,
-        task: s.task,
-        label: s.label,
-        threshold: typeof s.threshold === "number" ? s.threshold : undefined,
-        direction: s.direction === "below" ? "below" : "above",
-        color: s.color,
-        visible: s.visible !== false,
-        energy: s.energy === true && isFrequency(kind),
-        epsilon:
-          typeof s.epsilon === "number" && s.epsilon > 0
-            ? s.epsilon
-            : DEFAULT_EPSILON,
-        cutoff: typeof s.cutoff === "number" && s.cutoff > 0 ? s.cutoff : null,
-      },
-    ];
-  });
+  return raw
+    .flatMap((entry): LayerSpec[] => {
+      if (typeof entry !== "object" || entry === null) return [];
+      const s = entry as Partial<LayerSpec>;
+      if (
+        typeof s.id !== "string" ||
+        !LAYER_KINDS.includes(s.kind as LayerKind) ||
+        typeof s.color !== "string" ||
+        !/^#[0-9a-f]{6}$/i.test(s.color)
+      )
+        return [];
+      const kind = s.kind as LayerKind;
+      if ((kind === "time" || kind === "reach") && !tasks.has(s.task ?? ""))
+        return [];
+      if (
+        (kind === "value" || kind === "threshold") &&
+        !labels.has(s.label ?? "")
+      )
+        return [];
+      return [
+        {
+          id: s.id,
+          kind,
+          task: s.task,
+          label: s.label,
+          threshold: typeof s.threshold === "number" ? s.threshold : undefined,
+          direction: s.direction === "below" ? "below" : "above",
+          color: s.color,
+          visible: s.visible !== false,
+          energy: s.energy === true && isFrequency(kind),
+          epsilon:
+            typeof s.epsilon === "number" && s.epsilon > 0
+              ? s.epsilon
+              : DEFAULT_EPSILON,
+          cutoff:
+            typeof s.cutoff === "number" && s.cutoff > 0 ? s.cutoff : null,
+        },
+      ];
+    })
+    .slice(0, MAX_LAYERS);
 }
 
 /** A colour darkened towards black by `amount` (0..1): a layer's shaded low ground. */
@@ -512,5 +539,41 @@ export function shade(color: string, amount: number): string {
     Math.round(parseInt(hex.slice(k, k + 2), 16) * (1 - amount))
       .toString(16)
       .padStart(2, "0");
+  return `#${channel(0)}${channel(2)}${channel(4)}`;
+}
+
+/** A colour lightened towards white by `amount` (0..1): a layer's pale foot. */
+export function tint(color: string, amount: number): string {
+  const hex = /^#([0-9a-f]{6})$/i.exec(color)?.[1];
+  if (!hex) return color;
+  const channel = (k: number) => {
+    const v = parseInt(hex.slice(k, k + 2), 16);
+    return Math.round(v + (255 - v) * amount)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${channel(0)}${channel(2)}${channel(4)}`;
+}
+
+/** A `#rrggbb` colour as `rgba(...)` with `alpha`: a layer's translucent shadow. */
+export function rgba(color: string, alpha: number): string {
+  const hex = /^#([0-9a-f]{6})$/i.exec(color)?.[1];
+  if (!hex) return color;
+  const [r, g, b] = [0, 2, 4].map((k) => parseInt(hex.slice(k, k + 2), 16));
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Two `#rrggbb` colours mixed, `t` of the way from `a` to `b`. */
+export function mix(a: string, b: string, t: number): string {
+  const ha = /^#([0-9a-f]{6})$/i.exec(a)?.[1];
+  const hb = /^#([0-9a-f]{6})$/i.exec(b)?.[1];
+  if (!ha || !hb) return a;
+  const channel = (k: number) => {
+    const va = parseInt(ha.slice(k, k + 2), 16);
+    const vb = parseInt(hb.slice(k, k + 2), 16);
+    return Math.round(va + (vb - va) * t)
+      .toString(16)
+      .padStart(2, "0");
+  };
   return `#${channel(0)}${channel(2)}${channel(4)}`;
 }

@@ -1348,8 +1348,8 @@
     "sidebarRedrawn": "Ridisegnato",
     "layers": {
       "title": "Livelli",
-      "intro": "Il piano sono gli stati del tuo cervello; un livello ci solleva sopra qualcos'altro. Scegli un colore per ciascuno: sono trasparenti, così puoi confrontarli sullo stesso terreno.",
-      "ground": "Tieni sotto la mappa del tempo complessivo",
+      "intro": "Il piano sono gli stati del tuo cervello; un livello ci mostra sopra qualcos'altro. Scegli un colore per ciascuno e sovrapponine due: sulla mappa sono ombre che si mescolano dove si incontrano; come rilievo, un'unica superficie colorata da quale livello è più alto.",
+      "ground": "Mostra sotto dove è andato tutto il tuo tempo",
       "failed": "Non è stato possibile caricare i livelli. Riprova tra un momento.",
       "stale": "Stiamo ricostruendo la tua mappa per aggiungere i livelli. Questa pagina si aggiorna da sola.",
       "empty": "Ancora niente da disegnare per questo livello.",
@@ -1409,6 +1409,12 @@
           "effort": "Sforzo (NASA-TLX)",
           "frustration": "Frustrazione (NASA-TLX)"
         }
+      },
+      "full": "Al massimo {max, plural, one {un livello} other {# livelli}}: rimuovine uno per aggiungerne un altro.",
+      "view": "Come mostrare i livelli",
+      "views": {
+        "map": "Mappa",
+        "relief": "Rilievo"
       }
     }
   },

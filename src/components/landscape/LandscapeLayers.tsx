@@ -17,14 +17,16 @@ import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
 import {
   type DrawnLayer,
   LayeredSurface,
+  type LayerView,
 } from "@/components/landscape/LayeredSurface";
-import { Button, Input, Select, cn } from "@/components/ui";
+import { Button, Input, Segmented, Select, cn } from "@/components/ui";
 import { api } from "@/lib/api";
 import type { BrainLandscape } from "@/lib/brainLandscape";
 import {
   DEFAULT_EPSILON,
   LAYER_COLORS,
   LAYER_KINDS,
+  MAX_LAYERS,
   type LayerField,
   type LayerKind,
   type LayerLabel,
@@ -86,6 +88,7 @@ export function LandscapeLayers({
   });
   const data = source.data;
   const [ground, setGround] = useState(true);
+  const [view, setView] = useState<LayerView>("map");
   // the stored layers, read once the person's tasks and labels are known; the reader's
   // own changes replace them from then on
   const remembered = useMemo(
@@ -157,11 +160,25 @@ export function LandscapeLayers({
   return (
     <div className="space-y-4">
       <div>
+        {drawn.length > 0 && (
+          <div className="mb-2 flex justify-end px-2">
+            <Segmented
+              label={t("view")}
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "map", label: t("views.map") },
+                { value: "relief", label: t("views.relief") },
+              ]}
+            />
+          </div>
+        )}
         {drawn.length > 0 ? (
           <LayeredSurface
             landscape={landscape}
             layers={drawn}
             ground={ground}
+            view={view}
             height={height}
             title={title}
           />
@@ -210,28 +227,34 @@ export function LandscapeLayers({
                 />
               ))}
             </ul>
-            <AddLayer
-              tasks={tasks}
-              labels={labels}
-              labelName={labelName}
-              onAdd={(spec) =>
-                setLayers((all) => {
-                  const list = all;
-                  return [
-                    ...list,
-                    {
-                      ...spec,
-                      id: `${Date.now().toString(36)}-${list.length}`,
-                      color: LAYER_COLORS[list.length % LAYER_COLORS.length],
-                      visible: true,
-                      energy: false,
-                      epsilon: DEFAULT_EPSILON,
-                      cutoff: null,
-                    },
-                  ];
-                })
-              }
-            />
+            {layers.length >= MAX_LAYERS ? (
+              <p className="type-caption text-ink-3">
+                {t("full", { max: MAX_LAYERS })}
+              </p>
+            ) : (
+              <AddLayer
+                tasks={tasks}
+                labels={labels}
+                labelName={labelName}
+                onAdd={(spec) =>
+                  setLayers((all) => {
+                    const list = all;
+                    return [
+                      ...list,
+                      {
+                        ...spec,
+                        id: `${Date.now().toString(36)}-${list.length}`,
+                        color: LAYER_COLORS[list.length % LAYER_COLORS.length],
+                        visible: true,
+                        energy: false,
+                        epsilon: DEFAULT_EPSILON,
+                        cutoff: null,
+                      },
+                    ];
+                  })
+                }
+              />
+            )}
           </>
         )}
       </aside>
