@@ -155,6 +155,9 @@ export function liveLandscape(frame: LiveFrame): BrainLandscape {
     categories: (frame.categories as BrainLandscape["categories"]) ?? [],
     cells: (frame.cells as BrainLandscape["cells"]) ?? [],
     trail: null,
+    sigma: typeof frame.sigma === "number" ? frame.sigma : null,
+    // the presets are the stored map's, made after a recording
+    presets: {},
   };
 }
 
@@ -329,7 +332,15 @@ export function applyFrame(
     case "settings":
       return { ...room, pauseOnLostSight: frame.pause_on_lost_sight === true };
     case "room":
-      return { ...room, producer: frame.producer as RoomView["producer"] };
+      return {
+        ...room,
+        producer: frame.producer as RoomView["producer"],
+        // the producer joined after this observer's hello: the map is known only now
+        hasLandscape:
+          typeof frame.landscape === "boolean"
+            ? frame.landscape
+            : room.hasLandscape,
+      };
     case "error":
       return { ...room, error: String(frame.code ?? "error") };
     default:

@@ -391,4 +391,20 @@ describe("the room an observer sees", () => {
     expect(room.producer).toBe("ended");
     expect(room.ended).toBe(true);
   });
+
+  test("learns the map from the producer's join when its hello came first", () => {
+    let room = applyFrame(emptyRoom(), {
+      type: "hello",
+      role: "observer",
+      landscape: false,
+      producer: null,
+    });
+    expect(room.hasLandscape).toBe(false);
+    room = applyFrame(room, { type: "room", producer: "on", landscape: true });
+    expect(room.producer).toBe("on");
+    expect(room.hasLandscape).toBe(true);
+    // the producer leaving says nothing about the map
+    room = applyFrame(room, { type: "room", producer: "lost" });
+    expect(room.hasLandscape).toBe(true);
+  });
 });

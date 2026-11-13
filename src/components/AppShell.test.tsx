@@ -145,6 +145,21 @@ test("the Brain Landscape is marked when its map was redrawn since last seen", a
   });
 });
 
+test("neurofeedback sits under Protocols in the personal rail, only when it is on", () => {
+  const keys = (
+    on: boolean,
+    e: Parameters<typeof sectionsFor>[0] = "personal"
+  ) => sectionsFor(e, { neurofeedback: on }).map((s) => s.key);
+  expect(keys(false)).not.toContain("neurofeedback");
+  expect(keys(true).slice(0, 3)).toEqual([
+    "home",
+    "protocols",
+    "neurofeedback",
+  ]);
+  // a person's own map: never in an organisation's rail
+  expect(keys(true, "therapy")).not.toContain("neurofeedback");
+});
+
 test("an organisation's rail has its people and no personal map", () => {
   const keys = (e: Parameters<typeof sectionsFor>[0]) =>
     sectionsFor(e).map((s) => s.key);

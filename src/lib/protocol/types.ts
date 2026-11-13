@@ -13,6 +13,7 @@
 import type { ComponentType } from "react";
 import type { ZodType } from "zod";
 import type { EegPacket } from "@/lib/neurofeedback/engine";
+import type { LandscapePoint } from "@/lib/neurofeedback/landscape";
 import type { MarkerDraft, MarkerMeta } from "./marker";
 import type { TrialRecord } from "./metrics";
 
@@ -24,6 +25,15 @@ import type { TrialRecord } from "./metrics";
 export interface EegFeed {
   /** Call `listener` with every packet from now on; returns the unsubscribe. */
   subscribe(listener: (packet: EegPacket) => void): () => void;
+}
+
+/**
+ * Where the person is on their own landscape, window by window, from the live service
+ * (V4-0010): what a `landscape_region` neurofeedback block trains on.
+ */
+export interface PositionFeed {
+  /** Call `listener` with every window placed from now on; returns the unsubscribe. */
+  subscribe(listener: (point: LandscapePoint) => void): () => void;
 }
 
 /** An operator's adjustment of the kind on screen: `nudge_threshold` (V4-0009). */
@@ -73,6 +83,11 @@ export interface TaskContext<C = unknown> {
    * other kind may show anything derived from the signal during a run (V3-0007).
    */
   signal?: EegFeed;
+  /**
+   * Where the person is on their landscape (V4-0010); absent when the run is not
+   * published to the live service. Only `neurofeedback` reads it, as `signal`.
+   */
+  position?: PositionFeed;
   /** The operator's adjustments of this step; absent without a console. */
   adjustments?: AdjustmentPort;
 }

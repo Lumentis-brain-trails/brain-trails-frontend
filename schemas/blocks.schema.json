@@ -1054,7 +1054,58 @@
             "smr",
             "beta",
             "theta_beta",
-            "alpha_theta"
+            "alpha_theta",
+            "landscape_region"
+          ]
+        },
+        "feedback": {
+          "default": "video",
+          "type": "string",
+          "enum": [
+            "video",
+            "plane",
+            "tuning",
+            "ribbons"
+          ]
+        },
+        "targets": {
+          "type": "object",
+          "properties": {
+            "points": {
+              "minItems": 1,
+              "maxItems": 3,
+              "type": "array",
+              "items": {
+                "minItems": 2,
+                "maxItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "radius": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "preset": {
+              "default": "custom",
+              "type": "string",
+              "enum": [
+                "focus",
+                "custom"
+              ]
+            }
+          },
+          "required": [
+            "points",
+            "radius",
+            "epoch"
           ]
         },
         "direction": {
@@ -1194,45 +1245,89 @@
           }
         }
       },
-      "anyOf": [
+      "allOf": [
         {
-          "required": [
-            "src"
-          ]
-        },
-        {
-          "required": [
-            "media_id"
-          ]
-        }
-      ],
-      "if": {
-        "properties": {
-          "baseline_s": {
-            "const": 0
-          }
-        },
-        "required": [
-          "baseline_s"
-        ]
-      },
-      "then": {
-        "properties": {
-          "threshold": {
+          "if": {
             "properties": {
-              "mode": {
-                "const": "fixed"
+              "feedback": {
+                "not": {
+                  "const": "video"
+                }
               }
             },
             "required": [
-              "mode"
+              "feedback"
+            ]
+          },
+          "else": {
+            "anyOf": [
+              {
+                "required": [
+                  "src"
+                ]
+              },
+              {
+                "required": [
+                  "media_id"
+                ]
+              }
             ]
           }
         },
-        "required": [
-          "threshold"
-        ]
-      }
+        {
+          "if": {
+            "properties": {
+              "baseline_s": {
+                "const": 0
+              }
+            },
+            "required": [
+              "baseline_s"
+            ]
+          },
+          "then": {
+            "properties": {
+              "threshold": {
+                "properties": {
+                  "mode": {
+                    "const": "fixed"
+                  }
+                },
+                "required": [
+                  "mode"
+                ]
+              }
+            },
+            "required": [
+              "threshold"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "signal": {
+                "const": "landscape_region"
+              }
+            },
+            "required": [
+              "signal"
+            ]
+          },
+          "then": {
+            "required": [
+              "targets"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "targets"
+              ]
+            }
+          }
+        }
+      ]
     },
     "prompt": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

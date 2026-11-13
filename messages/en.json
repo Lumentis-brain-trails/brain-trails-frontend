@@ -378,7 +378,10 @@
     "neurofeedback": {
       "needsHeadband": "This part needs the headband, and none is streaming. It will be skipped.",
       "baselineFailed": "The signal was too noisy to start this part. Let's move on.",
-      "timeout": "The headband signal did not come through. Let's move on."
+      "timeout": "The headband signal did not come through. Let's move on.",
+      "needsLive": "This part follows where you are on your brain landscape, and the live service is not on for this session. It will be skipped.",
+      "baselineFailedMap": "Your landscape did not come through clearly enough to start this part. Let's move on.",
+      "soundOn": "Turn the sound on"
     }
   },
   "builder": {
@@ -1196,7 +1199,18 @@
             "smr": "SMR (12-15 Hz)",
             "beta": "Beta (13-30 Hz)",
             "theta_beta": "Theta/beta ratio",
-            "alpha_theta": "Alpha/theta ratio"
+            "alpha_theta": "Alpha/theta ratio",
+            "landscape_region": "A place of the person's landscape"
+          }
+        },
+        "feedback": {
+          "label": "What the person watches",
+          "help": "The video below, or a built-in animation that needs no media: a plane that takes off in target, two notes that come into tune, or the two ribbons of light coming into focus.",
+          "options": {
+            "video": "The video",
+            "plane": "A plane taking off",
+            "tuning": "Two notes coming into tune",
+            "ribbons": "The ribbons coming into focus"
           }
         },
         "direction": {
@@ -1282,6 +1296,13 @@
         "artefact/max_muscle": {
           "label": "Muscle share limit",
           "help": "A window with more than this share of power above 30 Hz (jaw, frowning) holds the picture."
+        },
+        "targets/preset": {
+          "label": "Where the points came from",
+          "options": {
+            "focus": "The focus preset",
+            "custom": "The person's own points"
+          }
         }
       }
     }
@@ -2361,7 +2382,8 @@
       "people": "People",
       "patients": "Patients",
       "participants": "Participants",
-      "my": "My sessions"
+      "my": "My sessions",
+      "neurofeedback": "Neurofeedback"
     },
     "sections": "Sections",
     "you": "You",
@@ -3767,6 +3789,68 @@
         "skipped": "skipped",
         "ended": "ended by the operator",
         "done": "done"
+      }
+    }
+  },
+  "neurofeedback": {
+    "title": "Neurofeedback",
+    "intro": "Train toward a place of your own brain landscape. The headband's signal is placed on your map every second, and what you watch follows how close you are.",
+    "off": "Neurofeedback is not available here yet.",
+    "noMap": {
+      "title": "You need a landscape first",
+      "text": "Your brain landscape is made from your recordings. Record a session or two (a resting baseline is enough), then come back to choose where to train.",
+      "building": "Your landscape is being built. Come back in a minute.",
+      "record": "Choose a protocol to record"
+    },
+    "where": {
+      "title": "Where to go",
+      "focus": "Focus (ADHD)",
+      "custom": "My own points",
+      "map": "Your brain landscape, seen from above",
+      "focusHelp": "The places where your frontal theta/beta ratio was lowest, from {windows} of your own seconds. The dotted circle is where the reward is half.",
+      "customHelp": "Click the map to add a point (up to three); click a point to remove it.",
+      "noPreset": "There is no focus preset yet: it needs a few minutes of recordings with good contact at the forehead. Click the map to choose your own points (up to three)."
+    },
+    "what": {
+      "title": "What you see",
+      "plane": {
+        "label": "The plane",
+        "text": "On the runway while you are away, taking off as you get there, climbing while you stay."
+      },
+      "tuning": {
+        "label": "Tuning",
+        "text": "Two notes a fifth apart, out of tune while you are away, in tune as you get there. You can close your eyes."
+      },
+      "ribbons": {
+        "label": "The ribbons",
+        "text": "Our two ribbons of light, blurred in their corners, coming into focus and toward each other as you get there."
+      }
+    },
+    "long": {
+      "title": "How long",
+      "minutes": "{n} min",
+      "help": "After a minute that measures where you are today. Sessions usually last 15 to 30 minutes; start short."
+    },
+    "start": "Start",
+    "starting": "Preparing…",
+    "failed": "The session could not be prepared. Try again.",
+    "evidence": {
+      "title": "Before you start",
+      "preset": "The focus preset follows the oldest neurofeedback protocol for ADHD, theta/beta down, measured on your own recordings. It says where you were most focused in your own terms, nothing about anyone else.",
+      "studies": "The evidence is mixed: some studies found benefits, the largest blinded trials and reviews found none beyond placebo. Theta/beta is not a reliable marker of ADHD.",
+      "delay": "Your position comes from the analysis of each second of signal and arrives about one to two seconds late: the feedback follows states you hold, not single moments.",
+      "not": "This is a training tool for your own use. It is not a diagnosis or a treatment, and it does not replace care."
+    },
+    "protocol": {
+      "title": "My neurofeedback",
+      "label": "Get ready",
+      "ready": "Sit comfortably, relax your face and jaw, and keep still.",
+      "start": "Start",
+      "warning": "Moving images whose brightness changes slowly with your signal, for the length you chose. You can stop at any time.",
+      "how": {
+        "plane": "First a minute to see where you are. Then bring the plane up: it takes off when you get there.",
+        "tuning": "First a minute to see where you are. Then listen: the two notes come into tune when you get there.",
+        "ribbons": "First a minute to see where you are. Then the ribbons come into focus when you get there."
       }
     }
   }
