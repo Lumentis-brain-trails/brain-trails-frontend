@@ -1726,6 +1726,136 @@
       }
     }
   },
+  "context": {
+    "title": "Prima di iniziare",
+    "intro": "Qualche domanda veloce su come stai adesso. Aiutano a leggere questa registrazione accanto alle altre. Rispondi a quello che vuoi e salta il resto.",
+    "pickAll": "Scegli tutte quelle che valgono",
+    "skip": "Salta",
+    "continue": "Continua",
+    "personalise": "Cambia queste domande",
+    "unavailable": "Non è stato possibile caricare le domande. Puoi registrare lo stesso.",
+    "items": {
+      "emotions": {
+        "label": "Come ti senti in questo momento?",
+        "options": {
+          "calm": "Calma",
+          "content": "Soddisfazione",
+          "happy": "Felicità",
+          "energized": "Energia",
+          "motivated": "Motivazione",
+          "unmotivated": "Poca motivazione",
+          "bored": "Noia",
+          "tired": "Stanchezza",
+          "down": "Giù di morale",
+          "sad": "Tristezza",
+          "anxious": "Ansia",
+          "stressed": "Stress",
+          "annoyed": "Irritazione"
+        }
+      },
+      "focus": {
+        "label": "Quanto riesci a concentrarti?",
+        "points": {
+          "1": "Per niente",
+          "2": "Poco",
+          "3": "Abbastanza",
+          "4": "Molto",
+          "5": "Moltissimo"
+        }
+      },
+      "sleep": {
+        "label": "Come hai dormito stanotte?",
+        "points": {
+          "1": "Malissimo",
+          "2": "Male",
+          "3": "Così così",
+          "4": "Bene",
+          "5": "Benissimo"
+        }
+      },
+      "sleep_hours": {
+        "label": "Ore di sonno stanotte",
+        "hint": "Va bene anche a occhio"
+      },
+      "fatigue": {
+        "label": "Quanta energia hai?",
+        "points": {
+          "1": "Sfinimento",
+          "2": "Poca",
+          "3": "Così così",
+          "4": "Tanta",
+          "5": "Piena energia"
+        }
+      },
+      "stress": {
+        "label": "Quanto stress senti?",
+        "points": {
+          "1": "Moltissimo",
+          "2": "Molto",
+          "3": "Né poco né tanto",
+          "4": "Poco",
+          "5": "Relax totale"
+        }
+      },
+      "last_2h": {
+        "label": "Nelle ultime 2 ore ho…",
+        "options": {
+          "caffeine": "Preso caffeina",
+          "nicotine": "Fumato o svapato",
+          "meal": "Mangiato un pasto",
+          "exercise": "Fatto attività fisica",
+          "meditation": "Meditato",
+          "nap": "Fatto un pisolino"
+        }
+      },
+      "last_24h": {
+        "label": "Nelle ultime 24 ore ho…",
+        "options": {
+          "alcohol": "Bevuto alcol",
+          "cannabis": "Usato cannabis"
+        }
+      },
+      "medication": {
+        "label": "Farmaci oggi",
+        "options": {
+          "none": "Non ne prendo",
+          "usual": "Presi come al solito",
+          "changed": "Dose o farmaco cambiati",
+          "missed": "Saltata una dose"
+        }
+      },
+      "hours_awake": {
+        "label": "Ore dal risveglio"
+      }
+    },
+    "settings": {
+      "title": "Variabili di contesto",
+      "hint": "Le domande che ti facciamo prima di ogni registrazione. Spegni quelle che non ti riguardano e aggiungi le tue: le risposte restano con ogni registrazione.",
+      "asked": "Attiva",
+      "notAsked": "Spenta",
+      "addOption": "Aggiungi un'opzione",
+      "optionPlaceholder": "📓 Ho scritto un diario",
+      "add": "Aggiungi",
+      "removeOption": "Rimuovi {option}",
+      "mineTitle": "Le tue domande",
+      "mineEmpty": "Ancora nessuna.",
+      "remove": "Rimuovi",
+      "newTitle": "Aggiungi una domanda",
+      "question": "Domanda",
+      "questionHint": "Inizia con un'emoji per mostrarla accanto alla domanda.",
+      "kind": "Risposta",
+      "kinds": {
+        "scale": "Da 1 a 5",
+        "single": "Una scelta",
+        "multi": "Più scelte"
+      },
+      "low": "1 vuol dire",
+      "high": "5 vuol dire",
+      "options": "Opzioni",
+      "optionsHint": "Una per riga, almeno due. Inizia una riga con un'emoji per mostrarla.",
+      "addQuestion": "Aggiungi domanda"
+    }
+  },
   "home": {
     "welcome": "È bello rivederti.",
     "start": {

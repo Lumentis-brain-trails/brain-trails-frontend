@@ -1726,6 +1726,136 @@
       }
     }
   },
+  "context": {
+    "title": "Before we start",
+    "intro": "A few quick questions about how you are right now. They help read this recording next to your others. Answer what you like and skip the rest.",
+    "pickAll": "Pick all that apply",
+    "skip": "Skip",
+    "continue": "Continue",
+    "personalise": "Change these questions",
+    "unavailable": "The questions could not be loaded. You can record without them.",
+    "items": {
+      "emotions": {
+        "label": "How do you feel right now?",
+        "options": {
+          "calm": "Calm",
+          "content": "Content",
+          "happy": "Happy",
+          "energized": "Energized",
+          "motivated": "Motivated",
+          "unmotivated": "Unmotivated",
+          "bored": "Bored",
+          "tired": "Tired",
+          "down": "Down",
+          "sad": "Sad",
+          "anxious": "Anxious",
+          "stressed": "Stressed",
+          "annoyed": "Annoyed"
+        }
+      },
+      "focus": {
+        "label": "How focused are you?",
+        "points": {
+          "1": "Not focused",
+          "2": "Slightly",
+          "3": "Focused",
+          "4": "Very",
+          "5": "Extremely"
+        }
+      },
+      "sleep": {
+        "label": "How did you sleep last night?",
+        "points": {
+          "1": "Very poorly",
+          "2": "Poorly",
+          "3": "OK",
+          "4": "Well",
+          "5": "Great"
+        }
+      },
+      "sleep_hours": {
+        "label": "Hours of sleep last night",
+        "hint": "Roughly is fine"
+      },
+      "fatigue": {
+        "label": "How rested do you feel?",
+        "points": {
+          "1": "Exhausted",
+          "2": "Tired",
+          "3": "OK",
+          "4": "Rested",
+          "5": "Fully rested"
+        }
+      },
+      "stress": {
+        "label": "How stressed are you?",
+        "points": {
+          "1": "Extremely stressed",
+          "2": "Stressed",
+          "3": "Neutral",
+          "4": "Calm",
+          "5": "Relaxed"
+        }
+      },
+      "last_2h": {
+        "label": "In the last 2 hours I…",
+        "options": {
+          "caffeine": "Had caffeine",
+          "nicotine": "Smoked or vaped",
+          "meal": "Ate a meal",
+          "exercise": "Exercised",
+          "meditation": "Meditated",
+          "nap": "Napped"
+        }
+      },
+      "last_24h": {
+        "label": "In the last 24 hours I…",
+        "options": {
+          "alcohol": "Drank alcohol",
+          "cannabis": "Used cannabis"
+        }
+      },
+      "medication": {
+        "label": "Medication today",
+        "options": {
+          "none": "I don't take any",
+          "usual": "Took it as usual",
+          "changed": "Dose or drug changed",
+          "missed": "Missed a dose"
+        }
+      },
+      "hours_awake": {
+        "label": "Hours since you woke up"
+      }
+    },
+    "settings": {
+      "title": "Context variables",
+      "hint": "The questions asked before every recording. Turn off what doesn't apply to you and add your own: your answers are kept with each recording.",
+      "asked": "Asked",
+      "notAsked": "Off",
+      "addOption": "Add an option",
+      "optionPlaceholder": "📓 Journaled",
+      "add": "Add",
+      "removeOption": "Remove {option}",
+      "mineTitle": "Your questions",
+      "mineEmpty": "None yet.",
+      "remove": "Remove",
+      "newTitle": "Add a question",
+      "question": "Question",
+      "questionHint": "Start with an emoji to show it next to the question.",
+      "kind": "Answer",
+      "kinds": {
+        "scale": "1 to 5",
+        "single": "One choice",
+        "multi": "Several choices"
+      },
+      "low": "1 means",
+      "high": "5 means",
+      "options": "Options",
+      "optionsHint": "One per line, at least two. Start a line with an emoji to show it.",
+      "addQuestion": "Add question"
+    }
+  },
   "home": {
     "welcome": "Welcome back.",
     "start": {
