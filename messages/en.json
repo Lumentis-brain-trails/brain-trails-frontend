@@ -1730,6 +1730,25 @@
       "done": "Your account and data were deleted."
     }
   },
+  "transfers": {
+    "title": "Recordings in other environments",
+    "send": "Send my recordings to {env}",
+    "sendHint": "Copies only your own recordings. {env} reprocesses them; nothing here changes.",
+    "receiveHint": "To bring your recordings into {here}, open {sources} and use “Send my recordings to {here}” on its account page.",
+    "importTitle": "Import recordings",
+    "importText": "Copy your recordings from {env} into this environment? Recordings already copied are skipped, and the rest are processed here.",
+    "import": "Import",
+    "importing": "Reading the list…",
+    "result": "Found {found, plural, one {# recording} other {# recordings}}: {queued, plural, =0 {nothing new to copy} one {# is being copied} other {# are being copied}}{here, plural, =0 {} other {, # already here}}. They appear in Recordings and are processed in the next minutes.",
+    "openRecordings": "Open Recordings",
+    "noLink": "This page needs a link from another environment. Open its account page and press “Send my recordings”.",
+    "env": {
+      "dev": "dev",
+      "beta": "beta",
+      "prod": "production",
+      "other": "another environment"
+    }
+  },
   "taxonomies": {
     "option": {
       "female": "Female",
