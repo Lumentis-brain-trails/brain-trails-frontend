@@ -1348,7 +1348,7 @@
     "sidebarRedrawn": "Ridisegnato",
     "layers": {
       "title": "Livelli",
-      "intro": "Il piano sono gli stati del tuo cervello; un livello ci mostra sopra qualcos'altro. Scegli un colore per ciascuno e sovrapponine due: sulla mappa sono ombre che si mescolano dove si incontrano; come rilievo, un'unica superficie colorata da quale livello è più alto.",
+      "intro": "Il piano sono gli stati del tuo cervello; un livello ci mostra sopra qualcos'altro. Scegli un colore per ciascuno e sovrapponine due: sulla mappa sono ombre che si mescolano dove si incontrano; come rilievo, superfici trasparenti i cui colori si mescolano dove si incrociano.",
       "ground": "Mostra sotto dove è andato tutto il tuo tempo",
       "failed": "Non è stato possibile caricare i livelli. Riprova tra un momento.",
       "stale": "Stiamo ricostruendo la tua mappa per aggiungere i livelli. Questa pagina si aggiorna da sola.",

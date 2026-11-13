@@ -9,10 +9,8 @@
  * stacked translucent 3D surfaces never managed: WebGL draws them without sorting, so
  * they speckle and seem to float.
  *
- * **Relief**: one solid surface, standing on the ground everywhere, whose height is the
- * higher of the layers and whose colour leans to the higher one's: the first layer's
- * colour where it dominates, the second's where that one does, the ground's where
- * neither rises (or both rise alike - the map view shows that overlap best).
+ * **Relief**: each layer a see-through 3D surface in one flat colour, lying on the floor
+ * where nothing is raised; where the two cross, their colours mix.
  *
  * The map's own height (where all the time went) can show underneath.
  */
@@ -42,8 +40,10 @@ const STEP = 0.2;
 const SMOOTHING = 1.3;
 /** The densest a shadow gets, so the other shows through it. */
 const SHADOW = 0.6;
-/** Height over which the relief's colour goes from the ground's to a layer's. */
-const RAMP = 0.3;
+/** How see-through a relief layer is: low, so the other and the ground show through. */
+const RELIEF_OPACITY = 0.25;
+/** The second relief layer's lift above the first, in heights. */
+const SEPARATION = 0.004;
 
 export interface DrawnLayer {
   id: string;
@@ -77,7 +77,7 @@ export function LayeredSurface({
     () =>
       view === "map"
         ? mapView(xs, ys, landscape, layers, ground, theme)
-        : reliefView(xs, ys, landscape, layers, ground, theme),
+        : reliefView(xs, ys, layers),
     [view, xs, ys, landscape, layers, ground, theme]
   );
 
@@ -199,87 +199,52 @@ function mapView(
 }
 
 /**
- * One solid relief: the higher layer's height, coloured from the first layer's colour
- * to the second's by their shares; the ground's colour where both are low.
+ * One see-through surface per layer, each a single flat colour - no gradient - so where
+ * they cross the two colours simply mix. Each is drawn on the whole grid, lying flat on
+ * the floor where nothing is raised, so it stands on the ground instead of floating;
+ * the second sits a hair above the first so the two flat sheets never flicker together.
+ * The map's own height is the map view's floor; here the layers are the ground.
  */
 function reliefView(
   xs: number[],
   ys: number[],
-  landscape: BrainLandscape,
-  layers: readonly DrawnLayer[],
-  ground: boolean,
-  theme: Theme
+  layers: readonly DrawnLayer[]
 ): Data[] {
-  const [a, b] = layers;
-  const floor = theme.landscape[0][1];
-  const at = (layer: DrawnLayer | undefined, j: number, i: number) =>
-    layer?.field.z[j]?.[i] ?? 0;
-  const z = landscape.grid.z.map((row, j) =>
-    row.map((base, i) => {
-      const top = Math.max(0, at(a, j, i), at(b, j, i));
-      // where nothing is raised, the ground's own relief, kept low, shows where time went
-      return ground ? Math.max(top, base * 0.12) : top;
-    })
-  );
-  // colour runs continuously, so no boundary is drawn in steps: the ground's colour
-  // where nothing is raised, ramping to a layer's colour as it rises; with two layers,
-  // towards whichever is higher (where both stand equally high it stays between them)
-  const color = landscape.grid.z.map((row, j) =>
-    row.map((_, i) => {
-      const za = at(a, j, i);
-      const zb = at(b, j, i);
-      const strength = Math.min(1, Math.max(za, zb) / RAMP);
-      if (!b) return strength;
-      const lean = zb / (za + zb || 1); // 0: all a, 1: all b
-      return 0.5 + 0.5 * strength * (2 * lean - 1);
-    })
-  );
-  const hover = landscape.grid.z.map((row, j) =>
-    row.map((_, i) =>
-      layers
-        .map((l) => l.hover[j]?.[i])
-        .filter(Boolean)
-        .join("<br>")
-    )
-  );
-  const colorscale = b
-    ? [
-        [0, a.color],
-        [0.5, floor],
-        [1, b.color],
-      ]
-    : [
-        [0, floor],
-        [1, a.color],
-      ];
   return [
-    {
-      type: "surface",
-      x: xs,
-      y: ys,
-      z,
-      surfacecolor: color,
-      cmin: 0,
-      cmax: 1,
-      colorscale,
-      showscale: false,
-      text: hover,
-      hovertemplate: "%{text}<extra></extra>",
-      contours: {
-        z: {
-          show: true,
-          start: STEP,
-          end: 1,
-          size: STEP,
-          color: theme.contour,
-          width: 1,
-          highlight: false,
-        },
-        x: { highlight: false },
-        y: { highlight: false },
-      },
-      lighting: LIGHTING,
-      lightposition: LIGHT,
-    } as unknown as Data,
+    ...layers.map(
+      (layer, k): Data =>
+        ({
+          type: "surface",
+          x: xs,
+          y: ys,
+          z: layer.field.z.map((row) => row.map((v) => v + k * SEPARATION)),
+          surfacecolor: layer.field.z,
+          cmin: 0,
+          cmax: 1,
+          colorscale: [
+            [0, layer.color],
+            [1, layer.color],
+          ],
+          opacity: RELIEF_OPACITY,
+          showscale: false,
+          text: layer.hover,
+          hovertemplate: "%{text}<extra></extra>",
+          contours: {
+            z: {
+              show: true,
+              start: STEP,
+              end: 1,
+              size: STEP,
+              color: layer.color,
+              width: 2,
+              highlight: false,
+            },
+            x: { highlight: false },
+            y: { highlight: false },
+          },
+          lighting: LIGHTING,
+          lightposition: LIGHT,
+        }) as unknown as Data
+    ),
   ];
 }

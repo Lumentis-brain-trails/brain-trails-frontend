@@ -1348,7 +1348,7 @@
     "sidebarRedrawn": "Redrawn",
     "layers": {
       "title": "Layers",
-      "intro": "The plane is your brain's states; a layer shows something else over it. Pick a colour for each and lay two over each other: on the map they are shadows that blend where they meet; as a relief, one surface coloured by which layer is higher.",
+      "intro": "The plane is your brain's states; a layer shows something else over it. Pick a colour for each and lay two over each other: on the map they are shadows that blend where they meet; as a relief, see-through surfaces whose colours mix where they cross.",
       "ground": "Show where all your time went underneath",
       "failed": "The layers could not be loaded. Try again in a moment.",
       "stale": "Your map is being rebuilt to add layers. This page updates by itself.",
