@@ -520,6 +520,36 @@ export interface paths {
         patch: operations["edit_assignment_assignments__assignment_id__patch"];
         trace?: never;
     };
+    "/assignments/{assignment_id}/live-room": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Waiting Room
+         * @description Open the assignment's waiting room for a remote session, and a ticket to wait in it.
+         *
+         *     Opening an open room again only hands out a new ticket (a carer reconnecting asks
+         *     here again: tickets are single-use). The room closes by itself after two hours, when
+         *     its session starts and ends, or with `DELETE`. 404 when the live service is off here,
+         *     409 when the assignment is closed. A sync route on purpose: the database work below
+         *     runs in the threadpool, never on the event loop every live socket shares.
+         */
+        post: operations["open_waiting_room_assignments__assignment_id__live_room_post"];
+        /**
+         * Close Waiting Room
+         * @description Close the waiting room: the patient's Play stops offering it. Idempotent.
+         */
+        delete: operations["close_waiting_room_assignments__assignment_id__live_room_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -999,6 +1029,30 @@ export interface paths {
          *     Empty for an account that is nobody's subject. Not paged: a person has a handful.
          */
         get: operations["my_assignments_me_assignments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/assignments/{assignment_id}/live-room": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Waiting Room
+         * @description Whether the caller's own assignment has a waiting room open, with a ticket to join it.
+         *
+         *     Asked when the patient opens the run and again on a reconnect (tickets are
+         *     single-use) - never polled (0014). 404 when the assignment is not the caller's open
+         *     one or the live service is off here.
+         */
+        get: operations["my_waiting_room_me_assignments__assignment_id__live_room_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1918,6 +1972,10 @@ export interface paths {
          *     acknowledgement as the timeline's first event (`photosensitivity_ack` at `t` 0, with
          *     the run's mode and the wall-clock time), so the record does not depend on the
          *     browser that showed the screen.
+         *
+         *     A version with a `neurofeedback` block starts only where the flag is on for the
+         *     workspace's kind (403 `feature_disabled`, V4-0009): never in a clinic in production
+         *     until the regulatory question is answered.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -2005,6 +2063,79 @@ export interface paths {
          *     log. `bt_sessions_total` is labelled with the session's `console`.
          */
         post: operations["finish_session_sessions__session_id__finish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/{session_id}/live/landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Live Landscape
+         * @description The recorded person's brain landscape, the ground of the console's second view (T5).
+         *
+         *     The live windows are placed on it by the worker (`place` frames). 409 `not_ready`
+         *     when the person has no landscape yet: the console then shows the session's own trail
+         *     only. Never builds one - that is the batch's, after a session.
+         */
+        get: operations["live_landscape_sessions__session_id__live_landscape_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/{session_id}/live/observer-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Observer Ticket
+         * @description A 5-minute, single-use ticket to watch this session; it commands if `can_command`.
+         *
+         *     Each one is a `live.joined` in the usage log (asked for, so about to join), and,
+         *     when the person is someone else, a `live.observe` in the audit log, as a read of
+         *     their data is. 404 when the live service is off here, 409 once it has finished.
+         */
+        post: operations["observer_ticket_sessions__session_id__live_observer_ticket_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/{session_id}/live/producer-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Producer Ticket
+         * @description A 5-minute, single-use ticket to send this session's signal.
+         *
+         *     Only for the person who started the session - its recording's operator, the
+         *     patient's own account included: a carer who may run the session still may not put
+         *     a signal into someone else's run. 403 `not_the_runner` otherwise, 404 when the live
+         *     service is off here, 409 once the session has finished.
+         */
+        post: operations["producer_ticket_sessions__session_id__live_producer_ticket_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2996,7 +3127,8 @@ export interface components {
          *     `prestimulus`, its windows' trial `labels` (one per window whose start falls in the
          *     block, null where no trial onset falls in the window) and the average person's
          *     `norm`; any block may carry `cardiac` and `dynamics`, and a heartbeat-counting block
-         *     `interoception`. All are null where they do not apply and on older analyses.
+         *     `interoception`, and a neurofeedback block `neurofeedback`. All are null where they
+         *     do not apply and on older analyses.
          */
         BlockMetricsOut: {
             /** Artefact */
@@ -3036,6 +3168,7 @@ export interface components {
             labels?: (string | null)[] | null;
             /** N Windows */
             n_windows: number;
+            neurofeedback?: components["schemas"]["NeurofeedbackOut"] | null;
             /** Node Path */
             node_path: string | null;
             norm?: components["schemas"]["BlockNormOut"] | null;
@@ -3222,6 +3355,15 @@ export interface components {
             n_windows: number;
             /** Pending */
             pending: boolean;
+            /**
+             * Presets
+             * @default {}
+             */
+            presets: {
+                [key: string]: components["schemas"]["BrainLandscapeTargetsOut"];
+            };
+            /** Sigma */
+            sigma?: number | null;
             trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
             /** Version */
             version: number;
@@ -3259,6 +3401,25 @@ export interface components {
             epoch: number | null;
             /** Pending */
             pending: boolean;
+        };
+        /**
+         * BrainLandscapeTargetsOut
+         * @description A neurofeedback preset on the map (V4-0010): points, their radius, why them.
+         */
+        BrainLandscapeTargetsOut: {
+            /** Enrichment */
+            enrichment: number[];
+            /** Points */
+            points: [
+                number,
+                number
+            ][];
+            /** Radius */
+            radius: number;
+            /** Rule */
+            rule: string;
+            /** Windows */
+            windows: number;
         };
         /**
          * BrainLandscapeTrailOut
@@ -3491,7 +3652,7 @@ export interface components {
                 catalog: boolean;
                 /** @description Operator console on the same machine (S21). */
                 console: boolean;
-                /** @description Remote operator console over the live relay (S23). */
+                /** @description Remote console: waiting room, observers, commands at a distance (V4 T5). */
                 console_remote: boolean;
                 /** @description BIDS exports (S25). */
                 exports: boolean;
@@ -3499,8 +3660,12 @@ export interface components {
                 library_publish: boolean;
                 /** @description Media bin: audio, image sets, text, questionnaires; probe; quotas (S17). */
                 library_v2: boolean;
+                /** @description Live service on Redis: ws tickets, gateway, live trail in the worker (V4 T4). */
+                live: boolean;
                 /** @description TOTP enforced for anyone who can see another person's data (S26). */
                 mfa_required: boolean;
+                /** @description Live neurofeedback block: band power drives a video (V4-0009, T5b). */
+                neurofeedback: boolean;
                 /** @description Protocol model, runtime, official templates, protocol from media (S18). */
                 protocols: boolean;
                 /** @description Recording review with annotations (S20). */
@@ -3512,6 +3677,8 @@ export interface components {
                 /** @description Clinics and laboratories: requests, seats, invitations (V4 T2). */
                 workspaces_multi: boolean;
             };
+            /** Live Url */
+            live_url?: string | null;
             /** Version */
             version: string;
             /** Workspace Kind */
@@ -4487,6 +4654,107 @@ export interface components {
             };
         };
         /**
+         * NeurofeedbackOut
+         * @description What a neurofeedback block did (V4-0009), from its own timeline events.
+         *
+         *     Shares are over the training's updates (~10.7 a second); `time_in_target_s` counts
+         *     in-target updates as 24 samples each. `trajectory` is `[t, threshold]` per change.
+         *     The value is relative power for a band, the ratio itself for a ratio.
+         */
+        NeurofeedbackOut: {
+            /** Baseline Extended */
+            baseline_extended: boolean;
+            /** Baseline Failed */
+            baseline_failed: boolean;
+            /** Baseline Updates */
+            baseline_updates: number;
+            /** Channels */
+            channels: string[] | null;
+            /** Clean Updates */
+            clean_updates: number;
+            /** Direction */
+            direction: string | null;
+            /** Gated */
+            gated: {
+                [key: string]: number;
+            };
+            /** Gated Share */
+            gated_share: number | null;
+            /** In Target Share */
+            in_target_share: number | null;
+            latency_ms: components["schemas"]["NfLatencyOut"];
+            replay?: components["schemas"]["NfReplayOut"] | null;
+            /** Signal */
+            signal: string | null;
+            threshold: components["schemas"]["NfThresholdOut"];
+            /** Time In Target S */
+            time_in_target_s: number;
+            /** Training Updates */
+            training_updates: number;
+            /** Trajectory */
+            trajectory: (number | null)[][];
+            value: components["schemas"]["NfQuantilesOut"];
+        };
+        /**
+         * NfLatencyOut
+         * @description Measured `age_ms` of the updates: packet arrival to the frame that showed it.
+         */
+        NfLatencyOut: {
+            /** Median */
+            median: number | null;
+            /** P95 */
+            p95: number | null;
+        };
+        /**
+         * NfQuantilesOut
+         * @description Median and 10th/90th percentiles of the smoothed value over clean training.
+         */
+        NfQuantilesOut: {
+            /** Median */
+            median: number | null;
+            /** P10 */
+            p10: number | null;
+            /** P90 */
+            p90: number | null;
+        };
+        /**
+         * NfReplayOut
+         * @description The browser's values recomputed from the uploaded EEG (V4-0009, hazard H12).
+         *
+         *     `gate_agreement` is the share of compared updates whose gate matches; for the clean
+         *     ones, `value_agreement` the share within 0.1% and `max_relative_error` the worst.
+         */
+        NfReplayOut: {
+            /** Compared */
+            compared: number;
+            /** Gate Agreement */
+            gate_agreement: number;
+            /** Max Relative Error */
+            max_relative_error: number | null;
+            /** Updates */
+            updates: number;
+            /** Value Agreement */
+            value_agreement: number | null;
+        };
+        /**
+         * NfThresholdOut
+         * @description The threshold over the block: first and last value, range, changes and nudges.
+         */
+        NfThresholdOut: {
+            /** Changes */
+            changes: number;
+            /** End */
+            end: number | null;
+            /** Max */
+            max: number | null;
+            /** Min */
+            min: number | null;
+            /** Nudges */
+            nudges: number;
+            /** Start */
+            start: number | null;
+        };
+        /**
          * NogoTypeOut
          * @description One kind of no-go trial of a cued block (`red_cargo`, `green_debris`, ...).
          */
@@ -5176,7 +5444,9 @@ export interface components {
          *     version runs and the run counts towards it when it finishes. `acknowledged` names
          *     the warnings the person read before Start: `photosensitivity` is required for a
          *     version with visual blocks (H4). `console` says an operator's console drives the
-         *     run: `local` from the console on the same machine (T1).
+         *     run: `local` from the console on the same machine (T1); the server sets `remote`
+         *     itself when a carer waits in the assignment's room (T5) and the run has no local
+         *     console.
          */
         SessionStartIn: {
             /** Acknowledged */
@@ -5487,6 +5757,20 @@ export interface components {
             sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
         };
         /**
+         * TicketOut
+         * @description A ticket for one socket, and where to open it.
+         */
+        TicketOut: {
+            /** Expires In */
+            expires_in: number;
+            /** Protocol */
+            protocol: number;
+            /** Ticket */
+            ticket: string;
+            /** Ws Path */
+            ws_path: string;
+        };
+        /**
          * TokenIn
          * @description The token from an invitation link.
          */
@@ -5655,6 +5939,15 @@ export interface components {
             ok: boolean;
             /** Warnings */
             warnings: components["schemas"]["IssueOut"][];
+        };
+        /**
+         * WaitingRoomOut
+         * @description An assignment's waiting room as its patient sees it: open or not, and a ticket.
+         */
+        WaitingRoomOut: {
+            /** Open */
+            open: boolean;
+            ticket?: components["schemas"]["TicketOut"] | null;
         };
         /**
          * WorkspaceDecisionIn
@@ -6552,6 +6845,66 @@ export interface operations {
             };
         };
     };
+    open_waiting_room_assignments__assignment_id__live_room_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_waiting_room_assignments__assignment_id__live_room_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     login_auth_login_post: {
         parameters: {
             query?: never;
@@ -7166,6 +7519,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyAssignment"][];
+                };
+            };
+        };
+    };
+    my_waiting_room_me_assignments__assignment_id__live_room_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitingRoomOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8773,6 +9157,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    live_landscape_sessions__session_id__live_landscape_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    observer_ticket_sessions__session_id__live_observer_ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    producer_ticket_sessions__session_id__live_producer_ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
                 };
             };
             /** @description Validation Error */

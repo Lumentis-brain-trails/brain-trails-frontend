@@ -24,6 +24,7 @@ import { setDragPayload } from "@/components/builder/Timeline";
 import { Button, Icon, Skeleton, cn } from "@/components/ui";
 import { api } from "@/lib/api";
 import { ELEMENTS, formatClock } from "@/lib/builder/draft";
+import { useFeature } from "@/lib/features";
 import { useKindText, usePaletteText } from "@/lib/builder/kinds";
 import { inWorkspace, useCurrentWorkspace } from "@/lib/workspace";
 import type { Media } from "@/lib/types";
@@ -40,6 +41,8 @@ export function Bin({
   onAddElement: (kind: string) => void;
 }) {
   const t = useTranslations("builder.bin");
+  // a kind still behind its flag is not offered where the flag is off (V4-0009)
+  const neurofeedback = useFeature("neurofeedback");
   const kindText = useKindText();
   const localise = usePaletteText();
   const [tab, setTab] = useState<"media" | "elements" | "tasks">("media");
@@ -143,7 +146,8 @@ export function Bin({
         <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 gap-2 overflow-y-auto">
           {ELEMENTS.filter(
             (element) =>
-              element.group === (tab === "tasks" ? "task" : "element")
+              element.group === (tab === "tasks" ? "task" : "element") &&
+              (element.flag !== "neurofeedback" || neurofeedback)
           )
             .map(localise)
             .map((element) => (
