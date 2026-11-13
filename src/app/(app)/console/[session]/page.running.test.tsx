@@ -18,6 +18,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import messages from "../../../../../messages/en.json";
 import { type ChannelMessage, channelName } from "@/lib/console/channel";
 import { SimulatedMuse } from "@/lib/muse/device";
+import type { Marker } from "@/lib/protocol/marker";
 import ConsolePage from "./page";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -251,6 +252,8 @@ test("a participant window reloaded mid-run is booted again where the run was", 
   });
   participant.postMessage({ type: "marker", marker: stamp(0, "block_start") });
   participant.postMessage({ type: "marker", marker: stamp(1, "rest_start") });
+  // the lost window had its first marker acknowledged before it went
+  participant.postMessage({ type: "acked", seqs: [0] });
 
   // the window reloads: it goes, then the new one says hello
   participant.postMessage({ type: "gone" });
@@ -292,8 +295,11 @@ test("a participant window reloaded mid-run is booted again where the run was", 
   await waitFor(() => expect(finishCalls()).toHaveLength(1), {
     timeout: 5000,
   });
-  const sent = (finishCalls()[0][1] as { events: { seq: number }[] }).events;
-  expect(sent.map((e) => e.seq)).toEqual([0, 1, 2, 3]);
+  // a reloaded run sends what neither window had acknowledged, through the events endpoint
+  const sent = post.mock.calls
+    .filter(([path]) => path === "sessions/s1/events")
+    .flatMap(([, body]) => (body as { events: { seq: number }[] }).events);
+  expect(sent.map((e) => e.seq)).toEqual([1, 2, 3]);
   participant.close();
 }, 30_000);
 
@@ -359,5 +365,41 @@ test("a dropped headband with a silent runner still closes after the grace perio
   await waitFor(() => expect(finishCalls()).toHaveLength(1), {
     timeout: 6000,
   });
+  participant.close();
+}, 30_000);
+
+test("a finished run sends only what no window had acknowledged", async () => {
+  const { participant } = await startRun("run-acked");
+  const stamp = (seq: number, label: string): Marker => ({
+    label,
+    kind: "stage",
+    tSessionS: seq,
+    tMonotonicMs: seq,
+    tRunMs: seq,
+    seq,
+    meta: {},
+  });
+  // the console mirrored four markers; the window's sink had three acknowledged
+  for (const [seq, label] of [
+    [0, "session_start"],
+    [1, "block_start"],
+    [2, "nf_update"],
+    [3, "block_end"],
+  ] as const)
+    participant.postMessage({ type: "marker", marker: stamp(seq, label) });
+  participant.postMessage({ type: "acked", seqs: [0, 1, 2] });
+  participant.postMessage({
+    type: "finished",
+    results: [],
+    markers: [0, 1, 2, 3].map((n) => stamp(n, "x")),
+  });
+  await waitFor(() => expect(finishCalls()).toHaveLength(1), {
+    timeout: 5000,
+  });
+  const sent = post.mock.calls
+    .filter(([path]) => path === "sessions/s1/events")
+    .flatMap(([, body]) => (body as { events: { seq: number }[] }).events);
+  expect(sent.map((e) => e.seq)).toEqual([3]);
+  expect(finishCalls()[0][1]).not.toHaveProperty("events");
   participant.close();
 }, 30_000);
