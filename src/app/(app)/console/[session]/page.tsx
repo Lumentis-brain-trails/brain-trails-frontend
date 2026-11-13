@@ -457,7 +457,7 @@ function Console({
   const nudge = useCallback((steps: number) => {
     channelRef.current?.post({
       type: "command",
-      command: makeCommand("nudge_threshold", undefined, steps),
+      command: makeCommand("nudge_threshold", undefined, { steps }),
     });
   }, []);
 

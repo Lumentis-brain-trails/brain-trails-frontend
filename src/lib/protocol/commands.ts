@@ -53,8 +53,11 @@ export const operatorCommandSchema = z.object({
   text: z.string().max(MESSAGE_MAX_CHARS).optional(),
   /** `nudge_threshold`: how many 5% steps, up (positive) or down (V4-0009). */
   steps: z.number().int().min(-NUDGE_MAX_STEPS).max(NUDGE_MAX_STEPS).optional(),
-  /** Who asked: the console on this machine for now; a remote console from T5. */
-  source: z.enum(["console"]).default("console"),
+  /**
+   * Who asked: the console on this machine (T1), a remote console over the live service
+   * (T5), or the run itself (`auto`: "pause when I lose sight" fired).
+   */
+  source: z.enum(["console", "remote", "auto"]).default("console"),
 });
 
 export type OperatorCommand = z.infer<typeof operatorCommandSchema>;
@@ -151,7 +154,7 @@ let counter = 0;
 export function makeCommand(
   type: CommandType,
   text?: string,
-  steps?: number
+  options: { steps?: number; source?: OperatorCommand["source"] } = {}
 ): OperatorCommand {
   counter += 1;
   const random =
@@ -162,8 +165,8 @@ export function makeCommand(
   return {
     id: random,
     type,
-    source: "console",
+    source: options.source ?? "console",
     ...(trimmed ? { text: trimmed } : {}),
-    ...(steps !== undefined ? { steps } : {}),
+    ...(options.steps !== undefined ? { steps: options.steps } : {}),
   };
 }
