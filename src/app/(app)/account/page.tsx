@@ -16,7 +16,6 @@ import {
 import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
 import { LanguageCard } from "@/components/account/LanguageCard";
 import { ContextSettingsCard } from "@/components/account/ContextSettingsCard";
-import { TransferCard } from "@/components/account/TransferCard";
 import { useContextEnabled } from "@/lib/context";
 import {
   type ConsentData,
@@ -34,6 +33,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { TransferCard } from "@/components/account/TransferCard";
 
 export default function AccountPage() {
   const signOut = useSignOut();

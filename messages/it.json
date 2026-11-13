@@ -1730,6 +1730,25 @@
       "done": "Il tuo account e i tuoi dati sono stati eliminati."
     }
   },
+  "transfers": {
+    "title": "Registrazioni negli altri ambienti",
+    "send": "Invia le mie registrazioni a {env}",
+    "sendHint": "Copia solo le tue registrazioni. {env} le rielabora; qui non cambia nulla.",
+    "receiveHint": "Per portare le tue registrazioni in {here}, apri {sources} e usa “Invia le mie registrazioni a {here}” nella pagina dell’account.",
+    "importTitle": "Importa registrazioni",
+    "importText": "Copiare le tue registrazioni da {env} in questo ambiente? Quelle già copiate vengono saltate, le altre vengono elaborate qui.",
+    "import": "Importa",
+    "importing": "Lettura dell’elenco…",
+    "result": "{found, plural, one {Trovata # registrazione} other {Trovate # registrazioni}}: {queued, plural, =0 {niente di nuovo da copiare} one {# in copia} other {# in copia}}{here, plural, =0 {} other {, # già qui}}. Compaiono in Registrazioni e vengono elaborate nei prossimi minuti.",
+    "openRecordings": "Apri Registrazioni",
+    "noLink": "Questa pagina ha bisogno di un link da un altro ambiente. Apri la pagina dell’account di quell’ambiente e premi “Invia le mie registrazioni”.",
+    "env": {
+      "dev": "dev",
+      "beta": "beta",
+      "prod": "produzione",
+      "other": "un altro ambiente"
+    }
+  },
   "taxonomies": {
     "option": {
       "female": "Femmina",
@@ -3730,25 +3749,6 @@
       "confirm": "Elimina",
       "deleting": "Elimino…",
       "done": "Il tuo account è stato eliminato."
-    }
-  },
-  "transfers": {
-    "title": "Registrazioni negli altri ambienti",
-    "send": "Invia le mie registrazioni a {env}",
-    "sendHint": "Copia solo le tue registrazioni. {env} le rielabora; qui non cambia nulla.",
-    "receiveHint": "Per portare le tue registrazioni in {here}, apri {sources} e usa “Invia le mie registrazioni a {here}” nella pagina dell’account.",
-    "importTitle": "Importa registrazioni",
-    "importText": "Copiare le tue registrazioni da {env} in questo ambiente? Quelle già copiate vengono saltate, le altre vengono elaborate qui.",
-    "import": "Importa",
-    "importing": "Lettura dell’elenco…",
-    "result": "{found, plural, one {Trovata # registrazione} other {Trovate # registrazioni}}: {queued, plural, =0 {niente di nuovo da copiare} one {# in copia} other {# in copia}}{here, plural, =0 {} other {, # già qui}}. Compaiono in Registrazioni e vengono elaborate nei prossimi minuti.",
-    "openRecordings": "Apri Registrazioni",
-    "noLink": "Questa pagina ha bisogno di un link da un altro ambiente. Apri la pagina dell’account di quell’ambiente e premi “Invia le mie registrazioni”.",
-    "env": {
-      "dev": "dev",
-      "beta": "beta",
-      "prod": "produzione",
-      "other": "un altro ambiente"
     }
   }
 }
