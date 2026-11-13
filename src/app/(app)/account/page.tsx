@@ -16,6 +16,7 @@ import {
 import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
 import { LanguageCard } from "@/components/account/LanguageCard";
 import { ContextSettingsCard } from "@/components/account/ContextSettingsCard";
+import { TransferCard } from "@/components/account/TransferCard";
 import { useContextEnabled } from "@/lib/context";
 import {
   type ConsentData,
@@ -138,6 +139,8 @@ export default function AccountPage() {
         <section>
           {!application.isLoading && <BetaCard data={application.data} />}
         </section>
+
+        {me.data?.role === "admin" && <TransferCard />}
 
         <section>
           <SectionTitle>{t("data.title")}</SectionTitle>
