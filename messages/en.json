@@ -1345,6 +1345,10 @@
     "building": "Building your landscape. This page updates by itself.",
     "redrawn": "The map's geometry was redrawn with your latest recording: places on it compare within this version, not with earlier ones.",
     "epoch": "Geometry version {epoch}",
+    "redraw": "Redraw",
+    "redrawing": "Redrawing your map from scratch…",
+    "redrawHint": "Draw the map again from scratch with all your recordings. Places on it will move.",
+    "redrawFailed": "The map could not be redrawn. Try again in a moment.",
     "sidebarRedrawn": "Redrawn",
     "layers": {
       "title": "Layers",
