@@ -24,9 +24,14 @@ import {
   type RunnerState,
   operatorCommandSchema,
 } from "@/lib/protocol/commands";
+import type { EegPacket } from "@/lib/neurofeedback/engine";
 import type { Marker } from "@/lib/protocol/marker";
 import type { MarkerSink } from "@/lib/protocol/sink";
-import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
+import type {
+  EegFeed,
+  ProtocolDefinition,
+  TaskResult,
+} from "@/lib/protocol/types";
 
 /**
  * How long the console waits, after asking the runner to stop because the headband
@@ -56,6 +61,12 @@ export type ConsoleMessage =
   | { type: "boot"; boot: RunBoot }
   | { type: "fit"; fit: TimelineFit; origin: number }
   | { type: "command"; command: OperatorCommand }
+  /**
+   * One EEG packet as the console's headband delivered it, `hostMs` in the console's
+   * frame: what a neurofeedback block computes from (V4-0009). ~85 small messages a
+   * second, ~4 KB/s.
+   */
+  | { type: "eeg"; packet: EegPacket }
   /** To a second window opened while the first still runs: it cannot take over. */
   | { type: "detached" };
 
@@ -66,6 +77,11 @@ export type RunMessage =
   | { type: "marker"; marker: Marker }
   | { type: "finished"; results: TaskResult[]; markers: Marker[] }
   | { type: "exited"; reason: string; markers: Marker[] }
+  /**
+   * The `seq` of every marker in a batch the server acknowledged: what the console's
+   * finish need not send again (`owedMarkers`).
+   */
+  | { type: "acked"; seqs: number[] }
   | { type: "gone" };
 
 export type ChannelMessage = ConsoleMessage | RunMessage;
@@ -142,6 +158,26 @@ export function commandPortFrom(channel: ConsoleChannel): CommandPort {
 }
 
 /**
+ * The EEG packets arriving on `channel`, as the runner's live signal, with each packet's
+ * arrival moved from the console's frame (`origin`, its `performance.timeOrigin`) into
+ * this window's - the latency a block records is then measured on one clock.
+ */
+export function eegFeedFrom(
+  channel: ConsoleChannel,
+  origin: number,
+  here: number = performance.timeOrigin
+): EegFeed {
+  return {
+    subscribe: (listener) =>
+      channel.subscribe((message) => {
+        if (message.type !== "eeg") return;
+        const { packet } = message;
+        listener({ ...packet, hostMs: packet.hostMs + (origin - here) });
+      }),
+  };
+}
+
+/**
  * A fit made in a window whose time origin is `from`, in the frame of a window whose
  * origin is `to`. Absolute time is `origin + performance.now()` in both windows, so
  * only the sample-0 instant moves; the period is the same clock's.
@@ -174,6 +210,7 @@ export function teeSink(
     flush: () => sink.flush(),
     flushBeacon: () => sink.flushBeacon(),
     all: () => sink.all(),
+    unacknowledged: () => sink.unacknowledged(),
     get pending() {
       return sink.pending;
     },
@@ -223,6 +260,20 @@ export function resumePoint(
     interrupted: !held && open,
     ...(held ? { held: true } : {}),
   };
+}
+
+/**
+ * What a console's finish still has to send: every marker no window had acknowledged.
+ *
+ * Re-sending the whole timeline would count every event twice against the session's
+ * 100,000 (an hour of neurofeedback is ~38,000 `nf_update`), and the finish of a run
+ * after a reload would be refused; a marker with no `seq` is always sent.
+ */
+export function owedMarkers(
+  markers: readonly Marker[],
+  acked: ReadonlySet<number>
+): Marker[] {
+  return markers.filter((m) => m.seq === undefined || !acked.has(m.seq));
 }
 
 /**

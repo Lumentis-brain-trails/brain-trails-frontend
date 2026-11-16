@@ -12,8 +12,33 @@
 
 import type { ComponentType } from "react";
 import type { ZodType } from "zod";
+import type { EegPacket } from "@/lib/neurofeedback/engine";
 import type { MarkerDraft, MarkerMeta } from "./marker";
 import type { TrialRecord } from "./metrics";
+
+/**
+ * The live EEG, packet by packet, for the one kind allowed to read it during a run
+ * (`neurofeedback`, backend V4-0009). Play hands the runner `useMuse`'s packets; the
+ * participant's window, the packets the console forwards over the channel.
+ */
+export interface EegFeed {
+  /** Call `listener` with every packet from now on; returns the unsubscribe. */
+  subscribe(listener: (packet: EegPacket) => void): () => void;
+}
+
+/** An operator's adjustment of the kind on screen: `nudge_threshold` (V4-0009). */
+export interface Adjustment {
+  steps: number;
+  commandId: string;
+}
+
+/**
+ * Where a kind hears the operator's adjustments. A listener returns whether it applied
+ * the adjustment, which is what the runner logs as the command's effect.
+ */
+export interface AdjustmentPort {
+  subscribe(listener: (adjustment: Adjustment) => boolean): () => void;
+}
 
 /**
  * Report that something happened.
@@ -43,6 +68,13 @@ export interface TaskContext<C = unknown> {
   onComplete: (result: TaskResult) => void;
   /** True when the participant asked for less motion, or the OS did. */
   reducedMotion: boolean;
+  /**
+   * The live EEG; absent when no headband streams. Only `neurofeedback` reads it: no
+   * other kind may show anything derived from the signal during a run (V3-0007).
+   */
+  signal?: EegFeed;
+  /** The operator's adjustments of this step; absent without a console. */
+  adjustments?: AdjustmentPort;
 }
 
 export interface TaskKind<C = unknown> {

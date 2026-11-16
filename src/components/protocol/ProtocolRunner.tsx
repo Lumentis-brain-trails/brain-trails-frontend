@@ -60,6 +60,9 @@ import { useSoundtrack } from "./useSoundtrack";
 import type { MarkerSink } from "@/lib/protocol/sink";
 import { pageProbe } from "@/lib/timing/probe";
 import {
+  type Adjustment,
+  type AdjustmentPort,
+  type EegFeed,
   type ProtocolDefinition,
   type ProtocolStep,
   type TaskResult,
@@ -68,6 +71,11 @@ import {
 
 /** One empty soundtrack for every plan without one, so `stopAll` keeps its identity. */
 const NO_CUES: NonNullable<ProtocolDefinition["soundtrack"]> = [];
+
+/** A neurofeedback block: the only step `nudge_threshold` adjusts (V4-0009). */
+function isNeurofeedback(step: ProtocolStep): boolean {
+  return step.kind === "neurofeedback";
+}
 
 /** A rest that counts down a fixed time: the only step `extend_rest` lengthens. */
 function isTimedRest(step: ProtocolStep): boolean {
@@ -127,6 +135,11 @@ export interface ProtocolRunnerProps {
   warningShown?: boolean;
   /** Commands from an operator's console (V3-0007); absent for a self-run session. */
   commands?: CommandPort;
+  /**
+   * The live EEG, for a neurofeedback block (V4-0009); absent when no headband streams.
+   * Handed to that kind only.
+   */
+  signal?: EegFeed;
   /** Told the runner's state after every change, for a console to show. */
   onState?: (state: RunnerState) => void;
   /**
@@ -150,6 +163,7 @@ export function ProtocolRunner({
   officialSlug = null,
   warningShown = false,
   commands,
+  signal,
   onState,
   resume,
   onFinish,
@@ -457,6 +471,19 @@ export function ProtocolRunner({
     null
   );
   const seenCommandsRef = useRef(new Set<string>());
+  // The operator's adjustments, handed to the kind on screen (`nudge_threshold`).
+  const adjustmentListenersRef = useRef(
+    new Set<(adjustment: Adjustment) => boolean>()
+  );
+  const adjustments = useMemo<AdjustmentPort>(
+    () => ({
+      subscribe(listener) {
+        adjustmentListenersRef.current.add(listener);
+        return () => void adjustmentListenersRef.current.delete(listener);
+      },
+    }),
+    []
+  );
   // The step already completed: a kind's own timer may fire in the tick between an
   // operator ending its block and the block unmounting, and must not advance twice.
   const doneStepRef = useRef<number | null>(null);
@@ -691,6 +718,15 @@ export function ProtocolRunner({
         return log("applied");
       case "flag":
         return log("applied");
+      case "nudge_threshold": {
+        if (held || !step || !isNeurofeedback(step) || !command.steps)
+          return log("ignored");
+        const adjustment = { steps: command.steps, commandId: command.id };
+        let applied = false;
+        for (const listener of [...adjustmentListenersRef.current])
+          applied = listener(adjustment) || applied;
+        return log(applied ? "applied" : "ignored", { steps: command.steps });
+      }
       case "abort":
         log("applied");
         abort("operator");
@@ -714,6 +750,7 @@ export function ProtocolRunner({
     screen === "warning" ? "warning" : hold ? "paused" : "running";
   const messageText = message?.text ?? null;
   const extendable = step ? isTimedRest(step) : false;
+  const nudgeable = step ? isNeurofeedback(step) : false;
   useEffect(() => {
     onStateRef.current?.({
       status,
@@ -723,11 +760,13 @@ export function ProtocolRunner({
       extendable,
       attempt,
       message: messageText,
+      nudgeable,
     });
   }, [
     attempt,
     extendable,
     messageText,
+    nudgeable,
     onStateRef,
     pausePending,
     protocol.steps,
@@ -853,6 +892,7 @@ export function ProtocolRunner({
           emit={emitForStep}
           onComplete={onComplete}
           reducedMotion={reducedMotion}
+          {...(isNeurofeedback(step) ? { signal, adjustments } : {})}
         />
       )}
       {message && (

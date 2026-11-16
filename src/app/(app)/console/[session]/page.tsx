@@ -74,6 +74,7 @@ import {
   EXIT_GRACE_MS,
   type RunBoot,
   mergeMarkers,
+  owedMarkers,
   openChannel,
   resumePoint,
 } from "@/lib/console/channel";
@@ -89,6 +90,13 @@ import {
 } from "@/lib/muse/device";
 import { MODEL_PROFILES } from "@/lib/muse/models";
 import { useMuse } from "@/lib/muse/useMuse";
+import {
+  EMPTY_PANEL,
+  type NfPanel,
+  foldPanel,
+  isTickerMarker,
+} from "@/lib/neurofeedback/panel";
+import { NeurofeedbackPanel } from "@/components/console/NeurofeedbackPanel";
 import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
 import { type ClockAnchor, eegAnchor } from "@/lib/protocol/clock";
 import {
@@ -275,6 +283,13 @@ function Console({
     runnerRef.current = runner;
   });
   const markers = useRef<Marker[]>([]);
+  // Every marker a participant's window says the server acknowledged, across reloads:
+  // the finish sends only the others (`owedMarkers`).
+  const acked = useRef(new Set<number>());
+  // The neurofeedback panel, folded from the runner's `nf_*` events as they arrive and
+  // drawn four times a second: `nf_update` comes ten times a second.
+  const nfRef = useRef<NfPanel>(EMPTY_PANEL);
+  const [nf, setNf] = useState<NfPanel>(EMPTY_PANEL);
   const [ticker, setTicker] = useState<
     { seq: number; label: string; tS: number }[]
   >([]);
@@ -293,7 +308,7 @@ function Console({
         summary: end.summary,
         aborted: end.aborted || capture === undefined,
         capture,
-        events: markers.current.map(toWireEvent),
+        events: owedMarkers(markers.current, acked.current).map(toWireEvent),
       });
       setPhase("saved");
     } catch (e) {
@@ -376,9 +391,14 @@ function Console({
         case "state":
           setRunner(message.state);
           return;
+        case "acked":
+          for (const seq of message.seqs) acked.current.add(seq);
+          return;
         case "marker": {
           const m = message.marker;
           markers.current.push(m);
+          nfRef.current = foldPanel(nfRef.current, m);
+          if (!isTickerMarker(m)) return;
           setTicker((list) =>
             [
               {
@@ -433,6 +453,31 @@ function Console({
       command: makeCommand(type, text),
     });
   }, []);
+
+  const nudge = useCallback((steps: number) => {
+    channelRef.current?.post({
+      type: "command",
+      command: makeCommand("nudge_threshold", undefined, steps),
+    });
+  }, []);
+
+  // Every EEG packet goes on to the participant's window, where a neurofeedback block
+  // computes its feedback next to the runner's clock (V4-0009).
+  const { eegFeed } = muse;
+  useEffect(
+    () =>
+      eegFeed.subscribe((packet) =>
+        channelRef.current?.post({ type: "eeg", packet })
+      ),
+    [eegFeed]
+  );
+
+  const nfOnScreen = runner?.nudgeable === true;
+  useEffect(() => {
+    if (!nfOnScreen) return;
+    const id = setInterval(() => setNf(nfRef.current), 250);
+    return () => clearInterval(id);
+  }, [nfOnScreen]);
 
   const begin = useCallback(async () => {
     if (!protocol.data) return;
@@ -713,6 +758,13 @@ function Console({
               disabled={phase !== "running" || participant !== "open"}
               send={send}
             />
+            {nfOnScreen && (
+              <NeurofeedbackPanel
+                panel={nf}
+                disabled={phase !== "running" || participant !== "open"}
+                nudge={nudge}
+              />
+            )}
             {session && phase === "running" && (
               <LiveNotes
                 clock={sessionClock}
