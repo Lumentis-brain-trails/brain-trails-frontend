@@ -349,16 +349,23 @@ function ViewCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [computed, landscape, namer.category, view, source]);
 
-  const painted = computed.color
-    ? colorOf(computed.color, theme.landscape, noData)
+  // coloured by its own height, a measure still greys where it knows too little: only
+  // the map itself (never blank) keeps the plain height ramp
+  const colorField: MeasureField | null =
+    computed.color ??
+    (view.height.kind === "map" && !view.height.energy
+      ? null
+      : computed.height);
+  const painted = colorField
+    ? colorOf(colorField, theme.landscape, noData)
     : null;
   const key: ColorKey | null = painted
     ? painted.key
     : { type: "ramp", low: 0, high: 1 };
   const keyField: ContinuousField | null =
-    computed.color?.type === "continuous"
-      ? computed.color
-      : computed.color
+    colorField?.type === "continuous"
+      ? colorField
+      : colorField
         ? null
         : computed.height;
 
