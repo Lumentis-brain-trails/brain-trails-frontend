@@ -1,24 +1,30 @@
 /**
- * The Brain Landscape's other layers: heights over the same plane of neural states
- * (backend V3-0016, amended 2026-11-13).
+ * The measures the Brain Landscape can be drawn with (backend V3-0016, amended
+ * 2026-11-13 and 2026-11-16).
  *
- * The map's own height is where the person spent their time, every task together. A
- * layer raises something else over the same grid:
+ * One landscape shows two measures over the plane of neural states: one as its height,
+ * the other as its colour. Either can be any of:
  *
+ * - `map`: where the person spent their time, every task together (the map's own height);
+ * - `share`: of the time spent near each place, the share spent in one task;
  * - `time`: for one task, the seconds spent near each place, averaged over its runs;
  * - `reach`: for one task, the share of its runs that came near each place;
+ * - `score`: for one task, the average score (accuracy, d', reaction time) of its runs
+ *   near each place - a run's score is the whole run's, not its trials';
  * - `value`: for one self-reported label, the average answer near each place;
  * - `threshold`: for one label, the share of the windows near each place whose answer
- *   was above (or below) a threshold the reader picks.
+ *   was above (or below) a threshold the reader picks;
+ * - `band`: the average relative power of one band (alpha...) of the windows near each place;
+ * - `main` (colour only): the task with the most time near each place.
  *
- * "Near" is the map's own blur width (`sigma`), so a layer's hills are as wide as the
- * map's. The backend sends the inputs (`GET /landscape/layers`); the blurring is here
- * because the threshold, the colours and the energy transform are the reader's and move
- * at the speed of a slider. The binning and the blur follow the map's own
- * (`pipeline/neurometrics/brain.py`): bilinear onto the grid, windows off the frame left
- * out, a Gaussian truncated at four widths with zeros past the edge.
+ * "Near" is the map's own blur width (`sigma`). The backend sends the inputs
+ * (`GET /landscape/layers`); the blurring is here because the threshold and the energy
+ * transform are the reader's and move at the speed of a slider. The binning and the blur
+ * follow the map's own (`pipeline/neurometrics/brain.py`): bilinear onto the grid,
+ * windows off the frame left out, a Gaussian truncated at four widths with zeros past
+ * the edge.
  *
- * The three frequency layers have an energy view, `U = -log(p + epsilon)`, capped at a
+ * The frequency measures have an energy view, `U = -log(p + epsilon)`, capped at a
  * cutoff when one is set. Arbitrary units, like every terrain here: it is not a free
  * energy and nothing licenses reading it as one.
  */
@@ -27,35 +33,61 @@ import type { components } from "@/lib/api-types";
 export type LayerSource = components["schemas"]["BrainLandscapeLayersOut"];
 export type LayerLabel = components["schemas"]["BrainLandscapeLabelOut"];
 
-export type LayerKind = "time" | "reach" | "value" | "threshold";
-export const LAYER_KINDS: readonly LayerKind[] = [
+export type MeasureKind =
+  | "map"
+  | "share"
+  | "time"
+  | "reach"
+  | "score"
+  | "value"
+  | "threshold"
+  | "band"
+  | "main";
+export const MEASURE_KINDS: readonly MeasureKind[] = [
+  "map",
+  "share",
   "time",
   "reach",
+  "score",
   "value",
   "threshold",
+  "band",
+  "main",
 ];
-/** Kinds whose height is how often something happened: they have an energy view. */
-export const FREQUENCY_KINDS: readonly LayerKind[] = [
+/** Kinds whose value is how often something happened: they have an energy view. */
+export const FREQUENCY_KINDS: readonly MeasureKind[] = [
+  "map",
+  "share",
   "time",
   "reach",
   "threshold",
+];
+/** Kinds that name a task. */
+const TASK_KINDS: readonly MeasureKind[] = ["share", "time", "reach", "score"];
+
+export type ScoreMetric = "accuracy" | "d_prime" | "rt_ms";
+export const SCORE_METRICS: readonly ScoreMetric[] = [
+  "accuracy",
+  "d_prime",
+  "rt_ms",
 ];
 
 export type Direction = "above" | "below";
 
-/** One layer as the reader set it up. */
-export interface LayerSpec {
-  id: string;
-  kind: LayerKind;
-  /** The task (block label) of a `time` or `reach` layer. */
+/** One measure as the reader set it up. */
+export interface MeasureSpec {
+  kind: MeasureKind;
+  /** The task (block label) of a task measure. */
   task?: string;
-  /** The label key of a `value` or `threshold` layer. */
+  /** The label key of a `value` or `threshold` measure. */
   label?: string;
   /** On the label's own scale; on 0..1 when the label has none. */
   threshold?: number;
   direction?: Direction;
-  color: string;
-  visible: boolean;
+  /** Which score a `score` measure averages. */
+  metric?: ScoreMetric;
+  /** Which band a `band` measure averages. */
+  band?: string;
   /** Show `-log(p + epsilon)` instead of `p` (frequency kinds only). */
   energy: boolean;
   epsilon: number;
@@ -63,30 +95,63 @@ export interface LayerSpec {
   cutoff: number | null;
 }
 
-/** A layer evaluated on the grid. */
-export interface LayerField {
+/** One landscape on the page: a measure for the height, another (or the same) for the colour. */
+export interface ViewSpec {
+  id: string;
+  height: MeasureSpec;
+  /** Null: coloured by its own height, as the map always was. */
+  color: MeasureSpec | null;
+}
+
+export type Unit =
+  | "density"
+  | "seconds"
+  | "share"
+  | "reach"
+  | "threshold"
+  | "answer"
+  | "energy"
+  | "band"
+  | "accuracy"
+  | "dprime"
+  | "ms";
+
+/** A measure with a number at every place. */
+export interface ContinuousField {
+  type: "continuous";
   /**
-   * What is drawn, `[row][column]`, scaled to about 0..1. Never blank: a layer rises
-   * from the floor and sinks back to it, so it stands on the map instead of floating
-   * as islands with cliff edges, and its contours stay smooth.
+   * What a height draws, `[row][column]`, scaled to about 0..1. Never blank: a measure
+   * rises from the floor and sinks back to it, so it stands on the map instead of
+   * floating as islands with cliff edges.
    */
   z: number[][];
-  /** What the hover says at each point, in the layer's own units. */
+  /** The measure itself, in `unit`; null where too few windows went to say. */
   value: (number | null)[][];
-  /** Which unit `value` is in. */
-  unit: "seconds" | "reach" | "threshold" | "answer" | "energy";
+  unit: Unit;
 }
+
+/** A measure with a category at every place: which task was the main one there. */
+export interface CategoricalField {
+  type: "categorical";
+  /** An index into `categories`; null where too few windows went to say. */
+  category: (number | null)[][];
+  /** The winner's share of the time spent near the place. */
+  share: (number | null)[][];
+  categories: string[];
+}
+
+export type MeasureField = ContinuousField | CategoricalField;
 
 /** Below this many windows' worth of weight near a place, an average there is not given. */
 export const MIN_SUPPORT = 0.5;
 /**
- * From this many windows' worth of weight near a place, an answer layer stands at its
- * full height; with less it sinks smoothly towards the floor, so where few windows went
- * says little instead of ending in a cliff.
+ * From this many windows' worth of weight near a place, an average stands at its full
+ * height; with less it sinks smoothly towards the floor, so where few windows went says
+ * little instead of ending in a cliff.
  */
 export const FULL_SUPPORT = 2;
-/** At most this many layers at once: more stacked translucent surfaces stop reading. */
-export const MAX_LAYERS = 2;
+/** At most this many landscapes on the page: each is a WebGL scene of its own. */
+export const MAX_VIEWS = 4;
 export const DEFAULT_EPSILON = 0.01;
 /** Kernels stop at four widths, like `scipy.ndimage.gaussian_filter`'s default. */
 const TRUNCATE = 4;
@@ -94,10 +159,10 @@ const TRUNCATE = 4;
 const REACH_SPAN = 3;
 
 /**
- * Colours a new layer is offered in turn: the trail's hues and the labels' blue, green
- * and orange, distinct enough to read through each other.
+ * The colours of the `main` measure's tasks, in turn: the trail's hues and the labels'
+ * blue, green and orange, distinct enough to tell apart side by side.
  */
-export const LAYER_COLORS = [
+export const CATEGORY_COLORS = [
   "#2a78d6",
   "#e2569c",
   "#1baf7a",
@@ -284,140 +349,6 @@ interface Frequency {
 }
 
 /**
- * Evaluate one layer on the map's grid. Returns null when the layer names a task or
- * label the person no longer has (a stored layer outliving its data).
- */
-export function computeLayer(
-  source: LayerSource,
-  spec: LayerSpec
-): LayerField | null {
-  const grid = gridOf(source);
-  const n = grid.nx * grid.ny;
-  let frequency: Frequency | null = null;
-  let field: LayerField;
-
-  if (spec.kind === "time" || spec.kind === "reach") {
-    const runs = source.runs
-      .map((run, r) => (run.task === spec.task ? r : -1))
-      .filter((r) => r >= 0);
-    if (runs.length === 0) return null;
-    if (spec.kind === "time") {
-      const near = blurGrid(
-        splat(
-          grid,
-          windowsOf(source, runs, (r) => source.runs[r].dt)
-        ),
-        grid.nx,
-        grid.ny,
-        grid.sx,
-        grid.sy
-      );
-      const perRun = near.map((v) => v / runs.length);
-      const duration =
-        runs.reduce(
-          (s, r) => s + source.runs[r].dt * source.runs[r].x.length,
-          0
-        ) / runs.length;
-      const peak = Math.max(...perRun) || 1;
-      field = {
-        z: rows(grid, (c) => perRun[c] / peak),
-        value: rows(grid, (c) => perRun[c]),
-        unit: "seconds",
-      };
-      frequency = { p: perRun.map((v) => Math.min(1, v / (duration || 1))) };
-    } else {
-      const total = new Float64Array(n);
-      for (const r of runs)
-        total.set(reached(grid, source.runs[r]).map((v, c) => v + total[c]));
-      const share = total.map((v) => v / runs.length);
-      field = {
-        z: rows(grid, (c) => share[c]),
-        value: rows(grid, (c) => share[c]),
-        unit: "reach",
-      };
-      frequency = { p: share };
-    }
-  } else {
-    const label = source.labels.find((l) => l.key === spec.label);
-    if (!label) return null;
-    const answers = runAnswers(source, label.key);
-    if (answers.size === 0) return null;
-    const runs = [...answers.keys()];
-    const support = blurGrid(
-      splat(
-        grid,
-        windowsOf(source, runs, () => 1)
-      ),
-      grid.nx,
-      grid.ny,
-      grid.sx,
-      grid.sy
-    );
-    const known = (c: number) => support[c] >= MIN_SUPPORT;
-    const confidence = support.map((v) => Math.min(1, v / FULL_SUPPORT));
-    // an answer layer changes fast where its support ends; drawn, it is softened once
-    // more at the map's width so its sides slope like a hill's instead of a wall's
-    const soften = (values: Float64Array) => {
-      const drawn = blurGrid(
-        values.map((v, c) => v * confidence[c]),
-        grid.nx,
-        grid.ny,
-        grid.sx,
-        grid.sy,
-        false
-      );
-      return (c: number) => drawn[c];
-    };
-    const ratio = (weight: (run: number) => number) => {
-      const top = blurGrid(
-        splat(grid, windowsOf(source, runs, weight)),
-        grid.nx,
-        grid.ny,
-        grid.sx,
-        grid.sy
-      );
-      return top.map((v, c) =>
-        support[c] > 0 ? Math.min(1, Math.max(0, v / support[c])) : 0
-      );
-    };
-    if (spec.kind === "value") {
-      const mean = ratio((r) => answers.get(r)?.norm ?? 0);
-      const [low, high] = label.scale ?? [0, 1];
-      field = {
-        z: rows(grid, soften(mean)),
-        value: rows(grid, (c) =>
-          known(c) ? low + mean[c] * (high - low) : null
-        ),
-        unit: "answer",
-      };
-    } else {
-      const threshold = spec.threshold ?? defaultThreshold(label);
-      const passes = (r: number) => {
-        const a = answers.get(r);
-        if (!a) return 0;
-        const v = label.scale ? a.raw : a.norm;
-        return (spec.direction ?? "above") === "above"
-          ? Number(v > threshold)
-          : Number(v < threshold);
-      };
-      const share = ratio(passes);
-      field = {
-        z: rows(grid, soften(share)),
-        value: rows(grid, (c) => (known(c) ? share[c] : null)),
-        unit: "threshold",
-      };
-      frequency = {
-        p: share.map((v, c) => v * confidence[c]),
-        mask: known,
-      };
-    }
-  }
-
-  if (spec.energy && frequency) return energy(grid, frequency, spec);
-  return field;
-}
-
-/**
  * Per cell, how close one run came: the kernel of its nearest window, 1 on top of a
  * window and 0.61 one width away. Averaged over runs, the share of runs that got there.
  */
@@ -450,12 +381,346 @@ function reached(
   return out;
 }
 
+/** A weighted average near each place, and how much weight it stands on. */
+interface Average {
+  mean: Float64Array;
+  known: (index: number) => boolean;
+  confidence: Float64Array;
+}
+
+function average(
+  grid: Grid,
+  points: readonly { x: number; y: number; w: number; v: number }[]
+): Average {
+  const blur = (data: Float64Array) =>
+    blurGrid(data, grid.nx, grid.ny, grid.sx, grid.sy);
+  const support = blur(splat(grid, points));
+  const top = blur(
+    splat(
+      grid,
+      points.map((p) => ({ x: p.x, y: p.y, w: p.w * p.v }))
+    )
+  );
+  return {
+    mean: top.map((v, c) => (support[c] > 0 ? v / support[c] : 0)),
+    known: (c) => support[c] >= MIN_SUPPORT,
+    confidence: support.map((v) => Math.min(1, v / FULL_SUPPORT)),
+  };
+}
+
+/**
+ * An average drawn as a height: scaled from `low` to `high`, sunk towards the floor
+ * where little weight stands under it and softened once more at the map's width, so its
+ * sides slope like a hill's instead of a wall's.
+ */
+function averageHeight(
+  grid: Grid,
+  avg: Average,
+  low: number,
+  high: number
+): number[][] {
+  const span = high - low || 1;
+  const drawn = blurGrid(
+    avg.mean.map(
+      (v, c) => Math.min(1, Math.max(0, (v - low) / span)) * avg.confidence[c]
+    ),
+    grid.nx,
+    grid.ny,
+    grid.sx,
+    grid.sy,
+    false
+  );
+  return rows(grid, (c) => drawn[c]);
+}
+
+/** The lowest and highest known value of an average: what its height spans. */
+function knownRange(avg: Average): [number, number] {
+  let low = Infinity;
+  let high = -Infinity;
+  avg.mean.forEach((v, c) => {
+    if (!avg.known(c)) return;
+    low = Math.min(low, v);
+    high = Math.max(high, v);
+  });
+  return Number.isFinite(low) ? [low, high] : [0, 1];
+}
+
+function continuous(
+  grid: Grid,
+  avg: Average,
+  unit: Unit,
+  range: [number, number] = knownRange(avg),
+  scale: (v: number) => number = (v) => v
+): ContinuousField {
+  return {
+    type: "continuous",
+    z: averageHeight(grid, avg, range[0], range[1]),
+    value: rows(grid, (c) => (avg.known(c) ? scale(avg.mean[c]) : null)),
+    unit,
+  };
+}
+
+/** The runs of one task, by index. */
+function runsOf(source: LayerSource, task: string | undefined): number[] {
+  return source.runs
+    .map((run, r) => (run.task === task ? r : -1))
+    .filter((r) => r >= 0);
+}
+
+/** A count of windows near each place, weighted. */
+function near(
+  grid: Grid,
+  source: LayerSource,
+  runs: Iterable<number>,
+  weight: (run: number) => number
+): Float64Array {
+  return blurGrid(
+    splat(grid, windowsOf(source, runs, weight)),
+    grid.nx,
+    grid.ny,
+    grid.sx,
+    grid.sy
+  );
+}
+
+/**
+ * Evaluate one measure on the map's grid. `map` is the map's own height grid,
+ * `[row][column]`. Returns null when the measure names a task, label or band the person
+ * no longer has, or one without data (a task never scored).
+ */
+export function computeMeasure(
+  source: LayerSource,
+  map: readonly (readonly number[])[],
+  spec: MeasureSpec
+): MeasureField | null {
+  const grid = gridOf(source);
+  const n = grid.nx * grid.ny;
+  let frequency: Frequency | null = null;
+  let field: ContinuousField;
+  const all = source.runs.map((_, r) => r);
+
+  switch (spec.kind) {
+    case "map": {
+      const at = (c: number) =>
+        map[Math.floor(c / grid.nx)]?.[c % grid.nx] ?? 0;
+      field = {
+        type: "continuous",
+        z: rows(grid, at),
+        value: rows(grid, at),
+        unit: "density",
+      };
+      frequency = { p: Float64Array.from({ length: n }, (_, c) => at(c)) };
+      break;
+    }
+    case "share": {
+      const runs = runsOf(source, spec.task);
+      if (runs.length === 0) return null;
+      const mine = near(grid, source, runs, (r) => source.runs[r].dt);
+      const total = near(grid, source, all, (r) => source.runs[r].dt);
+      const count = near(grid, source, all, () => 1);
+      const known = (c: number) => count[c] >= MIN_SUPPORT;
+      const share = mine.map((v, c) =>
+        total[c] > 0 ? Math.min(1, v / total[c]) : 0
+      );
+      const confidence = count.map((v) => Math.min(1, v / FULL_SUPPORT));
+      const drawn = blurGrid(
+        share.map((v, c) => v * confidence[c]),
+        grid.nx,
+        grid.ny,
+        grid.sx,
+        grid.sy,
+        false
+      );
+      field = {
+        type: "continuous",
+        z: rows(grid, (c) => drawn[c]),
+        value: rows(grid, (c) => (known(c) ? share[c] : null)),
+        unit: "share",
+      };
+      frequency = { p: share.map((v, c) => v * confidence[c]), mask: known };
+      break;
+    }
+    case "time": {
+      const runs = runsOf(source, spec.task);
+      if (runs.length === 0) return null;
+      const perRun = near(grid, source, runs, (r) => source.runs[r].dt).map(
+        (v) => v / runs.length
+      );
+      const duration =
+        runs.reduce(
+          (s, r) => s + source.runs[r].dt * source.runs[r].x.length,
+          0
+        ) / runs.length;
+      const peak = Math.max(...perRun) || 1;
+      field = {
+        type: "continuous",
+        z: rows(grid, (c) => perRun[c] / peak),
+        value: rows(grid, (c) => perRun[c]),
+        unit: "seconds",
+      };
+      frequency = { p: perRun.map((v) => Math.min(1, v / (duration || 1))) };
+      break;
+    }
+    case "reach": {
+      const runs = runsOf(source, spec.task);
+      if (runs.length === 0) return null;
+      const total = new Float64Array(n);
+      for (const r of runs)
+        total.set(reached(grid, source.runs[r]).map((v, c) => v + total[c]));
+      const share = total.map((v) => v / runs.length);
+      field = {
+        type: "continuous",
+        z: rows(grid, (c) => share[c]),
+        value: rows(grid, (c) => share[c]),
+        unit: "reach",
+      };
+      frequency = { p: share };
+      break;
+    }
+    case "score": {
+      const metric = spec.metric ?? "accuracy";
+      const scores = new Map<number, number>();
+      for (const r of runsOf(source, spec.task)) {
+        const v = source.runs[r].score?.[metric];
+        if (typeof v === "number") scores.set(r, v);
+      }
+      if (scores.size === 0) return null;
+      const valued: { x: number; y: number; w: number; v: number }[] = [];
+      for (const r of scores.keys()) {
+        const run = source.runs[r];
+        for (let k = 0; k < run.x.length; k += 1)
+          valued.push({ x: run.x[k], y: run.y[k], w: 1, v: scores.get(r)! });
+      }
+      const avg = average(grid, valued);
+      field = continuous(
+        grid,
+        avg,
+        metric === "accuracy"
+          ? "accuracy"
+          : metric === "d_prime"
+            ? "dprime"
+            : "ms"
+      );
+      break;
+    }
+    case "band": {
+      const b = source.bands?.names.indexOf(spec.band ?? "") ?? -1;
+      if (!source.bands || b < 0) return null;
+      const { x, y, values } = source.bands;
+      const points: { x: number; y: number; w: number; v: number }[] = [];
+      values[b].forEach((v, k) => {
+        if (typeof v === "number") points.push({ x: x[k], y: y[k], w: 1, v });
+      });
+      if (points.length === 0) return null;
+      field = continuous(grid, average(grid, points), "band");
+      break;
+    }
+    case "value":
+    case "threshold": {
+      const label = source.labels.find((l) => l.key === spec.label);
+      if (!label) return null;
+      const answers = runAnswers(source, label.key);
+      if (answers.size === 0) return null;
+      const valued = (v: (run: number) => number) => {
+        const out: { x: number; y: number; w: number; v: number }[] = [];
+        for (const r of answers.keys()) {
+          const run = source.runs[r];
+          if (!run) continue;
+          for (let k = 0; k < run.x.length; k += 1)
+            out.push({ x: run.x[k], y: run.y[k], w: 1, v: v(r) });
+        }
+        return out;
+      };
+      if (spec.kind === "value") {
+        const [low, high] = label.scale ?? [0, 1];
+        const avg = average(
+          grid,
+          valued((r) => answers.get(r)?.norm ?? 0)
+        );
+        field = continuous(
+          grid,
+          avg,
+          "answer",
+          [0, 1],
+          (v) => low + v * (high - low)
+        );
+      } else {
+        const threshold = spec.threshold ?? defaultThreshold(label);
+        const passes = (r: number) => {
+          const a = answers.get(r);
+          if (!a) return 0;
+          const v = label.scale ? a.raw : a.norm;
+          return (spec.direction ?? "above") === "above"
+            ? Number(v > threshold)
+            : Number(v < threshold);
+        };
+        const avg = average(grid, valued(passes));
+        field = continuous(grid, avg, "threshold", [0, 1]);
+        frequency = {
+          p: avg.mean.map((v, c) => v * avg.confidence[c]),
+          mask: avg.known,
+        };
+      }
+      break;
+    }
+    case "main":
+      return mainTask(grid, source);
+  }
+
+  if (spec.energy && frequency) return energy(grid, frequency, spec);
+  return field;
+}
+
+/** Which task had the most time near each place, and its share of that time. */
+function mainTask(grid: Grid, source: LayerSource): CategoricalField | null {
+  const tasks = layerTasks(source);
+  if (tasks.length === 0) return null;
+  const n = grid.nx * grid.ny;
+  const best = new Float64Array(n);
+  const winner = new Int32Array(n).fill(-1);
+  const total = new Float64Array(n);
+  tasks.forEach((task, k) => {
+    const time = near(
+      grid,
+      source,
+      runsOf(source, task),
+      (r) => source.runs[r].dt
+    );
+    for (let c = 0; c < n; c += 1) {
+      total[c] += time[c];
+      if (time[c] > best[c]) {
+        best[c] = time[c];
+        winner[c] = k;
+      }
+    }
+  });
+  const count = near(
+    grid,
+    source,
+    source.runs.map((_, r) => r),
+    () => 1
+  );
+  const known = (c: number) => count[c] >= MIN_SUPPORT && winner[c] >= 0;
+  return {
+    type: "categorical",
+    category: rows(grid, (c) => (known(c) ? winner[c] : null)),
+    share: rows(grid, (c) =>
+      known(c) && total[c] > 0 ? best[c] / total[c] : null
+    ),
+    categories: tasks,
+  };
+}
+
 /**
  * `U = -log(p + epsilon)`, capped at the cutoff; drawn over its own ceiling (the cutoff,
  * or `-log epsilon`) so energies with the same settings share a scale. Wells are where
  * it happened most.
  */
-function energy(grid: Grid, frequency: Frequency, spec: LayerSpec): LayerField {
+function energy(
+  grid: Grid,
+  frequency: Frequency,
+  spec: MeasureSpec
+): ContinuousField {
   const epsilon = spec.epsilon > 0 ? spec.epsilon : DEFAULT_EPSILON;
   const ceiling = spec.cutoff ?? -Math.log(epsilon);
   const u = (c: number) => {
@@ -464,6 +729,7 @@ function energy(grid: Grid, frequency: Frequency, spec: LayerSpec): LayerField {
   };
   const shown = (c: number) => !frequency.mask || frequency.mask(c);
   return {
+    type: "continuous",
     z: rows(grid, (c) => u(c) / (ceiling || 1)),
     value: rows(grid, (c) => (shown(c) ? u(c) : null)),
     unit: "energy",
@@ -476,104 +742,102 @@ export function defaultThreshold(label: LayerLabel): number {
   return low + (high - low) / 2;
 }
 
-/** Whether a layer has an energy view. */
-export function isFrequency(kind: LayerKind): boolean {
+/** Whether a measure has an energy view. */
+export function isFrequency(kind: MeasureKind): boolean {
   return FREQUENCY_KINDS.includes(kind);
 }
 
+/** The scores some run of `task` has: what a `score` measure can average for it. */
+export function taskMetrics(source: LayerSource, task: string): ScoreMetric[] {
+  return SCORE_METRICS.filter((metric) =>
+    source.runs.some(
+      (run) => run.task === task && typeof run.score?.[metric] === "number"
+    )
+  );
+}
+
+/** A measure with its settings at their defaults. */
+export function measure(
+  kind: MeasureKind,
+  change: Partial<MeasureSpec> = {}
+): MeasureSpec {
+  return {
+    kind,
+    energy: false,
+    epsilon: DEFAULT_EPSILON,
+    cutoff: null,
+    ...change,
+  };
+}
+
+/** The first landscape: the map as it always was, height and colour where the time went. */
+export function defaultView(id = "v0"): ViewSpec {
+  return { id, height: measure("map"), color: null };
+}
+
 /**
- * The stored layers that still make sense against what the person has now: a task or
- * label they no longer have is dropped, odd entries too. Reads what a browser kept.
+ * A stored measure if it still makes sense against what the person has now - its task,
+ * label, score or band still there - repaired where it can be; null otherwise.
  */
-export function reviveLayers(raw: unknown, source: LayerSource): LayerSpec[] {
-  if (!Array.isArray(raw)) return [];
-  const tasks = new Set(layerTasks(source));
-  const labels = new Set(source.labels.map((l) => l.key));
-  return raw
-    .flatMap((entry): LayerSpec[] => {
-      if (typeof entry !== "object" || entry === null) return [];
-      const s = entry as Partial<LayerSpec>;
-      if (
-        typeof s.id !== "string" ||
-        !LAYER_KINDS.includes(s.kind as LayerKind) ||
-        typeof s.color !== "string" ||
-        !/^#[0-9a-f]{6}$/i.test(s.color)
-      )
-        return [];
-      const kind = s.kind as LayerKind;
-      if ((kind === "time" || kind === "reach") && !tasks.has(s.task ?? ""))
-        return [];
-      if (
-        (kind === "value" || kind === "threshold") &&
-        !labels.has(s.label ?? "")
-      )
-        return [];
-      return [
-        {
-          id: s.id,
-          kind,
-          task: s.task,
-          label: s.label,
-          threshold: typeof s.threshold === "number" ? s.threshold : undefined,
-          direction: s.direction === "below" ? "below" : "above",
-          color: s.color,
-          visible: s.visible !== false,
-          energy: s.energy === true && isFrequency(kind),
-          epsilon:
-            typeof s.epsilon === "number" && s.epsilon > 0
-              ? s.epsilon
-              : DEFAULT_EPSILON,
-          cutoff:
-            typeof s.cutoff === "number" && s.cutoff > 0 ? s.cutoff : null,
-        },
-      ];
-    })
-    .slice(0, MAX_LAYERS);
-}
-
-/** A colour darkened towards black by `amount` (0..1): a layer's shaded low ground. */
-export function shade(color: string, amount: number): string {
-  const hex = /^#([0-9a-f]{6})$/i.exec(color)?.[1];
-  if (!hex) return color;
-  const channel = (k: number) =>
-    Math.round(parseInt(hex.slice(k, k + 2), 16) * (1 - amount))
-      .toString(16)
-      .padStart(2, "0");
-  return `#${channel(0)}${channel(2)}${channel(4)}`;
-}
-
-/** A colour lightened towards white by `amount` (0..1): a layer's pale foot. */
-export function tint(color: string, amount: number): string {
-  const hex = /^#([0-9a-f]{6})$/i.exec(color)?.[1];
-  if (!hex) return color;
-  const channel = (k: number) => {
-    const v = parseInt(hex.slice(k, k + 2), 16);
-    return Math.round(v + (255 - v) * amount)
-      .toString(16)
-      .padStart(2, "0");
+function reviveMeasure(
+  raw: unknown,
+  source: LayerSource,
+  asColor: boolean
+): MeasureSpec | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const s = raw as Partial<MeasureSpec>;
+  if (!MEASURE_KINDS.includes(s.kind as MeasureKind)) return null;
+  const kind = s.kind as MeasureKind;
+  if (kind === "main" && !asColor) return null;
+  if (TASK_KINDS.includes(kind) && !layerTasks(source).includes(s.task ?? ""))
+    return null;
+  if (
+    kind === "score" &&
+    !taskMetrics(source, s.task ?? "").includes(s.metric as ScoreMetric)
+  )
+    return null;
+  if (
+    (kind === "value" || kind === "threshold") &&
+    !source.labels.some((l) => l.key === s.label)
+  )
+    return null;
+  if (kind === "band" && !source.bands?.names.includes(s.band ?? ""))
+    return null;
+  return {
+    kind,
+    ...(typeof s.task === "string" ? { task: s.task } : {}),
+    ...(typeof s.label === "string" ? { label: s.label } : {}),
+    ...(typeof s.threshold === "number" ? { threshold: s.threshold } : {}),
+    ...(kind === "threshold"
+      ? { direction: s.direction === "below" ? "below" : "above" }
+      : {}),
+    ...(kind === "score" ? { metric: s.metric } : {}),
+    ...(kind === "band" ? { band: s.band } : {}),
+    energy: s.energy === true && isFrequency(kind),
+    epsilon:
+      typeof s.epsilon === "number" && s.epsilon > 0
+        ? s.epsilon
+        : DEFAULT_EPSILON,
+    cutoff: typeof s.cutoff === "number" && s.cutoff > 0 ? s.cutoff : null,
   };
-  return `#${channel(0)}${channel(2)}${channel(4)}`;
 }
 
-/** A `#rrggbb` colour as `rgba(...)` with `alpha`: a layer's translucent shadow. */
-export function rgba(color: string, alpha: number): string {
-  const hex = /^#([0-9a-f]{6})$/i.exec(color)?.[1];
-  if (!hex) return color;
-  const [r, g, b] = [0, 2, 4].map((k) => parseInt(hex.slice(k, k + 2), 16));
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-/** Two `#rrggbb` colours mixed, `t` of the way from `a` to `b`. */
-export function mix(a: string, b: string, t: number): string {
-  const ha = /^#([0-9a-f]{6})$/i.exec(a)?.[1];
-  const hb = /^#([0-9a-f]{6})$/i.exec(b)?.[1];
-  if (!ha || !hb) return a;
-  const channel = (k: number) => {
-    const va = parseInt(ha.slice(k, k + 2), 16);
-    const vb = parseInt(hb.slice(k, k + 2), 16);
-    return Math.round(va + (vb - va) * t)
-      .toString(16)
-      .padStart(2, "0");
-  };
-  return `#${channel(0)}${channel(2)}${channel(4)}`;
+/**
+ * The stored landscapes as far as they still apply: a height whose data is gone falls
+ * back to the map, a colour to the height's own. Reads what a browser kept; never empty.
+ */
+export function reviveViews(raw: unknown, source: LayerSource): ViewSpec[] {
+  const views = (Array.isArray(raw) ? raw : []).flatMap((entry): ViewSpec[] => {
+    if (typeof entry !== "object" || entry === null) return [];
+    const v = entry as { id?: unknown; height?: unknown; color?: unknown };
+    if (typeof v.id !== "string") return [];
+    return [
+      {
+        id: v.id,
+        height: reviveMeasure(v.height, source, false) ?? measure("map"),
+        color: reviveMeasure(v.color, source, true),
+      },
+    ];
+  });
+  return views.length > 0 ? views.slice(0, MAX_VIEWS) : [defaultView()];
 }
