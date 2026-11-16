@@ -1231,6 +1231,7 @@
     "noBlocks": "This recording has no protocol blocks to compare. The trail of the whole session is below.",
     "disclaimer": "Exploratory, not diagnostic. These describe one recording, not a person.",
     "groups": {
+      "landscape": "Brain Landscape",
       "spectral": "Band power",
       "dynamics": "Neurometrics",
       "task": "Task"
@@ -1247,6 +1248,10 @@
       "radii": "radii"
     },
     "rows": {
+      "trajectory": {
+        "name": "Path on your Brain Landscape",
+        "meaning": "Where this block took you on the map of all your recordings. The rest of this run is the faint line; the ring follows the slider. Turn one landscape and the other turns with it."
+      },
       "alpha": {
         "name": "Alpha",
         "meaning": "Share of the signal's power in the 8–12 Hz band. It rises when you relax with eyes closed and drops when you look and pay attention."
@@ -1330,7 +1335,16 @@
       "person": "Neurometrics counted in your personal map's regions: they compare with your other recordings.",
       "session": "Neurometrics counted in this session's own regions: they compare within this recording only."
     },
-    "averageWholeOnly": "The average person is for the whole block: show the whole block to compare with it."
+    "averageWholeOnly": "The average person is for the whole block: show the whole block to compare with it.",
+    "trajectory": {
+      "building": "Your Brain Landscape appears once your first recording has been analysed.",
+      "unavailable": "This server does not have the Brain Landscape yet.",
+      "error": "The landscape could not be loaded. Try again in a moment.",
+      "adding": "Adding this recording to your landscape. This row updates by itself.",
+      "missing": "This recording is not on your landscape yet.",
+      "empty": "No moment of this block is on the map.",
+      "aria": "The path of {block} on your Brain Landscape"
+    }
   },
   "landscape": {
     "title": "Brain Landscape",

@@ -1231,6 +1231,7 @@
     "noBlocks": "Questa registrazione non ha blocchi di protocollo da confrontare. Il sentiero dell'intera sessione è qui sotto.",
     "disclaimer": "Esplorativo, non diagnostico. Queste misure descrivono una registrazione, non una persona.",
     "groups": {
+      "landscape": "Paesaggio cerebrale",
       "spectral": "Potenza di banda",
       "dynamics": "Neurometriche",
       "task": "Compito"
@@ -1247,6 +1248,10 @@
       "radii": "raggi"
     },
     "rows": {
+      "trajectory": {
+        "name": "Percorso sul tuo paesaggio cerebrale",
+        "meaning": "Dove ti ha portato questo blocco sulla mappa di tutte le tue registrazioni. Il resto della sessione è la linea tenue; l'anello segue il cursore. Ruota un paesaggio e l'altro ruota con lui."
+      },
       "alpha": {
         "name": "Alfa",
         "meaning": "Quota della potenza del segnale nella banda 8–12 Hz. Sale quando ti rilassi a occhi chiusi e scende quando guardi e presti attenzione."
@@ -1330,7 +1335,16 @@
       "person": "Neurometriche contate nelle regioni della tua mappa personale: si confrontano con le tue altre registrazioni.",
       "session": "Neurometriche contate nelle regioni di questa sessione: si confrontano solo all'interno di questa registrazione."
     },
-    "averageWholeOnly": "La persona media riguarda l'intero blocco: mostra l'intero blocco per confrontarti con essa."
+    "averageWholeOnly": "La persona media riguarda l'intero blocco: mostra l'intero blocco per confrontarti con essa.",
+    "trajectory": {
+      "building": "Il tuo paesaggio cerebrale compare quando la tua prima registrazione è stata analizzata.",
+      "unavailable": "Questo server non ha ancora il paesaggio cerebrale.",
+      "error": "Non è stato possibile caricare il paesaggio. Riprova tra poco.",
+      "adding": "Sto aggiungendo questa registrazione al tuo paesaggio. Questa riga si aggiorna da sola.",
+      "missing": "Questa registrazione non è ancora sul tuo paesaggio.",
+      "empty": "Nessun momento di questo blocco è sulla mappa.",
+      "aria": "Il percorso di {block} sul tuo paesaggio cerebrale"
+    }
   },
   "landscape": {
     "title": "Paesaggio cerebrale",

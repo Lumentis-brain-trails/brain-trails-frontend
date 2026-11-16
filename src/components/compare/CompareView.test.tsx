@@ -21,7 +21,8 @@ import { CompareView, defaultPair } from "./CompareView";
  * out halves alpha and makes every remaining trial right - enough to see a column follow
  * its focus.
  */
-const get = vi.fn(async (path: string) => {
+const get = vi.fn(async (path: string): Promise<unknown> => {
+  if (path.endsWith("/landscape")) return landscapeWithoutTrail;
   const query = new URLSearchParams(path.split("?")[1]);
   const key = query.get("block");
   const row = [settle, dock].find((b) => b.key === key)!;
@@ -43,7 +44,31 @@ const get = vi.fn(async (path: string) => {
     regions: "session",
   };
 });
-vi.mock("@/lib/api", () => ({ api: { get: (path: string) => get(path) } }));
+/** A map built before this recording: the landscape row says so instead of drawing. */
+const landscapeWithoutTrail = {
+  bounds: [0, 1, 0, 1],
+  built_at: "2026-11-16T00:00:00Z",
+  categories: [],
+  cells: [],
+  epoch: 1,
+  grid: {
+    nx: 2,
+    ny: 2,
+    z: [
+      [0, 0],
+      [0, 0],
+    ],
+  },
+  n_recordings: 1,
+  n_windows: 4,
+  pending: false,
+  trail: null,
+  version: 1,
+};
+vi.mock("@/lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api")>()),
+  api: { get: (path: string) => get(path) },
+}));
 
 const analysis: Analysis = {
   id: "a",
@@ -254,6 +279,22 @@ describe("CompareView", () => {
     }
   });
 
+  test("the landscape row says when the recording is not on the map yet", async () => {
+    renderView();
+    for (const side of ["Left block", "Right block"] as const) {
+      expect(
+        column(side).getByRole("heading", {
+          name: "Path on your Brain Landscape",
+        })
+      ).toBeInTheDocument();
+      expect(
+        await column(side).findByText(
+          "This recording is not on your landscape yet."
+        )
+      ).toBeInTheDocument();
+    }
+  });
+
   test("a task block names its trial labels in the task's own words", () => {
     renderView();
     const right = column("Right block");
@@ -347,7 +388,7 @@ describe("CompareView", () => {
       window.localStorage.getItem(ROWS_STORAGE_KEY) ?? "[]"
     );
     expect(saved.at(-1)).toBe("alpha");
-    expect(saved).toHaveLength(14);
+    expect(saved).toHaveLength(15);
   });
 
   test("two blocks without trials show no task rows", () => {
@@ -383,8 +424,9 @@ describe("CompareView", () => {
 
   test("each column asks for its block's numbers", async () => {
     renderView();
-    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(3));
     expect(get.mock.calls.map(([path]) => path).sort()).toEqual([
+      "recordings/rec-1/landscape",
       "recordings/rec-1/selection?block=dock%230",
       "recordings/rec-1/selection?block=settle%230",
     ]);
