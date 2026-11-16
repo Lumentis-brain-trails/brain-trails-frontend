@@ -24,6 +24,14 @@ adds its path (S13: record 30 s, upload, see the trail).
 
 `E2E_API_URL`, `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` override the defaults above.
 
+The remote console's path (`e2e/remote-console.spec.ts`, T5) needs more of the backend:
+`FEATURES=beta_applications,workspaces_multi,assignments,live,console_remote`, a Redis
+(`docker compose -f infra/docker-compose.yml up -d redis`, then
+`REDIS_URL=redis://localhost:6381/0`) and `PUBLIC_API_URL=http://localhost:8000`, with the
+worker running (its live consumer draws the trail). `E2E_RESTART_API`, if set, is a
+shell command that restarts the API mid-run; the test then checks the console reconnects,
+keeps control and the trail goes on.
+
 ## In CI
 
 The `e2e` job in `.github/workflows/ci.yml` checks out the backend's `dev` branch, runs

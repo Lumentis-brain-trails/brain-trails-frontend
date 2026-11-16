@@ -26,6 +26,12 @@ export interface MarkerSink {
   flushBeacon(): void;
   /** Every marker this run produced, in order. */
   all(): readonly Marker[];
+  /**
+   * The markers no posted batch has had acknowledged yet, in order: all a run's finish
+   * still has to send. Re-sending the whole timeline instead made a long session's
+   * finish request larger than the BFF accepts (4.5 MB, ~11 min of neurofeedback).
+   */
+  unacknowledged(): readonly Marker[];
   readonly pending: number;
 }
 
@@ -37,6 +43,8 @@ export function createMemorySink(): MarkerSink {
     flush: async () => {},
     flushBeacon: () => {},
     all: () => markers,
+    // nothing is ever sent: everything is still to send
+    unacknowledged: () => markers,
     get pending() {
       return 0;
     },
@@ -49,6 +57,12 @@ export interface SessionSinkOptions {
   highWater?: number;
   post?: (path: string, body: unknown) => Promise<unknown>;
   beacon?: (path: string, body: unknown) => boolean;
+  /**
+   * Told each batch the server acknowledged: the participant's window reports them to
+   * the console, so the console's finish sends only what no window delivered - also
+   * after a reload, when the lost window's sink is gone.
+   */
+  onAck?: (markers: readonly Marker[]) => void;
 }
 
 /**
@@ -111,6 +125,7 @@ export function createSessionSink(
     // Only drop the batch once the server has acknowledged it; a failed post leaves the
     // buffer untouched so the next attempt resends the same events, never a second part.
     buffer = buffer.slice(batch.length);
+    options.onAck?.(batch);
   }
 
   async function drain(): Promise<void> {
@@ -137,6 +152,7 @@ export function createSessionSink(
       }
     },
     all: () => all,
+    unacknowledged: () => [...buffer],
     get pending() {
       return buffer.length;
     },

@@ -139,6 +139,13 @@ const SYMBOLS: Record<string, React.ReactNode> = {
     </>
   ),
   heartbeat: <path d="M28 46h30l8-16 12 32 10-22 6 6h38" />,
+  neurofeedback: (
+    <>
+      <rect x="44" y="24" width="72" height="44" rx="4" opacity="0.45" />
+      <path d="M52 56c8-14 14 6 22-6s14-10 20 0 10 4 14-2" />
+      <circle cx="80" cy="46" r="18" opacity="0.25" fill="currentColor" />
+    </>
+  ),
   quiz: (
     <>
       <path d="M52 30h56" />

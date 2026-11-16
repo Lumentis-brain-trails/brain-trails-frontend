@@ -62,12 +62,31 @@ describe("finishSession", () => {
       events: [{ t: 1, type: "session_start", payload: {}, seq: 0 }],
     });
 
-    expect(post).toHaveBeenCalledWith("sessions/sess-1/finish", {
+    // the events still owed go first, through the events endpoint
+    expect(post).toHaveBeenNthCalledWith(1, "sessions/sess-1/events", {
+      events: [{ t: 1, type: "session_start", payload: {}, seq: 0 }],
+    });
+    expect(post).toHaveBeenNthCalledWith(2, "sessions/sess-1/finish", {
       summary: { challenge_a: { hitRate: 0.9 } },
       aborted: false,
       capture,
-      events: [{ t: 1, type: "session_start", payload: {}, seq: 0 }],
     });
+  });
+
+  test("a long timeline goes in batches of 500, never in one finish body", async () => {
+    const events = Array.from({ length: 1201 }, (_, i) => ({
+      t: i / 10,
+      type: "nf_update",
+      payload: {},
+      seq: i,
+    }));
+    await finishSession("sess-1", { summary: {}, aborted: false, events });
+    const sizes = post.mock.calls
+      .filter(([path]) => path === "sessions/sess-1/events")
+      .map(([, body]) => (body as { events: unknown[] }).events.length);
+    expect(sizes).toEqual([500, 500, 201]);
+    expect(post.mock.calls.at(-1)?.[0]).toBe("sessions/sess-1/finish");
+    expect(post.mock.calls.at(-1)?.[1]).not.toHaveProperty("events");
   });
 
   test("an aborted run with nothing captured sends no capture", async () => {
