@@ -3100,6 +3100,35 @@ export interface components {
             title: string;
         };
         /**
+         * BrainLandscapeBandsOut
+         * @description Every window's relative band power, with its place on the map.
+         *
+         *     `values[b][k]` is band `names[b]` at window `(x[k], y[k])`, a share of the 1-45 Hz
+         *     total averaged over the channels in good contact; null where none was.
+         */
+        BrainLandscapeBandsOut: {
+            /**
+             * Names
+             * @default []
+             */
+            names: string[];
+            /**
+             * Values
+             * @default []
+             */
+            values: (number | null)[][];
+            /**
+             * X
+             * @default []
+             */
+            x: number[];
+            /**
+             * Y
+             * @default []
+             */
+            y: number[];
+        };
+        /**
          * BrainLandscapeCategoryOut
          * @description One thing that can have been happening in a window: its block, its trial label.
          */
@@ -3147,8 +3176,10 @@ export interface components {
          *
          *     The page blurs `runs` on the map's grid (`bounds`, `nx` x `ny`) with the map's own
          *     width `sigma`, for the task and label the reader picks. `answers` are `[run, label,
-         *     normalised, raw]`, `normalised` in `[0, 1]` on the item's scale. `stale` says the map
-         *     was built before layers were: the runs are empty and a rebuild has been queued.
+         *     normalised, raw]`, `normalised` in `[0, 1]` on the item's scale; `bands` places every
+         *     window's band power and a run's `score` says how it went, for colouring the map by
+         *     them (amended 2026-11-16). `stale` says the map was built before layers, or before
+         *     their scores and band power, were: what it has is sent and a rebuild has been queued.
          */
         BrainLandscapeLayersOut: {
             /** Answers */
@@ -3158,6 +3189,7 @@ export interface components {
                 number,
                 number
             ][];
+            bands?: components["schemas"]["BrainLandscapeBandsOut"];
             /** Bounds */
             bounds: number[];
             /** Epoch */
@@ -3236,12 +3268,27 @@ export interface components {
         BrainLandscapeRunOut: {
             /** Dt */
             dt: number;
+            score?: components["schemas"]["BrainLandscapeScoreOut"] | null;
             /** Task */
             task: string | null;
             /** X */
             x: number[];
             /** Y */
             y: number[];
+        };
+        /**
+         * BrainLandscapeScoreOut
+         * @description How a task run went, from its block's behaviour summary; null where undefined.
+         *
+         *     `accuracy` is a share in `[0, 1]`, `rt_ms` the median reaction time of the hits.
+         */
+        BrainLandscapeScoreOut: {
+            /** Accuracy */
+            accuracy?: number | null;
+            /** D Prime */
+            d_prime?: number | null;
+            /** Rt Ms */
+            rt_ms?: number | null;
         };
         /**
          * BrainLandscapeStatusOut

@@ -1346,48 +1346,74 @@
     "redrawn": "La geometria della mappa è stata ridisegnata con la tua ultima registrazione: i punti si confrontano all'interno di questa versione, non con le precedenti.",
     "epoch": "Versione della geometria {epoch}",
     "sidebarRedrawn": "Ridisegnato",
-    "layers": {
-      "title": "Livelli",
-      "intro": "Il piano sono gli stati del tuo cervello; un livello ci mostra sopra qualcos'altro. Scegli un colore per ciascuno e sovrapponine due: sulla mappa sono ombre che si mescolano dove si incontrano; come rilievo, superfici trasparenti i cui colori si mescolano dove si incrociano.",
-      "ground": "Mostra sotto dove è andato tutto il tuo tempo",
-      "failed": "Non è stato possibile caricare i livelli. Riprova tra un momento.",
-      "stale": "Stiamo ricostruendo la tua mappa per aggiungere i livelli. Questa pagina si aggiorna da sola.",
-      "empty": "Ancora niente da disegnare per questo livello.",
-      "add": "Aggiungi un livello",
-      "addButton": "Aggiungi",
-      "kind": "Cosa mostra l'altezza",
-      "task": "Compito",
-      "label": "Etichetta",
-      "noTasks": "Non hai ancora registrato nessun compito.",
-      "noLabels": "Ancora nessuna risposta ai questionari: le etichette vengono dai questionari dei tuoi protocolli.",
-      "kinds": {
-        "time": "Tempo per ogni esecuzione di un compito",
-        "reach": "Quanto spesso un compito ci è arrivato",
-        "value": "Risposta media a un'etichetta",
-        "threshold": "Risposta sopra o sotto una soglia"
+    "measures": {
+      "failed": "Non è stato possibile caricare le misure. Riprova tra un momento.",
+      "stale": "La tua mappa viene ricostruita per aggiungere i punteggi dei compiti e i ritmi cerebrali. La pagina si aggiorna da sola.",
+      "empty": "Ancora niente da colorare: nessun momento su questa mappa ha questa misura.",
+      "height": "Altezza",
+      "color": "Colore",
+      "sameAsHeight": "Come l'altezza",
+      "groups": {
+        "overall": "Tutto il tuo tempo",
+        "band": "Ritmi cerebrali",
+        "category": "Categorie"
+      },
+      "options": {
+        "map": "Tempo trascorso, tutti i compiti insieme",
+        "share": "quota di tempo",
+        "time": "tempo per esecuzione",
+        "reach": "quanto spesso un'esecuzione ci è arrivata",
+        "score": "{metric, select, accuracy {accuratezza media} d_prime {d′ medio} other {tempo di reazione medio}}",
+        "value": "risposta media",
+        "threshold": "sopra o sotto una soglia",
+        "band": "Potenza {band, select, delta {Delta} theta {Theta} alpha {Alfa} beta {Beta} gamma {Gamma} other {{band}}}",
+        "main": "Compito principale",
+        "subject": "{subject} · {option}"
       },
       "explain": {
-        "time": "Per un compito, i secondi che hai passato vicino a ogni punto, in media sulle volte in cui l'hai fatto.",
-        "reach": "Per un compito, la quota delle volte in cui l'hai fatto che è arrivata vicino a ogni punto.",
-        "value": "Per una domanda di un questionario (ansia, stress, valenza...), la tua risposta media vicino a ogni punto. Una risposta descrive il blocco che hai valutato.",
-        "threshold": "Per una domanda di un questionario e una soglia, quanto spesso la tua risposta vicino a ogni punto è stata sopra o sotto la soglia."
+        "map": "Dove il tuo cervello ha passato il suo tempo in tutte le tue registrazioni: l'altezza della mappa stessa.",
+        "share": "Del tempo passato nei compiti vicino a ogni punto, la quota passata in questo.",
+        "time": "I secondi passati vicino a ogni punto durante questo compito, in media sulle volte che l'hai fatto.",
+        "reach": "La quota delle volte che hai fatto questo compito che è passata vicino a ogni punto.",
+        "score": "Come sono andate, in media, le esecuzioni di questo compito passate vicino a ogni punto. Il punteggio è quello dell'intera esecuzione.",
+        "value": "La tua risposta media vicino a ogni punto. Una risposta descrive il blocco che hai valutato.",
+        "threshold": "Quanto spesso la tua risposta vicino a ogni punto era sopra o sotto una soglia.",
+        "band": "La quota media di questa banda nella potenza dei momenti vicino a ogni punto.",
+        "main": "Il compito in cui hai passato più tempo vicino a ogni punto."
       },
       "name": {
-        "time": "{subject} · tempo",
+        "map": "Tempo trascorso",
+        "share": "{subject} · quota di tempo",
+        "time": "{subject} · tempo per esecuzione",
         "reach": "{subject} · raggiunto",
+        "score": "{subject} · {metric, select, accuracy {accuratezza} d_prime {d′} other {tempo di reazione}}",
         "value": "{subject} · media",
-        "threshold": "{subject} · {direction, select, below {sotto} other {sopra}} {threshold}"
+        "threshold": "{subject} · {direction, select, below {sotto} other {sopra}} {threshold}",
+        "band": "Potenza {band, select, delta {Delta} theta {Theta} alpha {Alfa} beta {Beta} gamma {Gamma} other {{band}}}",
+        "main": "Compito principale"
       },
       "unit": {
+        "density": "{value}% del picco",
         "seconds": "{value} s per esecuzione",
-        "reach": "Raggiunto nel {value}% delle esecuzioni",
+        "share": "{value}% del tempo qui",
+        "reach": "raggiunto nel {value}% delle esecuzioni",
         "threshold": "{value}% delle risposte qui",
-        "answer": "Risposta media {value}",
-        "energy": "Energia {value}"
+        "answer": "{value}",
+        "energy": "energia {value}",
+        "band": "{value}% della potenza",
+        "accuracy": "{value}%",
+        "dprime": "{value}",
+        "ms": "{value} ms",
+        "none": "troppo pochi momenti qui",
+        "main": "Compito principale: {task} ({value}% del tempo qui)"
       },
-      "color": "Colore di {name}",
-      "remove": "Rimuovi {name}",
+      "noData": "Troppo pochi momenti qui per dirlo",
+      "aria": "altezza: {height}, colore: {color}",
+      "landscapeN": "Paesaggio {n}",
+      "add": "Aggiungi paesaggio",
+      "remove": "Rimuovi il paesaggio {n}",
       "removeShort": "Rimuovi",
+      "full": "Al massimo {max} paesaggi: rimuovine uno per aggiungerne un altro.",
       "direction": "Sopra o sotto",
       "above": "Sopra",
       "below": "Sotto",
@@ -1409,12 +1435,6 @@
           "effort": "Sforzo (NASA-TLX)",
           "frustration": "Frustrazione (NASA-TLX)"
         }
-      },
-      "full": "Al massimo {max, plural, one {un livello} other {# livelli}}: rimuovine uno per aggiungerne un altro.",
-      "view": "Come mostrare i livelli",
-      "views": {
-        "map": "Mappa",
-        "relief": "Rilievo"
       }
     }
   },

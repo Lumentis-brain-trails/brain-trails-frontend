@@ -1346,48 +1346,74 @@
     "redrawn": "The map's geometry was redrawn with your latest recording: places on it compare within this version, not with earlier ones.",
     "epoch": "Geometry version {epoch}",
     "sidebarRedrawn": "Redrawn",
-    "layers": {
-      "title": "Layers",
-      "intro": "The plane is your brain's states; a layer shows something else over it. Pick a colour for each and lay two over each other: on the map they are shadows that blend where they meet; as a relief, see-through surfaces whose colours mix where they cross.",
-      "ground": "Show where all your time went underneath",
-      "failed": "The layers could not be loaded. Try again in a moment.",
-      "stale": "Your map is being rebuilt to add layers. This page updates by itself.",
-      "empty": "Nothing to draw yet for this layer.",
-      "add": "Add a layer",
-      "addButton": "Add",
-      "kind": "What the height shows",
-      "task": "Task",
-      "label": "Label",
-      "noTasks": "No task has been recorded yet.",
-      "noLabels": "No questionnaire answers yet: labels come from the questionnaires in your protocols.",
-      "kinds": {
-        "time": "Time per run of a task",
-        "reach": "How often a task got there",
-        "value": "Average answer to a label",
-        "threshold": "Answer above or below a threshold"
+    "measures": {
+      "failed": "The measures could not be loaded. Try again in a moment.",
+      "stale": "Your map is being rebuilt to add task scores and brain rhythms. This page updates by itself.",
+      "empty": "Nothing to colour with yet: no moment on this map has this measure.",
+      "height": "Height",
+      "color": "Colour",
+      "sameAsHeight": "Same as the height",
+      "groups": {
+        "overall": "All your time",
+        "band": "Brain rhythms",
+        "category": "Categories"
+      },
+      "options": {
+        "map": "Time spent, every task together",
+        "share": "share of time",
+        "time": "time per run",
+        "reach": "how often a run got there",
+        "score": "{metric, select, accuracy {average accuracy} d_prime {average d′} other {average reaction time}}",
+        "value": "average answer",
+        "threshold": "above or below a threshold",
+        "band": "{band, select, delta {Delta} theta {Theta} alpha {Alpha} beta {Beta} gamma {Gamma} other {{band}}} power",
+        "main": "Main task",
+        "subject": "{subject} · {option}"
       },
       "explain": {
-        "time": "For one task, the seconds you spent near each place, averaged over the times you did it.",
-        "reach": "For one task, the share of the times you did it that came near each place.",
-        "value": "For one questionnaire item (anxiety, stress, valence...), your average answer near each place. An answer describes the block you rated.",
-        "threshold": "For one questionnaire item and a threshold, how often your answer near each place was above or below it."
+        "map": "Where your brain spent its time across all your recordings: the map's own height.",
+        "share": "Of the time you spent in tasks near each place, the share spent in this one.",
+        "time": "The seconds you spent near each place during this task, averaged over the times you did it.",
+        "reach": "The share of the times you did this task that came near each place.",
+        "score": "How well the runs of this task that passed near each place went, on average. A run's score is the whole run's.",
+        "value": "Your average answer near each place. An answer describes the block you rated.",
+        "threshold": "How often your answer near each place was above or below a threshold.",
+        "band": "The average share of this band in the power of the moments near each place.",
+        "main": "The task you spent the most time on near each place."
       },
       "name": {
-        "time": "{subject} · time",
+        "map": "Time spent",
+        "share": "{subject} · share of time",
+        "time": "{subject} · time per run",
         "reach": "{subject} · reached",
+        "score": "{subject} · {metric, select, accuracy {accuracy} d_prime {d′} other {reaction time}}",
         "value": "{subject} · average",
-        "threshold": "{subject} · {direction, select, below {below} other {above}} {threshold}"
+        "threshold": "{subject} · {direction, select, below {below} other {above}} {threshold}",
+        "band": "{band, select, delta {Delta} theta {Theta} alpha {Alpha} beta {Beta} gamma {Gamma} other {{band}}} power",
+        "main": "Main task"
       },
       "unit": {
+        "density": "{value}% of the peak",
         "seconds": "{value} s per run",
-        "reach": "Reached in {value}% of runs",
+        "share": "{value}% of the time here",
+        "reach": "reached in {value}% of runs",
         "threshold": "{value}% of answers here",
-        "answer": "Average answer {value}",
-        "energy": "Energy {value}"
+        "answer": "{value}",
+        "energy": "energy {value}",
+        "band": "{value}% of the power",
+        "accuracy": "{value}%",
+        "dprime": "{value}",
+        "ms": "{value} ms",
+        "none": "too few moments here",
+        "main": "Main task: {task} ({value}% of the time here)"
       },
-      "color": "Colour of {name}",
-      "remove": "Remove {name}",
+      "noData": "Too few moments here to say",
+      "aria": "height: {height}, colour: {color}",
+      "landscapeN": "Landscape {n}",
+      "add": "Add landscape",
+      "remove": "Remove landscape {n}",
       "removeShort": "Remove",
+      "full": "{max} landscapes at most: remove one to add another.",
       "direction": "Above or below",
       "above": "Above",
       "below": "Below",
@@ -1409,12 +1435,6 @@
           "effort": "Effort (NASA-TLX)",
           "frustration": "Frustration (NASA-TLX)"
         }
-      },
-      "full": "{max, plural, one {One layer} other {# layers}} at most: remove one to add another.",
-      "view": "How to show the layers",
-      "views": {
-        "map": "Map",
-        "relief": "Relief"
       }
     }
   },

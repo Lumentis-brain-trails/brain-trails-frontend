@@ -8,9 +8,10 @@
  * recording that went there. The map is rebuilt after each new recording, which is the
  * point of the page: coming back after a session and seeing the landscape change.
  *
- * Other layers rise over the same plane on request - a task's time or reach, a
- * self-reported label's average or threshold, each in its own colour - so several can be
- * read together (`LandscapeLayers`, backend V3-0016 amended 2026-11-13).
+ * The reader can draw it with other measures: one as the height, another as the colour
+ * - a task's share of time or score, a label's average, a band's power, the main task -
+ * and add more landscapes coloured other ways (`LandscapeViews`, backend V3-0016 amended
+ * 2026-11-16).
  *
  * Only ever the person's own recordings. The first visit of an account that recorded
  * before landscapes existed is also what asks for its first build.
@@ -19,7 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { useEffect } from "react";
-import { LandscapeLayers } from "@/components/landscape/LandscapeLayers";
+import { LandscapeViews } from "@/components/landscape/LandscapeViews";
 import {
   Card,
   EmptyState,
@@ -102,7 +103,7 @@ export default function BrainLandscapePage() {
 
       {data && (
         <Card className="p-2 sm:p-4">
-          <LandscapeLayers landscape={data} height={560} title={t("aria")} />
+          <LandscapeViews landscape={data} height={520} title={t("aria")} />
         </Card>
       )}
 
