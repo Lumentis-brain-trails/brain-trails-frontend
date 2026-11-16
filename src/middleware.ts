@@ -32,6 +32,7 @@ export const config = {
     "/protocols/:path*",
     "/admin/:path*",
     "/console/:path*",
+    "/live/:path*",
     "/run/:path*",
   ],
 };

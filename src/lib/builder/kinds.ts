@@ -95,6 +95,12 @@ export const KIND_IDENTITY: Record<string, KindIdentity> = {
     tone: "#e9668a",
     family: "task",
   },
+  neurofeedback: {
+    label: "Neurofeedback",
+    hint: "A video that brightens while the chosen brain rhythm is in its target zone.",
+    tone: "#8b7cf6",
+    family: "task",
+  },
   baseline: {
     label: "Resting baseline",
     hint: "Sitting still, eyes open or closed: what every other block is compared to.",

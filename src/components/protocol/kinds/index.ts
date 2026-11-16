@@ -24,6 +24,7 @@ import { codingTaskKind } from "./CodingTask";
 import { flankerTaskKind } from "./FlankerTask";
 import { heartbeatTaskKind } from "./HeartbeatTask";
 import { nBackTaskKind } from "./NBackTask";
+import { neurofeedbackTaskKind } from "./NeurofeedbackTask";
 import type { TaskKind } from "@/lib/protocol/types";
 import type { PromptConfig } from "./PromptTask";
 
@@ -65,6 +66,8 @@ export function registerBuiltInKinds(): void {
   if (!hasTaskKind(nBackTaskKind.name)) registerTaskKind(nBackTaskKind);
   if (!hasTaskKind(codingTaskKind.name)) registerTaskKind(codingTaskKind);
   if (!hasTaskKind(heartbeatTaskKind.name)) registerTaskKind(heartbeatTaskKind);
+  if (!hasTaskKind(neurofeedbackTaskKind.name))
+    registerTaskKind(neurofeedbackTaskKind);
 }
 
 registerBuiltInKinds();

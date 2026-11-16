@@ -75,6 +75,18 @@ npm run e2e                              # Playwright; needs the local backend (
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).
 - Conventional Commits; PR title becomes the squash commit.
 
+## The remote console (backend plan V4, sprint T5)
+
+Behind `console_remote` + `live`. `src/app/(app)/live/[session]` is a carer's console
+for a run elsewhere, `src/app/(app)/live/wait/[assignment]` the waiting room before it;
+`src/components/run/useRemoteRun.ts` is the patient's half inside `RunProtocol`;
+`src/lib/live/` holds the socket (straight to `GET /config` `live_url`, never through
+the BFF; a fresh ticket per (re)connect, backoff), the producer (chunks with the device
+counter, plan, state, markers, block results, quality; re-sends after the room's
+`last_seq`), and the observer's room (`applyFrame`, a pure reducer feeding T1's panels
+through `useLiveRoom`). One carer holds the commands; a holder takes them back after a
+reconnect. The protocol is the backend's `docs/api/live-protocol.md`.
+
 ## The console (backend plan OPS, sprint O1)
 
 `console/` is a second Next.js app, an npm workspace of this repo, with its own Vercel
@@ -145,3 +157,16 @@ recording link). The **client shell** is the `(client)` route group (`ClientShel
 account whose `GET /auth/me` says `shell: client` is sent there by `AppShell` and has no
 other page. `/join` opens a subject's invitation into a client account
 (`POST /invitations/register`).
+
+## Neurofeedback (backend V4-0009, sprint T5b)
+
+Behind the flag `neurofeedback` (dev and beta; never prod clinics, by the backend's code).
+The kind is `src/components/protocol/kinds/NeurofeedbackTask.tsx`; everything it computes
+is in `src/lib/neurofeedback/` (pure): `spectrum.ts` (FFT, bands), `engine.ts` (value,
+artefact gate, smoothing, baseline threshold, nudges; clocked by the device sample index),
+`picture.ts` (the level and the luminance limit, H4), `panel.ts` (the console's fold of
+the `nf_*` events). It is the only kind that gets `TaskContext.signal` (the live EEG) and
+`TaskContext.adjustments` (`nudge_threshold`). In Play the packets come from `useMuse`'s
+`eegFeed`; with the console they cross the channel (`eeg` messages, `eegFeedFrom`).
+`schemas/neurofeedback-golden.json` is written by `engine.test.ts` (`npm run schemas`) and
+pins the backend's Python twin (`make schemas-sync` copies it).
