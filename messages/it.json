@@ -1439,6 +1439,10 @@
       "energy": "Vista energia: −log(p + ε)",
       "epsilon": "ε",
       "cutoff": "Limita a",
+      "smooth": "Sfoca",
+      "smoothWidth": "Larghezza, in larghezze della mappa",
+      "smoothHelp": "Aggiunge una sfocatura gaussiana larga questo numero di larghezze della mappa (varianza: quel numero al quadrato per quella della mappa) oltre a quella della mappa.",
+      "tasksShown": "Compiti mostrati",
       "items": {
         "sam": {
           "valence": "Valenza (SAM)",

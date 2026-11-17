@@ -21,10 +21,7 @@ import {
 } from "@/components/compare/LandscapeSurface";
 import { useLabelNamer } from "@/components/compare/useLabelNamer";
 import {
-  type ColorKey,
   MeasureSurface,
-  colorOf,
-  measureRamp,
   useNoData,
 } from "@/components/landscape/MeasureSurface";
 import { Button, Input, Select } from "@/components/ui";
@@ -34,6 +31,7 @@ import {
   type ContinuousField,
   type LayerLabel,
   type LayerSource,
+  MAX_SMOOTH,
   MAX_VIEWS,
   type MeasureField,
   type MeasureKind,
@@ -48,13 +46,8 @@ import {
   reviveViews,
   taskMetrics,
 } from "@/lib/landscapeLayers";
-import {
-  refineAxis,
-  refineContinuous,
-  paintable,
-  refineNearest,
-  unknownOf,
-} from "@/lib/refine";
+import { type ColorKey, measureRamp, paint } from "@/lib/landscapePaint";
+import { refineAxis, refineGrid, refineNearest } from "@/lib/refine";
 import { useChartTheme } from "@/lib/theme";
 
 const STORAGE_KEY = "bt-landscape-views";
@@ -371,18 +364,16 @@ function ViewCard({
     return {
       xs: refineAxis(xs, REFINE),
       ys: refineAxis(ys, REFINE),
-      height: refineContinuous(computed.height, REFINE),
-      color: colorField ? paintable(colorField, REFINE) : null,
-      unknown: colorField ? unknownOf(colorField, REFINE) : null,
-      hover: refineNearest(hover, REFINE),
+      z: refineGrid(computed.height.z, REFINE),
     };
-  }, [landscape, computed.height, colorField, hover]);
-  const painted = fine.color
-    ? colorOf(fine.color, theme.landscape, noData)
-    : null;
-  const key: ColorKey | null = painted
-    ? painted.key
-    : { type: "ramp", low: 0, high: 1 };
+  }, [landscape, computed.height]);
+  const fineHover = useMemo(() => refineNearest(hover, REFINE), [hover]);
+  // painted point by point: tasks blend, colour fades into grey without a cell's edge
+  const painted = useMemo(
+    () => paint(colorField, fine.z, theme.landscape, noData, REFINE),
+    [colorField, fine.z, theme.landscape, noData]
+  );
+  const key: ColorKey = painted.key;
   const keyField: ContinuousField | null =
     colorField?.type === "continuous"
       ? colorField
@@ -429,10 +420,9 @@ function ViewCard({
         landscape={landscape}
         xs={fine.xs}
         ys={fine.ys}
-        height={fine.height}
-        color={painted}
-        unknown={fine.unknown}
-        hover={fine.hover}
+        z={fine.z}
+        colors={painted.colors}
+        hover={fineHover}
         camera={camera}
         onCamera={onCamera}
         plotHeight={plotHeight}
@@ -444,11 +434,11 @@ function ViewCard({
       <Key
         colorKey={key}
         field={keyField}
-        ramp={painted ? measureRamp(theme.landscape) : theme.landscape}
+        ramp={colorField ? measureRamp(theme.landscape) : theme.landscape}
         noData={noData}
         format={(v) => (keyField ? describe(keyField, v) : format(v))}
         name={view.color ? name(view.color) : name(view.height)}
-        hasNoData={painted !== null}
+        hasNoData={colorField !== null}
       />
     </section>
   );
@@ -645,6 +635,68 @@ function MeasurePicker({
             }}
             className="h-8 text-[13px]"
           />
+        </div>
+      )}
+      {spec?.kind === "main" && source && (
+        <fieldset className="space-y-1 text-[13px] text-ink-2">
+          <legend className="font-medium">{t("tasksShown")}</legend>
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {layerTasks(source).map((task) => {
+              const all = layerTasks(source);
+              const shown = spec.tasks ?? all;
+              const on = shown.includes(task);
+              return (
+                <label key={task} className="flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    // the last task shown stays: a main task among none is nothing
+                    disabled={on && shown.length === 1}
+                    onChange={(e) => {
+                      const next = all.filter((name) =>
+                        name === task ? e.target.checked : shown.includes(name)
+                      );
+                      set({
+                        tasks: next.length === all.length ? undefined : next,
+                      });
+                    }}
+                  />
+                  {task}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+      {spec && spec.kind !== "map" && (
+        <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
+          <label className="flex items-center gap-2" title={t("smoothHelp")}>
+            <input
+              type="checkbox"
+              checked={(spec.smooth ?? 0) > 0}
+              onChange={(e) =>
+                set({ smooth: e.target.checked ? 1 : undefined })
+              }
+            />
+            {t("smooth")}
+          </label>
+          {(spec.smooth ?? 0) > 0 && (
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              {t("smoothWidth")}
+              <Input
+                type="number"
+                min={0.25}
+                max={MAX_SMOOTH}
+                step={0.25}
+                value={spec.smooth}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (v > 0 && v <= MAX_SMOOTH) set({ smooth: v });
+                }}
+                className="h-8 w-20 text-[13px]"
+              />
+            </label>
+          )}
         </div>
       )}
       {spec && isFrequency(spec.kind) && (

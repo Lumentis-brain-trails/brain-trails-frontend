@@ -219,6 +219,44 @@ describe("computeMeasure", () => {
     expect(compute(source({ runs: [] }), { kind: "main" })).toBeNull();
   });
 
+  it("main: chooses only among the tasks shown, colours kept by task", () => {
+    const field = compute(source(), { kind: "main", tasks: ["B"] });
+    if (!field || field.type !== "categorical") throw new Error("categorical");
+    expect(field.categories).toEqual(["A", "B"]);
+    expect(field.shown).toEqual([1]);
+    // only B's windows count: A's place is unknown, B's is B's alone
+    expect(field.category[5][5]).toBeNull();
+    expect(field.category[15][5]).toBe(1);
+    expect(field.weights[0][15][5]).toBe(0);
+    expect(field.weights[1][15][5]).toBeCloseTo(1, 6);
+    // naming no task the person has is every task
+    const all = compute(source(), { kind: "main", tasks: ["gone"] });
+    if (!all || all.type !== "categorical") throw new Error("categorical");
+    expect(all.shown).toEqual([0, 1]);
+    expect(all.weights[0][5][5]).toBeCloseTo(1, 3);
+  });
+
+  it("blur: averages over a wider kernel, the extra width in map widths", () => {
+    const sharp = continuous(
+      compute(source(), { kind: "band", band: "alpha" })
+    );
+    const soft = continuous(
+      compute(source(), { kind: "band", band: "alpha", smooth: 3 })
+    );
+    // farther from the windows, the blurred average still knows something
+    expect(sharp.value[10][5]).toBeNull();
+    expect(soft.value[10][5]).not.toBeNull();
+    // and the two places' averages draw closer to each other
+    const gap = (f: typeof sharp) =>
+      (f.value[5][5] ?? 0) - (f.value[15][15] ?? 0);
+    expect(gap(soft)).toBeLessThan(gap(sharp));
+    expect(soft.support?.[10][5]).toBeGreaterThan(sharp.support?.[10][5] ?? 0);
+    // the map is the map: no blur of its own
+    expect(compute(source(), { kind: "map", smooth: 3 })).toEqual(
+      compute(source(), { kind: "map" })
+    );
+  });
+
   it("value: the average answer near a place, on the label's scale, blank where none", () => {
     const field = continuous(
       compute(source(), { kind: "value", label: "anxiety" })
@@ -373,6 +411,26 @@ describe("reviveViews", () => {
       source()
     );
     expect(kept.map((v) => v.id)).toEqual(["a", "b", "c", "d"]);
+    expect(
+      reviveViews(
+        [
+          {
+            id: "e",
+            height: spec({ kind: "share", task: "A", smooth: 2 }),
+            color: spec({ kind: "main", tasks: ["B", "gone"], smooth: -1 }),
+          },
+          {
+            id: "f",
+            height: spec({ kind: "share", task: "A", smooth: 99 }),
+            color: spec({ kind: "main", tasks: ["gone"] }),
+          },
+        ],
+        source()
+      ).map((v) => [v.height.smooth, v.color?.smooth, v.color?.tasks])
+    ).toEqual([
+      [2, undefined, ["B"]],
+      [undefined, undefined, undefined],
+    ]);
     expect(kept[0].height.epsilon).toBe(DEFAULT_EPSILON);
     expect(kept[0].height.cutoff).toBeNull();
     expect(kept[0].color?.energy).toBe(false);
