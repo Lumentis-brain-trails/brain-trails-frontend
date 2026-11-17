@@ -772,11 +772,23 @@ function MeasurePicker({
             <input
               type="checkbox"
               checked={spec.energy}
-              onChange={(e) => set({ energy: e.target.checked })}
+              onChange={(e) =>
+                set({ energy: e.target.checked, log: undefined })
+              }
             />
             {t("energy")}
           </label>
-          {spec.energy && (
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={spec.log === true}
+              onChange={(e) =>
+                set({ log: e.target.checked || undefined, energy: false })
+              }
+            />
+            {t("logHeight")}
+          </label>
+          {(spec.energy || spec.log) && (
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-1">
                 {t("epsilon")}
@@ -793,33 +805,37 @@ function MeasurePicker({
                   className="h-8 w-24 text-[13px]"
                 />
               </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={spec.cutoff !== null}
-                  onChange={(e) =>
-                    set({
-                      cutoff: e.target.checked
-                        ? Math.round(-Math.log(spec.epsilon) * 50) / 100
-                        : null,
-                    })
-                  }
-                />
-                {t("cutoff")}
-              </label>
-              {spec.cutoff !== null && (
-                <Input
-                  type="number"
-                  aria-label={t("cutoff")}
-                  min={0.01}
-                  step={0.1}
-                  value={spec.cutoff}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    if (v > 0) set({ cutoff: v });
-                  }}
-                  className="h-8 w-20 text-[13px]"
-                />
+              {spec.energy && (
+                <>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={spec.cutoff !== null}
+                      onChange={(e) =>
+                        set({
+                          cutoff: e.target.checked
+                            ? Math.round(-Math.log(spec.epsilon) * 50) / 100
+                            : null,
+                        })
+                      }
+                    />
+                    {t("cutoff")}
+                  </label>
+                  {spec.cutoff !== null && (
+                    <Input
+                      type="number"
+                      aria-label={t("cutoff")}
+                      min={0.01}
+                      step={0.1}
+                      value={spec.cutoff}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (v > 0) set({ cutoff: v });
+                      }}
+                      className="h-8 w-20 text-[13px]"
+                    />
+                  )}
+                </>
               )}
             </div>
           )}

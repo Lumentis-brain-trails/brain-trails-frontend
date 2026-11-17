@@ -1437,6 +1437,7 @@
       "below": "Below",
       "threshold": "Threshold",
       "energy": "Energy view: −log(p + ε)",
+      "logHeight": "Log height: log(1 + p/ε), lifts sparse ground",
       "epsilon": "ε",
       "cutoff": "Cap at",
       "smooth": "Blur",
