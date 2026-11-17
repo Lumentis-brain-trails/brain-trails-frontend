@@ -331,6 +331,18 @@ describe("computeMeasure", () => {
     );
   });
 
+  it("log height: log(1 + p / epsilon) over its ceiling, values kept", () => {
+    const plain = continuous(compute(source(), { kind: "map" }));
+    const lifted = continuous(
+      compute(source(), { kind: "map", log: true, epsilon: 0.01 })
+    );
+    expect(lifted.value).toEqual(plain.value);
+    expect(lifted.z[10][10]).toBeCloseTo(1, 6);
+    // the flat ground at 0.25 rises well above a quarter of the peak
+    expect(lifted.z[0][0]).toBeCloseTo(Math.log1p(25) / Math.log1p(100), 6);
+    expect(lifted.z[0][0]).toBeGreaterThan(plain.z[0][0]);
+  });
+
   it("an average has no energy view", () => {
     const field = continuous(
       compute(source(), { kind: "value", label: "anxiety", energy: true })

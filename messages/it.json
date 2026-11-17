@@ -1581,6 +1581,7 @@
       "below": "Sotto",
       "threshold": "Soglia",
       "energy": "Vista energia: −log(p + ε)",
+      "logHeight": "Altezza logaritmica: log(1 + p/ε), solleva le zone poco visitate",
       "epsilon": "ε",
       "cutoff": "Limita a",
       "smooth": "Sfoca",
