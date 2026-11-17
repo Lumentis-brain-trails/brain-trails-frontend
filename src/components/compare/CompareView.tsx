@@ -10,8 +10,9 @@
  *    first two main segments, `defaultPair`);
  * 2. its stretch of the brain trail, on the session's terrain, with a slider through it;
  * 3. what was on screen at the slider's moment;
- * 4. then rows the reader adds and removes - band power, neurometrics, task scores -
- *    each one number per block on a scale both columns share.
+ * 4. then rows the reader adds and removes - the block's path on the person's Brain
+ *    Landscape (`TrajectoryCell`, one camera for both columns), band power,
+ *    neurometrics, task scores - each number one per block on a scale both columns share.
  *
  * Each column keeps its own moment: the two blocks have their own lengths, and a shared
  * clock would pin one of them to a time it does not have. The chosen rows are
@@ -31,6 +32,14 @@ import { FocusControls } from "@/components/compare/FocusControls";
 import { useSelection } from "@/components/compare/useSelection";
 import { BlockFrame, type FrameVideo } from "@/components/compare/BlockFrame";
 import { BlockTrail, blockWindows } from "@/components/compare/BlockTrail";
+import {
+  type Camera,
+  DEFAULT_CAMERA,
+} from "@/components/compare/LandscapeSurface";
+import {
+  TrajectoryCell,
+  useRecordingLandscape,
+} from "@/components/compare/TrajectoryCell";
 import {
   type BandSeries,
   MetricCell,
@@ -167,6 +176,11 @@ export function CompareView({
   };
   // every chosen row that applies to the two blocks on screen, in the reader's order
   const shown = rows.filter((id) => applies(rowSpec(id), columns));
+  const landscape = useRecordingLandscape(
+    recordingId,
+    shown.includes("trajectory")
+  );
+  const [camera, setCamera] = useState<Camera>(DEFAULT_CAMERA);
   const available = ROWS.filter(
     (r) => !rows.includes(r.id) && applies(r, columns)
   );
@@ -287,19 +301,36 @@ export function CompareView({
                 />
               </div>
 
-              {shown.map((id) => (
-                <MetricCell
-                  key={id}
-                  spec={rowSpec(id)}
-                  block={block}
-                  other={other}
-                  series={bands?.[id] ?? null}
-                  narrowed={isNarrowed(row, focus[side])}
-                  pending={selection.isFetching}
-                  t={t}
-                  onRemove={() => updateRows(rows.filter((r) => r !== id))}
-                />
-              ))}
+              {shown.map((id) =>
+                id === "trajectory" ? (
+                  <TrajectoryCell
+                    key={id}
+                    landscape={landscape}
+                    block={row}
+                    windowT={windowT}
+                    labels={labels}
+                    groups={groups}
+                    kept={kept}
+                    t={t}
+                    camera={camera}
+                    onCamera={setCamera}
+                    title={title}
+                    onRemove={() => updateRows(rows.filter((r) => r !== id))}
+                  />
+                ) : (
+                  <MetricCell
+                    key={id}
+                    spec={rowSpec(id)}
+                    block={block}
+                    other={other}
+                    series={bands?.[id] ?? null}
+                    narrowed={isNarrowed(row, focus[side])}
+                    pending={selection.isFetching}
+                    t={t}
+                    onRemove={() => updateRows(rows.filter((r) => r !== id))}
+                  />
+                )
+              )}
             </section>
           );
         })}

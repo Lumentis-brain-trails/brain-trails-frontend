@@ -149,6 +149,14 @@ describe("the reader's rows", () => {
     expect(readRows()).toEqual(["theta", "diameter"]);
   });
 
+  test("a choice saved before the landscape row keeps its rows and gains it", () => {
+    window.localStorage.setItem("bt-compare-rows-v2", '["theta","diameter"]');
+    expect(readRows()).toEqual(["trajectory", "theta", "diameter"]);
+    // once the reader chooses again, that choice is the one kept
+    writeRows(["theta"]);
+    expect(readRows()).toEqual(["theta"]);
+  });
+
   test("an unknown or corrupt entry is dropped, not trusted", () => {
     window.localStorage.setItem(ROWS_STORAGE_KEY, '["theta","nonsense",3]');
     expect(readRows()).toEqual(["theta"]);
