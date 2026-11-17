@@ -96,11 +96,11 @@ test("marks only the section being viewed", () => {
   expect(current()).toEqual(["Recordings"]);
 });
 
-test("shows Admin only to administrators", async () => {
+test("has no Admin entry, even for administrators: staff work in the console", async () => {
   me.mockResolvedValueOnce({ email: "root@lab.org", role: "admin" });
-  renderAt("/admin");
-  expect(await screen.findByRole("link", { name: "Admin" })).toBeTruthy();
-  expect(current()).toEqual(["Admin"]);
+  renderAt("/account");
+  expect(await screen.findByRole("link", { name: "Account" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Admin" })).toBeNull();
 });
 
 test("the appearance switch flips the document theme and remembers it", async () => {
