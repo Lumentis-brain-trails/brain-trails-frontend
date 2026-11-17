@@ -46,7 +46,13 @@ import {
   reviveViews,
   taskMetrics,
 } from "@/lib/landscapeLayers";
-import { type ColorKey, measureRamp, paint } from "@/lib/landscapePaint";
+import {
+  type ColorKey,
+  type TaskColors,
+  measureRamp,
+  paint,
+  taskColor,
+} from "@/lib/landscapePaint";
 import { refineAxis, refineGrid, refineNearest } from "@/lib/refine";
 import { useChartTheme } from "@/lib/theme";
 
@@ -68,6 +74,33 @@ function store(views: ViewSpec[]) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(views));
   } catch {
     // a private window: the landscapes simply are not remembered
+  }
+}
+
+const COLORS_KEY = "bt-landscape-task-colors";
+
+/** The task colours the reader picked in this browser: only `#rrggbb` strings survive. */
+function storedColors(): TaskColors {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(COLORS_KEY) ?? "{}");
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw))
+      return {};
+    return Object.fromEntries(
+      Object.entries(raw).filter(
+        (entry): entry is [string, string] =>
+          typeof entry[1] === "string" && /^#[0-9a-f]{6}$/i.test(entry[1])
+      )
+    );
+  } catch {
+    return {};
+  }
+}
+
+function storeColors(colors: TaskColors) {
+  try {
+    window.localStorage.setItem(COLORS_KEY, JSON.stringify(colors));
+  } catch {
+    // a private window: the colours simply are not remembered
   }
 }
 
@@ -159,6 +192,15 @@ export function LandscapeViews({
     store(next);
   };
   const [camera, setCamera] = useState<Camera>(DEFAULT_CAMERA);
+  // a task's colour is the reader's across every landscape, kept like the landscapes
+  const rememberedColors = useMemo(() => (data ? storedColors() : {}), [data]);
+  const [ownColors, setOwnColors] = useState<TaskColors | null>(null);
+  const taskColors = ownColors ?? rememberedColors;
+  const setTaskColor = (task: string, color: string) => {
+    const next = { ...taskColors, [task]: color };
+    setOwnColors(next);
+    storeColors(next);
+  };
   const choices = useMemo(
     () => choicesOf(data, labelName, t),
     // labelName and t are stable per locale; the menu changes with the data
@@ -183,6 +225,8 @@ export function LandscapeViews({
           source={data}
           choices={choices}
           labelName={labelName}
+          taskColors={taskColors}
+          onTaskColor={setTaskColor}
           camera={camera}
           onCamera={setCamera}
           plotHeight={height}
@@ -236,6 +280,8 @@ function ViewCard({
   source,
   choices,
   labelName,
+  taskColors,
+  onTaskColor,
   camera,
   onCamera,
   plotHeight,
@@ -249,6 +295,8 @@ function ViewCard({
   source: LayerSource | undefined;
   choices: Choice[];
   labelName: (label: LayerLabel) => string;
+  taskColors: TaskColors;
+  onTaskColor: (task: string, color: string) => void;
   camera: Camera;
   onCamera: (camera: Camera) => void;
   plotHeight: number;
@@ -370,8 +418,9 @@ function ViewCard({
   const fineHover = useMemo(() => refineNearest(hover, REFINE), [hover]);
   // painted point by point: tasks blend, colour fades into grey without a cell's edge
   const painted = useMemo(
-    () => paint(colorField, fine.z, theme.landscape, noData, REFINE),
-    [colorField, fine.z, theme.landscape, noData]
+    () =>
+      paint(colorField, fine.z, theme.landscape, noData, REFINE, taskColors),
+    [colorField, fine.z, theme.landscape, noData, taskColors]
   );
   const key: ColorKey = painted.key;
   const keyField: ContinuousField | null =
@@ -399,6 +448,8 @@ function ViewCard({
           spec={view.color}
           choices={choices}
           source={source}
+          taskColors={taskColors}
+          onTaskColor={onTaskColor}
           onChange={(color) => onChange({ ...view, color })}
         />
         {onRemove && (
@@ -535,12 +586,17 @@ function MeasurePicker({
   spec,
   choices,
   source,
+  taskColors = {},
+  onTaskColor,
   onChange,
 }: {
   role: "height" | "color";
   spec: MeasureSpec | null;
   choices: Choice[];
   source: LayerSource | undefined;
+  /** The main task's colours, and how the reader changes one. */
+  taskColors?: TaskColors;
+  onTaskColor?: (task: string, color: string) => void;
   /** Null only from the colour's "same as the height". */
   onChange: (spec: MeasureSpec | null) => void;
 }) {
@@ -641,28 +697,39 @@ function MeasurePicker({
         <fieldset className="space-y-1 text-[13px] text-ink-2">
           <legend className="font-medium">{t("tasksShown")}</legend>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {layerTasks(source).map((task) => {
+            {layerTasks(source).map((task, k) => {
               const all = layerTasks(source);
               const shown = spec.tasks ?? all;
               const on = shown.includes(task);
               return (
-                <label key={task} className="flex items-center gap-1.5">
+                <span key={task} className="flex items-center gap-1.5">
                   <input
-                    type="checkbox"
-                    checked={on}
-                    // the last task shown stays: a main task among none is nothing
-                    disabled={on && shown.length === 1}
-                    onChange={(e) => {
-                      const next = all.filter((name) =>
-                        name === task ? e.target.checked : shown.includes(name)
-                      );
-                      set({
-                        tasks: next.length === all.length ? undefined : next,
-                      });
-                    }}
+                    type="color"
+                    aria-label={t("taskColor", { task })}
+                    value={taskColor(task, k, taskColors)}
+                    onChange={(e) => onTaskColor?.(task, e.target.value)}
+                    className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
                   />
-                  {task}
-                </label>
+                  <label className="flex items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      // the last task shown stays: a main task among none is nothing
+                      disabled={on && shown.length === 1}
+                      onChange={(e) => {
+                        const next = all.filter((name) =>
+                          name === task
+                            ? e.target.checked
+                            : shown.includes(name)
+                        );
+                        set({
+                          tasks: next.length === all.length ? undefined : next,
+                        });
+                      }}
+                    />
+                    {task}
+                  </label>
+                </span>
               );
             })}
           </div>

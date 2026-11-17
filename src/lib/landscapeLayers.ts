@@ -185,8 +185,9 @@ const TRUNCATE = 4;
 const REACH_SPAN = 3;
 
 /**
- * The colours of the `main` measure's tasks, in turn: the trail's hues and the labels'
- * blue, green and orange, distinct enough to tell apart side by side.
+ * The colours of the `main` measure's tasks, in turn, until the reader picks their own:
+ * the trail's hues and the labels' blue, green and orange first, then hues far from
+ * those, so neighbours in the list never look alike.
  */
 export const CATEGORY_COLORS = [
   "#2a78d6",
@@ -196,6 +197,9 @@ export const CATEGORY_COLORS = [
   "#7c5ce6",
   "#eb6834",
   "#1bafc4",
+  "#8c6d46",
+  "#93b52a",
+  "#5b6b82",
 ] as const;
 
 interface Grid {

@@ -7,6 +7,7 @@ import {
   paint,
   rampAt,
   smoothstep,
+  taskColor,
   triangulate,
 } from "./landscapePaint";
 
@@ -109,6 +110,32 @@ describe("landscapePaint", () => {
       type: "categories",
       entries: [
         { name: "A", color: "#2a78d6" },
+        { name: "B", color: "#e2569c" },
+      ],
+    });
+  });
+
+  it("paints a task in the colour the reader picked, the palette's otherwise", () => {
+    expect(taskColor("A", 0)).toBe("#2a78d6");
+    expect(taskColor("A", 0, { A: "#00ff00" })).toBe("#00ff00");
+    expect(taskColor("A", 1, { A: "red" })).toBe("#e2569c");
+    const field: CategoricalField = {
+      type: "categorical",
+      category: [[0]],
+      share: [[1]],
+      weights: [[[1]], [[0]]],
+      support: [[5]],
+      categories: ["A", "B"],
+      shown: [0, 1],
+    };
+    const { colors, key } = paint(field, [[0]], RAMP, GREY, 1, {
+      A: "#00ff00",
+    });
+    expect(colors).toEqual(["rgb(0,255,0)"]);
+    expect(key).toEqual({
+      type: "categories",
+      entries: [
+        { name: "A", color: "#00ff00" },
         { name: "B", color: "#e2569c" },
       ],
     });
