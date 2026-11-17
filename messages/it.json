@@ -1359,6 +1359,10 @@
     "building": "Stiamo costruendo il tuo paesaggio. Questa pagina si aggiorna da sola.",
     "redrawn": "La geometria della mappa è stata ridisegnata con la tua ultima registrazione: i punti si confrontano all'interno di questa versione, non con le precedenti.",
     "epoch": "Versione della geometria {epoch}",
+    "redraw": "Ridisegna",
+    "redrawing": "Ridisegno la tua mappa da zero…",
+    "redrawHint": "Ridisegna la mappa da zero con tutte le tue registrazioni. I luoghi sulla mappa si sposteranno.",
+    "redrawFailed": "Non è stato possibile ridisegnare la mappa. Riprova tra poco.",
     "sidebarRedrawn": "Ridisegnato",
     "measures": {
       "failed": "Non è stato possibile caricare le misure. Riprova tra un momento.",

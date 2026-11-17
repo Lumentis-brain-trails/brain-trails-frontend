@@ -98,6 +98,9 @@ function renderPage() {
 }
 
 beforeEach(() => {
+  // the fixture's dates are fixed, so "today" is too: otherwise its planned items turn
+  // "late" once the calendar passes them (only Date is faked; timers stay real)
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-05T12:00:00Z") });
   get.mockImplementation(() => Promise.resolve(ROADMAP));
 });
 
@@ -106,6 +109,7 @@ const EDITABLE: Roadmap = { ...ROADMAP, editable: true };
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 
 test("the chart draws every track and item, and the milestones list", async () => {
