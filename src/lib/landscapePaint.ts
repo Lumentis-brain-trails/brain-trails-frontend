@@ -43,6 +43,21 @@ export function categoryColor(k: number): string {
   return CATEGORY_COLORS[k % CATEGORY_COLORS.length];
 }
 
+/** A task's own colour, as the reader picked it (`#rrggbb`), by its name. */
+export type TaskColors = Readonly<Record<string, string>>;
+
+/** The colour of task `name`, the `k`-th: the reader's pick, else the palette's. */
+export function taskColor(
+  name: string,
+  k: number,
+  picked: TaskColors = {}
+): string {
+  const own = picked[name];
+  return typeof own === "string" && /^#[0-9a-f]{6}$/i.test(own)
+    ? own
+    : categoryColor(k);
+}
+
 /**
  * The map's ramp as a colour measure uses it: from its first tinted stop up, since the
  * ramp's near-white foot would read as "nothing here" next to the no-data grey.
@@ -142,15 +157,17 @@ function rangeOf(
  *   as the map always was.
  * - A continuous measure: its value on the ramp from its first tint, scaled to its range
  *   on this map, faded into `noData` where few windows went.
- * - The main task: the shown tasks' colours blended by their shares of the time (the
- *   larger share sharply favoured), faded into `noData` the same way.
+ * - The main task: the shown tasks' colours (`taskColor`: the reader's, else the
+ *   palette's) blended by their shares of the time (the larger share sharply favoured),
+ *   faded into `noData` the same way.
  */
 export function paint(
   field: MeasureField | null,
   height: readonly (readonly number[])[],
   ramp: Ramp,
   noData: string,
-  factor: number
+  factor: number,
+  picked: TaskColors = {}
 ): { colors: string[]; key: ColorKey } {
   const grey = hexToRgb(noData);
   if (!field) {
@@ -180,7 +197,9 @@ export function paint(
       key: { type: "ramp", low, high },
     };
   }
-  const colors = field.categories.map((_, k) => hexToRgb(categoryColor(k)));
+  const colors = field.categories.map((name, k) =>
+    hexToRgb(taskColor(name, k, picked))
+  );
   const weights = field.shown.map((k) => ({
     rgb: colors[k],
     grid: refineGrid(field.weights[k], factor),
@@ -206,7 +225,7 @@ export function paint(
       type: "categories",
       entries: field.shown.map((k) => ({
         name: field.categories[k],
-        color: categoryColor(k),
+        color: taskColor(field.categories[k], k, picked),
       })),
     },
   };
