@@ -1439,6 +1439,10 @@
       "energy": "Energy view: −log(p + ε)",
       "epsilon": "ε",
       "cutoff": "Cap at",
+      "smooth": "Blur",
+      "smoothWidth": "Width, in map widths",
+      "smoothHelp": "Adds a Gaussian blur this many map widths wide (its variance: that number squared times the map's) on top of the map's own.",
+      "tasksShown": "Tasks shown",
       "items": {
         "sam": {
           "valence": "Valence (SAM)",

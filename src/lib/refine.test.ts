@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   fillBlanks,
-  paintable,
   refineAxis,
   refineContinuous,
   refineGrid,
   refineMasked,
   refineNearest,
   refinedLength,
-  unknownOf,
 } from "./refine";
 
 describe("refine", () => {
@@ -80,7 +78,7 @@ describe("refine", () => {
     expect(fillBlanks([[null, null]])).toEqual([[null, null]]);
   });
 
-  it("veils what is unknown, fading over a cell", () => {
+  it("refines a measure's height and its values with their edge", () => {
     const field = {
       type: "continuous" as const,
       z: [
@@ -93,30 +91,6 @@ describe("refine", () => {
       ],
       unit: "band" as const,
     };
-    const veil = unknownOf(field, 2);
-    expect(veil[0]).toEqual([0, 0.5, 1]);
-    const painted = paintable(field, 2);
-    if (painted.type !== "continuous") throw new Error("continuous");
-    expect(painted.value[0]).toEqual([0.5, 0.5, 0.5]);
     expect(refineContinuous(field, 2).z[0]).toEqual([0, 0.5, 1]);
-  });
-
-  it("refines a categorical measure by its nearest category inside its edge", () => {
-    const field = {
-      type: "categorical" as const,
-      category: [
-        [0, 1, null],
-        [0, 1, null],
-      ],
-      share: [
-        [1, 0.6, null],
-        [1, 0.6, null],
-      ],
-      categories: ["A", "B"],
-    };
-    const painted = paintable(field, 2);
-    if (painted.type !== "categorical") throw new Error("categorical");
-    expect(painted.category[0]).toEqual([0, 1, 1, 1, 1]);
-    expect(unknownOf(field, 2)[0]).toEqual([0, 0, 0, 0.5, 1]);
   });
 });

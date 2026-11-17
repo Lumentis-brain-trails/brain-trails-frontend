@@ -2,26 +2,23 @@
 
 /**
  * One Brain Landscape drawn with two measures: one is the height, the other the colour
- * (backend V3-0016, amended 2026-11-16). With no colour measure it is the map as it
- * always was, coloured by its own height.
+ * (backend V3-0016, amended 2026-11-16).
  *
- * The colour runs along the map's own ramp, low to high, scaled to the measure's range on
- * this map; a categorical measure (the main task) gets one colour per category. Where too
- * few windows went to say anything, the colour is a neutral grey rather than the ramp's
- * low end, so "nothing known here" never reads as "low here".
+ * The ground is a triangle mesh painted point by point (`lib/landscapePaint.ts`), not a
+ * Plotly surface: a surface can only look colours up in a scale, which steps between
+ * categories and needs a second, translucent surface for "unknown here"; painted per
+ * point, tasks blend into each other and colour fades into grey without an edge. The
+ * height's contour lines are drawn by a surface with its ground hidden.
  *
  * Several landscapes on a page share one camera, like the comparison view's columns:
  * turning one turns the others, so the same place is in the same spot on each.
  */
 import dynamic from "next/dynamic";
+import { useMemo } from "react";
 import type { Data, Layout } from "plotly.js";
 import { type Camera } from "@/components/compare/LandscapeSurface";
 import { type BrainLandscape } from "@/lib/brainLandscape";
-import {
-  CATEGORY_COLORS,
-  type ContinuousField,
-  type MeasureField,
-} from "@/lib/landscapeLayers";
+import { triangulate } from "@/lib/landscapePaint";
 import { useChartTheme, useTheme } from "@/lib/theme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -36,109 +33,17 @@ const LIGHTING = {
 };
 const LIGHT = { x: -1e4, y: 1e4, z: 2.5e3 };
 const CONTOUR_STEP = 0.05;
-/** How far above the surface the "unknown here" veil floats, in heights. */
-const VEIL_LIFT = 0.012;
-/** The bottom of the colour scale kept for "too few windows here". */
-const GAP = 0.04;
+/** How far above the ground the contour lines float, in heights, so none is buried. */
+const CONTOUR_LIFT = 0.002;
 /** "Nothing known here", per theme: a grey with no hue of the ramp in it. */
 export const NO_DATA = { light: "#e4e4e8", dark: "#2a2d35" } as const;
-
-export type ColorScale = [number, string][];
-
-/** What the colour means, for the key under the plot. */
-export type ColorKey =
-  | { type: "ramp"; low: number; high: number }
-  | { type: "categories"; entries: { name: string; color: string }[] };
-
-/**
- * The map's ramp as a colour measure uses it: from its first tinted stop up, since the
- * ramp's near-white foot would read as "nothing here" next to the no-data grey.
- */
-export function measureRamp(
-  ramp: readonly (readonly [number, string])[]
-): [number, string][] {
-  const from = ramp.find(([at]) => at > 0)?.[0] ?? 0;
-  return ramp
-    .filter(([at]) => at >= from)
-    .map(([at, c]): [number, string] => [(at - from) / (1 - from || 1), c]);
-}
-
-/** The colour of the `k`-th category. */
-export function categoryColor(k: number): string {
-  return CATEGORY_COLORS[k % CATEGORY_COLORS.length];
-}
-
-/**
- * A measure as Plotly surface colours: one number per grid point in `[0, 1]`, the scale
- * that turns it into a colour (its bottom `GAP` is the no-data grey), and the key that
- * explains it.
- */
-export function colorOf(
-  field: MeasureField,
-  ramp: readonly (readonly [number, string])[],
-  noData: string
-): { surface: number[][]; scale: ColorScale; key: ColorKey } {
-  if (field.type === "categorical") {
-    const k = Math.max(1, field.categories.length);
-    const width = (1 - GAP) / k;
-    const scale: ColorScale = [
-      [0, noData],
-      [GAP, noData],
-    ];
-    field.categories.forEach((_, i) => {
-      scale.push([GAP + i * width, categoryColor(i)]);
-      scale.push([Math.min(1, GAP + (i + 1) * width), categoryColor(i)]);
-    });
-    return {
-      surface: field.category.map((row) =>
-        row.map((c) => (c === null ? 0 : GAP + (c + 0.5) * width))
-      ),
-      scale,
-      key: {
-        type: "categories",
-        entries: field.categories.map((name, i) => ({
-          name,
-          color: categoryColor(i),
-        })),
-      },
-    };
-  }
-  let low = Infinity;
-  let high = -Infinity;
-  for (const row of field.value)
-    for (const v of row) {
-      if (v === null) continue;
-      low = Math.min(low, v);
-      high = Math.max(high, v);
-    }
-  if (!Number.isFinite(low)) {
-    low = 0;
-    high = 1;
-  }
-  const span = high - low || 1;
-  return {
-    surface: field.value.map((row) =>
-      row.map((v) => (v === null ? 0 : GAP + (1 - GAP) * ((v - low) / span)))
-    ),
-    scale: [
-      [0, noData],
-      [GAP, noData],
-      ...measureRamp(ramp).map(([at, c]): [number, string] => [
-        GAP + (1 - GAP) * at,
-        c,
-      ]),
-    ],
-    key: { type: "ramp", low, high },
-  };
-}
 
 export function MeasureSurface({
   landscape,
   xs,
   ys,
-  height: heightField,
-  color,
-  unknown = null,
+  z,
+  colors,
   hover,
   camera,
   onCamera,
@@ -146,18 +51,13 @@ export function MeasureSurface({
   title,
 }: {
   landscape: BrainLandscape;
-  /** The grid the fields below are on: the map's, or finer (`lib/refine.ts`). */
+  /** The grid everything below is on: the map's, or finer (`lib/refine.ts`). */
   xs: number[];
   ys: number[];
-  /** What the height draws. */
-  height: ContinuousField;
-  /** What the colour draws, from `colorOf`; null colours the surface by its height. */
-  color: { surface: number[][]; scale: ColorScale } | null;
-  /**
-   * How unknown the colour is at each point, 0 to 1: drawn as a grey veil just above
-   * the surface, fading in where too few windows went (`lib/refine.ts`, `unknownOf`).
-   */
-  unknown?: number[][] | null;
+  /** The height at each point, `[row][column]`, about 0..1. */
+  z: number[][];
+  /** Each point's colour, row by row, from `paint`. */
+  colors: string[];
   /** One hover line per grid point, `[row][column]`. */
   hover: string[][];
   camera: Camera;
@@ -166,27 +66,54 @@ export function MeasureSurface({
   title: string;
 }) {
   const theme = useChartTheme();
-  const noData = useNoData();
+
+  const ground = useMemo(() => {
+    const columns = xs.length;
+    const n = columns * ys.length;
+    const px = new Float32Array(n);
+    const py = new Float32Array(n);
+    const pz = new Float32Array(n);
+    const text: string[] = new Array(n);
+    ys.forEach((y, j) =>
+      xs.forEach((x, i) => {
+        const c = j * columns + i;
+        px[c] = x;
+        py[c] = y;
+        pz[c] = z[j]?.[i] ?? 0;
+        text[c] = hover[j]?.[i] ?? "";
+      })
+    );
+    return { px, py, pz, text, ...triangulate(columns, ys.length) };
+  }, [xs, ys, z, hover]);
+  const lifted = useMemo(
+    () => z.map((row) => row.map((v) => v + CONTOUR_LIFT)),
+    [z]
+  );
 
   const data: Data[] = [
+    {
+      type: "mesh3d",
+      x: ground.px,
+      y: ground.py,
+      z: ground.pz,
+      i: ground.i,
+      j: ground.j,
+      k: ground.k,
+      vertexcolor: colors,
+      flatshading: false,
+      text: ground.text,
+      hovertemplate: "%{text}<extra></extra>",
+      lighting: LIGHTING,
+      lightposition: LIGHT,
+    } as unknown as Data,
     {
       type: "surface",
       x: xs,
       y: ys,
-      z: heightField.z,
-      ...(color
-        ? { surfacecolor: color.surface, colorscale: color.scale }
-        : {
-            colorscale: theme.landscape.map(([at, c]) => [at, c]) as [
-              number,
-              string,
-            ][],
-          }),
-      cmin: 0,
-      cmax: 1,
+      z: lifted,
+      hidesurface: true,
       showscale: false,
-      text: hover as unknown as string[],
-      hovertemplate: "%{text}<extra></extra>",
+      hoverinfo: "skip",
       contours: {
         z: {
           show: true,
@@ -199,38 +126,8 @@ export function MeasureSurface({
         },
         x: { highlight: false },
         y: { highlight: false },
-      } as never,
-      lighting: LIGHTING,
-      lightposition: LIGHT,
-    } as Data,
-    // the veil: the same ground a hair higher, grey, as opaque as the colour is unknown
-    ...(unknown
-      ? [
-          {
-            type: "surface",
-            x: xs,
-            y: ys,
-            z: heightField.z.map((row) => row.map((v) => v + VEIL_LIFT)),
-            surfacecolor: unknown,
-            cmin: 0,
-            cmax: 1,
-            colorscale: [
-              [0, noData],
-              [1, noData],
-            ],
-            opacityscale: [
-              [0, 0],
-              [0.15, 0],
-              [0.85, 1],
-              [1, 1],
-            ],
-            showscale: false,
-            hoverinfo: "skip",
-            lighting: LIGHTING,
-            lightposition: LIGHT,
-          } as unknown as Data,
-        ]
-      : []),
+      },
+    } as unknown as Data,
   ];
 
   const hidden = { visible: false, showspikes: false } as const;

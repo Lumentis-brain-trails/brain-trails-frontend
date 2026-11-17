@@ -12,7 +12,7 @@
  *
  * Nothing here adds information: it only stops the grid from showing.
  */
-import type { ContinuousField, MeasureField } from "@/lib/landscapeLayers";
+import type { ContinuousField } from "@/lib/landscapeLayers";
 
 /** The grid's points per side once refined: every old point kept, `factor - 1` between. */
 export function refinedLength(n: number, factor: number): number {
@@ -158,32 +158,9 @@ export function refineContinuous(
 }
 
 /**
- * Any measure refined: a continuous one as above, a categorical one by its nearest
- * category inside the refined edge of where it is known.
- */
-export function refineMeasure(
-  field: MeasureField,
-  factor: number
-): MeasureField {
-  if (field.type === "continuous") return refineContinuous(field, factor);
-  const edge = refineMasked(field.share, factor);
-  const category = refineNearest(field.category, factor);
-  const share = refineNearest(field.share, factor);
-  return {
-    ...field,
-    category: category.map((row, j) =>
-      row.map((c, i) => (edge[j][i] === null ? null : c))
-    ),
-    share: share.map((row, j) =>
-      row.map((v, i) => (edge[j][i] === null ? null : v))
-    ),
-  };
-}
-
-/**
  * Every blank filled with the nearest known value (4-neighbour steps), so a colour can
- * be painted everywhere and "unknown here" drawn over it as a soft veil instead of as a
- * hard, cell-shaped edge. A grid with nothing known is returned as it is.
+ * be painted everywhere and "unknown here" faded over it (`lib/landscapePaint.ts`)
+ * instead of drawn as a hard, cell-shaped edge. A grid with nothing known is returned as it is.
  */
 export function fillBlanks<T>(
   grid: readonly (readonly (T | null)[])[]
@@ -214,29 +191,4 @@ export function fillBlanks<T>(
     frontier = next;
   }
   return out;
-}
-
-/**
- * How unknown each point of a refined measure is, 0 (known) to 1 (too few windows):
- * the known indicator refined with the smooth cubic, so the veil fades in over about a
- * coarse cell instead of stepping.
- */
-export function unknownOf(field: MeasureField, factor: number): number[][] {
-  const known =
-    field.type === "continuous"
-      ? field.value.map((row) => row.map((v) => (v === null ? 0 : 1)))
-      : field.category.map((row) => row.map((c) => (c === null ? 0 : 1)));
-  return refineGrid(known, factor).map((row) => row.map((k) => 1 - k));
-}
-
-/** A measure refined and filled everywhere: what the colour is painted from. */
-export function paintable(field: MeasureField, factor: number): MeasureField {
-  const fine = refineMeasure(field, factor);
-  return fine.type === "continuous"
-    ? { ...fine, value: fillBlanks(fine.value) }
-    : {
-        ...fine,
-        category: fillBlanks(fine.category),
-        share: fillBlanks(fine.share),
-      };
 }

@@ -93,6 +93,14 @@ export interface MeasureSpec {
   epsilon: number;
   /** Cap on the energy; null for none. */
   cutoff: number | null;
+  /**
+   * An extra Gaussian blur, its width in multiples of the map's own (so its variance is
+   * `smooth^2` times the map's): the windows are averaged over `sqrt(1 + smooth^2)`
+   * map widths instead of one. Absent or 0: none. Not for `map`, which is the map.
+   */
+  smooth?: number;
+  /** The tasks a `main` measure chooses among; absent: every task. */
+  tasks?: string[];
 }
 
 /** One landscape on the page: a measure for the height, another (or the same) for the colour. */
@@ -128,6 +136,12 @@ export interface ContinuousField {
   /** The measure itself, in `unit`; null where too few windows went to say. */
   value: (number | null)[][];
   unit: Unit;
+  /**
+   * How many windows' worth of weight each place stands on, for a measure that can be
+   * unknown: `value` is null below `MIN_SUPPORT`. Lets a painter fade into "unknown"
+   * smoothly instead of at a cell's edge.
+   */
+  support?: number[][];
 }
 
 /** A measure with a category at every place: which task was the main one there. */
@@ -137,7 +151,17 @@ export interface CategoricalField {
   category: (number | null)[][];
   /** The winner's share of the time spent near the place. */
   share: (number | null)[][];
+  /**
+   * Every category's share of the time near each place, `[category][row][column]`
+   * (0 for a category not shown): what a painter blends between tasks with.
+   */
+  weights: number[][][];
+  /** How many windows' worth of weight each place stands on (all the shown tasks'). */
+  support: number[][];
+  /** Every task, so a task keeps its colour whichever are shown. */
   categories: string[];
+  /** The indices of `categories` the reader chose to show. */
+  shown: number[];
 }
 
 export type MeasureField = ContinuousField | CategoricalField;
@@ -153,6 +177,8 @@ export const FULL_SUPPORT = 2;
 /** At most this many landscapes on the page: each is a WebGL scene of its own. */
 export const MAX_VIEWS = 4;
 export const DEFAULT_EPSILON = 0.01;
+/** The widest extra blur offered, in map widths: past it the map is one blob. */
+export const MAX_SMOOTH = 10;
 /** Kernels stop at four widths, like `scipy.ndimage.gaussian_filter`'s default. */
 const TRUNCATE = 4;
 /** `reach` looks this many widths around a window; past it the kernel is below 1%. */
@@ -184,10 +210,12 @@ interface Grid {
   sy: number;
 }
 
-function gridOf(source: LayerSource): Grid {
+/** The map's grid, its blur widened by an extra one `smooth` map widths across. */
+function gridOf(source: LayerSource, smooth = 0): Grid {
   const [x0, x1, y0, y1] = source.bounds;
   const stepX = (x1 - x0) / Math.max(1, source.nx - 1) || 1;
   const stepY = (y1 - y0) / Math.max(1, source.ny - 1) || 1;
+  const sigma = source.sigma * Math.sqrt(1 + smooth * smooth);
   return {
     nx: source.nx,
     ny: source.ny,
@@ -195,8 +223,8 @@ function gridOf(source: LayerSource): Grid {
     y0,
     stepX,
     stepY,
-    sx: source.sigma / stepX,
-    sy: source.sigma / stepY,
+    sx: sigma / stepX,
+    sy: sigma / stepY,
   };
 }
 
@@ -346,6 +374,7 @@ function rows<T extends number | null>(grid: Grid, cell: (index: number) => T) {
 interface Frequency {
   p: Float64Array;
   mask?: (index: number) => boolean;
+  support?: Float64Array;
 }
 
 /**
@@ -384,6 +413,7 @@ function reached(
 /** A weighted average near each place, and how much weight it stands on. */
 interface Average {
   mean: Float64Array;
+  support: Float64Array;
   known: (index: number) => boolean;
   confidence: Float64Array;
 }
@@ -403,6 +433,7 @@ function average(
   );
   return {
     mean: top.map((v, c) => (support[c] > 0 ? v / support[c] : 0)),
+    support,
     known: (c) => support[c] >= MIN_SUPPORT,
     confidence: support.map((v) => Math.min(1, v / FULL_SUPPORT)),
   };
@@ -457,6 +488,7 @@ function continuous(
     z: averageHeight(grid, avg, range[0], range[1]),
     value: rows(grid, (c) => (avg.known(c) ? scale(avg.mean[c]) : null)),
     unit,
+    support: rows(grid, (c) => avg.support[c]),
   };
 }
 
@@ -493,7 +525,7 @@ export function computeMeasure(
   map: readonly (readonly number[])[],
   spec: MeasureSpec
 ): MeasureField | null {
-  const grid = gridOf(source);
+  const grid = gridOf(source, spec.kind === "map" ? 0 : (spec.smooth ?? 0));
   const n = grid.nx * grid.ny;
   let frequency: Frequency | null = null;
   let field: ContinuousField;
@@ -536,8 +568,13 @@ export function computeMeasure(
         z: rows(grid, (c) => drawn[c]),
         value: rows(grid, (c) => (known(c) ? share[c] : null)),
         unit: "share",
+        support: rows(grid, (c) => count[c]),
       };
-      frequency = { p: share.map((v, c) => v * confidence[c]), mask: known };
+      frequency = {
+        p: share.map((v, c) => v * confidence[c]),
+        mask: known,
+        support: count,
+      };
       break;
     }
     case "time": {
@@ -659,33 +696,48 @@ export function computeMeasure(
         frequency = {
           p: avg.mean.map((v, c) => v * avg.confidence[c]),
           mask: avg.known,
+          support: avg.support,
         };
       }
       break;
     }
     case "main":
-      return mainTask(grid, source);
+      return mainTask(grid, source, spec.tasks);
   }
 
   if (spec.energy && frequency) return energy(grid, frequency, spec);
   return field;
 }
 
-/** Which task had the most time near each place, and its share of that time. */
-function mainTask(grid: Grid, source: LayerSource): CategoricalField | null {
+/**
+ * Which of the shown tasks had the most time near each place, its share of the shown
+ * tasks' time, and every task's share for a painter to blend with. `shown` lists task
+ * names; absent (or naming none the person has) means every task.
+ */
+function mainTask(
+  grid: Grid,
+  source: LayerSource,
+  shown?: readonly string[]
+): CategoricalField | null {
   const tasks = layerTasks(source);
   if (tasks.length === 0) return null;
+  const picked = tasks
+    .map((task, k) => (shown && !shown.includes(task) ? -1 : k))
+    .filter((k) => k >= 0);
+  const indices = picked.length > 0 ? picked : tasks.map((_, k) => k);
   const n = grid.nx * grid.ny;
   const best = new Float64Array(n);
   const winner = new Int32Array(n).fill(-1);
   const total = new Float64Array(n);
-  tasks.forEach((task, k) => {
+  const times = new Map<number, Float64Array>();
+  for (const k of indices) {
     const time = near(
       grid,
       source,
-      runsOf(source, task),
+      runsOf(source, tasks[k]),
       (r) => source.runs[r].dt
     );
+    times.set(k, time);
     for (let c = 0; c < n; c += 1) {
       total[c] += time[c];
       if (time[c] > best[c]) {
@@ -693,11 +745,13 @@ function mainTask(grid: Grid, source: LayerSource): CategoricalField | null {
         winner[c] = k;
       }
     }
-  });
+  }
   const count = near(
     grid,
     source,
-    source.runs.map((_, r) => r),
+    source.runs
+      .map((run, r) => (indices.some((k) => tasks[k] === run.task) ? r : -1))
+      .filter((r) => r >= 0),
     () => 1
   );
   const known = (c: number) => count[c] >= MIN_SUPPORT && winner[c] >= 0;
@@ -707,7 +761,13 @@ function mainTask(grid: Grid, source: LayerSource): CategoricalField | null {
     share: rows(grid, (c) =>
       known(c) && total[c] > 0 ? best[c] / total[c] : null
     ),
+    weights: tasks.map((_, k) => {
+      const time = times.get(k);
+      return rows(grid, (c) => (time && total[c] > 0 ? time[c] / total[c] : 0));
+    }),
+    support: rows(grid, (c) => count[c]),
     categories: tasks,
+    shown: indices,
   };
 }
 
@@ -728,11 +788,13 @@ function energy(
     return spec.cutoff === null ? value : Math.min(value, spec.cutoff);
   };
   const shown = (c: number) => !frequency.mask || frequency.mask(c);
+  const support = frequency.support;
   return {
     type: "continuous",
     z: rows(grid, (c) => u(c) / (ceiling || 1)),
     value: rows(grid, (c) => (shown(c) ? u(c) : null)),
     unit: "energy",
+    ...(support ? { support: rows(grid, (c) => support[c]) } : {}),
   };
 }
 
@@ -819,6 +881,20 @@ function reviveMeasure(
         ? s.epsilon
         : DEFAULT_EPSILON,
     cutoff: typeof s.cutoff === "number" && s.cutoff > 0 ? s.cutoff : null,
+    ...(kind !== "map" &&
+    typeof s.smooth === "number" &&
+    s.smooth > 0 &&
+    s.smooth <= MAX_SMOOTH
+      ? { smooth: s.smooth }
+      : {}),
+    ...(kind === "main" && Array.isArray(s.tasks)
+      ? (() => {
+          const tasks = layerTasks(source).filter((task) =>
+            (s.tasks as unknown[]).includes(task)
+          );
+          return tasks.length > 0 ? { tasks } : {};
+        })()
+      : {}),
   };
 }
 
