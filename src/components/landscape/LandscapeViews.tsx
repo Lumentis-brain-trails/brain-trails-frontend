@@ -29,7 +29,7 @@ import {
 } from "@/components/landscape/MeasureSurface";
 import { Button, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
-import { type BrainLandscape, hoverMatrix } from "@/lib/brainLandscape";
+import { type BrainLandscape, axes, hoverMatrix } from "@/lib/brainLandscape";
 import {
   type ContinuousField,
   type LayerLabel,
@@ -48,9 +48,18 @@ import {
   reviveViews,
   taskMetrics,
 } from "@/lib/landscapeLayers";
+import {
+  refineAxis,
+  refineContinuous,
+  paintable,
+  refineNearest,
+  unknownOf,
+} from "@/lib/refine";
 import { useChartTheme } from "@/lib/theme";
 
 const STORAGE_KEY = "bt-landscape-views";
+/** How many times finer than the map's grid a landscape is drawn (`lib/refine.ts`). */
+const REFINE = 3;
 
 function stored(): unknown {
   try {
@@ -356,8 +365,20 @@ function ViewCard({
     (view.height.kind === "map" && !view.height.energy
       ? null
       : computed.height);
-  const painted = colorField
-    ? colorOf(colorField, theme.landscape, noData)
+  // drawn finer than the grid, so neither the peaks' facets nor the cells show
+  const fine = useMemo(() => {
+    const { xs, ys } = axes(landscape);
+    return {
+      xs: refineAxis(xs, REFINE),
+      ys: refineAxis(ys, REFINE),
+      height: refineContinuous(computed.height, REFINE),
+      color: colorField ? paintable(colorField, REFINE) : null,
+      unknown: colorField ? unknownOf(colorField, REFINE) : null,
+      hover: refineNearest(hover, REFINE),
+    };
+  }, [landscape, computed.height, colorField, hover]);
+  const painted = fine.color
+    ? colorOf(fine.color, theme.landscape, noData)
     : null;
   const key: ColorKey | null = painted
     ? painted.key
@@ -406,9 +427,12 @@ function ViewCard({
       )}
       <MeasureSurface
         landscape={landscape}
-        height={computed.height}
+        xs={fine.xs}
+        ys={fine.ys}
+        height={fine.height}
         color={painted}
-        hover={hover}
+        unknown={fine.unknown}
+        hover={fine.hover}
         camera={camera}
         onCamera={onCamera}
         plotHeight={plotHeight}

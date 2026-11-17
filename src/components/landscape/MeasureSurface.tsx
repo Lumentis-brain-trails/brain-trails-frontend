@@ -16,7 +16,7 @@
 import dynamic from "next/dynamic";
 import type { Data, Layout } from "plotly.js";
 import { type Camera } from "@/components/compare/LandscapeSurface";
-import { type BrainLandscape, axes } from "@/lib/brainLandscape";
+import { type BrainLandscape } from "@/lib/brainLandscape";
 import {
   CATEGORY_COLORS,
   type ContinuousField,
@@ -36,6 +36,8 @@ const LIGHTING = {
 };
 const LIGHT = { x: -1e4, y: 1e4, z: 2.5e3 };
 const CONTOUR_STEP = 0.05;
+/** How far above the surface the "unknown here" veil floats, in heights. */
+const VEIL_LIFT = 0.012;
 /** The bottom of the colour scale kept for "too few windows here". */
 const GAP = 0.04;
 /** "Nothing known here", per theme: a grey with no hue of the ramp in it. */
@@ -132,8 +134,11 @@ export function colorOf(
 
 export function MeasureSurface({
   landscape,
+  xs,
+  ys,
   height: heightField,
   color,
+  unknown = null,
   hover,
   camera,
   onCamera,
@@ -141,10 +146,18 @@ export function MeasureSurface({
   title,
 }: {
   landscape: BrainLandscape;
+  /** The grid the fields below are on: the map's, or finer (`lib/refine.ts`). */
+  xs: number[];
+  ys: number[];
   /** What the height draws. */
   height: ContinuousField;
   /** What the colour draws, from `colorOf`; null colours the surface by its height. */
   color: { surface: number[][]; scale: ColorScale } | null;
+  /**
+   * How unknown the colour is at each point, 0 to 1: drawn as a grey veil just above
+   * the surface, fading in where too few windows went (`lib/refine.ts`, `unknownOf`).
+   */
+  unknown?: number[][] | null;
   /** One hover line per grid point, `[row][column]`. */
   hover: string[][];
   camera: Camera;
@@ -153,7 +166,7 @@ export function MeasureSurface({
   title: string;
 }) {
   const theme = useChartTheme();
-  const { xs, ys } = axes(landscape);
+  const noData = useNoData();
 
   const data: Data[] = [
     {
@@ -190,6 +203,34 @@ export function MeasureSurface({
       lighting: LIGHTING,
       lightposition: LIGHT,
     } as Data,
+    // the veil: the same ground a hair higher, grey, as opaque as the colour is unknown
+    ...(unknown
+      ? [
+          {
+            type: "surface",
+            x: xs,
+            y: ys,
+            z: heightField.z.map((row) => row.map((v) => v + VEIL_LIFT)),
+            surfacecolor: unknown,
+            cmin: 0,
+            cmax: 1,
+            colorscale: [
+              [0, noData],
+              [1, noData],
+            ],
+            opacityscale: [
+              [0, 0],
+              [0.15, 0],
+              [0.85, 1],
+              [1, 1],
+            ],
+            showscale: false,
+            hoverinfo: "skip",
+            lighting: LIGHTING,
+            lightposition: LIGHT,
+          } as unknown as Data,
+        ]
+      : []),
   ];
 
   const hidden = { visible: false, showspikes: false } as const;
