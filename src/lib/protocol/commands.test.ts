@@ -27,7 +27,7 @@ describe("operator commands", () => {
   });
 
   test("a threshold nudge carries its steps, five at most either way", () => {
-    const nudge = makeCommand("nudge_threshold", undefined, -2);
+    const nudge = makeCommand("nudge_threshold", undefined, { steps: -2 });
     expect(nudge).toMatchObject({ type: "nudge_threshold", steps: -2 });
     expect(operatorCommandSchema.parse(nudge)).toEqual(nudge);
     expect(SAFE_POINTS.nudge_threshold).toBe("now");

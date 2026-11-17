@@ -25,7 +25,7 @@ import {
   hoverMatrix,
   onMap,
 } from "@/lib/brainLandscape";
-import { useChartTheme } from "@/lib/theme";
+import { CHART_THEMES, type ThemeName, useChartTheme } from "@/lib/theme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -69,6 +69,8 @@ const LIGHT = { x: -1e4, y: 1e4, z: 2.5e3 };
 const CONTOUR_STEP = 0.05;
 /** How far above the ground a trail rides, in landscape heights. */
 const LIFT = 0.025;
+/** How high the live position's stem rises above the ground, so no ridge hides it. */
+const STEM = 0.35;
 
 export type Camera = NonNullable<NonNullable<Layout["scene"]>["camera"]>;
 
@@ -99,6 +101,8 @@ export function LandscapeSurface({
   camera = DEFAULT_CAMERA,
   onCamera,
   hover = true,
+  live = false,
+  scheme,
   title,
 }: {
   landscape: BrainLandscape;
@@ -110,9 +114,17 @@ export function LandscapeSurface({
   onCamera?: (camera: Camera) => void;
   /** Hover the ground; off where a page has its own way to read it. */
   hover?: boolean;
+  /**
+   * The cursor is where a live session is now: a bright dot with a halo, on a stem
+   * that rises above the hills, so it stays in sight as it moves and the map turns.
+   */
+  live?: boolean;
+  /** A fixed scheme, for a view over the black stage whatever the page's theme. */
+  scheme?: ThemeName;
   title: string;
 }) {
-  const theme = useChartTheme();
+  const pageTheme = useChartTheme();
+  const theme = scheme ? CHART_THEMES[scheme] : pageTheme;
   const namer = useLabelNamer();
   const narrow = useNarrow();
   const plotHeight = narrow ? Math.min(height, NARROW_MAX_HEIGHT) : height;
@@ -198,7 +210,10 @@ export function LandscapeSurface({
             }),
       } as Data;
     }),
-    ...(cursor && onMap(landscape, cursor.x, cursor.y)
+    ...(live && cursor && onMap(landscape, cursor.x, cursor.y)
+      ? liveCursor(cursor, lift(cursor.x, cursor.y), theme.trailEnd)
+      : []),
+    ...(!live && cursor && onMap(landscape, cursor.x, cursor.y)
       ? [
           {
             type: "scatter3d",
@@ -261,4 +276,46 @@ export function LandscapeSurface({
       />
     </div>
   );
+}
+
+/** The live position: a stem from the ground, a halo and a bright dot at its top. */
+function liveCursor(
+  cursor: { x: number; y: number },
+  ground: number,
+  accent: string
+): Data[] {
+  const top = ground + STEM;
+  return [
+    {
+      type: "scatter3d",
+      mode: "lines",
+      x: [cursor.x, cursor.x],
+      y: [cursor.y, cursor.y],
+      z: [ground, top],
+      hoverinfo: "skip",
+      line: { color: accent, width: 4 },
+    } as Data,
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: [cursor.x, cursor.x],
+      y: [cursor.y, cursor.y],
+      z: [ground, top],
+      hoverinfo: "skip",
+      marker: { size: [6, 22], color: accent, opacity: 0.35 },
+    } as Data,
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: [cursor.x],
+      y: [cursor.y],
+      z: [top],
+      hoverinfo: "skip",
+      marker: {
+        size: 9,
+        color: "#ffffff",
+        line: { color: accent, width: 2 },
+      },
+    } as Data,
+  ];
 }
