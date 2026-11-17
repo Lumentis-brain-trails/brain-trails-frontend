@@ -63,6 +63,7 @@ import {
   type Adjustment,
   type AdjustmentPort,
   type EegFeed,
+  type PositionFeed,
   type ProtocolDefinition,
   type ProtocolStep,
   type TaskResult,
@@ -140,6 +141,8 @@ export interface ProtocolRunnerProps {
    * Handed to that kind only.
    */
   signal?: EegFeed;
+  /** Where the person is on their landscape, for the same block (V4-0010). */
+  position?: PositionFeed;
   /** Told the runner's state after every change, for a console to show. */
   onState?: (state: RunnerState) => void;
   /**
@@ -171,6 +174,7 @@ export function ProtocolRunner({
   warningShown = false,
   commands,
   signal,
+  position,
   onState,
   resume,
   observed = false,
@@ -908,7 +912,7 @@ export function ProtocolRunner({
           emit={emitForStep}
           onComplete={onComplete}
           reducedMotion={reducedMotion}
-          {...(isNeurofeedback(step) ? { signal, adjustments } : {})}
+          {...(isNeurofeedback(step) ? { signal, position, adjustments } : {})}
         />
       )}
       {message && (

@@ -58,6 +58,8 @@ import {
   type HeadbandSource,
 } from "@/components/run/HeadbandPreflight";
 import { SelfTrail } from "@/components/live/SelfTrail";
+import { usePositionFeed } from "@/lib/live/usePositionFeed";
+import { hasLandscapeBlock } from "@/lib/neurofeedback/landscape";
 import { useFeature } from "@/lib/features";
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
@@ -240,8 +242,15 @@ export function RunProtocol({
     !client && !remote && !target.subjectId && !target.assignmentId;
   const [selfViewAsked, setSelfView] = useState(false);
   const selfView = liveOn && selfRun && selfViewAsked;
+  // a block that trains on the person's landscape hears it through the live service
+  // (V4-0010): the run is published and this page observes it, as the self view does
+  const trainsOnMap = useMemo(
+    () => hasLandscapeBlock(protocol.data?.definition),
+    [protocol.data]
+  );
+  const mapFeedback = liveOn && trainsOnMap;
   const live = useRemoteRun({
-    enabled: remote || selfView,
+    enabled: remote || selfView || mapFeedback,
     assignmentId: target.assignmentId,
     sessionId: session?.id ?? null,
     muse,
@@ -259,6 +268,7 @@ export function RunProtocol({
     () => (sessionSink ? wrap(sessionSink) : null),
     [sessionSink, wrap]
   );
+  const positions = usePositionFeed(session?.id ?? null, mapFeedback);
   const liveRef = useRef(live);
   useEffect(() => {
     liveRef.current = live;
@@ -522,11 +532,18 @@ export function RunProtocol({
             sink={sink}
             anchor={anchor}
             commands={live.commands}
-            // watching yourself is not a carer following the session
-            observed={selfView ? false : live.observed}
+            // watching yourself, or the page hearing your landscape, is not a carer
+            // following the session: only observers beyond this page's own count
+            observed={
+              live.observers >
+              (selfView ? 1 : 0) + (mapFeedback && session ? 1 : 0)
+            }
             onState={live.onState}
             onStepResult={live.onStepResult}
             signal={muse.eegFeed}
+            position={
+              mapFeedback && positions.available ? positions.feed : undefined
+            }
             onFinish={onFinish}
             onExit={onExit}
           />
