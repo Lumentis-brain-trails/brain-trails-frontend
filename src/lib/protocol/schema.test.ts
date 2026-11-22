@@ -27,6 +27,7 @@ describe("registry", () => {
       "image-sequence",
       "instructions",
       "n-back",
+      "neurofeedback",
       "prompt",
       "questionnaire",
       "quiz",
