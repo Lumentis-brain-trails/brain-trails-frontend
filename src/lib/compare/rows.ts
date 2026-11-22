@@ -14,9 +14,10 @@ import type { components } from "@/lib/api-types";
 export type BlockMetrics = components["schemas"]["BlockMetricsOut"];
 type Norm = components["schemas"]["BlockNormOut"];
 
-export type RowGroup = "spectral" | "dynamics" | "task";
+export type RowGroup = "landscape" | "spectral" | "dynamics" | "task";
 
 export type RowId =
+  | "trajectory"
   | "alpha"
   | "beta"
   | "theta"
@@ -60,6 +61,15 @@ const dynamic =
     block.dynamics?.[name] ?? null;
 
 export const ROWS: readonly RowSpec[] = [
+  // not a number: the block's stretch of the run drawn on the person's Brain Landscape
+  // (`TrajectoryCell`); `value` is never read for it
+  {
+    id: "trajectory",
+    group: "landscape",
+    format: "ratio",
+    domain: null,
+    value: () => null,
+  },
   {
     id: "alpha",
     group: "spectral",
@@ -165,7 +175,12 @@ export const ROWS: readonly RowSpec[] = [
   },
 ];
 
-export const ROW_GROUPS: readonly RowGroup[] = ["spectral", "dynamics", "task"];
+export const ROW_GROUPS: readonly RowGroup[] = [
+  "landscape",
+  "spectral",
+  "dynamics",
+  "task",
+];
 
 /**
  * What a first visit shows under the trail and the frame: every row. Rows that do not
@@ -176,7 +191,7 @@ export const DEFAULT_ROWS: readonly RowId[] = ROWS.map((r) => r.id);
 
 /**
  * Whether a row has anything to say about these blocks: task scores need at least one
- * block with trials; band power and neurometrics apply to every block.
+ * block with trials; the landscape, band power and neurometrics apply to every block.
  */
 export function applies(
   spec: RowSpec,
@@ -277,21 +292,34 @@ export function direction(
 }
 
 /** Storage key of the rows a reader chose; a convenience, never state that matters. */
-export const ROWS_STORAGE_KEY = "bt-compare-rows-v2";
+export const ROWS_STORAGE_KEY = "bt-compare-rows-v3";
 /* v2: the default became every row; a choice saved against the old three-row default
-   would have hidden the new one from everyone who had ever touched their rows. */
+   would have hidden the new one from everyone who had ever touched their rows.
+   v3: the landscape row; a v2 choice is carried over with it added on top. */
+const PREVIOUS_STORAGE_KEY = "bt-compare-rows-v2";
+
+/** Rows added since a previous key: shown to whoever chose rows before they existed. */
+const ADDED_SINCE_PREVIOUS: readonly RowId[] = ["trajectory"];
+
+function storedRows(name: string): RowId[] | null {
+  const raw = window.localStorage.getItem(name);
+  if (!raw) return null;
+  return (JSON.parse(raw) as unknown[]).filter(
+    (id): id is RowId => typeof id === "string" && ROWS.some((r) => r.id === id)
+  );
+}
 
 /** The reader's rows from a previous visit, or the defaults. */
 export function readRows(): RowId[] {
   try {
-    const raw = window.localStorage.getItem(ROWS_STORAGE_KEY);
-    if (raw) {
-      const ids = (JSON.parse(raw) as unknown[]).filter(
-        (id): id is RowId =>
-          typeof id === "string" && ROWS.some((r) => r.id === id)
-      );
-      return ids;
-    }
+    const current = storedRows(ROWS_STORAGE_KEY);
+    if (current) return current;
+    const previous = storedRows(PREVIOUS_STORAGE_KEY);
+    if (previous)
+      return [
+        ...ADDED_SINCE_PREVIOUS.filter((id) => !previous.includes(id)),
+        ...previous,
+      ];
   } catch {
     // unreadable or blocked storage: the defaults are a fine first view
   }

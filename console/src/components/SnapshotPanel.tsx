@@ -16,18 +16,21 @@ import { useRefresh, useSnapshot } from "@console/components/data";
  */
 export function SnapshotPanel<T>({
   panelKey,
+  params,
   title,
   className,
   children,
 }: {
   panelKey: string;
+  /** The panel's parameters (Statistics: `weeks`, `cohort`); one snapshot per set. */
+  params?: Record<string, unknown>;
   title: string;
   className?: string;
   children: (payload: T, ageSeconds: number) => React.ReactNode;
 }) {
   const t = useTranslations("console.panel");
   const errorText = useErrorText();
-  const snapshot = useSnapshot(panelKey);
+  const snapshot = useSnapshot(panelKey, params);
   const refresh = useRefresh();
   return (
     <Card inset className={className}>
@@ -39,7 +42,7 @@ export function SnapshotPanel<T>({
             size="sm"
             variant="secondary"
             disabled={refresh.isPending}
-            onClick={() => refresh.mutate(panelKey)}
+            onClick={() => refresh.mutate({ key: panelKey, params })}
           >
             {t("refresh")}
           </Button>

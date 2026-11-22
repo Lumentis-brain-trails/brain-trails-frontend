@@ -75,6 +75,18 @@ npm run e2e                              # Playwright; needs the local backend (
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).
 - Conventional Commits; PR title becomes the squash commit.
 
+## The remote console (backend plan V4, sprint T5)
+
+Behind `console_remote` + `live`. `src/app/(app)/live/[session]` is a carer's console
+for a run elsewhere, `src/app/(app)/live/wait/[assignment]` the waiting room before it;
+`src/components/run/useRemoteRun.ts` is the patient's half inside `RunProtocol`;
+`src/lib/live/` holds the socket (straight to `GET /config` `live_url`, never through
+the BFF; a fresh ticket per (re)connect, backoff), the producer (chunks with the device
+counter, plan, state, markers, block results, quality; re-sends after the room's
+`last_seq`), and the observer's room (`applyFrame`, a pure reducer feeding T1's panels
+through `useLiveRoom`). One carer holds the commands; a holder takes them back after a
+reconnect. The protocol is the backend's `docs/api/live-protocol.md`.
+
 ## The therapy edition (backend plan V4, sprint T6)
 
 Behind `therapy` (practices): `src/components/therapy/` holds the patient page's
@@ -91,8 +103,11 @@ the map before and after - behind `client_summary`, off) and, when shared in ful
 `console/` is a second Next.js app, an npm workspace of this repo, with its own Vercel
 project (root directory `console/`): the shell (launcher, side rail, widget strip), its
 BFF (`/api/session`, `/api/ops` to bt-ops, `/api/product` to the API), one directory
-per app under `console/apps/<slug>/` (Overview, Work log, Health) and its strings under
-`console.*` in `console/messages/`. It imports the product's tokens, `ui` primitives
+per app under `console/apps/<slug>/` (Work log, Health, Beta testers, Moderation, Statistics;
+Overview deprecated)
+and its strings under `console.*` in `console/messages/` (plus `admin.*`, the keys of the
+pages moved from the user app's `/admin` in O2). Product actions go through
+`@console/lib/product` and the BFF's `/api/product` allow-list. It imports the product's tokens, `ui` primitives
 and `common` messages from `../src`. See `console/README.md`.
 
 ## Working method (backend decision 0013, v2 since 2026-09-24)
@@ -103,16 +118,22 @@ and `common` messages from `../src`. See `console/README.md`.
    `integration` status: in dev, or left out because it conflicts with an older one.
 3. PRs to `beta` are merged **after the pre-merge review** (backend 0013, amendment
    2026-10-20): the coordinating session reviews the diff and checks the PR on dev, sets
-   a green `review` commit status on the PR's head, and merges with `gh pr merge <n>
---merge` (merge commit only). Alessio may merge reviewed PRs too. A commit pushed after
-   the review drops the status. Vercel deploys beta on the merge.
-4. `beta -> main`: Alessio opens it by hand and merges it **with a merge commit, never a
-   squash**. Vercel deploys production on the merge.
+   a green `review` commit status on the PR's head, asks Alessio in the chat, and merges
+   with `gh pr merge <n> --merge` (merge commit only) **only after his explicit word
+   naming the PR**, e.g. "unisci #157" (backend 0013, amendment 2026-11-10; a generic
+   "ok" is not consent). Alessio may merge reviewed PRs too. A commit pushed after the
+   review drops the status. Vercel deploys beta on the merge.
+4. `beta -> main`: the promotion, opened by Alessio or, when he asks, by the coordinating
+   session, and merged **with a merge commit, never a squash**, once its checks are green
+   and Alessio's latest message asks for it by number (backend 0013, amendments
+   2026-11-01 and 2026-11-10). Vercel deploys production on the merge.
 5. `vercel.json` deploys only `dev`, `beta` and `main` - no preview per PR: what a PR
    looks like next to the others is dev.
-6. `dev` belongs to `integrate`: never push to it, never merge into it. Claude never
-   merges into `main`, merges into `beta` only a reviewed head as a merge commit, and
-   nobody merges on a red or running `ci`.
+6. `dev` belongs to `integrate`: never push to it, never merge into it. Claude merges
+   into `main` only the `beta -> main` promotion, merges into `beta` only a reviewed head
+   as a merge commit, merges into either only when Alessio's latest message names the PR
+   and asks for the merge (the guard reads it from the transcript), and nobody merges on
+   a red or running `ci`.
    `.claude/hooks/guard-git.py` enforces this in Claude Code sessions (it is a copy of
    the backend's - change both); `merge-watch` flags anyone else; the repository's
    rulesets protect `dev`, `beta` and `main` server-side (this repo is public).
@@ -147,3 +168,16 @@ recording link). The **client shell** is the `(client)` route group (`ClientShel
 account whose `GET /auth/me` says `shell: client` is sent there by `AppShell` and has no
 other page. `/join` opens a subject's invitation into a client account
 (`POST /invitations/register`).
+
+## Neurofeedback (backend V4-0009, sprint T5b)
+
+Behind the flag `neurofeedback` (dev and beta; never prod clinics, by the backend's code).
+The kind is `src/components/protocol/kinds/NeurofeedbackTask.tsx`; everything it computes
+is in `src/lib/neurofeedback/` (pure): `spectrum.ts` (FFT, bands), `engine.ts` (value,
+artefact gate, smoothing, baseline threshold, nudges; clocked by the device sample index),
+`picture.ts` (the level and the luminance limit, H4), `panel.ts` (the console's fold of
+the `nf_*` events). It is the only kind that gets `TaskContext.signal` (the live EEG) and
+`TaskContext.adjustments` (`nudge_threshold`). In Play the packets come from `useMuse`'s
+`eegFeed`; with the console they cross the channel (`eeg` messages, `eegFeedFrom`).
+`schemas/neurofeedback-golden.json` is written by `engine.test.ts` (`npm run schemas`) and
+pins the backend's Python twin (`make schemas-sync` copies it).

@@ -20,12 +20,18 @@ import type { TimelineFit } from "@/lib/protocol/clock";
 import {
   type CommandPort,
   type OperatorCommand,
+  type RunResume,
   type RunnerState,
   operatorCommandSchema,
 } from "@/lib/protocol/commands";
+import type { EegPacket } from "@/lib/neurofeedback/engine";
 import type { Marker } from "@/lib/protocol/marker";
 import type { MarkerSink } from "@/lib/protocol/sink";
-import type { ProtocolDefinition, TaskResult } from "@/lib/protocol/types";
+import type {
+  EegFeed,
+  ProtocolDefinition,
+  TaskResult,
+} from "@/lib/protocol/types";
 
 /**
  * How long the console waits, after asking the runner to stop because the headband
@@ -46,6 +52,8 @@ export interface RunBoot {
   fit: TimelineFit;
   /** The console's `performance.timeOrigin`, the frame `fit` is in. */
   origin: number;
+  /** Set when the run began in a window that is gone: where this one picks it up. */
+  resume?: RunResume;
 }
 
 /** What the console sends. */
@@ -53,7 +61,13 @@ export type ConsoleMessage =
   | { type: "boot"; boot: RunBoot }
   | { type: "fit"; fit: TimelineFit; origin: number }
   | { type: "command"; command: OperatorCommand }
-  /** To a window that opened after the run began there: it cannot resume it. */
+  /**
+   * One EEG packet as the console's headband delivered it, `hostMs` in the console's
+   * frame: what a neurofeedback block computes from (V4-0009). ~85 small messages a
+   * second, ~4 KB/s.
+   */
+  | { type: "eeg"; packet: EegPacket }
+  /** To a second window opened while the first still runs: it cannot take over. */
   | { type: "detached" };
 
 /** What the participant's window sends. */
@@ -63,6 +77,11 @@ export type RunMessage =
   | { type: "marker"; marker: Marker }
   | { type: "finished"; results: TaskResult[]; markers: Marker[] }
   | { type: "exited"; reason: string; markers: Marker[] }
+  /**
+   * The `seq` of every marker in a batch the server acknowledged: what the console's
+   * finish need not send again (`owedMarkers`).
+   */
+  | { type: "acked"; seqs: number[] }
   | { type: "gone" };
 
 export type ChannelMessage = ConsoleMessage | RunMessage;
@@ -139,6 +158,26 @@ export function commandPortFrom(channel: ConsoleChannel): CommandPort {
 }
 
 /**
+ * The EEG packets arriving on `channel`, as the runner's live signal, with each packet's
+ * arrival moved from the console's frame (`origin`, its `performance.timeOrigin`) into
+ * this window's - the latency a block records is then measured on one clock.
+ */
+export function eegFeedFrom(
+  channel: ConsoleChannel,
+  origin: number,
+  here: number = performance.timeOrigin
+): EegFeed {
+  return {
+    subscribe: (listener) =>
+      channel.subscribe((message) => {
+        if (message.type !== "eeg") return;
+        const { packet } = message;
+        listener({ ...packet, hostMs: packet.hostMs + (origin - here) });
+      }),
+  };
+}
+
+/**
  * A fit made in a window whose time origin is `from`, in the frame of a window whose
  * origin is `to`. Absolute time is `origin + performance.now()` in both windows, so
  * only the sample-0 instant moves; the period is the same clock's.
@@ -171,8 +210,83 @@ export function teeSink(
     flush: () => sink.flush(),
     flushBeacon: () => sink.flushBeacon(),
     all: () => sink.all(),
+    unacknowledged: () => sink.unacknowledged(),
     get pending() {
       return sink.pending;
     },
   };
+}
+
+/**
+ * Where a reloaded participant window should pick the run up, from what the console
+ * knows: the runner's last state and every marker it mirrored.
+ *
+ * A run held between blocks resumes held before the block it was about to start, and
+ * moves on only with `resume`; otherwise the block that was on screen runs again, and is
+ * `interrupted` when its `block_start` never got a `block_end`. A run whose notice was
+ * still up (`warning`, or no state yet) had not begun: `"fresh"`, boot it as new. Markers continue after the highest `seq` seen, so nothing the new
+ * window stamps can be taken for something the lost one sent. Null once the plan is
+ * done: there is nothing left to run.
+ */
+export function resumePoint(
+  state: RunnerState | null,
+  markers: readonly Marker[],
+  steps: number
+): RunResume | "fresh" | null {
+  // the participant had not begun (the notice was up): the new window starts afresh,
+  // notice and `session_start` included
+  if (!state || state.status === "warning") return "fresh";
+  const stepIndex = !state
+    ? 0
+    : state.status === "paused"
+      ? state.stepIndex + 1
+      : state.stepIndex;
+  if (stepIndex >= steps) return null;
+  const seqFrom = markers.reduce(
+    (top, m) => Math.max(top, (m.seq ?? -1) + 1),
+    0
+  );
+  let open = false;
+  for (const m of markers) {
+    if (m.label === "block_start" && m.meta?.step_id === state?.stepId)
+      open = true;
+    else if (m.label === "block_end" && m.meta?.step_id === state?.stepId)
+      open = false;
+  }
+  const held = state.status === "paused";
+  return {
+    stepIndex,
+    seqFrom,
+    interrupted: !held && open,
+    ...(held ? { held: true } : {}),
+  };
+}
+
+/**
+ * What a console's finish still has to send: every marker no window had acknowledged.
+ *
+ * Re-sending the whole timeline would count every event twice against the session's
+ * 100,000 (an hour of neurofeedback is ~38,000 `nf_update`), and the finish of a run
+ * after a reload would be refused; a marker with no `seq` is always sent.
+ */
+export function owedMarkers(
+  markers: readonly Marker[],
+  acked: ReadonlySet<number>
+): Marker[] {
+  return markers.filter((m) => m.seq === undefined || !acked.has(m.seq));
+}
+
+/**
+ * The run's whole timeline after a reload: what the console mirrored from every window,
+ * plus what the last window hands over at the end, once each.
+ */
+export function mergeMarkers(
+  mirrored: readonly Marker[],
+  last: readonly Marker[]
+): Marker[] {
+  const key = (m: Marker) => `${m.seq}:${m.label}:${m.tMonotonicMs}`;
+  const seen = new Set(mirrored.map(key));
+  return [...mirrored, ...last.filter((m) => !seen.has(key(m)))].sort(
+    (a, b) => (a.seq ?? 0) - (b.seq ?? 0)
+  );
 }

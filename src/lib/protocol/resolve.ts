@@ -187,6 +187,7 @@ function expandBlock(node: BlockNode, path: string, ctx: Context) {
       node_path: path,
       iteration: ctx.iterations.at(-1) ?? null,
       ...(condition !== undefined ? { condition } : {}),
+      ...(node.main ? { main: true } : {}),
     },
   });
 

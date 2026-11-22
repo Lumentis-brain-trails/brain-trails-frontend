@@ -31,6 +31,7 @@ import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 type SectionKey =
   | "home"
   | "protocols"
+  | "neurofeedback"
   | "media"
   | "recordings"
   | "landscape"
@@ -74,9 +75,25 @@ function organisation(edition: Edition): Section[] {
   ];
 }
 
+/**
+ * Neurofeedback on your own landscape (V4-0010), under Protocols: a person's own map,
+ * so the personal workspace only, and only with the flags it needs.
+ */
+const NEUROFEEDBACK: Section = {
+  href: "/neurofeedback",
+  key: "neurofeedback",
+  icon: "target",
+};
+
 /** The sections an edition shows, in order (one place decides, V4-0006). */
-export function sectionsFor(edition: Edition): Section[] {
-  return edition === "personal" ? MAIN : organisation(edition);
+export function sectionsFor(
+  edition: Edition,
+  { neurofeedback = false }: { neurofeedback?: boolean } = {}
+): Section[] {
+  if (edition !== "personal") return organisation(edition);
+  if (!neurofeedback) return MAIN;
+  const at = MAIN.findIndex((s) => s.key === "protocols") + 1;
+  return [...MAIN.slice(0, at), NEUROFEEDBACK, ...MAIN.slice(at)];
 }
 
 /**
@@ -223,6 +240,9 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
   const edition = useEdition();
   const me = useMe();
   const assignments = useFeature("assignments");
+  const nfFlag = useFeature("neurofeedback");
+  const liveFlag = useFeature("live");
+  const neurofeedback = nfFlag && liveFlag;
   const secondary: Section[] = [
     // a private user or a therapist who is also somebody's patient (V4 question A8)
     ...(assignments && me.data?.is_client
@@ -257,19 +277,21 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
       {multi && <WorkspaceSwitcher />}
 
       <nav className="flex flex-col items-center gap-1">
-        {sectionsFor(multi ? edition : "personal").map((s) => (
-          <RailLink
-            key={s.href}
-            section={s}
-            label={t(`nav.${s.key}`)}
-            current={isCurrentSection(pathname, s.href)}
-            mark={
-              s.href === "/landscape" && redrawn
-                ? tLandscape("sidebarRedrawn")
-                : null
-            }
-          />
-        ))}
+        {sectionsFor(multi ? edition : "personal", { neurofeedback }).map(
+          (s) => (
+            <RailLink
+              key={s.href}
+              section={s}
+              label={t(`nav.${s.key}`)}
+              current={isCurrentSection(pathname, s.href)}
+              mark={
+                s.href === "/landscape" && redrawn
+                  ? tLandscape("sidebarRedrawn")
+                  : null
+              }
+            />
+          )
+        )}
       </nav>
 
       <div className="my-2 h-px w-8 bg-hairline" aria-hidden />

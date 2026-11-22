@@ -339,6 +339,9 @@
                   "skippable": {
                     "type": "boolean"
                   },
+                  "main": {
+                    "type": "boolean"
+                  },
                   "config": {
                     "type": "object",
                     "propertyNames": {

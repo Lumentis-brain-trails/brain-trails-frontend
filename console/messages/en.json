@@ -35,7 +35,14 @@
       "cluster_unavailable": "This console cannot reach the cluster (it runs outside a pod, or the cluster did not answer).",
       "cluster_forbidden": "The console may not read the cluster yet: its Role (infra/k8s/rbac/bt-ops.yaml) is not applied in this namespace.",
       "no_pod": "No such pod, container or previous run. Refresh Pods and try again.",
-      "invalid_pod": "That is not a pod or container name."
+      "invalid_pod": "That is not a pod or container name.",
+      "stale_roadmap": "Someone saved the roadmap after you opened it. The chart now shows their version; check it and save again.",
+      "duplicate_id": "Another entry already has this id.",
+      "depended_on": "Other items depend on this one.",
+      "invalid_roadmap": "The roadmap would contradict itself.",
+      "id_mismatch": "An entry keeps its id.",
+      "no_item": "This entry is no longer on the roadmap.",
+      "validation_error": "Something in the form is not valid."
     },
     "age": {
       "now": "just now",
@@ -146,6 +153,12 @@
         "pdf": "PDF",
         "markdown": "Markdown"
       },
+      "status": {
+        "title": "Status report",
+        "updated": "Updated {date}",
+        "download": "Markdown",
+        "none": "No status report imported yet."
+      },
       "entry": {
         "done": "done",
         "inProgress": "in progress",
@@ -188,6 +201,85 @@
       "count": "Recordings",
       "minutes": "Minutes recorded",
       "jobs": "Jobs {status}"
+    },
+    "roadmap": {
+      "intro": "Where the product is going: the plans' sprints, the phone app and the platform work as dated bars. Click a row to read the item; people who may edit change it there, or add one.",
+      "updated": "Updated {date}",
+      "chartLabel": "Gantt of the roadmap",
+      "today": "today",
+      "tentative": "tentative dates",
+      "milestone": "milestone",
+      "milestones": "Milestones",
+      "pick": "Pick an item on the chart to read its dates, dependencies, tasks and open questions.",
+      "assumptions": "How to read the dates",
+      "inDays": "in {days} days",
+      "daysAgo": "{days} days ago",
+      "status": {
+        "done": "done",
+        "in_progress": "in progress",
+        "review": "in review",
+        "planned": "planned",
+        "proposed": "proposed",
+        "late": "late"
+      },
+      "detail": {
+        "dates": "{start} – {end} ({days} days)",
+        "size": "size {size}",
+        "dependsOn": "Depends on:",
+        "tasks": "Tasks, day by day",
+        "questions": "Open questions",
+        "tentative": "tentative dates"
+      },
+      "widget": {
+        "none": "No milestone ahead.",
+        "today": "today",
+        "inDays": "{days} d",
+        "counts": "{review} in review · {planned} planned"
+      },
+      "edit": {
+        "edit": "Edit",
+        "addItem": "Add item",
+        "addMilestone": "Add milestone",
+        "newItem": "New item",
+        "editItem": "Edit item",
+        "newMilestone": "New milestone",
+        "editMilestone": "Edit milestone",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "confirmDelete": "Delete for good",
+        "saved": "Roadmap saved",
+        "label": "Code",
+        "name": "Name",
+        "start": "Start",
+        "end": "End",
+        "track": "Track",
+        "status": "Status",
+        "size": "Size",
+        "sizeHint": "An estimate, as 5-6 days.",
+        "tentative": "Tentative dates",
+        "id": "Id",
+        "idHint": "Lowercase letters, digits and dashes; other items depend on it, so it never changes.",
+        "note": "Note",
+        "dependsOn": "Depends on",
+        "tasks": "Tasks",
+        "tasksHint": "One per line: day | what (Day 1 · 6 Nov | Add the platform).",
+        "questions": "Open questions",
+        "linesHint": "One per line.",
+        "links": "Links",
+        "linksHint": "One per line: label | https://…",
+        "milestoneName": "Milestone",
+        "date": "Date",
+        "errors": {
+          "required": "Required.",
+          "badId": "Lowercase letters, digits and dashes, starting with a letter.",
+          "idTaken": "Another entry already has this id.",
+          "badDate": "Not a date.",
+          "endBeforeStart": "Ends before it starts.",
+          "badLine": "Every line needs a | between its two parts.",
+          "badUrl": "Links start with http:// or https://."
+        }
+      }
     },
     "panel": {
       "refresh": "Refresh",
@@ -264,6 +356,307 @@
         "failedJobs": "{loops} in a retry loop · {stale} stale",
         "restarts": "{oom} out of memory · {pods} pods"
       }
+    },
+    "betaTesters": {
+      "intro": "Who gets into the beta and who is in it. Moved here from the app's Admin pages: every decision is the product's own, made with your product account and recorded in its audit log.",
+      "sections": "Sections",
+      "applications": "Applications",
+      "people": "People",
+      "organisations": "Organisations",
+      "widgets": {
+        "pending": "{stand} from the stand · {organisations} organisations"
+      }
+    },
+    "moderation": {
+      "intro": "What is published, and who is called to the stand. Moved here from the app's Admin pages: every act is the product's own, made with your product account and recorded in its audit log.",
+      "sections": "Sections",
+      "review": "Publication review",
+      "locks": "Catalog locks",
+      "fair": "The stand",
+      "widgets": {
+        "queue": "{media} media · {protocols} protocols · {stand} at the stand"
+      }
+    },
+    "statistics": {
+      "intro": "How the product is used, and by whom. Every number is defined once, in the backend, and the Definitions tab says what each one counts. Staff and test accounts never count.",
+      "period": "Period",
+      "weeks": "{n} weeks",
+      "cohort": "Cohort",
+      "everyone": "Everyone",
+      "reports": "Reports",
+      "refreshAll": "Refresh all",
+      "refreshing": "Refreshing {step} of {total}…",
+      "snapshotsNote": "Each report shows its last refresh for this period and cohort. Refresh one, or all of them one after the other; nothing refreshes on its own.",
+      "steps": {
+        "registered": "Registered",
+        "accepted": "Accepted",
+        "verified": "Verified",
+        "first_session": "First session",
+        "second_session": "Second session"
+      },
+      "acquisition": {
+        "title": "Acquisition",
+        "funnel": "From registration to a second session",
+        "ofPrevious": "{share} of the step before",
+        "perWeek": "Per registration week",
+        "times": "Time between steps (median)",
+        "timeTo": {
+          "accepted": "Registration to acceptance:",
+          "verified": "Acceptance to verified email:",
+          "first_session": "Acceptance to first session:",
+          "second_session": "First to second session:"
+        },
+        "hours": "{n} h",
+        "days": "{n} days",
+        "ofPeople": "({people} people)",
+        "byProfile": "By requested profile",
+        "byCohort": "By cohort",
+        "noCohort": "No cohort"
+      },
+      "engagement": {
+        "title": "Engagement",
+        "perWeek": "Active people per week",
+        "perMonth": "Per month",
+        "active": "Active people",
+        "sessions": "Finished sessions",
+        "perPerson": "Finished sessions per active person, in the period",
+        "sessionsBucket": "{bucket, select, 1 {1 session} other {{bucket} sessions}}",
+        "retention": "Retention by first-session week",
+        "noRetention": "Nobody finished a first session in this period.",
+        "firstWeek": "First week",
+        "people": "People",
+        "weekN": "W{n}",
+        "idle": "Days since the last session (everyone who ever finished one)",
+        "daysBucket": "{bucket} days"
+      },
+      "consent": {
+        "title": "Consent",
+        "people": "People",
+        "summary": "{people} people; {newsletter} ticked the newsletter.",
+        "versions": "Privacy consent version",
+        "research": "Research consent version",
+        "none": "Not given",
+        "peopleColumn": "People",
+        "erasures": "Erased accounts per month, in the period",
+        "erasuresColumn": "Erasures",
+        "noErasures": "No account was erased in this period."
+      },
+      "definitions": {
+        "title": "Definitions",
+        "people": "People are product accounts that are neither staff nor test accounts. Staff: platform admins and anyone with console access. Test: emails matching {patterns}.",
+        "session": "A session is a protocol run. It counts for the person who ran it, who for a self-recording is the person recorded. A finished session reached its end (status done); aborted runs are not counted.",
+        "active": "Active in a week or month: finished at least one session in it.",
+        "retained": "Retained at week N: active in the N-th week after the week of the first finished session (week 0 is that week). The table shows weeks 0 to {last}; a dash is a week not reached yet.",
+        "weeks": "Weeks start on Monday, Rome time. A period of N weeks ends with the current week, which is still running.",
+        "verified": "Verified: the person proved their email address. The acceptance sends the link, so this step comes after it. Environments that do not ask for verification leave it empty, so the step reads 0 there.",
+        "accepted": "Accepted: the beta application was decided 'accepted'.",
+        "sessionsSteps": "The funnel counts the people who registered in the period; the session steps count their first and second finished sessions, whenever they happened.",
+        "small": "Small numbers: a group of fewer than {min} people is shown to collaborators as a dash, never as a number. Core people see every number.",
+        "erasures": "Erasures are counted from the product's audit log: the account is gone, so staff and test accounts cannot be told apart there."
+      },
+      "widgets": {
+        "signups": "Sign-ups per day, last 14 days",
+        "lastWeek": "week of {week}",
+        "sessions": "Finished sessions per week",
+        "active": "Active people per week"
+      }
+    }
+  },
+  "admin": {
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "active": "Active",
+      "rejected": "Rejected"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "intro": "Participants and input statistics across the prototype.",
+      "links": {
+        "fair": "The stand",
+        "protocols": "Catalog locks",
+        "review": "Publication review",
+        "applications": "Review applications",
+        "organisations": "Organisations"
+      },
+      "loadFailed": "Could not load statistics.",
+      "stats": {
+        "active": "Active participants",
+        "pending": "Pending review",
+        "rejected": "{count, plural, other {# rejected}}",
+        "recordings": "Recordings",
+        "liveSessions": "{count, plural, one {# live session} other {# live sessions}}",
+        "minutes": "Minutes of signal",
+        "failedJobs": "{count, plural, one {# failed job} other {# failed jobs}}"
+      },
+      "byTask": {
+        "title": "Recordings by task",
+        "empty": "No recordings yet."
+      },
+      "uploads": {
+        "title": "Uploads, last 14 days",
+        "empty": "No uploads yet.",
+        "aria": "Uploads per day"
+      },
+      "valueOf": "{label}: {value}",
+      "participants": {
+        "title": "Participants",
+        "participant": "Participant",
+        "status": "Status",
+        "recordings": "Recordings",
+        "minutes": "Minutes",
+        "lastActivity": "Last activity",
+        "allApplications": "All applications"
+      }
+    },
+    "applications": {
+      "title": "Applications",
+      "intro": "Who joins the beta, and in which cohort.",
+      "decision": "Decision",
+      "tabs": {
+        "pending": "Pending",
+        "waitlisted": "Waitlisted",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "Nothing pending.",
+        "waitlisted": "Nothing waitlisted.",
+        "accepted": "Nothing accepted.",
+        "rejected": "Nothing rejected."
+      },
+      "forbidden": "Admin role required.",
+      "profile": "Profile",
+      "cohort": "Cohort",
+      "allProfiles": "All profiles",
+      "allCohorts": "All cohorts",
+      "profiles": {
+        "private": "Private",
+        "therapist": "Therapist",
+        "lab_lead": "Lab lead",
+        "lab_member": "Lab member"
+      },
+      "meta": "{profile} · {email} · applied {date}{inCohort, select, yes { · {cohort}} other {}}",
+      "answers": {
+        "labels": {
+          "registration_no": "Registration no.",
+          "headband": "Headband",
+          "device": "Device",
+          "expected_subjects": "Expected subjects"
+        },
+        "webBluetooth": "Web Bluetooth",
+        "bluetoothUnknown": "Not reported",
+        "bluetoothYes": "Yes",
+        "bluetoothNo": "No - cannot pair here"
+      },
+      "verification": {
+        "manual": "Manual mail mode: send this verification link to the applicant.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "reissue": "Generate a fresh verification link"
+      },
+      "cohorts": {
+        "title": "Cohorts",
+        "empty": "No cohort yet. Create one to build the sample on purpose.",
+        "counts": "{accepted}{hasTarget, select, yes { / {target}} other {}} accepted · {waitlisted} waitlisted",
+        "new": "New cohort",
+        "anyProfile": "Any",
+        "target": "Target",
+        "add": "Add"
+      },
+      "decide": {
+        "noCohort": "No cohort",
+        "note": "Note (admins only)",
+        "accept": "Accept",
+        "waitlist": "Waitlist",
+        "reject": "Reject"
+      },
+      "more": "More applications"
+    },
+    "fair": {
+      "title": "The stand",
+      "intro": "While the stand is open, registration asks whether someone would like to try the headband. They can then walk away: calling them sends an email saying their turn is about five minutes off.",
+      "open": "The stand is open.",
+      "closed": "The stand is closed.",
+      "openHint": "New registrations are being asked the question.",
+      "closedHint": "Closing does not empty the queue — people already in it keep their turn.",
+      "openAction": "Open the stand",
+      "closeAction": "Close the stand",
+      "stats": {
+        "waiting": "Waiting",
+        "called": "Called",
+        "done": "Done",
+        "declined": "Not any more"
+      },
+      "states": {
+        "done": "done",
+        "declined": "not any more"
+      },
+      "conversion": "{converted} of {tried} who tried the headband asked to be beta testers ({percent}%).",
+      "wantsBeta": "Asked to be a beta tester",
+      "queue": "In the queue",
+      "nobody": "Nobody is waiting.",
+      "calledAgo": "called{when, select, now { just now} minutes { {n} min ago} hours { {n} h ago} other {}}",
+      "signedUp": "{email} · signed up {when, select, now {just now} minutes {{n} min ago} hours {{n} h ago} other {}}",
+      "call": "Call",
+      "callAgain": "Call again",
+      "done": "Done",
+      "gone": "Gone",
+      "seenTo": "Seen to",
+      "toast": {
+        "emailed": "Emailed {email}.",
+        "done": "Marked done.",
+        "declined": "Taken off the queue."
+      },
+      "refresh": "Refresh"
+    },
+    "protocols": {
+      "title": "Catalog locks",
+      "intro": "A locked protocol is still listed — people see what is coming — but it cannot be started. Changes take effect at once; a run already under way finishes.",
+      "changeFailed": "Could not change the lock.",
+      "official": "Official protocols",
+      "startable": "{open} of {total} can be started",
+      "empty": "No official protocols yet.",
+      "locked": "locked",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "toast": {
+        "locked": "Locked.",
+        "unlocked": "Unlocked."
+      }
+    },
+    "review": {
+      "title": "Review",
+      "intro": "Protocols and items people asked to share with the community.",
+      "loadFailed": "The queue could not be loaded.",
+      "empty": "Nothing to review.",
+      "protocols": "Protocols",
+      "media": "Media",
+      "approve": "Approve",
+      "refuse": "Refuse",
+      "hide": "Hide",
+      "meta": "version {version}{timed, select, yes { · {duration}} other {}}{tagged, select, yes { · {tags}} other {}}",
+      "contentWarning": "Content warning: {warning}"
+    },
+    "organisations": {
+      "title": "Organisations",
+      "intro": "Clinics and laboratories asked for by users. Approving makes the requester the owner; it gives you nothing inside.",
+      "unavailable": "Organisations are off in this environment.",
+      "tabs": {
+        "pending": "Waiting",
+        "active": "Approved",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "No requests waiting.",
+        "active": "No approved organisations yet.",
+        "rejected": "No rejected requests."
+      },
+      "line": "{kind} · {email} · {date}",
+      "gone": "account deleted",
+      "seats": "{count, plural, one {# seat} other {# seats}}",
+      "approve": "Approve",
+      "reject": "Reject"
     }
   }
 }

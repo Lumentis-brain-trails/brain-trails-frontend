@@ -38,7 +38,7 @@ jobs:
           mkdir -p out
           npx -y "$CYCLONEDX_NPM" --omit dev --spec-version 1.6 --output-reproducible \
             --output-format JSON --output-file "out/sbom-frontend-${GITHUB_SHA}.cdx.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom-frontend-${{ github.sha }}
           path: out/sbom-frontend-${{ github.sha }}.cdx.json
@@ -57,7 +57,7 @@ jobs:
             fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: security-scan-frontend-${{ github.sha }}

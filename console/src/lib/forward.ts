@@ -14,6 +14,11 @@ export interface Target {
   prefix: string;
   /** First path segments the browser may reach through this proxy. */
   allowed: readonly string[];
+  /**
+   * Of those, the ones reached with GET only. Checked on the decoded segments, like the
+   * allow-list, so `%70rotocols` is `protocols` here too.
+   */
+  readOnly?: readonly string[];
   /** The bearer token to attach, if any. */
   token?: string;
   /** Extra request headers (the BFF key for bt-ops). */
@@ -84,6 +89,15 @@ export async function forward(
     return NextResponse.json(errorBody("forbidden_path", "path not allowed"), {
       status: 403,
     });
+  }
+  if (
+    request.method !== "GET" &&
+    (target.readOnly ?? []).includes(segments[0])
+  ) {
+    return NextResponse.json(
+      errorBody("forbidden", "this proxy only reads this path"),
+      { status: 403 }
+    );
   }
   const url = new URL(
     `${target.base}${target.prefix}/${segments.map(encodeURIComponent).join("/")}`

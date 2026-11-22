@@ -97,6 +97,7 @@ export const ops = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body: unknown = {}) => request<T>("POST", path, body),
   put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
+  delete: <T>(path: string) => request<T>("DELETE", path),
   /** A list with its paging header. */
   async page<T>(path: string): Promise<Page<T>> {
     const res = await fetch(`/api/ops/${path}`);

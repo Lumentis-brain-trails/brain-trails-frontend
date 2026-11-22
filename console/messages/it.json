@@ -35,7 +35,14 @@
       "cluster_unavailable": "Questa console non raggiunge il cluster (gira fuori da un pod, o il cluster non ha risposto).",
       "cluster_forbidden": "La console non può ancora leggere il cluster: il suo Role (infra/k8s/rbac/bt-ops.yaml) non è applicato in questo namespace.",
       "no_pod": "Questo pod, container o run precedente non c'è. Aggiorna Pod e riprova.",
-      "invalid_pod": "Non è il nome di un pod o di un container."
+      "invalid_pod": "Non è il nome di un pod o di un container.",
+      "stale_roadmap": "Qualcuno ha salvato la roadmap dopo che l'hai aperta. Il grafico ora mostra la sua versione: controllala e salva di nuovo.",
+      "duplicate_id": "Un'altra voce ha già questo id.",
+      "depended_on": "Altre voci dipendono da questa.",
+      "invalid_roadmap": "La roadmap si contraddirebbe.",
+      "id_mismatch": "Una voce mantiene il suo id.",
+      "no_item": "Questa voce non è più nella roadmap.",
+      "validation_error": "Qualcosa nel modulo non è valido."
     },
     "age": {
       "now": "adesso",
@@ -146,6 +153,12 @@
         "pdf": "PDF",
         "markdown": "Markdown"
       },
+      "status": {
+        "title": "Stato del progetto",
+        "updated": "Aggiornato il {date}",
+        "download": "Markdown",
+        "none": "Nessun rapporto sullo stato importato finora."
+      },
       "entry": {
         "done": "fatto",
         "inProgress": "in corso",
@@ -188,6 +201,85 @@
       "count": "Registrazioni",
       "minutes": "Minuti registrati",
       "jobs": "Job {status}"
+    },
+    "roadmap": {
+      "intro": "Dove va il prodotto: gli sprint dei piani, l'app per il telefono e i lavori di piattaforma come barre datate. Clicca una riga per leggere la voce; chi può modificare la cambia da lì, o ne aggiunge una.",
+      "updated": "Aggiornata il {date}",
+      "chartLabel": "Gantt della roadmap",
+      "today": "oggi",
+      "tentative": "date incerte",
+      "milestone": "traguardo",
+      "milestones": "Traguardi",
+      "pick": "Scegli una voce nel grafico per leggerne date, dipendenze, attività e domande aperte.",
+      "assumptions": "Come leggere le date",
+      "inDays": "tra {days} giorni",
+      "daysAgo": "{days} giorni fa",
+      "status": {
+        "done": "fatto",
+        "in_progress": "in corso",
+        "review": "in revisione",
+        "planned": "pianificato",
+        "proposed": "proposto",
+        "late": "in ritardo"
+      },
+      "detail": {
+        "dates": "{start} – {end} ({days} giorni)",
+        "size": "stima {size}",
+        "dependsOn": "Dipende da:",
+        "tasks": "Attività, giorno per giorno",
+        "questions": "Domande aperte",
+        "tentative": "date incerte"
+      },
+      "widget": {
+        "none": "Nessun traguardo davanti.",
+        "today": "oggi",
+        "inDays": "{days} g",
+        "counts": "{review} in revisione · {planned} pianificati"
+      },
+      "edit": {
+        "edit": "Modifica",
+        "addItem": "Aggiungi voce",
+        "addMilestone": "Aggiungi traguardo",
+        "newItem": "Nuova voce",
+        "editItem": "Modifica voce",
+        "newMilestone": "Nuovo traguardo",
+        "editMilestone": "Modifica traguardo",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "delete": "Elimina",
+        "confirmDelete": "Elimina definitivamente",
+        "saved": "Roadmap salvata",
+        "label": "Codice",
+        "name": "Nome",
+        "start": "Inizio",
+        "end": "Fine",
+        "track": "Filone",
+        "status": "Stato",
+        "size": "Stima",
+        "sizeHint": "Una stima, come 5-6 giorni.",
+        "tentative": "Date incerte",
+        "id": "Id",
+        "idHint": "Lettere minuscole, cifre e trattini; altre voci dipendono da lui, quindi non cambia mai.",
+        "note": "Nota",
+        "dependsOn": "Dipende da",
+        "tasks": "Attività",
+        "tasksHint": "Una per riga: giorno | cosa (Giorno 1 · 6 nov | Aggiungere la piattaforma).",
+        "questions": "Domande aperte",
+        "linesHint": "Una per riga.",
+        "links": "Link",
+        "linksHint": "Uno per riga: etichetta | https://…",
+        "milestoneName": "Traguardo",
+        "date": "Data",
+        "errors": {
+          "required": "Obbligatorio.",
+          "badId": "Lettere minuscole, cifre e trattini, iniziando con una lettera.",
+          "idTaken": "Un'altra voce ha già questo id.",
+          "badDate": "Non è una data.",
+          "endBeforeStart": "Finisce prima di iniziare.",
+          "badLine": "Ogni riga ha bisogno di una | tra le sue due parti.",
+          "badUrl": "I link iniziano con http:// o https://."
+        }
+      }
     },
     "panel": {
       "refresh": "Aggiorna",
@@ -264,6 +356,307 @@
         "failedJobs": "{loops} in loop di retry · {stale} scaduti",
         "restarts": "{oom} per memoria · {pods} pod"
       }
+    },
+    "betaTesters": {
+      "intro": "Chi entra nella beta e chi c'è già. Spostato qui dalle pagine Admin dell'app: ogni decisione è del prodotto, presa con il tuo account del prodotto e registrata nel suo audit log.",
+      "sections": "Sezioni",
+      "applications": "Candidature",
+      "people": "Persone",
+      "organisations": "Organizzazioni",
+      "widgets": {
+        "pending": "{stand} dallo stand · {organisations} organizzazioni"
+      }
+    },
+    "moderation": {
+      "intro": "Cosa si pubblica e chi viene chiamato allo stand. Spostato qui dalle pagine Admin dell'app: ogni azione è del prodotto, fatta con il tuo account del prodotto e registrata nel suo audit log.",
+      "sections": "Sezioni",
+      "review": "Revisione pubblicazioni",
+      "locks": "Blocchi del catalogo",
+      "fair": "Lo stand",
+      "widgets": {
+        "queue": "{media} media · {protocols} protocolli · {stand} allo stand"
+      }
+    },
+    "statistics": {
+      "intro": "Come si usa il prodotto, e chi lo usa. Ogni numero è definito una volta sola, nel backend, e la scheda Definizioni dice cosa conta. Staff e account di test non contano mai.",
+      "period": "Periodo",
+      "weeks": "{n} settimane",
+      "cohort": "Coorte",
+      "everyone": "Tutti",
+      "reports": "Report",
+      "refreshAll": "Aggiorna tutti",
+      "refreshing": "Aggiorno {step} di {total}…",
+      "snapshotsNote": "Ogni report mostra il suo ultimo aggiornamento per questo periodo e questa coorte. Aggiornane uno, o tutti uno dopo l'altro; niente si aggiorna da solo.",
+      "steps": {
+        "registered": "Registrati",
+        "accepted": "Accettati",
+        "verified": "Email verificata",
+        "first_session": "Prima sessione",
+        "second_session": "Seconda sessione"
+      },
+      "acquisition": {
+        "title": "Acquisizione",
+        "funnel": "Dalla registrazione alla seconda sessione",
+        "ofPrevious": "{share} del passo prima",
+        "perWeek": "Per settimana di registrazione",
+        "times": "Tempo tra i passi (mediana)",
+        "timeTo": {
+          "accepted": "Dalla registrazione all'accettazione:",
+          "verified": "Dall'accettazione all'email verificata:",
+          "first_session": "Dall'accettazione alla prima sessione:",
+          "second_session": "Dalla prima alla seconda sessione:"
+        },
+        "hours": "{n} h",
+        "days": "{n} giorni",
+        "ofPeople": "({people} persone)",
+        "byProfile": "Per profilo richiesto",
+        "byCohort": "Per coorte",
+        "noCohort": "Nessuna coorte"
+      },
+      "engagement": {
+        "title": "Coinvolgimento",
+        "perWeek": "Persone attive per settimana",
+        "perMonth": "Per mese",
+        "active": "Persone attive",
+        "sessions": "Sessioni finite",
+        "perPerson": "Sessioni finite per persona attiva, nel periodo",
+        "sessionsBucket": "{bucket, select, 1 {1 sessione} other {{bucket} sessioni}}",
+        "retention": "Ritorno per settimana della prima sessione",
+        "noRetention": "Nessuno ha finito una prima sessione in questo periodo.",
+        "firstWeek": "Prima settimana",
+        "people": "Persone",
+        "weekN": "S{n}",
+        "idle": "Giorni dall'ultima sessione (chiunque ne abbia mai finita una)",
+        "daysBucket": "{bucket} giorni"
+      },
+      "consent": {
+        "title": "Consensi",
+        "people": "Persone",
+        "summary": "{people} persone; {newsletter} hanno spuntato la newsletter.",
+        "versions": "Versione del consenso privacy",
+        "research": "Versione del consenso alla ricerca",
+        "none": "Non dato",
+        "peopleColumn": "Persone",
+        "erasures": "Account cancellati per mese, nel periodo",
+        "erasuresColumn": "Cancellazioni",
+        "noErasures": "Nessun account cancellato in questo periodo."
+      },
+      "definitions": {
+        "title": "Definizioni",
+        "people": "Le persone sono gli account del prodotto che non sono né staff né di test. Staff: gli admin della piattaforma e chiunque abbia accesso alla console. Test: le email che corrispondono a {patterns}.",
+        "session": "Una sessione è un'esecuzione di un protocollo. Conta per chi l'ha condotta, che in un'autoregistrazione è la persona registrata. Una sessione finita è arrivata alla fine (stato done); quelle interrotte non contano.",
+        "active": "Attiva in una settimana o in un mese: ha finito almeno una sessione in quel periodo.",
+        "retained": "Tornata alla settimana N: attiva nella N-esima settimana dopo quella della prima sessione finita (la settimana 0 è quella). La tabella mostra le settimane da 0 a {last}; un trattino è una settimana non ancora arrivata.",
+        "weeks": "Le settimane iniziano il lunedì, ora di Roma. Un periodo di N settimane finisce con la settimana in corso, che non è ancora finita.",
+        "verified": "Email verificata: la persona ha confermato il suo indirizzo. Il link parte con l'accettazione, quindi questo passo viene dopo. Gli ambienti che non chiedono la verifica lo lasciano vuoto, e lì il passo vale 0.",
+        "accepted": "Accettati: la candidatura alla beta è stata decisa 'accettata'.",
+        "sessionsSteps": "L'imbuto conta le persone registrate nel periodo; i passi delle sessioni contano la loro prima e seconda sessione finita, in qualunque momento.",
+        "small": "Numeri piccoli: un gruppo di meno di {min} persone appare ai collaboratori come un trattino, mai come numero. Le persone core vedono tutti i numeri.",
+        "erasures": "Le cancellazioni si contano dall'audit log del prodotto: l'account non c'è più, quindi lì staff e account di test non si distinguono."
+      },
+      "widgets": {
+        "signups": "Registrazioni al giorno, ultimi 14 giorni",
+        "lastWeek": "settimana del {week}",
+        "sessions": "Sessioni finite per settimana",
+        "active": "Persone attive per settimana"
+      }
+    }
+  },
+  "admin": {
+    "statuses": {
+      "pending": "In attesa",
+      "approved": "Approvato",
+      "active": "Attivo",
+      "rejected": "Rifiutato"
+    },
+    "dashboard": {
+      "title": "Panoramica",
+      "intro": "Partecipanti e statistiche sui dati in ingresso in tutto il prototipo.",
+      "links": {
+        "fair": "Lo stand",
+        "protocols": "Blocchi del catalogo",
+        "review": "Revisione delle pubblicazioni",
+        "applications": "Esamina le candidature",
+        "organisations": "Organizzazioni"
+      },
+      "loadFailed": "Non è stato possibile caricare le statistiche.",
+      "stats": {
+        "active": "Partecipanti attivi",
+        "pending": "In attesa di esame",
+        "rejected": "{count, plural, one {# rifiutato} other {# rifiutati}}",
+        "recordings": "Registrazioni",
+        "liveSessions": "{count, plural, one {# sessione in diretta} other {# sessioni in diretta}}",
+        "minutes": "Minuti di segnale",
+        "failedJobs": "{count, plural, one {# elaborazione non riuscita} other {# elaborazioni non riuscite}}"
+      },
+      "byTask": {
+        "title": "Registrazioni per compito",
+        "empty": "Ancora nessuna registrazione."
+      },
+      "uploads": {
+        "title": "Caricamenti, ultimi 14 giorni",
+        "empty": "Ancora nessun caricamento.",
+        "aria": "Caricamenti al giorno"
+      },
+      "valueOf": "{label}: {value}",
+      "participants": {
+        "title": "Partecipanti",
+        "participant": "Partecipante",
+        "status": "Stato",
+        "recordings": "Registrazioni",
+        "minutes": "Minuti",
+        "lastActivity": "Ultima attività",
+        "allApplications": "Tutte le candidature"
+      }
+    },
+    "applications": {
+      "title": "Candidature",
+      "intro": "Chi entra nella beta, e in quale coorte.",
+      "decision": "Decisione",
+      "tabs": {
+        "pending": "In attesa",
+        "waitlisted": "In lista d'attesa",
+        "accepted": "Accettate",
+        "rejected": "Rifiutate"
+      },
+      "empty": {
+        "pending": "Nessuna candidatura in attesa.",
+        "waitlisted": "Nessuna candidatura in lista d'attesa.",
+        "accepted": "Nessuna candidatura accettata.",
+        "rejected": "Nessuna candidatura rifiutata."
+      },
+      "forbidden": "È richiesto il ruolo di admin.",
+      "profile": "Profilo",
+      "cohort": "Coorte",
+      "allProfiles": "Tutti i profili",
+      "allCohorts": "Tutte le coorti",
+      "profiles": {
+        "private": "Privato",
+        "therapist": "Terapeuta",
+        "lab_lead": "Responsabile di laboratorio",
+        "lab_member": "Membro di laboratorio"
+      },
+      "meta": "{profile} · {email} · candidatura del {date}{inCohort, select, yes { · {cohort}} other {}}",
+      "answers": {
+        "labels": {
+          "registration_no": "N. di iscrizione all'albo",
+          "headband": "Fascia",
+          "device": "Dispositivo",
+          "expected_subjects": "Persone previste"
+        },
+        "webBluetooth": "Web Bluetooth",
+        "bluetoothUnknown": "Non indicato",
+        "bluetoothYes": "Sì",
+        "bluetoothNo": "No - qui non può associare la fascia"
+      },
+      "verification": {
+        "manual": "Modalità email manuale: invia questo link di verifica al candidato.",
+        "copy": "Copia",
+        "copied": "Copiato",
+        "reissue": "Genera un nuovo link di verifica"
+      },
+      "cohorts": {
+        "title": "Coorti",
+        "empty": "Ancora nessuna coorte. Creane una per costruire il campione con criterio.",
+        "counts": "{accepted}{hasTarget, select, yes { / {target}} other {}} accettati · {waitlisted} in lista d'attesa",
+        "new": "Nuova coorte",
+        "anyProfile": "Qualsiasi",
+        "target": "Obiettivo",
+        "add": "Aggiungi"
+      },
+      "decide": {
+        "noCohort": "Nessuna coorte",
+        "note": "Nota (solo admin)",
+        "accept": "Accetta",
+        "waitlist": "Metti in lista d'attesa",
+        "reject": "Rifiuta"
+      },
+      "more": "Altre candidature"
+    },
+    "fair": {
+      "title": "Lo stand",
+      "intro": "Finché lo stand è aperto, la registrazione chiede se si vuole provare la fascia. Poi ci si può allontanare: quando chiami una persona, le arriva un'email che dice che il suo turno è tra circa cinque minuti.",
+      "open": "Lo stand è aperto.",
+      "closed": "Lo stand è chiuso.",
+      "openHint": "Alle nuove registrazioni viene posta la domanda.",
+      "closedHint": "Chiudere non svuota la coda — chi è già in coda mantiene il turno.",
+      "openAction": "Apri lo stand",
+      "closeAction": "Chiudi lo stand",
+      "stats": {
+        "waiting": "In attesa",
+        "called": "Chiamati",
+        "done": "Fatti",
+        "declined": "Non più in coda"
+      },
+      "states": {
+        "done": "fatto",
+        "declined": "non più in coda"
+      },
+      "conversion": "Tra chi ha provato la fascia, {converted} su {tried} hanno chiesto di diventare beta tester ({percent}%).",
+      "wantsBeta": "Ha chiesto di diventare beta tester",
+      "queue": "In coda",
+      "nobody": "Nessuno è in attesa.",
+      "calledAgo": "chiamato{when, select, now { adesso} minutes { {n} min fa} hours { {n} h fa} other {}}",
+      "signedUp": "{email} · iscrizione {when, select, now {adesso} minutes {{n} min fa} hours {{n} h fa} other {}}",
+      "call": "Chiama",
+      "callAgain": "Chiama di nuovo",
+      "done": "Fatto",
+      "gone": "Assente",
+      "seenTo": "Conclusi",
+      "toast": {
+        "emailed": "Email inviata a {email}.",
+        "done": "Segnato come fatto.",
+        "declined": "Tolto dalla coda."
+      },
+      "refresh": "Aggiorna"
+    },
+    "protocols": {
+      "title": "Blocchi del catalogo",
+      "intro": "Un protocollo bloccato resta in elenco — le persone vedono cosa è in arrivo — ma non può essere avviato. Le modifiche hanno effetto subito; una sessione già in corso arriva alla fine.",
+      "changeFailed": "Non è stato possibile cambiare il blocco.",
+      "official": "Protocolli ufficiali",
+      "startable": "Avviabili: {open} su {total}",
+      "empty": "Ancora nessun protocollo ufficiale.",
+      "locked": "bloccato",
+      "lock": "Blocca",
+      "unlock": "Sblocca",
+      "toast": {
+        "locked": "Bloccato.",
+        "unlocked": "Sbloccato."
+      }
+    },
+    "review": {
+      "title": "Revisione",
+      "intro": "Protocolli ed elementi che le persone hanno chiesto di condividere con la community.",
+      "loadFailed": "Non è stato possibile caricare la coda.",
+      "empty": "Niente da revisionare.",
+      "protocols": "Protocolli",
+      "media": "Media",
+      "approve": "Approva",
+      "refuse": "Rifiuta",
+      "hide": "Nascondi",
+      "meta": "versione {version}{timed, select, yes { · {duration}} other {}}{tagged, select, yes { · {tags}} other {}}",
+      "contentWarning": "Avviso sui contenuti: {warning}"
+    },
+    "organisations": {
+      "title": "Organizzazioni",
+      "intro": "Cliniche e laboratori richiesti dagli utenti. Approvare rende titolare chi ha fatto la richiesta; a te non dà niente al suo interno.",
+      "unavailable": "Le organizzazioni sono disattivate in questo ambiente.",
+      "tabs": {
+        "pending": "In attesa",
+        "active": "Approvate",
+        "rejected": "Rifiutate"
+      },
+      "empty": {
+        "pending": "Nessuna richiesta in attesa.",
+        "active": "Ancora nessuna organizzazione approvata.",
+        "rejected": "Nessuna richiesta rifiutata."
+      },
+      "line": "{kind} · {email} · {date}",
+      "gone": "account eliminato",
+      "seats": "{count, plural, one {# posto} other {# posti}}",
+      "approve": "Approva",
+      "reject": "Rifiuta"
     }
   }
 }

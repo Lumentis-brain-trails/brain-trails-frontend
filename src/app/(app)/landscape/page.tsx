@@ -8,15 +8,25 @@
  * recording that went there. The map is rebuilt after each new recording, which is the
  * point of the page: coming back after a session and seeing the landscape change.
  *
+ * The reader can draw it with other measures: one as the height, another as the colour
+ * - a task's share of time or score, a label's average, a band's power, the main task -
+ * and add more landscapes coloured other ways (`LandscapeViews`, backend V3-0016 amended
+ * 2026-11-16).
+ *
  * Only ever the person's own recordings. The first visit of an account that recorded
  * before landscapes existed is also what asks for its first build.
+ *
+ * "Redraw" asks for the map to be fitted again from scratch on every recording
+ * (`POST /landscape/redraw`): a map otherwise only extends itself, so a change to how
+ * maps are drawn would never reach it.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { useEffect } from "react";
-import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
+import { LandscapeViews } from "@/components/landscape/LandscapeViews";
 import {
+  Button,
   Card,
   EmptyState,
   ErrorBanner,
@@ -46,10 +56,29 @@ export default function BrainLandscapePage() {
         : false,
   });
 
+  const queryClient = useQueryClient();
+  const redraw = useMutation({
+    mutationFn: () => api.post<unknown>("landscape/redraw"),
+    onSuccess: () => {
+      // a redraw is queued: show it at once; the polling above takes it from here
+      queryClient.setQueryData<BrainLandscape>(["my-landscape"], (old) =>
+        old ? { ...old, pending: true } : old
+      );
+      void queryClient.invalidateQueries({ queryKey: ["my-landscape"] });
+      void queryClient.invalidateQueries({ queryKey: ["landscape-status"] });
+    },
+  });
+
   const problem = landscape.data
     ? null
     : landscapeProblem(problemOf(landscape.error));
   const data = landscape.data;
+  // the redraw has landed: the next wait is an ordinary update again
+  const settled = data !== undefined && !data.pending;
+  const { isSuccess: redrawn, reset: resetRedraw } = redraw;
+  useEffect(() => {
+    if (settled && redrawn) resetRedraw();
+  }, [settled, redrawn, resetRedraw]);
   // the map is on screen: the sidebar's "redrawn" mark has done its job
   const epoch = data?.epoch;
   useEffect(() => {
@@ -71,11 +100,22 @@ export default function BrainLandscapePage() {
                 timeStyle: "short",
               }),
             })}
-            {data.pending && (
+            {data.pending || redraw.isPending ? (
               <span className="inline-flex items-center gap-1.5">
                 <Spinner className="h-3 w-3 text-accent" />
-                {t("updating")}
+                {redraw.isPending || redraw.isSuccess
+                  ? t("redrawing")
+                  : t("updating")}
               </span>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => redraw.mutate()}
+                title={t("redrawHint")}
+              >
+                {t("redraw")}
+              </Button>
             )}
           </p>
         )}
@@ -90,6 +130,7 @@ export default function BrainLandscapePage() {
         <EmptyState title={t("title")} text={t("unavailable")} />
       )}
       {problem === "error" && <ErrorBanner message={t("failed")} />}
+      {redraw.isError && <ErrorBanner message={t("redrawFailed")} />}
       {data?.change === "redrawn" && (
         <p className="mb-3 rounded-[var(--radius-control)] bg-surface-2 px-3 py-2 text-[14px] text-ink-2">
           {t("redrawn")}
@@ -98,7 +139,7 @@ export default function BrainLandscapePage() {
 
       {data && (
         <Card className="p-2 sm:p-4">
-          <LandscapeSurface landscape={data} height={560} title={t("aria")} />
+          <LandscapeViews landscape={data} height={520} title={t("aria")} />
         </Card>
       )}
 

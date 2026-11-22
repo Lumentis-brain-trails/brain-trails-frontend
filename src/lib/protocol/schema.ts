@@ -35,6 +35,7 @@ const stepSchema = z.object({
       node_path: z.string().min(1),
       iteration: z.number().int().min(0).nullable(),
       condition: z.string().optional(),
+      main: z.literal(true).optional(),
     })
     .optional(),
 });

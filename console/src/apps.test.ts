@@ -7,9 +7,16 @@ import { APPS, appFor } from "./apps";
  * without the other fails here.
  */
 const BACKEND = {
+  "beta-testers": { version: "1.0.0", widgets: ["pending_applications"] },
   health: { version: "0.1.0", widgets: ["failed_jobs", "restarts_24h"] },
-  overview: { version: "1.0.0", widgets: ["recordings_14d"] },
-  worklog: { version: "1.0.0", widgets: ["tokens_week", "work_week"] },
+  moderation: { version: "1.0.0", widgets: ["review_queue"] },
+  overview: { version: "1.1.0", widgets: ["recordings_14d"] },
+  roadmap: { version: "1.1.0", widgets: ["next_milestone"] },
+  statistics: {
+    version: "1.0.0",
+    widgets: ["active_week", "sessions_week", "signups_14d"],
+  },
+  worklog: { version: "1.1.0", widgets: ["tokens_week", "work_week"] },
 };
 
 describe("the app registry", () => {

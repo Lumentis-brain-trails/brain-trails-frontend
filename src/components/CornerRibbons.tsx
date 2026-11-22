@@ -33,7 +33,7 @@ type Palette = {
   head: [number, number, number];
 };
 
-type Ribbon = {
+export type Ribbon = {
   body: Palette;
   rim: Palette;
   /** Which side of the path the cool rim bleeds onto. */
@@ -63,7 +63,7 @@ const BLEED = BLUR * 3;
 /** Samples along each ribbon's curve. */
 const STEPS = 56;
 
-const RIBBONS: Ribbon[] = [
+export const RIBBONS: Ribbon[] = [
   {
     // top-left: enters from the left edge, yellow body with a cyan rim underneath
     body: { tail: [244, 222, 128], head: [249, 186, 74] },
@@ -172,7 +172,7 @@ function paintPass(
   }
 }
 
-function drawRibbon(
+export function drawRibbon(
   ctx: CanvasRenderingContext2D,
   ribbon: Ribbon,
   time: number,

@@ -11,7 +11,9 @@
  * patient's own run: no scores at the end and no way into the recording - they see
  * neither (V4-0006).
  * Consent, the content warning and - for a protocol with visual blocks - the
- * photosensitivity warning come first (`ConsentGate`), then the headband pre-flight; Start opens a session, which returns the published version's
+ * photosensitivity warning come first (`ConsentGate`), then the context questionnaire
+ * (`ContextQuestionnaire`, flag `context_questionnaire`; its answers are stored with the
+ * session once it exists), then the headband pre-flight; Start opens a session, which returns the published version's
  * tree, the run's seed and links to its media. The tree is resolved here
  * (`resolvePlan`: loops, shuffles, jitter), the media are bound to it and the flat plan
  * is posted back before the first block, so review reads what was shown rather than what
@@ -43,6 +45,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { ContextQuestionnaire } from "@/components/context/ContextQuestionnaire";
 import { ProtocolRunner } from "@/components/protocol/ProtocolRunner";
 import "@/components/protocol/kinds";
 import {
@@ -54,11 +57,22 @@ import {
   HeadbandPreflight,
   type HeadbandSource,
 } from "@/components/run/HeadbandPreflight";
+import { SelfTrail } from "@/components/live/SelfTrail";
+import { usePositionFeed } from "@/lib/live/usePositionFeed";
+import { hasLandscapeBlock } from "@/lib/neurofeedback/landscape";
+import { useFeature } from "@/lib/features";
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
+import { useRemoteRun } from "@/components/run/useRemoteRun";
 import { Button, Card, ErrorBanner, Spinner } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
 import { useUploadErrorMessage } from "@/lib/upload";
+import {
+  type ContextAnswers,
+  saveSessionContext,
+  sessionContext,
+  useContextEnabled,
+} from "@/lib/context";
 import { useFocusMode } from "@/lib/focus";
 import {
   BluetoothMuse,
@@ -94,6 +108,7 @@ const SYNC_TIMEOUT_MS = 15_000;
 
 type Phase =
   | "consent"
+  | "context"
   | "preflight"
   | "syncing"
   | "running"
@@ -116,6 +131,7 @@ export function RunProtocol({
   picker = null,
   startBlocked = false,
   client = false,
+  remote = false,
 }: {
   protocolId: string;
   /** API path of the `ProtocolDetail` to run. */
@@ -127,6 +143,12 @@ export function RunProtocol({
   /** The picker is still resolving whom the run records: Start waits. */
   startBlocked?: boolean;
   client?: boolean;
+  /**
+   * Publish the run to the live service (T5): the patient's Play when the remote
+   * console is on. A carer waiting in the assignment's room sees the pre-flight, then
+   * watches and steers the run; nothing changes when nobody does.
+   */
+  remote?: boolean;
 }) {
   const router = useRouter();
   const t = useTranslations("run.upload");
@@ -177,6 +199,16 @@ export function RunProtocol({
   const muse = useMuse(createDevice);
 
   const [phase, setPhase] = useState<Phase>("consent");
+  // The context questionnaire (flag `context_questionnaire`) comes after consent: its
+  // answers, `null` once skipped, wait here for Start to create the session they belong
+  // to, with the moment they were given.
+  const contextEnabled = useContextEnabled();
+  const afterConsent: Phase = contextEnabled ? "context" : "preflight";
+  const [context, setContext] = useState<{
+    answers: ContextAnswers | null;
+    at: Date;
+  } | null>(null);
+  const contextSent = useRef<string | null>(null);
   // The person ticked the photosensitivity warning; the session start says so (H4).
   const [acknowledged, setAcknowledged] = useState(false);
   // The detail says whether the protocol's current version is visual; a run of an
@@ -204,10 +236,43 @@ export function RunProtocol({
   const syncStarted = useRef(0);
   useFocusMode(phase === "syncing" || phase === "running");
 
-  const sink: MarkerSink | null = useMemo(
+  // Your own trail over a run on yourself (T4b): never a patient's, never someone else's
+  const liveOn = useFeature("live");
+  const selfRun =
+    !client && !remote && !target.subjectId && !target.assignmentId;
+  const [selfViewAsked, setSelfView] = useState(false);
+  const selfView = liveOn && selfRun && selfViewAsked;
+  // a block that trains on the person's landscape hears it through the live service
+  // (V4-0010): the run is published and this page observes it, as the self view does
+  const trainsOnMap = useMemo(
+    () => hasLandscapeBlock(protocol.data?.definition),
+    [protocol.data]
+  );
+  const mapFeedback = liveOn && trainsOnMap;
+  const live = useRemoteRun({
+    enabled: remote || selfView || mapFeedback,
+    assignmentId: target.assignmentId,
+    sessionId: session?.id ?? null,
+    muse,
+    anchor,
+    plan,
+  });
+  // The session's own sink, made once per session; the live mirror wraps it, so a
+  // change in who watches never replaces the sink holding the run's markers.
+  const sessionSink: MarkerSink | null = useMemo(
     () => (session ? createSessionSink(session.id) : null),
     [session]
   );
+  const { wrap } = live;
+  const sink = useMemo(
+    () => (sessionSink ? wrap(sessionSink) : null),
+    [sessionSink, wrap]
+  );
+  const positions = usePositionFeed(session?.id ?? null, mapFeedback);
+  const liveRef = useRef(live);
+  useEffect(() => {
+    liveRef.current = live;
+  });
 
   const begin = useCallback(async () => {
     if (!protocol.data) return;
@@ -260,18 +325,21 @@ export function RunProtocol({
         end.files && session.upload
           ? await uploadCapture(session.upload, end.files, setProgress)
           : undefined;
+      // what the batches already delivered is not sent again: only what is still owed
+      await sink?.flush().catch(() => undefined);
+      const owed = sink ? sink.unacknowledged() : markers.current;
       await finishSession(session.id, {
         summary: end.summary,
         aborted: end.aborted || capture === undefined,
         capture,
-        events: markers.current.map(toWireEvent),
+        events: owed.map(toWireEvent),
       });
       setPhase("saved");
     } catch (e) {
       setError(errorText(e));
       setPhase("failed");
     }
-  }, [errorText, session]);
+  }, [errorText, session, sink]);
 
   const close = useCallback(
     async (
@@ -280,6 +348,7 @@ export function RunProtocol({
       reason?: "sync_failed" | "dropped"
     ) => {
       exitFullscreen();
+      liveRef.current.end();
       const stopped = muse.stopRecording();
       // A capture with no sample is nothing to analyse: the session closes as aborted.
       const files =
@@ -334,6 +403,17 @@ export function RunProtocol({
     return () => window.clearInterval(timer);
   }, [close, muse, phase]);
 
+  // The questionnaire's answers join the session once Start has created it. Best effort:
+  // a run is never held up or lost because its context could not be stored.
+  useEffect(() => {
+    if (!session || !context || contextSent.current === session.id) return;
+    contextSent.current = session.id;
+    saveSessionContext(
+      session.id,
+      sessionContext(context.answers, context.at)
+    ).catch(() => {});
+  }, [context, session]);
+
   const onFinish = useCallback(
     (taskResults: TaskResult[], produced: readonly Marker[]) => {
       markers.current = produced;
@@ -369,13 +449,27 @@ export function RunProtocol({
             photosensitive={photosensitive}
             onAccept={() => {
               setAcknowledged(photosensitive);
-              setPhase("preflight");
+              setPhase(afterConsent);
             }}
             onDecline={() => router.push(backHref)}
           />
         ) : (
-          <Skip onDone={() => setPhase("preflight")} />
+          <Skip onDone={() => setPhase(afterConsent)} />
         )}
+      </main>
+    );
+
+  if (phase === "context")
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <h1 className="type-title mb-6">{shown.title}</h1>
+        <ContextQuestionnaire
+          personaliseHref={client ? null : "/account#context"}
+          onDone={(answers) => {
+            setContext({ answers, at: new Date() });
+            setPhase("preflight");
+          }}
+        />
       </main>
     );
 
@@ -394,6 +488,15 @@ export function RunProtocol({
             <ErrorBanner message={error} />
           </div>
         )}
+        {live.carerWaiting && (
+          <p
+            role="status"
+            className="mb-6 flex items-center gap-2 rounded-[var(--radius-control)] bg-ok-soft px-4 py-3 text-ink"
+          >
+            <span aria-hidden className="h-2 w-2 rounded-full bg-ok" />
+            {tMy("carerWaiting")}
+          </p>
+        )}
         {picker}
         <HeadbandPreflight
           muse={muse}
@@ -405,6 +508,8 @@ export function RunProtocol({
           onOverride={setOverride}
           starting={starting}
           blocked={startBlocked}
+          selfView={selfViewAsked}
+          onSelfView={liveOn && selfRun ? setSelfView : undefined}
           onStart={() => void begin()}
           onBack={() => router.push(backHref)}
         />
@@ -426,9 +531,25 @@ export function RunProtocol({
             seed={session?.seed ?? 1}
             sink={sink}
             anchor={anchor}
+            commands={live.commands}
+            // watching yourself, or the page hearing your landscape, is not a carer
+            // following the session: only observers beyond this page's own count
+            observed={
+              live.observers >
+              (selfView ? 1 : 0) + (mapFeedback && session ? 1 : 0)
+            }
+            onState={live.onState}
+            onStepResult={live.onStepResult}
+            signal={muse.eegFeed}
+            position={
+              mapFeedback && positions.available ? positions.feed : undefined
+            }
             onFinish={onFinish}
             onExit={onExit}
           />
+        )}
+        {selfView && session && phase === "running" && (
+          <SelfTrail sessionId={session.id} />
         )}
       </RunSurface>
     );
