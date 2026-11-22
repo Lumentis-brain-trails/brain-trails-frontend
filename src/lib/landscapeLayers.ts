@@ -90,6 +90,12 @@ export interface MeasureSpec {
   band?: string;
   /** Show `-log(p + epsilon)` instead of `p` (frequency kinds only). */
   energy: boolean;
+  /**
+   * Draw the height as `log(1 + p / epsilon)` over its ceiling instead of `p` (frequency
+   * kinds only, and not with `energy`): hills stay hills, but ground the windows only
+   * crossed rises out of the flat plane next to a far denser peak.
+   */
+  log?: boolean;
   epsilon: number;
   /** Cap on the energy; null for none. */
   cutoff: number | null;
@@ -710,6 +716,15 @@ export function computeMeasure(
   }
 
   if (spec.energy && frequency) return energy(grid, frequency, spec);
+  if (spec.log && frequency) {
+    const epsilon = spec.epsilon > 0 ? spec.epsilon : DEFAULT_EPSILON;
+    const ceiling = Math.log1p(Math.max(...frequency.p, 0) / epsilon) || 1;
+    const p = frequency.p;
+    return {
+      ...field,
+      z: rows(grid, (c) => Math.log1p(Math.max(0, p[c]) / epsilon) / ceiling),
+    };
+  }
   return field;
 }
 
@@ -880,6 +895,9 @@ function reviveMeasure(
     ...(kind === "score" ? { metric: s.metric } : {}),
     ...(kind === "band" ? { band: s.band } : {}),
     energy: s.energy === true && isFrequency(kind),
+    ...(s.log === true && s.energy !== true && isFrequency(kind)
+      ? { log: true }
+      : {}),
     epsilon:
       typeof s.epsilon === "number" && s.epsilon > 0
         ? s.epsilon
