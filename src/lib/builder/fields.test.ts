@@ -11,6 +11,7 @@ import {
   type Field,
   type JsonSchema,
 } from "./fields";
+import { docFor } from "./fieldDocs";
 
 const KINDS = (blocks as { kinds: Record<string, JsonSchema> }).kinds;
 
@@ -37,9 +38,11 @@ describe("describeFields over the exported kind schemas", () => {
   });
 
   test("no kind currently needs the read-only JSON fallback", () => {
+    // a setting the builder never draws (a landscape's targets) needs no form either
     const unsupported = Object.entries(KINDS).flatMap(([name, schema]) =>
       describeFields(schema, {})
         .filter((field) => field.kind === "unsupported")
+        .filter((field) => !docFor(name, field.path)?.hidden)
         .map((field) => `${name}.${field.path.join(".")}`)
     );
     expect(unsupported).toEqual([]);

@@ -39,6 +39,8 @@ export interface RemoteRun {
   carerWaiting: boolean;
   /** Somebody watches the session now. */
   observed: boolean;
+  /** How many watch it, this page's own observers included (the self view, V4-0010). */
+  observers: number;
   commands: CommandPort | undefined;
   /** The run's sink, mirroring every marker to the room. */
   wrap: (sink: MarkerSink) => MarkerSink;
@@ -198,6 +200,7 @@ export function useRemoteRun({
     () => ({
       carerWaiting,
       observed: observers > 0,
+      observers,
       commands: producer?.commands,
       wrap,
       onState: (state) => producer?.setState(state),
