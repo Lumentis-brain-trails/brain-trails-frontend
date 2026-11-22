@@ -90,7 +90,9 @@ test("a live position off the map hides its traces instead of dropping them", ()
       />
     </NextIntlClientProvider>
   );
-  const all: Trace[] = JSON.parse(screen.getByTestId("plot").textContent ?? "[]");
+  const all: Trace[] = JSON.parse(
+    screen.getByTestId("plot").textContent ?? "[]"
+  );
   expect(all).toHaveLength(4);
   expect(all.slice(1).map((t) => t.visible)).toEqual([false, false, false]);
 });
