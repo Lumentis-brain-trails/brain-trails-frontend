@@ -6,7 +6,8 @@
  * Before Start: when a carer has opened the assignment's waiting room, join it and send
  * the headband pre-flight (status, model, battery, contact) once a second, so the carer
  * sees what the patient sees. The room is asked about once, when the page opens - never
- * polled (0014). After Start: publish the run to the session's live room - the signal
+ * polled (0014) - and again only to reconnect; a room found closed then (or a 4xx) ends
+ * it for this page. After Start: publish the run to the session's live room - the signal
  * from every headband packet, the plan, the runner's state, every marker (a command's
  * acknowledgement is its `operator_command` marker), each block's result, and the
  * quality once a second - and hand the commands that come back to the runner.
@@ -19,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useAppConfig } from "@/lib/features";
 import { LiveProducer } from "@/lib/live/producer";
-import { LiveSocket, type Ticket } from "@/lib/live/socket";
+import { LiveSocket, type Ticket, TicketRefused } from "@/lib/live/socket";
 import type { useMuse } from "@/lib/muse/useMuse";
 import type { ClockAnchor } from "@/lib/protocol/clock";
 import type { CommandPort, RunnerState } from "@/lib/protocol/commands";
@@ -112,13 +113,21 @@ export function useRemoteRun({
             const again = await api.get<WaitingRoom>(
               `me/assignments/${assignmentId}/live-room`
             );
-            if (!again.ticket) throw new Error("waiting room closed");
+            // final: asking again every 15 s would poll a closed room (0014)
+            if (!again.open || !again.ticket)
+              throw new TicketRefused("waiting room closed");
             return again.ticket;
           },
           onFrame: (frame) => {
             if (frame.type === "hello" || frame.type === "carer")
               setCarerWaiting(true);
             if (frame.type === "closed") setCarerWaiting(false);
+          },
+          onState: (state) => {
+            if (state !== "closed") return;
+            setCarerWaiting(false);
+            if (timer) clearInterval(timer);
+            timer = null;
           },
         });
         socket.start();

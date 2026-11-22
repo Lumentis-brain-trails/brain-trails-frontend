@@ -4,7 +4,14 @@ import { FakeSocket } from "./fakeSocket";
 import { LiveProducer } from "./producer";
 import { applyFrame, emptyRoom, holdsCommands, later } from "./room";
 import { trailingMean } from "./smoothPath";
-import { LiveSocket, backoffMs, wsUrl } from "./socket";
+import { ApiRequestError } from "@/lib/api";
+import {
+  LiveSocket,
+  TicketRefused,
+  backoffMs,
+  isFinalTicketError,
+  wsUrl,
+} from "./socket";
 
 const Impl = FakeSocket as unknown as typeof WebSocket;
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -84,6 +91,84 @@ describe("LiveSocket", () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(FakeSocket.all).toHaveLength(2);
     expect(socket.state).toBe("closed");
+  });
+
+  test("4429 (too many rooms) stops: the run goes on without the live copy", async () => {
+    const tickets = vi.fn(async () => ({ ticket: "t", ws_path: "/p" }));
+    const states: [string, number | undefined][] = [];
+    const socket = new LiveSocket({
+      baseUrl: "http://localhost:8000",
+      ticket: tickets,
+      onFrame: () => undefined,
+      onState: (s, code) => states.push([s, code]),
+      WebSocketImpl: Impl,
+      backoff: () => 1,
+    });
+    socket.start();
+    await flush();
+    FakeSocket.last().drop(4429);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(tickets).toHaveBeenCalledTimes(1);
+    expect(states.at(-1)).toEqual(["closed", 4429]);
+  });
+
+  /**
+   * A 4xx for a ticket is the API saying no (403 not yours, 404 no room, 409 closed);
+   * asking again every 15 s would be periodic database traffic (backend 0014).
+   */
+  test.each([403, 404, 409, 422])(
+    "a ticket refused with %i is final",
+    async (status) => {
+      const tickets = vi.fn(async () => {
+        throw new ApiRequestError(status, { code: "x", message: "no" });
+      });
+      const socket = new LiveSocket({
+        baseUrl: "http://localhost:8000",
+        ticket: tickets,
+        onFrame: () => undefined,
+        WebSocketImpl: Impl,
+        backoff: () => 1,
+      });
+      socket.start();
+      await new Promise((r) => setTimeout(r, 20));
+      expect(tickets).toHaveBeenCalledTimes(1);
+      expect(FakeSocket.all).toHaveLength(0);
+      expect(socket.state).toBe("closed");
+    }
+  );
+
+  test("a ticket lost to the network or a 5xx is retried with backoff", async () => {
+    const tickets = vi
+      .fn<() => Promise<{ ticket: string; ws_path: string }>>()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockRejectedValueOnce(
+        new ApiRequestError(503, { code: "unavailable", message: "later" })
+      )
+      .mockResolvedValue({ ticket: "t", ws_path: "/p" });
+    const socket = new LiveSocket({
+      baseUrl: "http://localhost:8000",
+      ticket: tickets,
+      onFrame: () => undefined,
+      WebSocketImpl: Impl,
+      backoff: () => 1,
+    });
+    socket.start();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(tickets).toHaveBeenCalledTimes(3);
+    expect(FakeSocket.all).toHaveLength(1);
+    socket.close();
+  });
+
+  test("only TicketRefused and a 4xx other than 408/429 are final", () => {
+    const api = (status: number) =>
+      new ApiRequestError(status, { code: "x", message: "" });
+    expect(isFinalTicketError(new TicketRefused("closed"))).toBe(true);
+    expect(isFinalTicketError(api(401))).toBe(true);
+    expect(isFinalTicketError(api(404))).toBe(true);
+    expect(isFinalTicketError(api(408))).toBe(false);
+    expect(isFinalTicketError(api(429))).toBe(false);
+    expect(isFinalTicketError(api(500))).toBe(false);
+    expect(isFinalTicketError(new TypeError("Failed to fetch"))).toBe(false);
   });
 
   test("backoff doubles to a cap, with jitter", () => {

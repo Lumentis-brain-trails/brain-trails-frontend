@@ -107,6 +107,8 @@ import {
 import { type Marker, toWireEvent } from "@/lib/protocol/marker";
 import { officialSlug, useOfficialTexts } from "@/lib/protocol/official";
 import {
+  type CaptureKeys,
+  type FinishProgress,
   type StimulusSessionStart,
   finishSession,
   postPlan,
@@ -145,6 +147,10 @@ interface Ending {
   summary: Record<string, unknown>;
   aborted: boolean;
   files: CaptureFiles | null;
+  /** The capture's keys once uploaded (`null`: nothing went up), so a retry skips it. */
+  capture?: CaptureKeys | null;
+  /** How far finish got: once it was sent, a retry sends finish alone. */
+  progress: FinishProgress;
 }
 
 export default function ConsolePage({
@@ -300,16 +306,22 @@ function Console({
     setPhase("saving");
     setError(null);
     try {
-      const capture =
+      // a retry does not upload again what already went up
+      end.capture ??=
         end.files && session.upload
           ? await uploadCapture(session.upload, end.files, setProgress)
-          : undefined;
-      await finishSession(session.id, {
-        summary: end.summary,
-        aborted: end.aborted || capture === undefined,
-        capture,
-        events: owedMarkers(markers.current, acked.current).map(toWireEvent),
-      });
+          : null;
+      const capture = end.capture ?? undefined;
+      await finishSession(
+        session.id,
+        {
+          summary: end.summary,
+          aborted: end.aborted || capture === undefined,
+          capture,
+          events: owedMarkers(markers.current, acked.current).map(toWireEvent),
+        },
+        end.progress
+      );
       setPhase("saved");
     } catch (e) {
       setError(errorText(e));
@@ -334,7 +346,7 @@ function Console({
               model: muse.model,
             })
           : null;
-      ending.current = { summary, aborted, files };
+      ending.current = { summary, aborted, files, progress: {} };
       setOutcome({ aborted, captured: files !== null, reason });
       await save();
     },
@@ -461,18 +473,21 @@ function Console({
     });
   }, []);
 
-  // Every EEG packet goes on to the participant's window, where a neurofeedback block
-  // computes its feedback next to the runner's clock (V4-0009).
-  const { eegFeed } = muse;
-  useEffect(
-    () =>
-      eegFeed.subscribe((packet) =>
-        channelRef.current?.post({ type: "eeg", packet })
-      ),
-    [eegFeed]
-  );
-
+  // While a neurofeedback block is on screen, every EEG packet goes on to the
+  // participant's window, where the block computes its feedback next to the runner's
+  // clock (V4-0009). Only then: no other kind reads the signal (`ProtocolRunner` hands
+  // it to `neurofeedback` alone), and ~85 messages a second would otherwise cross the
+  // channel for nothing. The block measures its own baseline once mounted, so the few
+  // packets sent before its state reaches the console are not needed.
   const nfOnScreen = runner?.nudgeable === true;
+  const { eegFeed } = muse;
+  useEffect(() => {
+    if (!nfOnScreen) return;
+    return eegFeed.subscribe((packet) =>
+      channelRef.current?.post({ type: "eeg", packet })
+    );
+  }, [eegFeed, nfOnScreen]);
+
   useEffect(() => {
     if (!nfOnScreen) return;
     const id = setInterval(() => setNf(nfRef.current), 250);

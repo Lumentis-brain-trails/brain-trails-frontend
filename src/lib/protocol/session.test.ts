@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { finishSession, postPlan, startSession } from "./session";
+import { ApiRequestError } from "@/lib/api";
+import {
+  type FinishProgress,
+  finishSession,
+  isSessionClosed,
+  postPlan,
+  startSession,
+} from "./session";
 import "@/components/protocol/kinds";
 
 const post = vi.fn();
@@ -7,10 +14,21 @@ vi.mock("@/lib/api", () => ({
   api: {
     post: (path: string, body: unknown) => post(path, body),
   },
-  ApiRequestError: class extends Error {},
+  ApiRequestError: class extends Error {
+    status: number;
+    error: { code: string; message: string };
+    constructor(status: number, error: { code: string; message: string }) {
+      super(error.message);
+      this.status = status;
+      this.error = error;
+    }
+  },
 }));
 
-beforeEach(() => post.mockReset().mockResolvedValue({}));
+// braces: a function returned from beforeEach is run as its teardown, and `post` is one
+beforeEach(() => {
+  post.mockReset().mockResolvedValue({});
+});
 afterEach(() => vi.clearAllMocks());
 
 describe("startSession", () => {
@@ -92,6 +110,93 @@ describe("finishSession", () => {
   test("an aborted run with nothing captured sends no capture", async () => {
     await finishSession("sess-1", { summary: {}, aborted: true });
     expect(post.mock.calls[0][1]).toEqual({ summary: {}, aborted: true });
+  });
+
+  const closed = () =>
+    new ApiRequestError(409, {
+      code: "session_closed",
+      message: "this session is already finished",
+    });
+  const events = [{ t: 1, type: "session_start", payload: {}, seq: 0 }];
+
+  /**
+   * The first finish closed the session but its answer was lost; the retry's events get
+   * 409 `session_closed`. That is the run already saved, not a failure to show forever.
+   */
+  test("a retry whose events meet a closed session still finishes", async () => {
+    const session = { id: "sess-1", status: "finished" };
+    post.mockImplementation((path: string) =>
+      path.endsWith("/events")
+        ? Promise.reject(closed())
+        : Promise.resolve(session)
+    );
+    await expect(
+      finishSession("sess-1", { summary: {}, aborted: false, events })
+    ).resolves.toBe(session);
+    expect(post.mock.calls.map(([path]) => path)).toEqual([
+      "sessions/sess-1/events",
+      "sessions/sess-1/finish",
+    ]);
+  });
+
+  test("a finish answering session_closed counts as saved", async () => {
+    post.mockImplementation((path: string) =>
+      path.endsWith("/finish") ? Promise.reject(closed()) : Promise.resolve({})
+    );
+    await expect(
+      finishSession("sess-1", { summary: {}, aborted: false, events })
+    ).resolves.toBeNull();
+  });
+
+  test("once finish was sent, a retry sends finish alone", async () => {
+    const progress: FinishProgress = {};
+    post.mockImplementation((path: string) =>
+      path.endsWith("/finish")
+        ? Promise.reject(new TypeError("network"))
+        : Promise.resolve({})
+    );
+    await expect(
+      finishSession("sess-1", { summary: {}, aborted: false, events }, progress)
+    ).rejects.toThrow("network");
+    expect(progress.finishSent).toBe(true);
+
+    post.mockReset().mockResolvedValue({});
+    await finishSession(
+      "sess-1",
+      { summary: {}, aborted: false, events },
+      progress
+    );
+    expect(post.mock.calls.map(([path]) => path)).toEqual([
+      "sessions/sess-1/finish",
+    ]);
+  });
+
+  test("events that failed for another reason are sent again on retry", async () => {
+    const progress: FinishProgress = {};
+    post.mockRejectedValueOnce(
+      new ApiRequestError(500, { code: "internal", message: "boom" })
+    );
+    await expect(
+      finishSession("sess-1", { summary: {}, aborted: false, events }, progress)
+    ).rejects.toThrow("boom");
+    expect(progress.finishSent).toBeFalsy();
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("isSessionClosed", () => {
+  test("is only the 409 session_closed", () => {
+    expect(
+      isSessionClosed(
+        new ApiRequestError(409, { code: "session_closed", message: "" })
+      )
+    ).toBe(true);
+    expect(
+      isSessionClosed(
+        new ApiRequestError(409, { code: "plan_fixed", message: "" })
+      )
+    ).toBe(false);
+    expect(isSessionClosed(new Error("session_closed"))).toBe(false);
   });
 });
 

@@ -11,7 +11,7 @@
  * sending an unlisted label would fail at the database rather than at the API.
  */
 
-import { api } from "@/lib/api";
+import { api, ApiRequestError } from "@/lib/api";
 import type { CaptureFiles } from "@/lib/muse/captureFiles";
 import { uploadToStorage } from "@/lib/upload";
 import { MAX_EVENTS_PER_BATCH, type WireEvent } from "./marker";
@@ -129,26 +129,66 @@ export interface FinishOptions {
 }
 
 /**
+ * What a save got through, kept by the caller across retries so that a retry repeats
+ * only what is left.
+ */
+export interface FinishProgress {
+  /**
+   * Set once every owed event was delivered and finish was sent. From then on a retry
+   * sends finish alone: the events are in, and if the first finish closed the session
+   * (its answer lost), the events endpoint would only answer 409 `session_closed`.
+   */
+  finishSent?: boolean;
+}
+
+/**
+ * The backend's answer to anything posted to a session that has already ended. For a
+ * save it means the first finish went through and only its answer was lost.
+ */
+export function isSessionClosed(error: unknown): boolean {
+  return (
+    error instanceof ApiRequestError &&
+    error.status === 409 &&
+    error.error.code === "session_closed"
+  );
+}
+
+/**
  * Close a session: send the events still owed, store the capture, merge the timeline,
  * start the analysis.
  *
- * Idempotent on the backend (events are de-duplicated on `(t, type, seq)` at finish),
- * so a failed call can simply be retried.
+ * Idempotent on the backend (events are de-duplicated on `(t, type, seq)` at finish, a
+ * finish on a closed session returns it unchanged), so a failed call can simply be
+ * retried with the same `progress`. A 409 `session_closed` from the events endpoint
+ * means an earlier finish already closed the run: the remaining batches are dropped and
+ * finish is asked for the closed session. Should finish itself answer `session_closed`,
+ * the run is saved too and the result is `null`. Anything else throws.
  */
 export async function finishSession(
   sessionId: string,
-  options: FinishOptions
-): Promise<StimulusSession> {
-  const events = options.events ?? [];
-  for (let i = 0; i < events.length; i += MAX_EVENTS_PER_BATCH)
-    await api.post(`sessions/${sessionId}/events`, {
-      events: events.slice(i, i + MAX_EVENTS_PER_BATCH),
+  options: FinishOptions,
+  progress: FinishProgress = {}
+): Promise<StimulusSession | null> {
+  const events = progress.finishSent ? [] : (options.events ?? []);
+  try {
+    for (let i = 0; i < events.length; i += MAX_EVENTS_PER_BATCH)
+      await api.post(`sessions/${sessionId}/events`, {
+        events: events.slice(i, i + MAX_EVENTS_PER_BATCH),
+      });
+  } catch (e) {
+    if (!isSessionClosed(e)) throw e;
+  }
+  progress.finishSent = true;
+  try {
+    return await api.post<StimulusSession>(`sessions/${sessionId}/finish`, {
+      summary: options.summary,
+      aborted: options.aborted,
+      ...(options.capture ? { capture: options.capture } : {}),
     });
-  return api.post<StimulusSession>(`sessions/${sessionId}/finish`, {
-    summary: options.summary,
-    aborted: options.aborted,
-    ...(options.capture ? { capture: options.capture } : {}),
-  });
+  } catch (e) {
+    if (isSessionClosed(e)) return null;
+    throw e;
+  }
 }
 
 export type ResolvedProtocol =
