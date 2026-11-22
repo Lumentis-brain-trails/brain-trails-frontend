@@ -16,7 +16,7 @@ import { Age } from "@console/components/Age";
 import { SnapshotPanel } from "@console/components/SnapshotPanel";
 import { useErrorText } from "@console/components/useErrorText";
 import { useSnapshot } from "@console/components/data";
-import { useOps } from "@console/components/env";
+import { EnvProvider, useOps, useOpsEnv } from "@console/components/env";
 import { type Schemas, query } from "@console/lib/client";
 import type { AppPageProps } from "@console/lib/manifest";
 import {
@@ -446,7 +446,7 @@ function Logs({
   );
   const [tail, setTail] = useState(200);
   const [q, setQ] = useState("");
-  // The cluster of the environment being read (OPS-0005), once its Role exists there.
+  // Inside `HomeCluster`: the home namespace's logs, whatever the switch says.
   const envOps = useOps();
   const read = useMutation({
     mutationFn: (target: LogTarget) =>
@@ -551,6 +551,31 @@ function Logs({
 }
 
 /**
+ * The cluster's panels - pods and logs - read the namespace bt-ops runs in, the home
+ * environment's, whatever the switch says (OPS-0005: per-namespace reads wait for the
+ * Role in each namespace). Under another environment's header they say so, and their
+ * reads name home, so their snapshots share the home cache.
+ */
+function HomeCluster({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("console.health");
+  const { env, home, isHome } = useOpsEnv();
+  if (isHome || !home) return <>{children}</>;
+  return (
+    <EnvProvider env={home} home={home}>
+      <section
+        aria-label={t("homeCluster", { env: env ?? home, home })}
+        className="grid min-w-0 gap-6 rounded-[var(--radius-card)] border border-dashed border-hairline-strong p-4 [&>*]:min-w-0"
+      >
+        <p className="text-[13px] font-medium text-ink-2">
+          {t("homeCluster", { env: env ?? home, home })}
+        </p>
+        {children}
+      </section>
+    </EnvProvider>
+  );
+}
+
+/**
  * Health: the job queue, the pods and their logs - what used to need `kubectl`. Every
  * panel is a snapshot refreshed on a click; logs are read on demand and never stored.
  */
@@ -569,26 +594,28 @@ export function HealthApp({ semver }: AppPageProps) {
       >
         {(p, age) => <JobsBody p={p} age={age} />}
       </SnapshotPanel>
-      <SnapshotPanel<PodsPayload>
-        panelKey="health.pods"
-        title={t("pods.title")}
-      >
-        {(p, age) => (
-          <PodsBody
-            p={p}
-            age={age}
-            onLogs={(target) => {
-              setChosen(target);
-              document
-                .getElementById("health-logs")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
-        )}
-      </SnapshotPanel>
-      <div id="health-logs">
-        <Logs chosen={chosen} onChoose={setChosen} />
-      </div>
+      <HomeCluster>
+        <SnapshotPanel<PodsPayload>
+          panelKey="health.pods"
+          title={t("pods.title")}
+        >
+          {(p, age) => (
+            <PodsBody
+              p={p}
+              age={age}
+              onLogs={(target) => {
+                setChosen(target);
+                document
+                  .getElementById("health-logs")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            />
+          )}
+        </SnapshotPanel>
+        <div id="health-logs">
+          <Logs chosen={chosen} onChoose={setChosen} />
+        </div>
+      </HomeCluster>
     </div>
   );
 }

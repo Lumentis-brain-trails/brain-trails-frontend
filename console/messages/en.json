@@ -44,7 +44,9 @@
       "no_item": "This entry is no longer on the roadmap.",
       "validation_error": "Something in the form is not valid.",
       "unknown_env": "The console does not know that environment.",
-      "stale_document": "Someone saved this document after you opened it."
+      "stale_document": "Someone saved this document after you opened it.",
+      "env_mismatch": "That link names one environment and the page reads another. Open it again from the app.",
+      "token_not_allowed": "An access token cannot make tokens. Sign in to the console to make one."
     },
     "age": {
       "now": "just now",
@@ -357,7 +359,8 @@
       "widgets": {
         "failedJobs": "{loops} in a retry loop · {stale} stale",
         "restarts": "{oom} out of memory · {pods} pods"
-      }
+      },
+      "homeCluster": "Pods and logs read the home environment's cluster ({home}), not {env}."
     },
     "betaTesters": {
       "intro": "Who gets into the beta and who is in it. Moved here from the app's Admin pages: every decision is the product's own, made with your product account and recorded in its audit log.",
@@ -565,7 +568,8 @@
         "revision": "Revision {revision}",
         "current": "current",
         "by": "{who}, {when}",
-        "noNote": "No note."
+        "noNote": "No note.",
+        "chars": "{chars, plural, one {# character} other {# characters}}"
       },
       "view": {
         "to": {
@@ -584,7 +588,9 @@
         "oldRevision": "You are reading revision {revision} of {current}, by {who}: {note}",
         "loadingRevision": "Loading revision {revision}…",
         "toCurrent": "Back to the current revision",
-        "empty": "This document has no text yet."
+        "empty": "This document has no text yet.",
+        "created": "Created by {who} on {when}",
+        "note": "Last change: {note}"
       },
       "tokens": {
         "title": "Access tokens",
@@ -626,6 +632,9 @@
           "nameTooLong": "At most 80 characters.",
           "scopesRequired": "Choose at least one."
         }
+      },
+      "widgets": {
+        "drafts": "{total, plural, one {of # document} other {of # documents}}"
       }
     }
   },

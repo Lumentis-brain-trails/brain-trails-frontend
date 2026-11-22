@@ -161,3 +161,51 @@ test("on home, Beta testers is the board, through the product", async () => {
     ).toBe(true)
   );
 });
+
+test("the strip's refresh names the panel and the widget's own environment, never the full key", async () => {
+  const { useRefresh } = await import("./data");
+  function Button() {
+    const refresh = useRefresh();
+    return (
+      <button
+        onClick={() =>
+          refresh.mutate({ key: "statistics.signups", env: "dev" })
+        }
+      >
+        go
+      </button>
+    );
+  }
+  render(wrap(<Button />));
+  fireEvent.click(screen.getByRole("button", { name: "go" }));
+  await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+  expect(String(fetchSpy.mock.calls[0][0])).toBe(
+    "/api/ops/snapshots/statistics.signups/refresh"
+  );
+  expect(headersOf(0)?.["X-Ops-Env"]).toBe("dev");
+});
+
+test("under a prod header, Health's pods and logs read home and say so; its jobs read prod", async () => {
+  const Page = APPS.health.Page;
+  render(
+    wrap(
+      <EnvProvider env="prod" home="dev">
+        <Page semver="0.1.0" />
+      </EnvProvider>
+    )
+  );
+  expect(
+    screen.getByText(
+      /Pods and logs read the home environment's cluster \(dev\)/
+    )
+  ).toBeInTheDocument();
+  await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+  const byUrl = Object.fromEntries(
+    fetchSpy.mock.calls.map((c, i) => [
+      String(c[0]),
+      headersOf(i)?.["X-Ops-Env"],
+    ])
+  );
+  expect(byUrl["/api/ops/snapshots/health.jobs"]).toBe("prod");
+  expect(byUrl["/api/ops/snapshots/health.pods"]).toBe("dev");
+});

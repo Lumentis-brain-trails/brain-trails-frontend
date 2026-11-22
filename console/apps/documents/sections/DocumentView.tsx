@@ -88,6 +88,9 @@ function History({
                 <span className="mt-0.5 block text-ink-2">
                   {r.note || t("noNote")}
                 </span>
+                <span className="mt-0.5 block text-[12px] text-ink-3">
+                  {t("chars", { chars: r.chars })}
+                </span>
               </button>
             </li>
           );
@@ -242,6 +245,15 @@ export function DocumentView({
             })}
           </span>
         </div>
+        <p className="text-[13px] text-ink-3">
+          {t("created", {
+            who: d.created_by ?? "-",
+            when: format.dateTime(new Date(d.created_at), {
+              dateStyle: "medium",
+            }),
+          })}
+          {!shownOld && d.note && ` · ${t("note", { note: d.note })}`}
+        </p>
         <div className="flex flex-wrap items-center gap-2">
           {canWrite && !shownOld && (
             <>

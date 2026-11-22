@@ -7,9 +7,11 @@
  * environment. Requests name it in `X-Ops-Env`, which the BFF forwards only when it is
  * one of the three names.
  */
-import type { EnvId, EnvsOut } from "./ops-types-pending";
+import type { components } from "./ops-types";
 
-export type { EnvId, EnvsOut };
+/** An environment of the product whose database the console may read. */
+export type EnvId = components["schemas"]["EnvOut"]["id"];
+export type EnvsOut = components["schemas"]["EnvsOut"];
 
 /** Every environment the console knows, in the order the switch shows them. */
 export const ENVS: readonly EnvId[] = ["dev", "beta", "prod"];

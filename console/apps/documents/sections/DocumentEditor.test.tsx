@@ -31,7 +31,9 @@ const DOC: DocumentOut = {
   audience: "Gabriella",
   revision: 3,
   body: "# First",
+  note: "Second pass",
   created_at: "2026-11-20T09:00:00Z",
+  created_by: "alessio@example.com",
   updated_at: "2026-11-21T09:00:00Z",
   updated_by: "alessio@example.com",
 };

@@ -15,26 +15,29 @@ export type AppDetail = Schemas["AppDetailOut"];
 export type Version = Schemas["VersionOut"];
 export type Pin = Schemas["PinOut"];
 /** A stored panel; `env` names the environment it was read from (OPS-0005). */
-export type Snapshot = Schemas["SnapshotOut"] & { env?: EnvId };
+export type Snapshot = Schemas["SnapshotOut"];
 export type WidgetItem = Schemas["WidgetOut"];
+/** A widget on the strip; `key` is the full `<env>/<app>.<panel>`, never parsed here. */
 export type StripItem = Schemas["StripItemOut"];
 export type StripItemIn = Schemas["StripItemIn"];
-// OPS-0005's routes, hand-written until the backend's ops-openapi.json names them.
-export type {
-  DocumentIn,
-  DocumentItem,
-  DocumentKind,
-  DocumentOut,
-  DocumentStatus,
-  DocumentStatusIn,
-  DocumentUpdateIn,
-  EnvsOut,
-  RevisionItem,
-  RevisionOut,
-  TokenCreatedOut,
-  TokenIn,
-  TokenOut,
-} from "./ops-types-pending";
+// Backend OPS-0005: environments, documents, access tokens.
+export type EnvsOut = Schemas["EnvsOut"];
+export type DocumentKind = Schemas["DocumentKind"];
+export type DocumentStatus = Schemas["DocumentStatus"];
+/** A row of the document list. */
+export type DocumentItem = Schemas["DocumentSummaryOut"];
+/** A document at its current revision, with its body and that revision's note. */
+export type DocumentOut = Schemas["DocumentOut"];
+export type DocumentIn = Schemas["DocumentIn"];
+/** A save, on the revision the editor was opened at. */
+export type DocumentUpdateIn = Schemas["DocumentSave"];
+export type DocumentStatusIn = Schemas["StatusIn"];
+export type RevisionItem = Schemas["RevisionSummaryOut"];
+export type RevisionOut = Schemas["RevisionOut"];
+export type TokenOut = Schemas["TokenOut"];
+/** A token just made: the row and, this once, the token itself. */
+export type TokenCreatedOut = Schemas["TokenMadeOut"];
+export type TokenIn = Schemas["TokenIn"];
 
 /** A refusal from the BFF or bt-ops, with the backend's error code. */
 export class OpsRequestError extends Error {

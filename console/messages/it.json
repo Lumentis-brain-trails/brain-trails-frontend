@@ -44,7 +44,9 @@
       "no_item": "Questa voce non è più nella roadmap.",
       "validation_error": "Qualcosa nel modulo non è valido.",
       "unknown_env": "La console non conosce questo ambiente.",
-      "stale_document": "Qualcuno ha salvato questo documento dopo che l'hai aperto."
+      "stale_document": "Qualcuno ha salvato questo documento dopo che l'hai aperto.",
+      "env_mismatch": "Quel link nomina un ambiente e la pagina ne legge un altro. Riaprilo dall'app.",
+      "token_not_allowed": "Un token di accesso non può creare token. Entra nella console per crearne uno."
     },
     "age": {
       "now": "adesso",
@@ -357,7 +359,8 @@
       "widgets": {
         "failedJobs": "{loops} in loop di retry · {stale} scaduti",
         "restarts": "{oom} per memoria · {pods} pod"
-      }
+      },
+      "homeCluster": "Pod e log leggono il cluster dell'ambiente di casa ({home}), non {env}."
     },
     "betaTesters": {
       "intro": "Chi entra nella beta e chi c'è già. Spostato qui dalle pagine Admin dell'app: ogni decisione è del prodotto, presa con il tuo account del prodotto e registrata nel suo audit log.",
@@ -565,7 +568,8 @@
         "revision": "Revisione {revision}",
         "current": "attuale",
         "by": "{who}, {when}",
-        "noNote": "Nessuna nota."
+        "noNote": "Nessuna nota.",
+        "chars": "{chars, plural, one {# carattere} other {# caratteri}}"
       },
       "view": {
         "to": {
@@ -584,7 +588,9 @@
         "oldRevision": "Stai leggendo la revisione {revision} di {current}, di {who}: {note}",
         "loadingRevision": "Carico la revisione {revision}…",
         "toCurrent": "Torna alla revisione attuale",
-        "empty": "Questo documento non ha ancora testo."
+        "empty": "Questo documento non ha ancora testo.",
+        "created": "Creato da {who} il {when}",
+        "note": "Ultima modifica: {note}"
       },
       "tokens": {
         "title": "Token di accesso",
@@ -626,6 +632,9 @@
           "nameTooLong": "Al massimo 80 caratteri.",
           "scopesRequired": "Scegline almeno uno."
         }
+      },
+      "widgets": {
+        "drafts": "{total, plural, one {su # documento} other {su # documenti}}"
       }
     }
   },
