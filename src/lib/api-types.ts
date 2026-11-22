@@ -961,8 +961,9 @@ export interface paths {
          *     Active at once - the link reached the address - with no personal workspace: it is a
          *     client account and lands in `/my`. 422 `adult_required` (accounts are 18+, V3-0011),
          *     `consent_required`; 503 `consent_unavailable` while no consent text is published;
-         *     409 `client_only` for a seat invitation, `email_taken` when the address has an
-         *     account (sign in and accept instead); 410 `invitation_closed`.
+         *     409 `client_only` for a seat invitation, `minor_no_account` for a minor (V4-0011),
+         *     `email_taken` when the address has an account (sign in and accept instead); 410
+         *     `invitation_closed`.
          */
         post: operations["register_from_invitation_invitations_register_post"];
         delete?: never;
@@ -6354,9 +6355,17 @@ export interface components {
          *
          *     `consent_attested` true means the operator attests that the person signed the
          *     consent text named by `consent_version`; the attestation, its time and its author
-         *     are stored. Nothing here collects consent.
+         *     are stored. Nothing here collects consent. For a minor (V4-0011) the signer is a
+         *     guardian: `consent_by: guardian`, `guardian_relationship`, and `assent` true for the
+         *     child's own agreement; a year of birth is required to attest. `research_consent`
+         *     true attests a separate consent to aggregate use (for a minor, the guardian's).
          */
         SubjectIn: {
+            /**
+             * Assent
+             * @default false
+             */
+            assent: boolean;
             /** Birth Year */
             birth_year?: number | null;
             /** Code */
@@ -6366,10 +6375,14 @@ export interface components {
              * @default false
              */
             consent_attested: boolean;
+            /** Consent By */
+            consent_by?: ("self" | "guardian") | null;
             /** Consent Version */
             consent_version?: string | null;
             /** Display Name */
             display_name?: string | null;
+            /** Guardian Relationship */
+            guardian_relationship?: ("parent" | "legal_guardian") | null;
             /** Handedness */
             handedness?: ("right" | "left" | "ambidextrous") | null;
             /**
@@ -6378,6 +6391,8 @@ export interface components {
              * @enum {string}
              */
             language: "en" | "it";
+            /** Research Consent */
+            research_consent?: boolean | null;
             /** Sex At Birth */
             sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
         };
@@ -6442,11 +6457,15 @@ export interface components {
          *     `readable` false is a roster row (an owner or admin who is not a carer): the code,
          *     the carers, the counts and the dates, every identifying field null. `no_carer` flags
          *     a clinic's subject nobody cares for any more, waiting to be handed over.
-         *     `has_account` says the person has their own account (`subject#client`).
+         *     `has_account` says the person has their own account (`subject#client`). `minor` and
+         *     `reconsent_required` are derived from the year of birth and the attestation
+         *     (V4-0011), never stored.
          */
         SubjectOut: {
             /** Archived At */
             archived_at: string | null;
+            /** Assent At */
+            assent_at?: string | null;
             /** Birth Year */
             birth_year?: number | null;
             /** Carers */
@@ -6455,6 +6474,8 @@ export interface components {
             code: string;
             /** Consent At */
             consent_at?: string | null;
+            /** Consent By */
+            consent_by?: string | null;
             /** Consent Version */
             consent_version?: string | null;
             /**
@@ -6464,6 +6485,8 @@ export interface components {
             created_at: string;
             /** Display Name */
             display_name?: string | null;
+            /** Guardian Relationship */
+            guardian_relationship?: string | null;
             /** Handedness */
             handedness?: string | null;
             /**
@@ -6480,12 +6503,24 @@ export interface components {
             language?: string | null;
             /** Last Session At */
             last_session_at: string | null;
+            /**
+             * Minor
+             * @default false
+             */
+            minor: boolean;
             /** No Carer */
             no_carer: boolean;
             /** Open Assignments */
             open_assignments: number;
             /** Readable */
             readable: boolean;
+            /**
+             * Reconsent Required
+             * @default false
+             */
+            reconsent_required: boolean;
+            /** Research Consent At */
+            research_consent_at?: string | null;
             /** Sessions */
             sessions: number;
             /** Sex At Birth */
@@ -6503,20 +6538,28 @@ export interface components {
          * @description Fields to change; those left out stay as they are.
          */
         SubjectPatch: {
+            /** Assent */
+            assent?: boolean | null;
             /** Birth Year */
             birth_year?: number | null;
             /** Code */
             code?: string | null;
             /** Consent Attested */
             consent_attested?: boolean | null;
+            /** Consent By */
+            consent_by?: ("self" | "guardian") | null;
             /** Consent Version */
             consent_version?: string | null;
             /** Display Name */
             display_name?: string | null;
+            /** Guardian Relationship */
+            guardian_relationship?: ("parent" | "legal_guardian") | null;
             /** Handedness */
             handedness?: ("right" | "left" | "ambidextrous") | null;
             /** Language */
             language?: ("en" | "it") | null;
+            /** Research Consent */
+            research_consent?: boolean | null;
             /** Sex At Birth */
             sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
         };
