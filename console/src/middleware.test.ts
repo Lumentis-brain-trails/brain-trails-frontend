@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest";
 import { NextRequest } from "next/server";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { config, middleware } from "./middleware";
 
 describe("console middleware", () => {
@@ -25,5 +26,19 @@ describe("console middleware", () => {
 
   test("guards the shell, never the sign-in or the BFF", () => {
     expect(config.matcher).toEqual(["/", "/apps/:path*"]);
+  });
+
+  test("a call with an access token and no cookie reaches the BFF, not the sign-in", () => {
+    // OPS-0005: a working session sends `Authorization: Bearer btc_...` to
+    // /api/ops/documents with no cookie; the middleware never runs there.
+    const matches = (url: string) =>
+      unstable_doesMiddlewareMatch({
+        config,
+        url,
+        headers: { authorization: "Bearer btc_x" },
+      });
+    expect(matches("http://c/api/ops/documents")).toBe(false);
+    expect(matches("http://c/api/ops/documents/roadmap-report")).toBe(false);
+    expect(matches("http://c/apps/documents")).toBe(true);
   });
 });

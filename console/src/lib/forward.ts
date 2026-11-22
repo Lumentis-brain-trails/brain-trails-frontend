@@ -23,6 +23,29 @@ export interface Target {
   token?: string;
   /** Extra request headers (the BFF key for bt-ops). */
   headers?: Record<string, string>;
+  /**
+   * Forward the browser's `X-Ops-Env` (backend OPS-0005) when it names one of the
+   * environments; any other value is dropped, and bt-ops reads the home environment.
+   */
+  forwardEnv?: boolean;
+  /**
+   * First segments on which a request without a cookie token may bring its own access
+   * token (`Authorization: Bearer btc_...`, OPS-0005 "Claude's door"). The cookie wins
+   * when both are there; elsewhere the header is never forwarded.
+   */
+  accessTokenPaths?: readonly string[];
+}
+
+/** The environments a request may name in `X-Ops-Env`. */
+const ENV_VALUES = ["dev", "beta", "prod"];
+
+/** An access token as bt-ops issues it: `btc_` and URL-safe characters, nothing else. */
+const ACCESS_TOKEN = /^Bearer (btc_[A-Za-z0-9_-]{16,256})$/;
+
+/** The access token of `request`, if it carries one in the only shape accepted. */
+export function accessToken(request: Request): string | null {
+  const match = ACCESS_TOKEN.exec(request.headers.get("authorization") ?? "");
+  return match ? match[1] : null;
 }
 
 const FORWARDED_REQUEST_HEADERS = ["if-match"];
@@ -108,6 +131,14 @@ export async function forward(
 
   const headers: Record<string, string> = { ...target.headers };
   if (target.token) headers.Authorization = `Bearer ${target.token}`;
+  else if ((target.accessTokenPaths ?? []).includes(segments[0])) {
+    const own = accessToken(request);
+    if (own) headers.Authorization = `Bearer ${own}`;
+  }
+  if (target.forwardEnv) {
+    const env = request.headers.get("x-ops-env");
+    if (env && ENV_VALUES.includes(env)) headers["X-Ops-Env"] = env;
+  }
   const contentType = request.headers.get("content-type");
   if (contentType) headers["Content-Type"] = contentType;
   for (const name of FORWARDED_REQUEST_HEADERS) {
