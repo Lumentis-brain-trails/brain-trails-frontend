@@ -149,6 +149,13 @@ export interface ProtocolRunnerProps {
    * was on screen with `block_end` (`ended_by: "reload"`) before running it again.
    */
   resume?: RunResume;
+  /**
+   * Somebody watches over the live service (T5): a discreet line on the screens between
+   * stimuli (the notice, a pause), never over a block.
+   */
+  observed?: boolean;
+  /** Each step's own result as it completes, for a remote console's measures. */
+  onStepResult?: (result: TaskResult) => void;
   onFinish: (results: TaskResult[], markers: readonly Marker[]) => void;
   onExit: (reason: "user" | "operator" | "error") => void;
 }
@@ -166,6 +173,8 @@ export function ProtocolRunner({
   signal,
   onState,
   resume,
+  observed = false,
+  onStepResult,
   onFinish,
   onExit,
 }: ProtocolRunnerProps) {
@@ -219,6 +228,7 @@ export function ProtocolRunner({
   const onFinishRef = useLatest(onFinish);
   const onExitRef = useLatest(onExit);
   const onStateRef = useLatest(onState);
+  const onStepResultRef = useLatest(onStepResult);
 
   const resultsRef = useRef<TaskResult[]>([]);
   const finishedRef = useRef(false);
@@ -510,6 +520,7 @@ export function ProtocolRunner({
       if (doneStepRef.current === stepIndex) return;
       doneStepRef.current = stepIndex;
       resultsRef.current = [...resultsRef.current, result];
+      onStepResultRef.current?.(result);
       if (step?.endMarker)
         emitForStep({ label: step.endMarker, kind: "stage" });
       if (step?.block && blockStartRef.current !== null) {
@@ -541,6 +552,7 @@ export function ProtocolRunner({
       emitForStep,
       finish,
       holdBefore,
+      onStepResultRef,
       protocol.steps.length,
       sink,
       step,
@@ -863,6 +875,7 @@ export function ProtocolRunner({
           )}
           <Button onClick={() => setScreen("running")}>{t("begin")}</Button>
           <p className="type-caption text-ink-3">{t("disclaimer")}</p>
+          {observed && <ObservedNote />}
         </div>
       </Shell>
     );
@@ -880,7 +893,10 @@ export function ProtocolRunner({
     >
       {hold ? (
         <div className="flex h-full items-center justify-center px-6 text-center">
-          <p className="type-heading text-ink-2">{t("paused")}</p>
+          <div>
+            <p className="type-heading text-ink-2">{t("paused")}</p>
+            {observed && <ObservedNote />}
+          </div>
         </div>
       ) : (
         <Renderer
@@ -949,5 +965,16 @@ function Shell({
       <div className="min-h-0 flex-1">{children}</div>
       <TimingProbeOverlay />
     </div>
+  );
+}
+
+/** "Your carer is following the session": said between stimuli, never over one. */
+function ObservedNote() {
+  const t = useTranslations("run.runner");
+  return (
+    <p className="type-caption mt-3 flex items-center justify-center gap-2 text-ink-3">
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />
+      {t("observed")}
+    </p>
   );
 }

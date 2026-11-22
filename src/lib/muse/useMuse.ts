@@ -37,6 +37,13 @@ import type { EegFeed } from "@/lib/protocol/types";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
 
+/** One EEG packet of one channel, as the device stamped it. */
+export type EegListener = (
+  channel: EegChannel,
+  sampleIndex: number,
+  samples: ArrayLike<number>
+) => void;
+
 export interface MuseState {
   status: MuseStatus;
   /** The last connection failure in English, for logs; the UI shows `failure`. */
@@ -162,8 +169,8 @@ export function useMuse(createDevice: () => MuseDevice) {
   const batteryRef = useRef<number | null>(null);
   const packetsSinceRefresh = useRef(0);
   const unsubscribe = useRef<(() => void)[]>([]);
-  // Who wants every EEG packet as it arrives: a neurofeedback block (V4-0009), or the
-  // console forwarding them to the participant's window.
+  // Who wants every EEG packet as it arrives: a neurofeedback block (V4-0009), the
+  // console forwarding them to the participant's window, the live producer (T5).
   const eegListeners = useRef(new Set<(packet: EegPacket) => void>());
 
   const teardown = useCallback(() => {
@@ -401,6 +408,16 @@ export function useMuse(createDevice: () => MuseDevice) {
     []
   );
 
+  /** Every EEG packet from now on, one channel at a time; returns the unsubscribe. */
+  const onEeg = useCallback(
+    (listener: EegListener) =>
+      eegFeed.subscribe((p) => listener(p.channel, p.sampleIndex, p.samples)),
+    [eegFeed]
+  );
+
+  /** The packet counts so far, read when asked rather than once a second. */
+  const readTimeline = useCallback(() => timelineRef.current.stats(), []);
+
   const allGood = EEG_CHANNELS.every((c) => state.quality[c].level === "good");
   return {
     ...state,
@@ -414,5 +431,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     readTimelineFit,
     readFirstSampleIndex,
     eegFeed,
+    onEeg,
+    readTimeline,
   };
 }

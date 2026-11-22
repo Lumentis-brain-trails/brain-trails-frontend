@@ -75,6 +75,18 @@ npm run e2e                              # Playwright; needs the local backend (
 - Keep `@emnapi/*` exact devDependencies (Linux `npm ci` needs them).
 - Conventional Commits; PR title becomes the squash commit.
 
+## The remote console (backend plan V4, sprint T5)
+
+Behind `console_remote` + `live`. `src/app/(app)/live/[session]` is a carer's console
+for a run elsewhere, `src/app/(app)/live/wait/[assignment]` the waiting room before it;
+`src/components/run/useRemoteRun.ts` is the patient's half inside `RunProtocol`;
+`src/lib/live/` holds the socket (straight to `GET /config` `live_url`, never through
+the BFF; a fresh ticket per (re)connect, backoff), the producer (chunks with the device
+counter, plan, state, markers, block results, quality; re-sends after the room's
+`last_seq`), and the observer's room (`applyFrame`, a pure reducer feeding T1's panels
+through `useLiveRoom`). One carer holds the commands; a holder takes them back after a
+reconnect. The protocol is the backend's `docs/api/live-protocol.md`.
+
 ## The console (backend plan OPS, sprint O1)
 
 `console/` is a second Next.js app, an npm workspace of this repo, with its own Vercel
