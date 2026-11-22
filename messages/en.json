@@ -1604,6 +1604,12 @@
           "frustration": "Frustration (NASA-TLX)"
         }
       }
+    },
+    "relief": {
+      "label": "Relief",
+      "hills": "Hills",
+      "wells": "Wells",
+      "hint": "Hills: the higher, the more time spent there. Wells: the same map as a potential, U = −log p, so the deeper, the more time; ground never reached is a flat, faded plateau."
     }
   },
   "language": {

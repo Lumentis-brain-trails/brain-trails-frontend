@@ -311,6 +311,39 @@ describe("the room an observer sees", () => {
     expect(room.trail.x).toEqual([1, 2]);
   });
 
+  test("a plan's neurofeedback block toward the map keeps where it leads", () => {
+    const room = applyFrame(emptyRoom(), {
+      type: "plan",
+      plan: {
+        steps: [
+          { id: "a", label: "Rest", kind: "rest", config: {} },
+          {
+            id: "nf",
+            label: "Neurofeedback",
+            kind: "neurofeedback",
+            config: {
+              signal: "landscape_region",
+              targets: { points: [[1, 2]], radius: 0.5, epoch: 3 },
+            },
+          },
+          {
+            id: "band",
+            label: "Alpha",
+            kind: "neurofeedback",
+            config: { signal: "alpha" },
+          },
+        ],
+      },
+    });
+    expect(room.plan[0].targets).toBeUndefined();
+    expect(room.plan[1].targets).toEqual({
+      points: [[1, 2]],
+      radius: 0.5,
+      epoch: 3,
+    });
+    expect(room.plan[2].targets).toBeUndefined();
+  });
+
   test("hello, trail, points, places, acks, results and the commander", () => {
     let room = emptyRoom();
     room = applyFrame(room, {

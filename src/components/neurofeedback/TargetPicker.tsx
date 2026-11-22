@@ -6,12 +6,22 @@
  * radius, the distance at which the reward is half. A click adds a point (up to
  * `NF_MAX_TARGETS`) or, on an existing one, removes it - only when `editable`: a preset
  * is shown as it is.
+ *
+ * With `relief: "wells"` the colour is the depth of the wells the 3D views draw
+ * (`groundOf`): the same places, on the log scale of `U = -log p`, so ground visited a
+ * little reads apart from ground never reached, which fades into the page.
  */
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import type { Data, Layout } from "plotly.js";
-import { type BrainLandscape, axes } from "@/lib/brainLandscape";
+import {
+  type BrainLandscape,
+  type Relief,
+  axes,
+  groundOf,
+  wellsColorscale,
+} from "@/lib/brainLandscape";
 import { NF_MAX_TARGETS } from "@/lib/protocol/blocks";
 import { useChartTheme } from "@/lib/theme";
 
@@ -27,6 +37,7 @@ export function TargetPicker({
   onChange,
   title,
   height = 420,
+  relief = "hills",
 }: {
   landscape: BrainLandscape;
   points: readonly Point[];
@@ -35,17 +46,31 @@ export function TargetPicker({
   onChange: (points: Point[]) => void;
   title: string;
   height?: number;
+  relief?: Relief;
 }) {
   const theme = useChartTheme();
   const { xs, ys } = useMemo(() => axes(landscape), [landscape]);
+  const colour = useMemo(
+    () => groundOf(landscape, relief).colour,
+    [landscape, relief]
+  );
   const data = useMemo<Data[]>(
     () => [
       {
         type: "heatmap",
         x: xs,
         y: ys,
-        z: landscape.grid.z as number[][],
-        colorscale: theme.landscape as [number, string][],
+        ...(colour
+          ? {
+              z: colour,
+              zmin: 0,
+              zmax: 1,
+              colorscale: wellsColorscale(theme.landscape, theme.canvas),
+            }
+          : {
+              z: landscape.grid.z as number[][],
+              colorscale: theme.landscape as [number, string][],
+            }),
         showscale: false,
         hoverinfo: "none",
         zsmooth: "best",
@@ -63,7 +88,7 @@ export function TargetPicker({
         hoverinfo: "none",
       },
     ],
-    [landscape, points, theme, xs, ys]
+    [colour, landscape, points, theme, xs, ys]
   );
   const layout = useMemo(
     () =>

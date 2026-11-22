@@ -8,7 +8,9 @@
  * commands, live notes, the events, the headband (contact, the four channels, packets
  * lost), and what only a live room has - the session's trail as the worker draws it,
  * each block's result as it finishes, and, when the person has a brain landscape, the
- * windows placed on it (the second view).
+ * windows placed on it (the second view). A session that trains toward places of the
+ * map (V4-0010) shows its targets there, on wells by default (hills otherwise; the
+ * carer's choice is remembered for each sort of session).
  *
  * Several carers may watch; one at a time holds the commands (Take / Let go), and only
  * that one may switch on "pause when I lose sight": if every carer drops, the run pauses
@@ -39,6 +41,7 @@ import {
   buttonClass,
 } from "@/components/ui";
 import { api } from "@/lib/api";
+import { RELIEFS } from "@/lib/brainLandscape";
 import { saveLiveNote } from "@/lib/console/notes";
 import { useFeature } from "@/lib/features";
 import { LIVE_CHUNK_SAMPLES } from "@/lib/live/chunks";
@@ -48,6 +51,7 @@ import { useLiveRoom } from "@/lib/live/useLiveRoom";
 import { EEG_CHANNELS } from "@/lib/muse/protocol";
 import type { ChannelQuality } from "@/lib/muse/quality";
 import type { StimulusSession } from "@/lib/protocol/session";
+import { useRelief } from "@/lib/relief";
 import { useChartTheme, trailHexAt } from "@/lib/theme";
 
 const UNKNOWN = { level: "unknown", stdUv: null } as ChannelQuality;
@@ -93,6 +97,16 @@ export default function RemoteConsolePage({
     ],
     [ground.x, ground.y, theme.trail]
   );
+  // a neurofeedback block toward the map: its targets, drawn on the map, on wells
+  const nfTargets = useMemo(
+    () => room.plan.find((s) => s.targets)?.targets ?? null,
+    [room.plan]
+  );
+  const [relief, setRelief] = useRelief(
+    nfTargets ? "live-neurofeedback" : "live",
+    nfTargets ? "wells" : "hills"
+  );
+  const tr = useTranslations("landscape.relief");
   const labels = useMemo(() => room.plan.map((s) => s.label), [room.plan]);
   const labelOf = useMemo(
     () => Object.fromEntries(room.plan.map((s) => [s.id, s.label])),
@@ -215,7 +229,21 @@ export default function RemoteConsolePage({
                   cursor={here}
                   live
                   trails={trails}
+                  relief={relief}
+                  targets={nfTargets}
                 />
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                  <Segmented
+                    label={tr("label")}
+                    value={relief}
+                    onChange={setRelief}
+                    options={RELIEFS.map((value) => ({
+                      value,
+                      label: tr(value),
+                    }))}
+                  />
+                  <p className="type-caption text-ink-3">{tr("hint")}</p>
+                </div>
                 {ground.growing && (
                   <p className="type-caption mt-2 text-ink-3">
                     {t("views.growing", { n: ground.landscape.n_windows })}

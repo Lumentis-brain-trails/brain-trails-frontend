@@ -59,7 +59,10 @@ import {
 } from "@/components/run/HeadbandPreflight";
 import { SelfTrail } from "@/components/live/SelfTrail";
 import { usePositionFeed } from "@/lib/live/usePositionFeed";
-import { hasLandscapeBlock } from "@/lib/neurofeedback/landscape";
+import {
+  hasLandscapeBlock,
+  landscapeTargets,
+} from "@/lib/neurofeedback/landscape";
 import { useFeature } from "@/lib/features";
 import { RunSurface, exitFullscreen } from "@/components/run/RunSurface";
 import { type RunTarget, startOptions } from "@/components/run/SubjectPicker";
@@ -249,6 +252,11 @@ export function RunProtocol({
     [protocol.data]
   );
   const mapFeedback = liveOn && trainsOnMap;
+  // where it leads, for the self view to draw on the map
+  const nfTargets = useMemo(
+    () => landscapeTargets(protocol.data?.definition),
+    [protocol.data]
+  );
   const live = useRemoteRun({
     enabled: remote || selfView || mapFeedback,
     assignmentId: target.assignmentId,
@@ -549,7 +557,7 @@ export function RunProtocol({
           />
         )}
         {selfView && session && phase === "running" && (
-          <SelfTrail sessionId={session.id} />
+          <SelfTrail sessionId={session.id} targets={nfTargets} />
         )}
       </RunSurface>
     );

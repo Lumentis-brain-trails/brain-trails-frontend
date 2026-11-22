@@ -26,11 +26,16 @@ import {
   Card,
   EmptyState,
   ErrorBanner,
+  Segmented,
   Skeleton,
   cn,
 } from "@/components/ui";
 import { ApiRequestError, api } from "@/lib/api";
-import { type BrainLandscape, landscapeProblem } from "@/lib/brainLandscape";
+import {
+  type BrainLandscape,
+  RELIEFS,
+  landscapeProblem,
+} from "@/lib/brainLandscape";
 import { useFeature } from "@/lib/features";
 import {
   FEEDBACKS,
@@ -40,6 +45,7 @@ import {
   saveDraft,
 } from "@/lib/neurofeedback/personal";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
+import { useRelief } from "@/lib/relief";
 import { useCurrentWorkspace, useEdition } from "@/lib/workspace";
 
 type Point = [number, number];
@@ -77,6 +83,9 @@ export default function NeurofeedbackPage() {
   const setCustom = (points: Point[]) =>
     setChosen({ epoch: map?.epoch ?? 0, points });
   const [feedback, setFeedback] = useState<Feedback>("plane");
+  // the place to head for is a basin to fall into: wells first, here
+  const [relief, setRelief] = useRelief("neurofeedback", "wells");
+  const tr = useTranslations("landscape.relief");
   const [minutes, setMinutes] = useState<number>(10);
 
   const radius = useMemo(() => {
@@ -190,7 +199,20 @@ export default function NeurofeedbackPage() {
                 editable={shownWhere === "custom"}
                 onChange={setCustom}
                 title={t("where.map")}
+                relief={relief}
               />
+              <div className="flex flex-wrap items-center gap-3 px-2 pt-2 pb-1">
+                <Segmented
+                  label={tr("label")}
+                  value={relief}
+                  onChange={setRelief}
+                  options={RELIEFS.map((value) => ({
+                    value,
+                    label: tr(value),
+                  }))}
+                />
+                <p className="type-caption text-ink-3">{tr("hint")}</p>
+              </div>
             </Card>
           </section>
 

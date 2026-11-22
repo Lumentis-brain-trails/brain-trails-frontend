@@ -122,3 +122,83 @@ test("a render that changes nothing on the map hands Plotly the same figure", ()
   rerender(view({ x: 6, y: 5 }));
   expect(figures.at(-1)?.data).not.toBe(first.data);
 });
+
+const peaked = {
+  bounds: [0, 10, 0, 10],
+  epoch: 2,
+  grid: {
+    nx: 2,
+    ny: 2,
+    z: [
+      [1, 0.5],
+      [0.5, 0],
+    ],
+  },
+  categories: [],
+  cells: [],
+} as unknown as BrainLandscape;
+
+function wellsTraces(
+  props: Partial<Parameters<typeof LandscapeSurface>[0]> = {}
+): (Trace & {
+  surfacecolor?: number[][];
+  z: number[] | number[][];
+  line?: { dash?: string };
+})[] {
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <LandscapeSurface
+        landscape={peaked}
+        relief="wells"
+        hover={false}
+        scheme="dark"
+        title="map"
+        {...props}
+      />
+    </NextIntlClientProvider>
+  );
+  return JSON.parse(screen.getByTestId("plot").textContent ?? "[]");
+}
+
+test("the wells draw the most time as the deepest ground, the rest a faded plateau", () => {
+  const [surface] = wellsTraces();
+  const z = surface.z as number[][];
+  expect(z[0][0]).toBeCloseTo(0);
+  expect(z[1][1]).toBe(1);
+  // coloured by depth: the plateau at the bottom of the scale, the deepest at the top
+  expect(surface.surfacecolor?.[1][1]).toBe(0);
+  expect(surface.surfacecolor?.[0][0]).toBeCloseTo(1);
+});
+
+test("in the wells the live dot stands on the well's floor, its stem clearing the plateau", () => {
+  const [, stem, , dot] = wellsTraces({ live: true, cursor: { x: 0, y: 0 } });
+  // on the deepest point: the ground is 0, the dot rides just over it
+  expect(stem.z[0]).toBeCloseTo(0.025, 5);
+  expect(stem.z[1]).toBeGreaterThan(1);
+  expect(dot.z[0]).toBe(stem.z[1]);
+});
+
+test("a trail on the wells rides the wells, not the hills", () => {
+  const [, trail] = wellsTraces({
+    trails: [{ x: [0, 10], y: [0, 10], colors: ["#fff", "#fff"] }],
+  });
+  expect(trail.z[0]).toBeCloseTo(0.025, 5);
+  expect(trail.z[1]).toBeCloseTo(1.025, 5);
+});
+
+test("targets are draped on the ground, only on the drawing of the map they belong to", () => {
+  const targets = { points: [[0, 0]], radius: 2, epoch: 2 };
+  const all = wellsTraces({ targets });
+  const [, ring, point] = all;
+  expect(ring.mode).toBe("lines");
+  expect(ring.line?.dash).toBe("dot");
+  expect(point.marker?.symbol).toBe("circle-open");
+  expect(point.z[0]).toBeCloseTo(0.05, 5);
+  // every point of the ring that is on the map sits on the surface it crosses
+  const ringZ = (ring.z as (number | null)[]).filter((v) => v !== null);
+  expect(ringZ.length).toBeGreaterThan(0);
+  expect(ringZ.every((v) => (v as number) > 0.025)).toBe(true);
+  cleanup();
+  // a redrawn map moved the places: nothing is drawn for the old ones
+  expect(wellsTraces({ targets: { ...targets, epoch: 1 } })).toHaveLength(1);
+});

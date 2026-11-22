@@ -378,3 +378,50 @@ export function hasLandscapeBlock(tree: unknown): boolean {
     (v) => typeof v === "object" && v !== null && hasLandscapeBlock(v)
   );
 }
+
+/**
+ * The targets of a protocol tree's first block that trains on the landscape - points,
+ * radius and the map's epoch - for the views that draw them on the map; null without
+ * such a block, or with targets that do not read as points and a radius.
+ */
+export function landscapeTargets(
+  tree: unknown
+): { points: number[][]; radius: number; epoch: number } | null {
+  if (Array.isArray(tree)) {
+    for (const child of tree) {
+      const found = landscapeTargets(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (!tree || typeof tree !== "object") return null;
+  const node = tree as Record<string, unknown>;
+  const config = node.config as Record<string, unknown> | undefined;
+  if (node.kind === "neurofeedback" && config?.signal === "landscape_region") {
+    const t = config.targets as Record<string, unknown> | undefined;
+    const points = t?.points;
+    if (
+      Array.isArray(points) &&
+      points.every(
+        (p) =>
+          Array.isArray(p) &&
+          p.length === 2 &&
+          p.every((v) => typeof v === "number")
+      ) &&
+      typeof t?.radius === "number" &&
+      typeof t?.epoch === "number"
+    )
+      return {
+        points: points as number[][],
+        radius: t.radius,
+        epoch: t.epoch,
+      };
+    return null;
+  }
+  for (const value of Object.values(node))
+    if (typeof value === "object" && value !== null) {
+      const found = landscapeTargets(value);
+      if (found) return found;
+    }
+  return null;
+}

@@ -1604,6 +1604,12 @@
           "frustration": "Frustrazione (NASA-TLX)"
         }
       }
+    },
+    "relief": {
+      "label": "Rilievo",
+      "hills": "Colline",
+      "wells": "Pozzi",
+      "hint": "Colline: più in alto, più tempo passato lì. Pozzi: la stessa mappa come un potenziale, U = −log p, quindi più in fondo, più tempo; il terreno mai raggiunto è un altopiano piatto e sbiadito."
     }
   },
   "language": {
