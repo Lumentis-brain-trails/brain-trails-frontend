@@ -80,6 +80,19 @@ export default function RemoteConsolePage({
     ? { x: ground.x[ground.x.length - 1], y: ground.y[ground.y.length - 1] }
     : null;
 
+  // the same arrays until a window moves the dot: the 3D view is redrawn only then
+  const trails = useMemo(
+    () => [
+      {
+        x: ground.x,
+        y: ground.y,
+        colors: ground.x.map((_, i) =>
+          trailHexAt(theme.trail, i / Math.max(1, ground.x.length - 1))
+        ),
+      },
+    ],
+    [ground.x, ground.y, theme.trail]
+  );
   const labels = useMemo(() => room.plan.map((s) => s.label), [room.plan]);
   const labelOf = useMemo(
     () => Object.fromEntries(room.plan.map((s) => [s.id, s.label])),
@@ -201,18 +214,7 @@ export default function RemoteConsolePage({
                   hover={!ground.growing}
                   cursor={here}
                   live
-                  trails={[
-                    {
-                      x: ground.x,
-                      y: ground.y,
-                      colors: ground.x.map((_, i) =>
-                        trailHexAt(
-                          theme.trail,
-                          i / Math.max(1, ground.x.length - 1)
-                        )
-                      ),
-                    },
-                  ]}
+                  trails={trails}
                 />
                 {ground.growing && (
                   <p className="type-caption mt-2 text-ink-3">
