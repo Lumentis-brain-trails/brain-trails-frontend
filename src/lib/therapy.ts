@@ -9,8 +9,9 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, ApiRequestError } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { subjectQueryKey } from "@/lib/subjects";
 
 export type Timeline = components["schemas"]["TimelineOut"];
 export type TimelineSession = components["schemas"]["TimelineSessionOut"];
@@ -50,7 +51,10 @@ export function useShare(subjectId: string) {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["timeline", subjectId] });
-      void queryClient.invalidateQueries({ queryKey: ["subject", subjectId] });
+      // the patient page reads `share_results` from the subject itself
+      void queryClient.invalidateQueries({
+        queryKey: subjectQueryKey(subjectId),
+      });
     },
   });
 }
@@ -61,6 +65,22 @@ export function useReviewQueue(workspaceId: string | undefined) {
     queryFn: () => api.get<ReviewItem[]>(`workspaces/${workspaceId}/review`),
     enabled: workspaceId !== undefined,
   });
+}
+
+/**
+ * Why a patient's results page has nothing to draw, as a key of `therapy.results`:
+ * a 403/404 is the API's answer while the carer shares less than everything
+ * (`notShared`), a 409 is a recording whose analysis is not done yet (`notReady`), and
+ * anything else - a 5xx, the network - is a failure worth trying again (`loadFailed`).
+ */
+export function resultsUnavailable(
+  error: unknown
+): "notShared" | "notReady" | "loadFailed" {
+  if (error instanceof ApiRequestError) {
+    if (error.status === 403 || error.status === 404) return "notShared";
+    if (error.status === 409) return "notReady";
+  }
+  return "loadFailed";
 }
 
 export function useMySummaries(enabled = true) {

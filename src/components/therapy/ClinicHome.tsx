@@ -4,13 +4,20 @@
  * The clinic home (backend T6): a therapist's day in three lists - their patients, what
  * is assigned and due, and the sessions waiting for them to read. "Waiting for review"
  * empties itself: opening a recording is what takes it off (the read audit of T3).
+ * Each list loads, fails and empties on its own: one failed call leaves the others read.
  */
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Card, ListRow, SectionTitle, Skeleton } from "@/components/ui";
+import {
+  Card,
+  ErrorBanner,
+  ListRow,
+  SectionTitle,
+  Skeleton,
+} from "@/components/ui";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { api } from "@/lib/api";
 import type { Assignment, Subject } from "@/lib/subjects";
@@ -54,7 +61,8 @@ export function ClinicHome({ workspace }: { workspace: Workspace }) {
       <section aria-label={t("review")} className="lg:col-span-2">
         <SectionTitle>{t("review")}</SectionTitle>
         <Card inset>
-          {review.isLoading && <Skeleton className="m-4 h-16" />}
+          {review.isPending && <Skeleton className="m-4 h-16" />}
+          {review.isError && <Failed message={t("reviewFailed")} />}
           {review.isSuccess && review.data.length === 0 && (
             <p className="px-5 py-4 text-ink-3">{t("reviewNone")}</p>
           )}
@@ -82,6 +90,8 @@ export function ClinicHome({ workspace }: { workspace: Workspace }) {
         <section aria-label={t("today")}>
           <SectionTitle>{t("today")}</SectionTitle>
           <Card inset>
+            {assignments.isPending && <Skeleton className="m-4 h-10" />}
+            {assignments.isError && <Failed message={t("todayFailed")} />}
             {assignments.isSuccess && due.length === 0 && (
               <p className="px-5 py-4 text-ink-3">{t("todayNone")}</p>
             )}
@@ -106,6 +116,8 @@ export function ClinicHome({ workspace }: { workspace: Workspace }) {
         <section aria-label={t("patients")} className="mt-8">
           <SectionTitle>{t("patients")}</SectionTitle>
           <Card inset>
+            {patients.isPending && <Skeleton className="m-4 h-10" />}
+            {patients.isError && <Failed message={t("patientsFailed")} />}
             {patients.isSuccess && mine.length === 0 && (
               <p className="px-5 py-4 text-ink-3">{t("patientsNone")}</p>
             )}
@@ -128,6 +140,14 @@ export function ClinicHome({ workspace }: { workspace: Workspace }) {
           </Card>
         </section>
       </div>
+    </div>
+  );
+}
+
+function Failed({ message }: { message: string }) {
+  return (
+    <div className="p-4">
+      <ErrorBanner message={message} />
     </div>
   );
 }

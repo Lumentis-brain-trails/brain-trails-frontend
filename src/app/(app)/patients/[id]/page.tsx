@@ -32,6 +32,7 @@ import {
   type Subject,
   isLate,
   subjectLabel,
+  subjectQueryKey,
   subjectWords,
 } from "@/lib/subjects";
 import { editionOf, managesMembers, useWorkspaces } from "@/lib/workspace";
@@ -69,7 +70,7 @@ export default function SubjectPage({
   const errorMessage = useErrorMessage();
   const locale = useFormatLocale();
   const subject = useQuery({
-    queryKey: ["subjects", "one", id],
+    queryKey: subjectQueryKey(id),
     queryFn: () => api.get<Subject>(`subjects/${id}`),
     retry: false,
   });

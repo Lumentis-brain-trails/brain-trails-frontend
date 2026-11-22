@@ -41,14 +41,17 @@ export default function HomePage() {
   const locale = useFormatLocale();
   const [showUpload, setShowUpload] = useState(false);
   const workspace = useCurrentWorkspace();
-  // a practice with the therapy edition opens on the clinic's day (T6)
-  const workspaceFlags = useWorkspaceConfig().data?.features;
-  const clinic =
-    workspace?.kind === "practice" && workspaceFlags?.therapy === true;
+  // a practice with the therapy edition opens on the clinic's day (T6); a practice waits
+  // for its flags before choosing, so a carer never sees the personal home flash by
+  const workspaceConfig = useWorkspaceConfig();
+  const practice = workspace?.kind === "practice";
+  const deciding =
+    workspace === undefined || (practice && workspaceConfig.isPending);
+  const clinic = practice && workspaceConfig.data?.features?.therapy === true;
   const recordings = useQuery({
     queryKey: ["recordings", workspace?.id],
     queryFn: () => api.get<Recording[]>(inWorkspace("recordings", workspace)),
-    enabled: workspace !== undefined,
+    enabled: !deciding && !clinic,
     refetchInterval: (query) =>
       query.state.data?.some(
         (r) => r.status === "uploaded" || r.status === "processing"
@@ -80,7 +83,12 @@ export default function HomePage() {
         </h1>
       </header>
 
-      {clinic && workspace ? (
+      {deciding ? (
+        <div className="grid gap-5 lg:grid-cols-3">
+          <Skeleton className="h-[250px] lg:col-span-2" />
+          <Skeleton className="h-[250px]" />
+        </div>
+      ) : clinic && workspace ? (
         <ClinicHome workspace={workspace} />
       ) : (
         <>

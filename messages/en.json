@@ -4041,7 +4041,10 @@
       "late": "late",
       "patients": "Your patients",
       "patientsNone": "No patients in your care yet.",
-      "never": "no session yet"
+      "never": "no session yet",
+      "reviewFailed": "The sessions waiting for review could not be loaded.",
+      "todayFailed": "What is due today could not be loaded.",
+      "patientsFailed": "Your patients could not be loaded."
     },
     "words": {
       "title": "This session in plain words",
@@ -4065,7 +4068,9 @@
     "results": {
       "title": "Your results",
       "back": "Back",
-      "notShared": "Your results are not shared with you at the moment."
+      "notShared": "Your results are not shared with you at the moment.",
+      "notReady": "These results are not ready yet. Come back in a few minutes.",
+      "loadFailed": "Your results could not be loaded. Try again in a moment."
     }
   },
   "live": {

@@ -38,3 +38,33 @@ test("results not shared in full say so, and ask for nothing else", async () => 
   expect(get).toHaveBeenCalledWith("recordings/r1/analysis");
   expect(get).toHaveBeenCalledTimes(1);
 });
+
+test.each([
+  [409, messages.therapy.results.notReady],
+  [503, messages.therapy.results.loadFailed],
+])(
+  "a %i is not mistaken for results that are not shared",
+  async (status, text) => {
+    const { ApiRequestError } = await import("@/lib/api");
+    get.mockReset();
+    get.mockRejectedValue(
+      new ApiRequestError(status, { code: "x", message: "x" })
+    );
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    await act(async () => {
+      render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <QueryClientProvider client={client}>
+            <Suspense fallback="loading">
+              <MyResultsPage params={Promise.resolve({ recording: "r1" })} />
+            </Suspense>
+          </QueryClientProvider>
+        </NextIntlClientProvider>
+      );
+    });
+    expect(await screen.findByText(text)).toBeTruthy();
+    expect(screen.queryByText(messages.therapy.results.notShared)).toBeNull();
+  }
+);

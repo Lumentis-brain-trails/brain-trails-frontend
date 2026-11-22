@@ -89,6 +89,15 @@ export function dueAtFromDate(value: string): string | null {
 
 export const SUBJECTS_QUERY_KEY = "subjects";
 
+/**
+ * The query key of one subject's page (`GET /subjects/{id}`). Under
+ * `SUBJECTS_QUERY_KEY`, so invalidating the roster refreshes it too; whoever changes one
+ * subject alone (its sharing, T6) invalidates this.
+ */
+export function subjectQueryKey(subjectId: string) {
+  return [SUBJECTS_QUERY_KEY, "one", subjectId] as const;
+}
+
 /** The subjects of an organisation the caller may know of (`view=mine`: their own). */
 export function useSubjects(
   workspaceId: string | undefined,

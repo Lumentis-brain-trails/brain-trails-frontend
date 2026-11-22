@@ -4041,7 +4041,10 @@
       "late": "in ritardo",
       "patients": "I tuoi pazienti",
       "patientsNone": "Nessun paziente in carico per ora.",
-      "never": "nessuna sessione"
+      "never": "nessuna sessione",
+      "reviewFailed": "Non è stato possibile caricare le sessioni da rivedere.",
+      "todayFailed": "Non è stato possibile caricare le scadenze di oggi.",
+      "patientsFailed": "Non è stato possibile caricare i tuoi pazienti."
     },
     "words": {
       "title": "Questa sessione a parole",
@@ -4065,7 +4068,9 @@
     "results": {
       "title": "I tuoi risultati",
       "back": "Indietro",
-      "notShared": "Al momento i tuoi risultati non sono condivisi con te."
+      "notShared": "Al momento i tuoi risultati non sono condivisi con te.",
+      "notReady": "Questi risultati non sono ancora pronti. Torna tra qualche minuto.",
+      "loadFailed": "Non è stato possibile caricare i tuoi risultati. Riprova tra poco."
     }
   },
   "live": {

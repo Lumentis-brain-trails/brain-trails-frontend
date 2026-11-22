@@ -4,6 +4,7 @@
  * A patient's own results, when their carer shares them in full (backend T6,
  * `share_results = full`): the trail of one of their sessions. The API answers only
  * while that level holds (`subject#reader`); otherwise the page says it is not shared.
+ * A recording still being analysed, or a call that failed, says that instead.
  * The carers' notes are never part of it.
  */
 
@@ -14,6 +15,7 @@ import { use } from "react";
 import { TrailPlot } from "@/components/TrailPlot";
 import { Card, EmptyState, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
+import { resultsUnavailable } from "@/lib/therapy";
 import type { Analysis } from "@/lib/types";
 
 export default function MyResultsPage({
@@ -36,7 +38,10 @@ export default function MyResultsPage({
       <h1 className="type-title mt-4 mb-6">{t("title")}</h1>
       {analysis.isLoading && <Spinner />}
       {analysis.isError && (
-        <EmptyState title={t("title")} text={t("notShared")} />
+        <EmptyState
+          title={t("title")}
+          text={t(resultsUnavailable(analysis.error))}
+        />
       )}
       {analysis.data && (
         <Card className="p-2 sm:p-4">

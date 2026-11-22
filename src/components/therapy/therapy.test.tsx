@@ -234,6 +234,38 @@ test("the clinic home: waiting for review, due today, my patients", async () => 
   expect(mine.textContent).not.toContain("P-2"); // not in my care
 });
 
+test("the clinic home: each list says when it could not be loaded, the others still read", async () => {
+  get.mockImplementation((path: string) => {
+    if (path === "workspaces/w1/review") return Promise.resolve([]);
+    return Promise.reject(new Error(path));
+  });
+  await act(async () => {
+    renderWith(<ClinicHome workspace={{ id: "w1" } as never} />);
+  });
+  const today = await screen.findByRole("region", { name: t.home.today });
+  expect(
+    await screen.findByText(t.home.todayFailed, { exact: false })
+  ).toBeTruthy();
+  expect(today.querySelector('[role="alert"]')).toBeTruthy();
+  const mine = screen.getByRole("region", { name: t.home.patients });
+  expect(mine.textContent).toContain(t.home.patientsFailed);
+  expect(mine.textContent).not.toContain(t.home.patientsNone);
+  const review = screen.getByRole("region", { name: t.home.review });
+  expect(review.textContent).toContain(t.home.reviewNone);
+  expect(review.querySelector('[role="alert"]')).toBeNull();
+});
+
+test("the clinic home shows each list loading", async () => {
+  get.mockImplementation(() => new Promise(() => {}));
+  await act(async () => {
+    renderWith(<ClinicHome workspace={{ id: "w1" } as never} />);
+  });
+  for (const name of [t.home.review, t.home.today, t.home.patients]) {
+    const region = screen.getByRole("region", { name });
+    expect(region.querySelector(".skeleton")).toBeTruthy();
+  }
+});
+
 test("after a session the patient sees done, a streak and a picture - only with the flag", async () => {
   const summaries = [
     {
