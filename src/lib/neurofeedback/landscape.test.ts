@@ -1,12 +1,16 @@
-import { expect, test } from "vitest";
-import { neurofeedbackConfigSchema } from "@/lib/protocol/blocks";
+import { describe, expect, test } from "vitest";
+import { isSpring, neurofeedbackConfigSchema } from "@/lib/protocol/blocks";
 import type { EegPacket } from "./engine";
 import {
   LandscapeEngine,
   type LandscapeOutput,
   type LandscapePoint,
   MIN_THRESHOLD,
+  ON_TARGET_SHARE,
+  STILL_SHARE,
   closeness,
+  directionCos,
+  rewardAt,
 } from "./landscape";
 
 const TARGETS = { points: [[0, 0]], radius: 1, epoch: 3, preset: "focus" };
@@ -224,4 +228,217 @@ test("a burst of windows moves the picture by the clock, not by the windows (H4)
   ).at(-1)!.level;
   expect(burstLevel).toBeCloseTo(afterOneSecond);
   expect(burstLevel).toBeLessThan(spacedLevel);
+});
+
+describe("the direction reward", () => {
+  const one = { points: [[0, 0]], radius: 1, spring: undefined };
+  const p = (x: number, y: number) => ({ x, y });
+
+  test("heading straight for the target is 1, straight away 0, sideways a half", () => {
+    const towards = rewardAt("direction", p(4, 0), p(3, 0), one);
+    expect(towards.cos).toBeCloseTo(1);
+    expect(towards.value).toBeCloseTo(1);
+    const away = rewardAt("direction", p(3, 0), p(4, 0), one);
+    expect(away.cos).toBeCloseTo(-1);
+    expect(away.value).toBeCloseTo(0);
+    const sideways = rewardAt("direction", p(3, 0), p(3, 1), one);
+    expect(sideways.cos).toBeCloseTo(0);
+    expect(sideways.value).toBeCloseTo(0.5);
+    // the closeness is recorded alongside, whichever the reward
+    expect(towards.closeness).toBeCloseTo(2 ** -9);
+    expect(towards.distance).toBeCloseTo(3);
+  });
+
+  test("standing still has no direction: the closeness stands in", () => {
+    const step = (STILL_SHARE / 2) * one.radius;
+    const still = rewardAt("direction", p(1, 0), p(1 + step, 0), one);
+    expect(still.cos).toBeNull();
+    expect(still.value).toBeCloseTo(closeness(1 + step, 0, one).closeness);
+    // nor has the first position, with nothing before it
+    const first = rewardAt("direction", null, p(1, 0), one);
+    expect(first.cos).toBeNull();
+    expect(first.value).toBeCloseTo(0.5);
+  });
+
+  test("on the target the direction is 1, whatever the step", () => {
+    const on = (ON_TARGET_SHARE / 2) * one.radius;
+    const there = rewardAt("direction", p(-1, 0), p(on, 0), one);
+    expect(there.value).toBe(1);
+    expect(there.cos).toBeNull();
+  });
+
+  test("the pull is towards the target nearest to where the step starts", () => {
+    const two = {
+      points: [
+        [0, 0],
+        [10, 0],
+      ],
+      radius: 1,
+      spring: undefined,
+    };
+    // from 8, the nearest is 10: heading to 9 is towards it
+    expect(directionCos(p(8, 0), p(9, 0), two)).toBeCloseTo(1);
+    expect(directionCos(p(2, 0), p(1, 0), two)).toBeCloseTo(1);
+    // no step, or a start on the target itself: no cosine
+    expect(directionCos(p(2, 0), p(2, 0), two)).toBeNull();
+    expect(directionCos(p(0, 0), p(1, 0), two)).toBeNull();
+  });
+
+  test("a spring pulls harder along its stiff axis", () => {
+    const loose = { points: [[0, 0]], radius: 1, spring: undefined };
+    const stiffY = {
+      points: [[0, 0]],
+      radius: 1,
+      spring: [
+        [1, 0],
+        [0, 4],
+      ] as [[number, number], [number, number]],
+    };
+    // from (3, 3), moving straight down in y
+    const down = [p(3, 3), p(3, 2)] as const;
+    const isotropic = directionCos(...down, loose)!;
+    const anisotropic = directionCos(...down, stiffY)!;
+    expect(isotropic).toBeCloseTo(Math.SQRT1_2);
+    expect(anisotropic).toBeCloseTo(12 / Math.hypot(3, 12));
+    expect(anisotropic).toBeGreaterThan(isotropic);
+    // and the diagonal, best with no spring, is no longer the best
+    expect(directionCos(p(3, 3), p(2, 2), loose)).toBeCloseTo(1);
+    const diagonal = directionCos(p(3, 3), p(2, 2), stiffY)!;
+    expect(diagonal).toBeCloseTo(15 / (Math.hypot(3, 12) * Math.SQRT2));
+    expect(diagonal).toBeLessThan(anisotropic);
+  });
+
+  test("the blend follows the direction far away and the closeness near", () => {
+    // far: the closeness is ~0, so the blend is the direction
+    const far = rewardAt("blend", p(6, 0), p(5, 0), one);
+    expect(far.value).toBeCloseTo(1, 4);
+    // at the radius, heading straight in: half the direction, half the closeness
+    const edge = rewardAt("blend", p(2, 0), p(1, 0), one);
+    expect(edge.closeness).toBeCloseTo(0.5);
+    expect(edge.value).toBeCloseTo(0.5 * 1 + 0.5 * 0.5);
+    // the closeness reward ignores the step
+    expect(rewardAt("closeness", p(0, 5), p(1, 0), one)).toEqual({
+      value: 0.5,
+      closeness: 0.5,
+      distance: 1,
+      cos: null,
+    });
+  });
+});
+
+describe("the reward's settings", () => {
+  test("a protocol without them keeps the closeness, and no spring", () => {
+    const parsed = config();
+    expect(parsed.targets?.reward).toBe("closeness");
+    expect(parsed.targets?.spring).toBeUndefined();
+    expect(
+      config({ targets: { ...TARGETS, reward: "direction" } }).targets?.reward
+    ).toBe("direction");
+    expect(() =>
+      config({ targets: { ...TARGETS, reward: "nearness" } })
+    ).toThrow();
+  });
+
+  test("a spring must be symmetric positive definite", () => {
+    const spring = (k: number[][]) =>
+      config({ targets: { ...TARGETS, reward: "direction", spring: k } });
+    expect(
+      spring([
+        [2, 0.5],
+        [0.5, 1],
+      ]).targets?.spring
+    ).toEqual([
+      [2, 0.5],
+      [0.5, 1],
+    ]);
+    for (const bad of [
+      [
+        [1, 2],
+        [2, 1],
+      ], // indefinite: ac - b² < 0
+      [
+        [1, 0.5],
+        [0.4, 1],
+      ], // not symmetric
+      [
+        [-1, 0],
+        [0, 1],
+      ], // a <= 0
+      [
+        [0, 0],
+        [0, 1],
+      ], // only semi-definite
+      [[1, 0]], // not 2 x 2
+    ])
+      expect(() => spring(bad), JSON.stringify(bad)).toThrow();
+    expect(
+      isSpring([
+        [1, 0],
+        [0, 1],
+      ])
+    ).toBe(true);
+    expect(
+      isSpring([
+        [1, Number.NaN],
+        [Number.NaN, 1],
+      ])
+    ).toBe(false);
+  });
+});
+
+test("closeness updates are as before, and say so", () => {
+  const engine = new LandscapeEngine(
+    config({ baseline_s: 0, threshold: { mode: "fixed", value: 0.5 } })
+  );
+  const [first, second] = [at(0, 2), at(1, 1)].flatMap((w) =>
+    updates(engine.push(w))
+  );
+  expect(first.reward).toBe("closeness");
+  expect(first.smoothed).toBe(first.closeness);
+  expect(second.smoothed).toBeCloseTo(closeness(1.5, 0, TARGETS).closeness);
+  expect(second.cos).toBeNull();
+});
+
+test("the direction rewards approaching from far away, where the closeness gives nothing", () => {
+  const train = (reward: string) => {
+    const engine = new LandscapeEngine(
+      config({
+        targets: { ...TARGETS, reward },
+        baseline_s: 0,
+        threshold: { mode: "fixed", value: 0.6 },
+      })
+    );
+    // from 20 radii away, one radius closer a second
+    return Array.from({ length: 8 }, (_, i) => at(i, 20 - i)).flatMap((w) =>
+      updates(engine.push(w))
+    );
+  };
+  const near = train("closeness");
+  expect(near.every((u) => u.inTarget === false)).toBe(true);
+  const heading = train("direction");
+  // the first position has no step before it: the closeness, ~0
+  expect(heading[0].inTarget).toBe(false);
+  expect(heading[0].cos).toBeNull();
+  expect(heading.slice(1).every((u) => u.inTarget === true)).toBe(true);
+  expect(heading.at(-1)).toMatchObject({ reward: "direction" });
+  expect(heading.at(-1)!.cos).toBeCloseTo(1);
+  expect(heading.at(-1)!.closeness).toBeLessThan(0.01);
+  // turning back is no longer rewarded
+  const blended = train("blend");
+  expect(blended.at(-1)!.smoothed).toBeGreaterThan(0.99);
+});
+
+test("the direction's baseline sets its threshold from the direction values", () => {
+  const engine = new LandscapeEngine(
+    config({ targets: { ...TARGETS, reward: "direction" }, baseline_s: 10 })
+  );
+  const out: LandscapeOutput[] = [];
+  // wandering back and forth, far away: directions of 0 and 1 by turns
+  for (let i = 0; i < 10; i++)
+    out.push(...engine.push(at(i, 10 + 4 * (i % 2))));
+  const threshold = out.find((o) => o.type === "threshold");
+  expect(threshold).toMatchObject({ cause: "baseline" });
+  const values = updates(out).map((u) => u.smoothed!);
+  expect(Math.max(...values)).toBeGreaterThan(0.5);
+  expect(Math.min(...values)).toBeLessThan(0.5);
 });

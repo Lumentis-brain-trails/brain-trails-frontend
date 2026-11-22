@@ -32,7 +32,16 @@ export interface FieldDoc {
   advanced?: boolean;
   /** Filled in by the builder, never typed: not drawn at all. */
   hidden?: boolean;
+  /**
+   * Drawn only for a config this says yes to: a setting that means something for one
+   * variant of a kind and not the others (a landscape block's reward, say).
+   */
+  shownIf?: (config: Record<string, unknown>) => boolean;
 }
+
+/** A neurofeedback block that trains toward places of the map (V4-0010). */
+const onLandscape = (config: Record<string, unknown>) =>
+  config.signal === "landscape_region";
 
 /** A documented setting, and where its words are in the catalogue. */
 export interface LocatedFieldDoc extends FieldDoc {
@@ -141,6 +150,10 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
     "targets.radius": { hidden: true },
     "targets.epoch": { hidden: true },
     "targets.preset": { hidden: true },
+    // what a landscape block rewards: a choice for the author; the spring stays the
+    // identity until there is a study to learn it from
+    "targets.reward": { shownIf: onLandscape },
+    "targets.spring": { hidden: true },
     direction: {},
     channels: { advanced: true },
     effect: {},
@@ -293,19 +306,26 @@ export interface PresentedField extends Field {
  * at first and the advanced ones. `words` reads the names and explanations
  * (`useFieldWords` in a component); whatever it does not have keeps what the schema
  * gave - the derived name, the schema's description, the raw value of a choice.
- * `base` is the path of the list the fields are rows of.
+ * `base` is the path of the list the fields are rows of; `config` the whole config
+ * being edited, for the settings shown only for some (`shownIf`).
  */
 export function present(
   kind: string,
   fields: Field[],
   words: FieldWords,
-  base: string[] = []
+  base: string[] = [],
+  config: unknown = {}
 ): PresentedField[] {
   const presented: PresentedField[] = [];
+  const whole =
+    config && typeof config === "object" && !Array.isArray(config)
+      ? (config as Record<string, unknown>)
+      : {};
   for (const field of fields) {
     const path = [...base, ...field.path];
     const doc = docFor(kind, path);
     if (doc?.hidden) continue;
+    if (doc?.shownIf && !doc.shownIf(whole)) continue;
     // a nested setting inherits "advanced" from the group it belongs to
     const parent =
       path.length > 1 ? docFor(kind, path.slice(0, -1)) : undefined;

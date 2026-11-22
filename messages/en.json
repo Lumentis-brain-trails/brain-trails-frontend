@@ -1303,6 +1303,15 @@
             "focus": "The focus preset",
             "custom": "The person's own points"
           }
+        },
+        "targets/reward": {
+          "label": "What is rewarded",
+          "help": "Closeness: being near the target (1 on it, a half at its radius). Direction: heading towards it, from the step between two averaged positions, so far away the person still hears which way to go; standing still counts as closeness, on the target as 1. Blend: direction far away, closeness near, weighed by how close the person is.",
+          "options": {
+            "closeness": "Being close to the target",
+            "direction": "Heading towards the target",
+            "blend": "Heading there, then being there"
+          }
         }
       }
     }

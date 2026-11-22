@@ -12,7 +12,11 @@
  */
 
 import { ApiRequestError, api } from "@/lib/api";
-import type { NeurofeedbackConfig } from "@/lib/protocol/blocks";
+import type { z } from "zod";
+import type {
+  NeurofeedbackConfig,
+  neurofeedbackConfigSchema,
+} from "@/lib/protocol/blocks";
 import type { ProtocolDetail } from "@/lib/protocol/catalog";
 import type { ProtocolTree } from "@/lib/protocol/tree";
 import { inWorkspace } from "@/lib/workspace";
@@ -35,7 +39,8 @@ export const BASELINE_S = 60;
 export const TARGET_FRACTION = 0.6;
 
 export interface PersonalChoice {
-  targets: NonNullable<NeurofeedbackConfig["targets"]>;
+  /** As the block takes them: `reward` and `spring` may be left to their defaults. */
+  targets: NonNullable<z.input<typeof neurofeedbackConfigSchema>["targets"]>;
   feedback: Feedback;
   minutes: number;
 }

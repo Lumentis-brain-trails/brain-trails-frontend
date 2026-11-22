@@ -165,8 +165,11 @@ The kind is `src/components/protocol/kinds/NeurofeedbackTask.tsx`; everything it
 is in `src/lib/neurofeedback/` (pure): `spectrum.ts` (FFT, bands), `engine.ts` (value,
 artefact gate, smoothing, baseline threshold, nudges; clocked by the device sample index),
 `picture.ts` (the level and the luminance limit, H4), `panel.ts` (the console's fold of
-the `nf_*` events). It is the only kind that gets `TaskContext.signal` (the live EEG) and
-`TaskContext.adjustments` (`nudge_threshold`). In Play the packets come from `useMuse`'s
+the `nf_*` events), `landscape.ts` (`signal: landscape_region`, V4-0010: the reward is
+`targets.reward` - closeness, direction `cos(step, K (a - X))` or a blend - on the mean of
+the last four windows; `nf_update` records `reward`, `closeness` and `cos`). It is the
+only kind that gets `TaskContext.signal` (the live EEG) and `TaskContext.adjustments`
+(`nudge_threshold`). In Play the packets come from `useMuse`'s
 `eegFeed`; with the console they cross the channel (`eeg` messages, `eegFeedFrom`).
 `schemas/neurofeedback-golden.json` is written by `engine.test.ts` (`npm run schemas`) and
 pins the backend's Python twin (`make schemas-sync` copies it).

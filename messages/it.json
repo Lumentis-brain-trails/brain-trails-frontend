@@ -1303,6 +1303,15 @@
             "focus": "Il preset di concentrazione",
             "custom": "I punti scelti dalla persona"
           }
+        },
+        "targets/reward": {
+          "label": "Cosa viene premiato",
+          "help": "Vicinanza: stare vicino al bersaglio (1 sopra, metà al suo raggio). Direzione: andare verso il bersaglio, dal passo tra due posizioni mediate, così anche lontano la persona sente da che parte andare; restare fermi conta come vicinanza, sul bersaglio come 1. Miscela: la direzione da lontano, la vicinanza da vicino, pesate da quanto la persona è vicina.",
+          "options": {
+            "closeness": "Stare vicino al bersaglio",
+            "direction": "Andare verso il bersaglio",
+            "blend": "Andarci, poi restarci"
+          }
         }
       }
     }
