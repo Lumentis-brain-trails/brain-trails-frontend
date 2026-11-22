@@ -488,6 +488,145 @@
       "readingHome": "L'ambiente di casa della console: qui leggi e agisci.",
       "readingOther": "Solo lettura: questa pagina legge il database di questo ambiente. Le azioni restano su {home}.",
       "actionsElsewhere": "Stai leggendo {env}. Le decisioni e la bacheca agiscono solo sull'ambiente di casa della console ({home}), quindi qui non ci sono; per agire su {env}, usa le pagine admin del prodotto in quell'ambiente."
+    },
+    "documents": {
+      "intro": "Ogni report, bozza, brief e analisi scritti per il team, in Markdown, con tutte le revisioni conservate. I documenti citano aggregati o chiavi pseudonimizzate, mai il nome o l'email di una persona.",
+      "sections": "Sezioni",
+      "library": "Documenti",
+      "kind": {
+        "report": "Report",
+        "draft": "Bozza",
+        "brief": "Brief",
+        "analysis": "Analisi",
+        "note": "Nota"
+      },
+      "status": {
+        "draft": "Bozza",
+        "final": "Definitivo",
+        "archived": "Archiviato"
+      },
+      "list": {
+        "kind": "Tipo",
+        "statusLabel": "Stato",
+        "any": "Tutti",
+        "search": "Cerca",
+        "searchPlaceholder": "Titolo o testo",
+        "find": "Cerca",
+        "new": "Nuovo documento",
+        "noneFound": "Nessun documento corrisponde.",
+        "emptyTitle": "Ancora nessun documento",
+        "emptyText": "Qui arrivano report, bozze e analisi scritti per il team.",
+        "title": "Titolo",
+        "audience": "Per",
+        "updated": "Ultimo salvataggio",
+        "updatedLine": "{when} da {who} · rev. {revision}"
+      },
+      "editor": {
+        "newTitle": "Nuovo documento",
+        "editTitle": "In modifica, sulla revisione {revision}",
+        "stale": "Qualcuno ha salvato questo documento dopo che l'hai aperto. Il tuo testo è ancora qui, non salvato. Ricarica la sua versione: compare accanto alla tua, e il prossimo salvataggio parte da quella.",
+        "reload": "Ricarica la sua versione",
+        "theirs": "La sua versione: revisione {revision}, di {who}",
+        "theirsHint": "Il tuo testo è nell'editor qui sotto. Prendi quello che ti serve dal suo, poi salva.",
+        "theirsBody": "Il suo testo",
+        "title": "Titolo",
+        "slug": "Indirizzo",
+        "slugHint": "Parole minuscole unite da trattini; se lo lasci, viene dal titolo.",
+        "kind": "Tipo",
+        "audience": "Per",
+        "audienceHint": "Per chi è scritto: Gabriella, Andrea, il team.",
+        "bodyLabel": "Testo (Markdown)",
+        "mode": "Scrivi o anteprima",
+        "write": "Scrivi",
+        "preview": "Anteprima",
+        "length": "{n} di {max} caratteri",
+        "nothingToPreview": "Ancora niente da mostrare.",
+        "privacy": "Niente nomi o email degli utenti: cita aggregati o chiavi pseudonimizzate.",
+        "note": "Cosa è cambiato",
+        "noteHint": "Una riga, resta nella cronologia.",
+        "saving": "Salvataggio…",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "discard": "Vuoi buttare le tue modifiche?",
+        "saved": "Documento salvato.",
+        "errors": {
+          "titleRequired": "Dagli un titolo.",
+          "titleTooLong": "Al massimo 200 caratteri.",
+          "slugInvalid": "Solo lettere minuscole, cifre e trattini singoli.",
+          "audienceRequired": "Di' per chi è.",
+          "audienceTooLong": "Al massimo 120 caratteri.",
+          "bodyTooLong": "Al massimo 200 000 caratteri.",
+          "noteRequired": "Di' in una riga cosa è cambiato.",
+          "noteTooLong": "Al massimo 200 caratteri."
+        }
+      },
+      "history": {
+        "title": "Cronologia",
+        "revision": "Revisione {revision}",
+        "current": "attuale",
+        "by": "{who}, {when}",
+        "noNote": "Nessuna nota."
+      },
+      "view": {
+        "to": {
+          "draft": "Torna a bozza",
+          "final": "Segna come definitivo",
+          "archived": "Archivia"
+        },
+        "back": "← Tutti i documenti",
+        "missingTitle": "Documento inesistente",
+        "missingText": "Forse ha un altro indirizzo; cercalo nell'elenco.",
+        "for": "per {audience}",
+        "meta": "Revisione {revision}, salvata da {who} il {when}",
+        "edit": "Modifica",
+        "hideHistory": "Nascondi cronologia",
+        "showHistory": "Cronologia",
+        "oldRevision": "Stai leggendo la revisione {revision} di {current}, di {who}: {note}",
+        "loadingRevision": "Carico la revisione {revision}…",
+        "toCurrent": "Torna alla revisione attuale",
+        "empty": "Questo documento non ha ancora testo."
+      },
+      "tokens": {
+        "title": "Token di accesso",
+        "intro": "Un token permette a una sessione di lavoro di leggere e scrivere documenti per te, senza la tua password né il secondo fattore. Apre solo Documenti, per al massimo 90 giorni. Revoca quelli che non usi più.",
+        "newTitle": "Nuovo token",
+        "name": "Nome",
+        "nameHint": "Dove lo userai, per esempio \"Claude, Mac di Alessio\".",
+        "scopes": "Può",
+        "scope": {
+          "read": "Leggere documenti",
+          "write": "Scrivere documenti"
+        },
+        "expiry": "Scade dopo",
+        "expiryHint": "Al massimo 90 giorni.",
+        "days": "{n, plural, one {# giorno} other {# giorni}}",
+        "create": "Crea token",
+        "yours": "I tuoi token",
+        "none": "Non hai token.",
+        "revoked": "Revocato",
+        "active": "Attivo",
+        "expired": "Scaduto",
+        "dates": "Creato {created}, scade {expires}",
+        "lastUsed": "usato l'ultima volta {when}",
+        "neverUsed": "mai usato",
+        "revokeConfirm": "Lo revochi? Tutto ciò che lo usa smette di funzionare.",
+        "revokeYes": "Revoca",
+        "revokeNo": "Tienilo",
+        "revoke": "Revoca",
+        "created": {
+          "title": "Token \"{name}\" creato",
+          "warning": "Copialo adesso: si vede solo questa volta e non si può più rileggere. Tienilo in un file che solo tu puoi leggere, e non incollarlo mai in una chat o in un documento.",
+          "copy": "Copia",
+          "copied": "Copiato",
+          "copyFailed": "Copia non riuscita: seleziona il token e copialo a mano.",
+          "done": "L'ho salvato"
+        },
+        "errors": {
+          "nameRequired": "Dagli un nome.",
+          "nameTooLong": "Al massimo 80 caratteri.",
+          "scopesRequired": "Scegline almeno uno."
+        }
+      }
     }
   },
   "admin": {

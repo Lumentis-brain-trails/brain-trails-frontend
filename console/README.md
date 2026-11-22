@@ -28,6 +28,12 @@ its widget renderers; `src/apps.ts` registers it. The backend's
 and widgets it serves (`src/apps.test.ts` keeps the two in step). An app imports
 `@console/*` and the product's `@/*`, never another app (ESLint).
 
+An app that reads product data sets `followsEnv: true` (backend OPS-0005): the shell puts
+the dev/beta/prod switch and the environment's colour in its header, keeps the choice in
+`?env=` (and per app in localStorage), and everything inside reads through `useOps()` /
+`useSnapshot`, which send `X-Ops-Env`. Product actions act on the home environment only,
+so such an app hides them elsewhere (`useOpsEnv().isHome`, `ElsewhereNotice`).
+
 ## Vercel
 
 A second project on this repository with root directory `console/`; environment

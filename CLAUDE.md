@@ -92,12 +92,16 @@ reconnect. The protocol is the backend's `docs/api/live-protocol.md`.
 `console/` is a second Next.js app, an npm workspace of this repo, with its own Vercel
 project (root directory `console/`): the shell (launcher, side rail, widget strip), its
 BFF (`/api/session`, `/api/ops` to bt-ops, `/api/product` to the API), one directory
-per app under `console/apps/<slug>/` (Work log, Health, Beta testers, Moderation, Statistics;
-Overview deprecated)
+per app under `console/apps/<slug>/` (Work log, Health, Beta testers, Moderation, Statistics,
+Documents; Overview deprecated)
 and its strings under `console.*` in `console/messages/` (plus `admin.*`, the keys of the
 pages moved from the user app's `/admin` in O2). Product actions go through
 `@console/lib/product` and the BFF's `/api/product` allow-list. It imports the product's tokens, `ui` primitives
-and `common` messages from `../src`. See `console/README.md`.
+and `common` messages from `../src`. Apps that read product data set `followsEnv` and get the
+dev/beta/prod switch in their header (backend OPS-0005; `console/src/components/env.tsx`,
+`?env=`, `X-Ops-Env`); product actions stay on the home environment. Documents holds the
+team's reports and drafts; its access tokens (`btc_...`) reach `/api/ops/documents` only.
+See `console/README.md`.
 
 ## Working method (backend decision 0013, v2 since 2026-09-24)
 

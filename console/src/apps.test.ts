@@ -8,6 +8,7 @@ import { APPS, appFor } from "./apps";
  */
 const BACKEND = {
   "beta-testers": { version: "1.0.0", widgets: ["pending_applications"] },
+  documents: { version: "1.0.0", widgets: [] },
   health: { version: "0.1.0", widgets: ["failed_jobs", "restarts_24h"] },
   moderation: { version: "1.0.0", widgets: ["review_queue"] },
   overview: { version: "1.1.0", widgets: ["recordings_14d"] },
