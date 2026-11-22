@@ -15,6 +15,7 @@ import {
   OpsRequestError,
   ops,
 } from "@console/lib/client";
+import { useOps, useOpsEnv } from "@console/components/env";
 
 /**
  * The shell's reads and writes, as react-query hooks. Every read runs once when its
@@ -106,13 +107,18 @@ function target(t: RefreshTarget): { key: string; params: string } {
     : { key: t.key, params: paramsKey(t.params) };
 }
 
-/** Run one panel now and store its snapshot: a person's click, the only refresh there is. */
+/**
+ * Run one panel now and store its snapshot: a person's click, the only refresh there is.
+ * Inside an app that follows the environment switch it runs on that environment.
+ */
 export function useRefresh() {
   const client = useQueryClient();
+  const api = useOps();
+  const { cacheKey } = useOpsEnv();
   return useMutation({
     mutationFn: (t: RefreshTarget) => {
       const { key, params } = target(t);
-      return ops.post<Snapshot>(
+      return api.post<Snapshot>(
         `snapshots/${encodeURIComponent(key)}/refresh`,
         {
           params: JSON.parse(params),
@@ -121,21 +127,27 @@ export function useRefresh() {
     },
     onSuccess: (snapshot, t) => {
       const { key, params } = target(t);
-      client.setQueryData(["snapshot", key, params], snapshot);
+      client.setQueryData(["snapshot", cacheKey, key, params], snapshot);
       void client.invalidateQueries({ queryKey: ["strip"] });
     },
   });
 }
 
-/** The newest snapshot of a panel for these parameters; `null` when never taken. */
+/**
+ * The newest snapshot of a panel for these parameters, in this part of the page's
+ * environment; `null` when never taken. The environment is part of the cache key, so
+ * switching never shows one environment's numbers under another's header.
+ */
 export const useSnapshot = (key: string, params?: Record<string, unknown>) => {
   const p = paramsKey(params);
+  const api = useOps();
+  const { cacheKey } = useOpsEnv();
   return useQuery({
-    queryKey: ["snapshot", key, p],
+    queryKey: ["snapshot", cacheKey, key, p],
     queryFn: async () => {
       try {
         const q = p === "{}" ? "" : `?params=${encodeURIComponent(p)}`;
-        return await ops.get<Snapshot>(
+        return await api.get<Snapshot>(
           `snapshots/${encodeURIComponent(key)}${q}`
         );
       } catch (e) {

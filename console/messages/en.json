@@ -30,7 +30,7 @@
       "product_unavailable": "The product did not answer. Try again in a moment.",
       "upstream_unavailable": "The console's service did not answer. Try again in a moment.",
       "console_unavailable": "This console is not configured yet.",
-      "read_unavailable": "This console has no read connection to the product database yet.",
+      "read_unavailable": "This console has no read connection to this environment's database yet.",
       "already_enrolled": "This account already has its second factor. Sign in again to enter a code.",
       "cluster_unavailable": "This console cannot reach the cluster (it runs outside a pod, or the cluster did not answer).",
       "cluster_forbidden": "The console may not read the cluster yet: its Role (infra/k8s/rbac/bt-ops.yaml) is not applied in this namespace.",
@@ -42,7 +42,9 @@
       "invalid_roadmap": "The roadmap would contradict itself.",
       "id_mismatch": "An entry keeps its id.",
       "no_item": "This entry is no longer on the roadmap.",
-      "validation_error": "Something in the form is not valid."
+      "validation_error": "Something in the form is not valid.",
+      "unknown_env": "The console does not know that environment.",
+      "stale_document": "Someone saved this document after you opened it."
     },
     "age": {
       "now": "just now",
@@ -365,6 +367,13 @@
       "organisations": "Organisations",
       "widgets": {
         "pending": "{stand} from the stand · {organisations} organisations"
+      },
+      "elsewhere": {
+        "pending": "Waiting for a decision",
+        "waiting": "Applications waiting",
+        "fromStand": "Of those, asked at the stand",
+        "organisations": "Organisation requests waiting",
+        "decision": "Decision: {decision}"
       }
     },
     "moderation": {
@@ -375,6 +384,13 @@
       "fair": "The stand",
       "widgets": {
         "queue": "{media} media · {protocols} protocols · {stand} at the stand"
+      },
+      "elsewhere": {
+        "queue": "Review queue",
+        "review": "Waiting for review",
+        "media": "Media",
+        "protocols": "Protocols",
+        "stand": "Waiting at the stand"
       }
     },
     "statistics": {
@@ -460,6 +476,18 @@
         "sessions": "Finished sessions per week",
         "active": "Active people per week"
       }
+    },
+    "env": {
+      "switch": "Environment",
+      "name": {
+        "dev": "Dev",
+        "beta": "Beta",
+        "prod": "Prod"
+      },
+      "unavailable": "This console has no read connection to this environment.",
+      "readingHome": "The console's home environment: you read and act here.",
+      "readingOther": "Read only: this page reads this environment's database. Actions stay in {home}.",
+      "actionsElsewhere": "You are reading {env}. Decisions and the board act on the console's home environment ({home}) only, so they are not shown here; to act on {env}, use the product's own admin pages there."
     }
   },
   "admin": {

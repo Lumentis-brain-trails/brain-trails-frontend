@@ -30,7 +30,7 @@
       "product_unavailable": "Il prodotto non ha risposto. Riprova tra poco.",
       "upstream_unavailable": "Il servizio della console non ha risposto. Riprova tra poco.",
       "console_unavailable": "Questa console non è ancora configurata.",
-      "read_unavailable": "Questa console non ha ancora una connessione in lettura al database del prodotto.",
+      "read_unavailable": "Questa console non ha ancora una connessione in lettura al database di questo ambiente.",
       "already_enrolled": "Questo account ha già il suo secondo fattore. Accedi di nuovo per inserire un codice.",
       "cluster_unavailable": "Questa console non raggiunge il cluster (gira fuori da un pod, o il cluster non ha risposto).",
       "cluster_forbidden": "La console non può ancora leggere il cluster: il suo Role (infra/k8s/rbac/bt-ops.yaml) non è applicato in questo namespace.",
@@ -42,7 +42,9 @@
       "invalid_roadmap": "La roadmap si contraddirebbe.",
       "id_mismatch": "Una voce mantiene il suo id.",
       "no_item": "Questa voce non è più nella roadmap.",
-      "validation_error": "Qualcosa nel modulo non è valido."
+      "validation_error": "Qualcosa nel modulo non è valido.",
+      "unknown_env": "La console non conosce questo ambiente.",
+      "stale_document": "Qualcuno ha salvato questo documento dopo che l'hai aperto."
     },
     "age": {
       "now": "adesso",
@@ -365,6 +367,13 @@
       "organisations": "Organizzazioni",
       "widgets": {
         "pending": "{stand} dallo stand · {organisations} organizzazioni"
+      },
+      "elsewhere": {
+        "pending": "In attesa di una decisione",
+        "waiting": "Candidature in attesa",
+        "fromStand": "Di queste, chieste allo stand",
+        "organisations": "Richieste di organizzazioni in attesa",
+        "decision": "Decisione: {decision}"
       }
     },
     "moderation": {
@@ -375,6 +384,13 @@
       "fair": "Lo stand",
       "widgets": {
         "queue": "{media} media · {protocols} protocolli · {stand} allo stand"
+      },
+      "elsewhere": {
+        "queue": "Coda di revisione",
+        "review": "In attesa di revisione",
+        "media": "Media",
+        "protocols": "Protocolli",
+        "stand": "In attesa allo stand"
       }
     },
     "statistics": {
@@ -460,6 +476,18 @@
         "sessions": "Sessioni finite per settimana",
         "active": "Persone attive per settimana"
       }
+    },
+    "env": {
+      "switch": "Ambiente",
+      "name": {
+        "dev": "Dev",
+        "beta": "Beta",
+        "prod": "Prod"
+      },
+      "unavailable": "Questa console non ha una connessione in lettura a questo ambiente.",
+      "readingHome": "L'ambiente di casa della console: qui leggi e agisci.",
+      "readingOther": "Solo lettura: questa pagina legge il database di questo ambiente. Le azioni restano su {home}.",
+      "actionsElsewhere": "Stai leggendo {env}. Le decisioni e la bacheca agiscono solo sull'ambiente di casa della console ({home}), quindi qui non ci sono; per agire su {env}, usa le pagine admin del prodotto in quell'ambiente."
     }
   },
   "admin": {

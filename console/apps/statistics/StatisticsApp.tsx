@@ -15,6 +15,7 @@ import { Bars } from "@console/components/Charts";
 import { Sections } from "@console/components/Sections";
 import { SnapshotPanel } from "@console/components/SnapshotPanel";
 import { useRefresh } from "@console/components/data";
+import { useOps, useOpsEnv } from "@console/components/env";
 import { useErrorText } from "@console/components/useErrorText";
 import { ops } from "@console/lib/client";
 import type { AppPageProps } from "@console/lib/manifest";
@@ -435,9 +436,12 @@ export function StatisticsApp({ semver }: AppPageProps) {
   const [cohort, setCohort] = useState("");
   // The cohort list reads the product: only once someone opens the picker.
   const [wantCohorts, setWantCohorts] = useState(false);
+  // Cohorts are the product's, so they come from the environment being read.
+  const envOps = useOps();
+  const { cacheKey } = useOpsEnv();
   const cohorts = useQuery({
-    queryKey: ["stats-cohorts"],
-    queryFn: () => ops.get<Cohort[]>("stats/cohorts"),
+    queryKey: ["stats-cohorts", cacheKey],
+    queryFn: () => envOps.get<Cohort[]>("stats/cohorts"),
     enabled: wantCohorts,
   });
   const params: Params = cohort

@@ -16,7 +16,8 @@ import { Age } from "@console/components/Age";
 import { SnapshotPanel } from "@console/components/SnapshotPanel";
 import { useErrorText } from "@console/components/useErrorText";
 import { useSnapshot } from "@console/components/data";
-import { type Schemas, ops, query } from "@console/lib/client";
+import { useOps } from "@console/components/env";
+import { type Schemas, query } from "@console/lib/client";
 import type { AppPageProps } from "@console/lib/manifest";
 import {
   type Container,
@@ -445,9 +446,11 @@ function Logs({
   );
   const [tail, setTail] = useState(200);
   const [q, setQ] = useState("");
+  // The cluster of the environment being read (OPS-0005), once its Role exists there.
+  const envOps = useOps();
   const read = useMutation({
     mutationFn: (target: LogTarget) =>
-      ops.get<LogOut>(
+      envOps.get<LogOut>(
         `health/logs${query({
           pod: target.pod,
           container: target.container,
