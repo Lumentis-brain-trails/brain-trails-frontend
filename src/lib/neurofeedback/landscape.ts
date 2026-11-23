@@ -25,7 +25,12 @@
  *
  * After that it is the band block again, whichever the reward: a baseline at the neutral level whose clean updates set the threshold (or a
  * fixed one), in target when the closeness is above it, the picture's level ramped and
- * its luminance rate-limited (`picture.ts`, H4).
+ * its luminance rate-limited (`picture.ts`, H4). Under `direction` the baseline hears
+ * only the windows whose direction was read (a still step far away scores the
+ * closeness, about 0, and would drag the threshold down until moving away paid), and
+ * its threshold is at least `MIN_DIRECTION_THRESHOLD`, sideways. A step is never
+ * measured across a gated window or missing windows: the position before it is
+ * forgotten.
  *
  * The gate: a window during which the EEG went over the block's artefact limits is
  * held, as a gated band update is. The browser has the raw signal the window was made
@@ -66,6 +71,11 @@ export const MAP_SMOOTH = 4;
 
 /** A baseline-set threshold is never below this closeness: "anywhere" is no target. */
 export const MIN_THRESHOLD = 0.05;
+/**
+ * Under `direction`, a baseline-set threshold is never below sideways (cos 0): only
+ * heading towards the target is rewarded, never drifting past it or away.
+ */
+export const MIN_DIRECTION_THRESHOLD = 0.5;
 /** ...nor above this one: a target nobody can stay in teaches nothing. */
 export const MAX_THRESHOLD = 0.9;
 
@@ -133,15 +143,21 @@ export interface RewardValue {
    * (the closeness reward, no previous position, standing still, on the target).
    */
   cos: number | null;
+  /**
+   * Whether the direction was read: a step's cosine, or being on the target. False
+   * when the closeness stood in (no previous position, standing still) and under the
+   * closeness reward. Under `direction` only read values feed the baseline.
+   */
+  read: boolean;
 }
 
-/** The target nearest to `(x, y)`. */
+/** The target nearest to `(x, y)`; undefined without targets. */
 function nearest(
   x: number,
   y: number,
   points: readonly (readonly number[])[]
-): readonly number[] {
-  let best = points[0];
+): readonly number[] | undefined {
+  let best: readonly number[] | undefined = points[0];
   let bestD = Infinity;
   for (const p of points) {
     const d = Math.hypot(x - p[0], y - p[1]);
@@ -156,14 +172,16 @@ function nearest(
 /**
  * The cosine between the step `from -> to` and the spring's pull at `from`,
  * `K (a - from)`, for the target `a` nearest to `from`; null when either vector is
- * zero.
+ * zero, or there is no target.
  */
 export function directionCos(
   from: Point,
   to: Point,
   targets: Pick<LandscapeTargets, "points" | "spring">
 ): number | null {
-  const [ax, ay] = nearest(from.x, from.y, targets.points);
+  const target = nearest(from.x, from.y, targets.points);
+  if (!target) return null;
+  const [ax, ay] = target;
   const [[k11, k12], [k21, k22]] = targets.spring ?? IDENTITY_SPRING;
   const ux = ax - from.x;
   const uy = ay - from.y;
@@ -196,10 +214,11 @@ export function rewardAt(
   const near = closeness(at.x, at.y, targets);
   const base = { closeness: near.closeness, distance: near.distance };
   if (reward === "closeness")
-    return { ...base, value: near.closeness, cos: null };
+    return { ...base, value: near.closeness, cos: null, read: false };
   let direction = near.closeness;
   let cos: number | null = null;
-  if (near.distance < ON_TARGET_SHARE * targets.radius) direction = 1;
+  const onTarget = near.distance < ON_TARGET_SHARE * targets.radius;
+  if (onTarget) direction = 1;
   else if (
     previous &&
     Math.hypot(at.x - previous.x, at.y - previous.y) >=
@@ -208,12 +227,14 @@ export function rewardAt(
     cos = directionCos(previous, at, targets);
     if (cos !== null) direction = (1 + cos) / 2;
   }
-  if (reward === "direction") return { ...base, value: direction, cos };
+  const read = onTarget || cos !== null;
+  if (reward === "direction") return { ...base, value: direction, cos, read };
   const alpha = 1 - near.closeness;
   return {
     ...base,
     value: alpha * direction + (1 - alpha) * near.closeness,
     cos,
+    read,
   };
 }
 
@@ -305,7 +326,10 @@ export class LandscapeEngine {
   private readonly picture: Picture;
   private readonly gate: EegGate;
   private readonly recent: { x: number; y: number }[] = [];
-  /** The averaged position of the last clean window: where the next step starts. */
+  /**
+   * The averaged position of the last clean window: where the next step starts. Null
+   * after a gated window or a gap in the windows, so no step is measured across one.
+   */
   private previous: Point | null = null;
   private threshold: number | null = null;
   private phase: Phase;
@@ -314,6 +338,8 @@ export class LandscapeEngine {
   private lastArrival: number | null = null;
   private baselineEnd: number;
   private baselineCount = 0;
+  /** Baseline windows under `direction` whose direction could not be read. */
+  private baselineUnread = 0;
   private baselineValues: number[] = [];
   private extended = false;
   private trainingEnd: number | null = null;
@@ -369,6 +395,9 @@ export class LandscapeEngine {
       }
     }
     this.firstWindow ??= point.i;
+    // missing windows: the next step would be measured across them
+    if (this.lastWindow !== null && point.i - this.lastWindow > 1)
+      this.previous = null;
     const windowsDt =
       this.lastWindow === null ? STEP_S : (point.i - this.lastWindow) * STEP_S;
     this.lastWindow = point.i;
@@ -395,7 +424,9 @@ export class LandscapeEngine {
     let cos: number | null = null;
     let at: { x: number; y: number } | null = null;
     let distance: number | null = null;
-    if (gated === null) {
+    let unread = false;
+    if (gated !== null) this.previous = null;
+    else {
       value = closeness(point.x, point.y, this.targets).closeness;
       this.recent.push({ x: point.x, y: point.y });
       if (this.recent.length > MAP_SMOOTH) this.recent.shift();
@@ -409,13 +440,17 @@ export class LandscapeEngine {
       near = r.closeness;
       cos = r.cos;
       distance = r.distance;
+      // a still step far away scores the closeness (~0): it says nothing of where
+      // the person heads, and would drag the direction's threshold down
+      unread = this.targets.reward === "direction" && !r.read;
     }
 
     const phase = this.phase;
     let inTarget: boolean | null = null;
     if (phase === "baseline") {
       this.baselineCount += 1;
-      if (smoothed !== null) this.baselineValues.push(smoothed);
+      if (unread) this.baselineUnread += 1;
+      else if (smoothed !== null) this.baselineValues.push(smoothed);
       this.picture.step("neutral", dt);
     } else if (smoothed !== null && this.threshold !== null) {
       inTarget = smoothed > this.threshold;
@@ -475,8 +510,11 @@ export class LandscapeEngine {
   private closeBaseline(window: number): LandscapeOutput[] {
     const updates = this.baselineCount;
     const clean = this.baselineValues.length;
+    // an unread direction is neither clean nor gated: it does not count against the
+    // share, only towards nothing
     const usable =
-      clean >= BASELINE_MIN_UPDATES && clean >= BASELINE_MIN_CLEAN * updates;
+      clean >= BASELINE_MIN_UPDATES &&
+      clean >= BASELINE_MIN_CLEAN * (updates - this.baselineUnread);
     if (!usable && this.config.threshold.mode === "baseline") {
       if (!this.extended) {
         this.extended = true;
@@ -500,7 +538,11 @@ export class LandscapeEngine {
         this.baselineValues,
         1 - this.config.threshold.target_fraction
       );
-      this.threshold = Math.min(MAX_THRESHOLD, Math.max(MIN_THRESHOLD, q));
+      const floor =
+        this.targets.reward === "direction"
+          ? MIN_DIRECTION_THRESHOLD
+          : MIN_THRESHOLD;
+      this.threshold = Math.min(MAX_THRESHOLD, Math.max(floor, q));
       out.push({
         type: "threshold",
         threshold: this.threshold,

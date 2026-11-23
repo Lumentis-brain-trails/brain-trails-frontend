@@ -5,6 +5,7 @@ import {
   LandscapeEngine,
   type LandscapeOutput,
   type LandscapePoint,
+  MIN_DIRECTION_THRESHOLD,
   MIN_THRESHOLD,
   ON_TARGET_SHARE,
   STILL_SHARE,
@@ -322,6 +323,7 @@ describe("the direction reward", () => {
       closeness: 0.5,
       distance: 1,
       cos: null,
+      read: false,
     });
   });
 });
@@ -428,17 +430,98 @@ test("the direction rewards approaching from far away, where the closeness gives
   expect(blended.at(-1)!.smoothed).toBeGreaterThan(0.99);
 });
 
+/** Around a circle of three radii, ten radii from the target: steps every way. */
+function circling(i: number, from = 0) {
+  return at(from + i, 10 + 3 * Math.cos(i), 3 * Math.sin(i));
+}
+
 test("the direction's baseline sets its threshold from the direction values", () => {
   const engine = new LandscapeEngine(
-    config({ targets: { ...TARGETS, reward: "direction" }, baseline_s: 10 })
+    config({ targets: { ...TARGETS, reward: "direction" }, baseline_s: 20 })
   );
   const out: LandscapeOutput[] = [];
-  // wandering back and forth, far away: directions of 0 and 1 by turns
-  for (let i = 0; i < 10; i++)
-    out.push(...engine.push(at(i, 10 + 4 * (i % 2))));
+  for (let i = 0; i < 20; i++) out.push(...engine.push(circling(i)));
   const threshold = out.find((o) => o.type === "threshold");
   expect(threshold).toMatchObject({ cause: "baseline" });
-  const values = updates(out).map((u) => u.smoothed!);
+  const read = updates(out).filter((u) => u.cos !== null);
+  const values = read.map((u) => u.smoothed!);
   expect(Math.max(...values)).toBeGreaterThan(0.5);
   expect(Math.min(...values)).toBeLessThan(0.5);
+});
+
+test("still steps far away do not feed the direction's baseline, nor lower it below sideways", () => {
+  const engine = new LandscapeEngine(
+    config({ targets: { ...TARGETS, reward: "direction" }, baseline_s: 30 })
+  );
+  const out: LandscapeOutput[] = [];
+  // ten seconds standing still far away (closeness ~0), then moving every way
+  for (let i = 0; i < 10; i++) out.push(...engine.push(at(i, 20)));
+  for (let i = 0; i < 20; i++) out.push(...engine.push(circling(i, 10)));
+  const baseline = updates(out);
+  const read = baseline.filter((u) => u.cos !== null).length;
+  expect(read).toBeGreaterThanOrEqual(10);
+  expect(read).toBeLessThan(baseline.length);
+  expect(out.find((o) => o.type === "baseline_end")).toMatchObject({
+    updates: 30,
+    clean: read,
+    extended: false,
+  });
+  const threshold = out.find((o) => o.type === "threshold");
+  expect(threshold).toMatchObject({ cause: "baseline" });
+  expect(engine.currentThreshold).toBeGreaterThanOrEqual(
+    MIN_DIRECTION_THRESHOLD
+  );
+  // walking away, or standing still far away, is never rewarded
+  const away = Array.from({ length: 6 }, (_, k) => at(30 + k, 20 + k)).flatMap(
+    (w) => updates(engine.push(w))
+  );
+  const still = Array.from({ length: 6 }, (_, k) => at(36 + k, 25)).flatMap(
+    (w) => updates(engine.push(w))
+  );
+  expect([...away, ...still].every((u) => u.inTarget === false)).toBe(true);
+});
+
+test("a direction baseline spent walking away is floored at sideways", () => {
+  const engine = new LandscapeEngine(
+    config({ targets: { ...TARGETS, reward: "direction" }, baseline_s: 12 })
+  );
+  const out: LandscapeOutput[] = [];
+  for (let i = 0; i < 12; i++) out.push(...engine.push(at(i, 10 + i)));
+  expect(out.find((o) => o.type === "threshold")).toMatchObject({
+    threshold: MIN_DIRECTION_THRESHOLD,
+    cause: "baseline",
+  });
+  // the closeness keeps its own floor
+  const near = new LandscapeEngine(config({ baseline_s: 12 }));
+  const closer: LandscapeOutput[] = [];
+  for (let i = 0; i < 12; i++) closer.push(...near.push(at(i, 10 + i)));
+  expect(closer.find((o) => o.type === "threshold")).toMatchObject({
+    threshold: MIN_THRESHOLD,
+  });
+});
+
+test("no step is measured across a gated window or missing windows", () => {
+  const engine = new LandscapeEngine(
+    config({
+      targets: { ...TARGETS, reward: "direction" },
+      baseline_s: 0,
+      threshold: { mode: "fixed", value: 0.6 },
+    })
+  );
+  const cos = (w: LandscapePoint) => updates(engine.push(w))[0].cos;
+  expect(cos(at(0, 20))).toBeNull(); // nothing before it
+  expect(cos(at(1, 19))).toBeCloseTo(1);
+  expect(cos(at(2, 18, 0, { ownMap: false }))).toBeNull(); // gated
+  expect(cos(at(3, 17))).toBeNull(); // the step would cross the gated second
+  expect(cos(at(4, 16))).toBeCloseTo(1);
+  expect(cos(at(7, 15))).toBeNull(); // windows 5 and 6 never came
+  expect(cos(at(8, 14))).toBeCloseTo(1);
+});
+
+test("no targets give no direction, and do not throw", () => {
+  const none = { points: [] as number[][], radius: 1, spring: undefined };
+  expect(directionCos({ x: 1, y: 0 }, { x: 0, y: 0 }, none)).toBeNull();
+  const r = rewardAt("direction", { x: 2, y: 0 }, { x: 1, y: 0 }, none);
+  expect(r).toMatchObject({ cos: null, read: false, closeness: 0 });
+  expect(r.value).toBe(0);
 });
