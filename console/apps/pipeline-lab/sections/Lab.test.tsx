@@ -8,11 +8,29 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { EnvProvider } from "@console/components/env";
 import { IntlEn, IntlIt } from "@console/i18n/testing";
-import type { LabOptions, LabResult, LabRun } from "@console/lib/client";
+import {
+  type LabOptions,
+  type LabResult,
+  type LabRun,
+  OpsRequestError,
+} from "@console/lib/client";
+import { PipelineLabApp } from "../PipelineLabApp";
 import { defaultForm } from "../lib/lab";
 import { ExperimentForm } from "./ExperimentForm";
 import { RunView } from "./RunView";
+
+const nav = vi.hoisted(() => ({
+  push: vi.fn(),
+  replace: vi.fn(),
+  search: "",
+}));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: nav.push, replace: nav.replace }),
+  usePathname: () => "/apps/pipeline-lab",
+  useSearchParams: () => new URLSearchParams(nav.search),
+}));
 
 const get = vi.fn();
 const post = vi.fn();
@@ -368,4 +386,84 @@ test("an environment the lab cannot read says so instead of the form", async () 
   expect(screen.queryByRole("button", { name: "Run the experiment" })).toBe(
     null
   );
+});
+
+const MISMATCH =
+  "This run read another environment. Switch back to it to open the run.";
+
+test("a run of another environment shows nothing of it", async () => {
+  get.mockRejectedValue(
+    new OpsRequestError(422, "env_mismatch", "this run read beta")
+  );
+  renderIn(view());
+  expect(await screen.findByText(MISMATCH)).toBeTruthy();
+  expect(screen.queryByText("Rest vs task")).toBeNull();
+  cleanup();
+  // A run read under one environment is not drawn under another.
+  get.mockResolvedValue(run({ env: "beta" }));
+  renderIn(
+    <EnvProvider env="prod" home="dev">
+      {view()}
+    </EnvProvider>
+  );
+  expect(await screen.findByText(MISMATCH)).toBeTruthy();
+  expect(screen.queryByText("Rest vs task")).toBeNull();
+});
+
+test("a failed read stops the polling and shows above the last run", async () => {
+  vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+  const replies: (() => Promise<LabRun>)[] = [
+    () => Promise.resolve(run({ status: "running", result: null })),
+    () => Promise.reject(new OpsRequestError(404, "no_run", "no such run")),
+  ];
+  get.mockImplementation(() =>
+    (replies.shift() ?? (() => Promise.resolve(run())))()
+  );
+  renderIn(view());
+  expect(
+    await screen.findByText(
+      "Running. This page reads the run again every 3 seconds."
+    )
+  ).toBeTruthy();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(3100);
+  });
+  expect(await screen.findByText("That run does not exist.")).toBeTruthy();
+  expect(screen.getByText("Rest vs task")).toBeTruthy();
+  expect(get).toHaveBeenCalledTimes(2);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(10_000);
+  });
+  expect(get).toHaveBeenCalledTimes(2);
+});
+
+test("switching the environment drops the open run from the address", async () => {
+  nav.search = `env=dev&run=${RUN_ID}`;
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const tree = (env: "dev" | "prod") => (
+    <IntlEn>
+      <QueryClientProvider client={client}>
+        <EnvProvider env={env} home="dev">
+          <PipelineLabApp semver="1.0.0" />
+        </EnvProvider>
+      </QueryClientProvider>
+    </IntlEn>
+  );
+  const { rerender } = render(tree("dev"));
+  expect(await screen.findByText("A against B: rest / task")).toBeTruthy();
+  expect(nav.replace).not.toHaveBeenCalled();
+  // The switch writes the new env to the address first; the run is still there.
+  nav.search = `env=prod&run=${RUN_ID}`;
+  rerender(tree("prod"));
+  await waitFor(() =>
+    expect(nav.replace).toHaveBeenCalledWith("/apps/pipeline-lab?env=prod", {
+      scroll: false,
+    })
+  );
+  expect(nav.push).not.toHaveBeenCalled();
+  expect(await screen.findByText(MISMATCH)).toBeTruthy();
+  expect(screen.queryByText("A against B: rest / task")).toBeNull();
+  nav.search = "";
 });

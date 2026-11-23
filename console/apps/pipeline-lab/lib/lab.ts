@@ -237,9 +237,16 @@ export function isActive(status: LabRunStatus | undefined): boolean {
   return status === "queued" || status === "running";
 }
 
-/** react-query's `refetchInterval`: every 3 s while the run is unfinished, then never. */
-export function pollInterval(status: LabRunStatus | undefined): number | false {
-  return isActive(status) ? POLL_MS : false;
+/**
+ * react-query's `refetchInterval`: every 3 s while the run is unfinished, then never;
+ * never again once a read failed (`failed`: a 404, a 422, bt-ops down), so a broken
+ * page does not keep asking.
+ */
+export function pollInterval(
+  status: LabRunStatus | undefined,
+  failed = false
+): number | false {
+  return !failed && isActive(status) ? POLL_MS : false;
 }
 
 /** A stored run error (`<code>: <message>`) split; a bare text is a `failed`. */

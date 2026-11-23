@@ -768,6 +768,7 @@
         "queued": "In attesa del worker. Questa pagina rilegge l'esecuzione ogni 3 secondi.",
         "running": "In corso. Questa pagina rilegge l'esecuzione ogni 3 secondi.",
         "detail": "Dettaglio: {message}",
+        "envMismatch": "Questa esecuzione ha letto un altro ambiente. Torna a quello per aprirla.",
         "took": "Ci ha messo {seconds} s.",
         "errors": {
           "lab_unavailable": "Il laboratorio non ha potuto leggere questo ambiente: manca la chiave del bucket o il sale.",
@@ -814,7 +815,8 @@
         "fewPeople": "Meno di 10 persone: leggi questo punteggio come un indizio, non come un risultato.",
         "too_few_people": "Troppe poche persone per una validazione incrociata per persona (ne servono almeno 3).",
         "one_class": "Nei dati c'è solo uno tra A e B.",
-        "unscorable": "Nessuna partizione è valutabile: ogni partizione di test conteneva solo A o solo B."
+        "unscorable": "Nessuna partizione è valutabile: ogni partizione di test conteneva solo A o solo B.",
+        "sampleOnePerson": "Nessun punteggio: il campione di finestre ha tenuto una sola persona, quindi nessuna partizione poteva lasciarne fuori una."
       },
       "map": {
         "title": "Mappa ({method})",

@@ -189,6 +189,9 @@ describe("runs", () => {
     expect(pollInterval("done")).toBe(false);
     expect(pollInterval("failed")).toBe(false);
     expect(pollInterval(undefined)).toBe(false);
+    // a failed read stops the polling, unfinished or not
+    expect(pollInterval("running", true)).toBe(false);
+    expect(pollInterval("queued", false)).toBe(3000);
     expect(isActive("running")).toBe(true);
   });
 

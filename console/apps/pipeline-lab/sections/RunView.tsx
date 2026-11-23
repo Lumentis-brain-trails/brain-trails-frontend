@@ -11,13 +11,14 @@ import {
   Skeleton,
   Spinner,
 } from "@/components/ui";
-import { useOps } from "@console/components/env";
+import { useOps, useOpsEnv } from "@console/components/env";
 import { useErrorText } from "@console/components/useErrorText";
-import type {
-  LabExperiment,
-  LabMetric,
-  LabResult,
-  LabRun,
+import {
+  type LabExperiment,
+  type LabMetric,
+  type LabResult,
+  type LabRun,
+  OpsRequestError,
 } from "@console/lib/client";
 import {
   auc,
@@ -153,7 +154,11 @@ function Classifier({
         </p>
       )}
       {classifier.status !== "done" ? (
-        <p className="text-[14px] text-ink-2">{t(classifier.status)}</p>
+        <p className="text-[14px] text-ink-2">
+          {classifier.warnings?.includes("sample_one_person")
+            ? t("sampleOnePerson")
+            : t(classifier.status)}
+        </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {scores.map(({ key, score }) => (
@@ -356,10 +361,18 @@ export function ResultView({
   );
 }
 
+/** Whether bt-ops refused the run because it belongs to another environment. */
+function isEnvMismatch(error: unknown): boolean {
+  return error instanceof OpsRequestError && error.code === "env_mismatch";
+}
+
 /**
  * One run: its status while bt-ops works on it (read again every 3 s, and no more once
- * it is done or failed), then its result or what stopped it. "Run again" runs the same
- * experiment on today's data; "Edit a copy" brings it back into the form.
+ * it is done or failed, or once a read failed), then its result or what stopped it. A
+ * failed read shows its banner above what was last read. A run belongs to the
+ * environment it read: under another one nothing of it is shown (bt-ops answers 422
+ * `env_mismatch`). "Run again" runs the same experiment on today's data; "Edit a copy"
+ * brings it back into the form.
  */
 export function RunView({
   runId,
@@ -377,11 +390,13 @@ export function RunView({
   const format = useFormatter();
   const errorText = useErrorText();
   const envOps = useOps();
+  const { env, cacheKey } = useOpsEnv();
   const queryClient = useQueryClient();
   const run = useQuery({
-    queryKey: ["lab-run", runId],
+    queryKey: ["lab-run", cacheKey, runId],
     queryFn: () => envOps.get<LabRun>(`lab/runs/${runId}`),
-    refetchInterval: (query) => pollInterval(query.state.data?.status),
+    refetchInterval: (query) =>
+      pollInterval(query.state.data?.status, query.state.status === "error"),
   });
   const rerun = useMutation({
     mutationFn: () => envOps.post<LabRun>(`lab/runs/${runId}/rerun`),
@@ -400,18 +415,24 @@ export function RunView({
     </div>
   );
   if (run.isPending) return <Skeleton className="h-64" />;
-  if (run.isError)
+  const r = run.data;
+  const mismatch =
+    isEnvMismatch(run.error) ||
+    (r !== undefined && env !== null && r.env !== env);
+  if (mismatch || r === undefined)
     return (
       <div className="grid gap-4">
         {back}
-        <ErrorBanner message={errorText(run.error)} />
+        <ErrorBanner
+          message={mismatch ? t("run.envMismatch") : errorText(run.error)}
+        />
       </div>
     );
-  const r = run.data;
   const failure = runError(r.error);
   return (
     <div className="grid gap-4">
       {back}
+      {run.isError && <ErrorBanner message={errorText(run.error)} />}
       <Card className="grid gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="type-heading min-w-0 flex-1 truncate">{r.title}</h2>

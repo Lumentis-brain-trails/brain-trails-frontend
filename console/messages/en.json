@@ -768,6 +768,7 @@
         "queued": "Waiting for the worker. This page reads the run again every 3 seconds.",
         "running": "Running. This page reads the run again every 3 seconds.",
         "detail": "Detail: {message}",
+        "envMismatch": "This run read another environment. Switch back to it to open the run.",
         "took": "Took {seconds} s.",
         "errors": {
           "lab_unavailable": "The lab could not read this environment: its bucket key or salt is missing.",
@@ -814,7 +815,8 @@
         "fewPeople": "Fewer than 10 people: read this score as a hint, not a result.",
         "too_few_people": "Too few people to cross-validate by person (at least 3 are needed).",
         "one_class": "Only one of A and B is in the data.",
-        "unscorable": "No fold could be scored: each test fold held only one of A and B."
+        "unscorable": "No fold could be scored: each test fold held only one of A and B.",
+        "sampleOnePerson": "No score: the sample of windows kept one person, so no fold could leave someone out."
       },
       "map": {
         "title": "Map ({method})",

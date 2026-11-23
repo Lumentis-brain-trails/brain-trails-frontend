@@ -329,6 +329,10 @@ export interface paths {
          * Get Options
          * @description The filter and label values of the request's environment, from aggregate reads.
          *
+         *     Values are counted over research-consented recordings unless
+         *     `research_consent_only=false`, and a value held by fewer than three recordings is
+         *     not offered (`data.MIN_OPTION_RECORDINGS`).
+         *
          *     Raises:
          *         OpsError: 503 `read_unavailable`, 422 `unknown_env`.
          */
@@ -377,10 +381,10 @@ export interface paths {
         };
         /**
          * Get Run
-         * @description One run, with its result once it is `done`, whatever the switch shows.
+         * @description One run of the request's environment, with its result once it is `done`.
          *
          *     Raises:
-         *         OpsError: 404 `no_run`.
+         *         OpsError: 404 `no_run`; 422 `env_mismatch`, `unknown_env`.
          */
         get: operations["get_run_ops_v1_lab_runs__run_id__get"];
         put?: never;
@@ -402,12 +406,13 @@ export interface paths {
         put?: never;
         /**
          * Rerun
-         * @description Queue the same experiment again, on the environment the run read.
+         * @description Queue the same experiment again, on the environment the run read (the switch's).
          *
          *     The data may have changed since; the new run's `data_fingerprint` says whether it did.
          *
          *     Raises:
-         *         OpsError: 404 `no_run`; 503 `lab_unavailable`; 429 `lab_busy`.
+         *         OpsError: 404 `no_run`; 422 `env_mismatch`, `unknown_env`; 503
+         *             `lab_unavailable`; 429 `lab_busy`.
          */
         post: operations["rerun_ops_v1_lab_runs__run_id__rerun_post"];
         delete?: never;
@@ -1187,8 +1192,9 @@ export interface components {
          *     balanced across folds).
          *
          *     `status`: `done`; `too_few_people` (fewer than three people with labelled windows);
-         *     `one_class` (no window of A or none of B); `unscorable` (no test fold held both).
-         *     `warnings` are codes: `few_people` below ten people.
+         *     `one_class` (no window of A or none of B); `unscorable` (no test fold held both, or
+         *     the sample kept one person). `warnings` are codes: `few_people` below ten people,
+         *     `sample_one_person` when the windows' sample held one person only (no AUC).
          */
         ClassifierOut: {
             embeddings?: components["schemas"]["ScoreOut"] | null;
@@ -3248,7 +3254,9 @@ export interface operations {
     };
     get_options_ops_v1_lab_options_get: {
         parameters: {
-            query?: never;
+            query?: {
+                research_consent_only?: boolean;
+            };
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
@@ -3355,6 +3363,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path: {
                 run_id: string;
@@ -3389,6 +3398,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path: {
                 run_id: string;

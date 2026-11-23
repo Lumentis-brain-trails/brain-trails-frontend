@@ -2,8 +2,9 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Segmented, Skeleton } from "@/components/ui";
+import { useOpsEnv } from "@console/components/env";
 import type { AppPageProps } from "@console/lib/manifest";
 import { type LabForm, defaultForm, fromExperiment } from "./lib/lab";
 import { ExperimentForm } from "./sections/ExperimentForm";
@@ -20,7 +21,9 @@ function runParam(value: string | null): string | null {
 /**
  * The lab's screen: the experiment form or the run list, or one run (`?run=<id>`). The
  * run lives in the address, so a link to a result opens that result; going back
- * returns to the list. "Edit a copy" brings a run's experiment back into the form.
+ * returns to the list. "Edit a copy" brings a run's experiment back into the form. A
+ * run belongs to the environment it read, so switching the environment drops it from
+ * the address (replacing the entry) and shows that environment's runs.
  */
 function Lab() {
   const t = useTranslations("console.pipelineLab");
@@ -28,6 +31,7 @@ function Lab() {
   const pathname = usePathname();
   const search = useSearchParams();
   const runId = runParam(search.get("run"));
+  const { env } = useOpsEnv();
   const [tab, setTab] = useState<Tab>("new");
   // A new key remounts the form on its new starting values.
   const [start, setStart] = useState<{ key: number; form: LabForm }>({
@@ -35,13 +39,31 @@ function Lab() {
     form: defaultForm(),
   });
 
-  const open = (id: string | null) => {
-    const params = new URLSearchParams(search.toString());
-    params.delete("run");
-    if (id) params.set("run", id);
-    const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  };
+  const open = useCallback(
+    (id: string | null, how: "push" | "replace" = "push") => {
+      const params = new URLSearchParams(search.toString());
+      params.delete("run");
+      if (id) params.set("run", id);
+      const query = params.toString();
+      router[how](query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [router, pathname, search]
+  );
+
+  // A switch away from an open run lands on the new environment's run list.
+  const [tabEnv, setTabEnv] = useState(env);
+  if (tabEnv !== env) {
+    setTabEnv(env);
+    if (runId) setTab("runs");
+  }
+  // The environment comes from the address too, so by the time it changes `search`
+  // already holds the new `env`: dropping `run` keeps it.
+  const seenEnv = useRef(env);
+  useEffect(() => {
+    if (seenEnv.current === env) return;
+    seenEnv.current = env;
+    if (runId) open(null, "replace");
+  }, [env, runId, open]);
 
   if (runId) {
     return (
