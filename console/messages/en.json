@@ -46,7 +46,10 @@
       "unknown_env": "The console does not know that environment.",
       "stale_document": "Someone saved this document after you opened it.",
       "env_mismatch": "That link names one environment and the page reads another. Open it again from the app.",
-      "token_not_allowed": "An access token cannot make tokens. Sign in to the console to make one."
+      "token_not_allowed": "An access token cannot make tokens. Sign in to the console to make one.",
+      "lab_unavailable": "The lab cannot read this environment yet: its bucket key or salt is missing.",
+      "lab_busy": "Too many runs are waiting. Try again when one is done.",
+      "no_run": "That run does not exist."
     },
     "age": {
       "now": "just now",
@@ -635,6 +638,211 @@
       },
       "widgets": {
         "drafts": "{total, plural, one {of # document} other {of # documents}}"
+      }
+    },
+    "pipelineLab": {
+      "intro": "Experiments on the EEG window embeddings already stored: choose the data and the question, then read the table and the 2-D map. Results hold pseudonymised person keys, never an id, an email or a name, and every run is audited with its environment.",
+      "sections": "Sections",
+      "new": "New experiment",
+      "runs": "Runs",
+      "unavailableTitle": "The lab cannot run on {env}",
+      "unavailableText": "It needs read access to this environment's bucket and a salt for person keys (LAB_S3_* and LAB_SALT in bt-ops-secrets).",
+      "overview": "{env}: {recordings, plural, one {# analysed recording} other {# analysed recordings}} of {people, plural, one {# person} other {# people}}, {research} with research consent.",
+      "span": "From {first} to {last}.",
+      "any": "Any",
+      "choose": "Choose…",
+      "option": "{label} ({recordings})",
+      "standard": "Standard",
+      "phase2": "Phase 2 adds options here.",
+      "title": "Title",
+      "titlePlaceholder": "Rest against task, research data",
+      "question": {
+        "title": "Question",
+        "kind": "Kind",
+        "explore": "Explore the map",
+        "ab": "A against B",
+        "exploreHint": "The label only colours the map and splits the table.",
+        "abHint": "A classifier tells A from B, cross-validated by person: nobody is in both the training and the test of a fold.",
+        "label": "Label windows by",
+        "labelNone": "Nothing (one colour)",
+        "contextItem": "Questionnaire item",
+        "a": "A",
+        "b": "B",
+        "source": {
+          "block_kind": "Block kind",
+          "block_label": "Block",
+          "trial": "Trial",
+          "task_label": "Task of the recording",
+          "context": "Questionnaire answer"
+        }
+      },
+      "data": {
+        "title": "Data",
+        "protocol": "Protocol",
+        "blockKind": "Only windows in blocks of kind",
+        "blockLabel": "Only windows in the block",
+        "ageBand": "Age",
+        "sex": "Sex at birth",
+        "device": "Device",
+        "dateFrom": "Recorded from",
+        "dateTo": "Recorded until",
+        "minQuality": "Quality at least",
+        "quality": {
+          "usable": "Usable",
+          "good": "Good"
+        },
+        "researchOnly": "Only people who agreed to research use",
+        "researchHint": "On by default: a lab experiment is research (V3-0011).",
+        "maxRecordings": "Recordings, at most",
+        "maxHint": "Taken in turn from each person, up to {max}."
+      },
+      "preprocessing": {
+        "title": "Preprocessing",
+        "text": "Notch, band-pass filter and bridging, as every recording gets them."
+      },
+      "artefacts": {
+        "title": "Artefact removal",
+        "text": "ASR cleaning and the per-window artefact flags of the stored analysis."
+      },
+      "encoding": {
+        "title": "Encoding",
+        "text": "The stored REVE embeddings, 512 numbers per window."
+      },
+      "reduction": {
+        "title": "Dimensionality reduction",
+        "method": "2-D view",
+        "pca": "PCA",
+        "tsne": "t-SNE",
+        "umap": "UMAP",
+        "umapNote": "UMAP is not available: it is not a dependency of the service.",
+        "perplexity": "Perplexity",
+        "tsneNote": "t-SNE draws at most {points} windows and cannot place new ones, so its A/B score is transductive.",
+        "pcaNote": "The NeuroMetrics run on the session's own PCA reduction; this choice changes only the 2-D view."
+      },
+      "graph": {
+        "title": "Graph (Ball Mapper)",
+        "eps": "Radius",
+        "epsHint": "Empty: chosen for a cover of a legible size (at most {nodes} nodes). In the units of the reduced space."
+      },
+      "metrics": {
+        "title": "NeuroMetrics",
+        "entropy": "Entropy",
+        "recurrence": "Recurrence",
+        "diameter": "Diameter",
+        "stretching": "Stretching",
+        "modularity": "Modularity"
+      },
+      "caps": "A run reads at most {windows} windows ({perPerson} per person) and stops after {minutes} minutes.",
+      "start": "Run the experiment",
+      "starting": "Starting…",
+      "problems": {
+        "title": "Give the experiment a title.",
+        "label": "An A/B question needs a label source.",
+        "contextItem": "Choose the questionnaire item.",
+        "values": "Choose A and B.",
+        "sameValues": "A and B must differ.",
+        "dates": "The start date is after the end date.",
+        "eps": "The radius is a positive number.",
+        "perplexity": "Perplexity is between 5 and 100.",
+        "maxRecordings": "Between 1 and {max} recordings.",
+        "metrics": "Choose at least one metric."
+      },
+      "status": {
+        "queued": "Queued",
+        "running": "Running",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "list": {
+        "emptyTitle": "No runs on {env} yet",
+        "emptyText": "The experiments run on this environment land here.",
+        "line": "{when} by {who}",
+        "someone": "someone",
+        "rerun": "rerun"
+      },
+      "run": {
+        "back": "All runs",
+        "rerun": "Run again",
+        "copy": "Edit a copy",
+        "config": "Configuration {hash}",
+        "queued": "Waiting for the worker. This page reads the run again every 3 seconds.",
+        "running": "Running. This page reads the run again every 3 seconds.",
+        "detail": "Detail: {message}",
+        "took": "Took {seconds} s.",
+        "errors": {
+          "lab_unavailable": "The lab could not read this environment: its bucket key or salt is missing.",
+          "no_recordings": "No recording matches these filters.",
+          "no_windows": "The chosen recordings have no windows to read.",
+          "too_few_windows": "Too few windows for a map. Widen the filters.",
+          "eps_too_small": "This radius makes too many balls. Choose a larger one, or leave it empty.",
+          "time_limit": "The run took longer than its time limit. Narrow the data.",
+          "interrupted": "bt-ops restarted while the run was running. Run it again.",
+          "failed": "The run failed. The service's log has the details."
+        }
+      },
+      "summary": {
+        "title": "Data",
+        "recordings": "Recordings",
+        "people": "People",
+        "windows": "Windows",
+        "embedder": "Embedder",
+        "dims": "Dimensions",
+        "dimsValue": "{dim} → {reduced}",
+        "dates": "Recorded",
+        "fingerprint": "Data fingerprint",
+        "skipped": "Left out",
+        "skip": {
+          "other_embedder": "another embedder",
+          "no_windows": "no windows",
+          "no_labelled_windows": "no windows with A or B",
+          "window_cap": "over the window cap",
+          "person_cap": "over the per-person cap",
+          "unreadable": "unreadable embeddings"
+        },
+        "skipLine": "{reason}: {n}",
+        "labels": "Labels",
+        "labelLine": "{windows} windows, {people, plural, one {# person} other {# people}}"
+      },
+      "classifier": {
+        "title": "A against B",
+        "auc": "AUC",
+        "onEmbeddings": "On the embeddings",
+        "onView": "On the 2-D view",
+        "transductive": "Transductive: the map was drawn with every window, test people included.",
+        "folds": "{n} folds by person",
+        "people": "{n, plural, one {# person} other {# people}} ({a} with A, {b} with B), {windows} windows.",
+        "fewPeople": "Fewer than 10 people: read this score as a hint, not a result.",
+        "too_few_people": "Too few people to cross-validate by person (at least 3 are needed).",
+        "one_class": "Only one of A and B is in the data.",
+        "unscorable": "No fold could be scored: each test fold held only one of A and B."
+      },
+      "map": {
+        "title": "Map ({method})",
+        "sample": "{shown} of {total} windows drawn.",
+        "aria": "Windows on the 2-D map, coloured by label",
+        "noLabel": "no label",
+        "oneColour": "One colour: the question names no label."
+      },
+      "graphView": {
+        "title": "Graph",
+        "line": "Radius {eps} ({how}) · {nodes} nodes · {edges} edges · {components} components · betti-1 {betti}",
+        "auto": "chosen",
+        "manual": "set",
+        "aria": "The Ball Mapper graph, each ball coloured by its most frequent label"
+      },
+      "table": {
+        "title": "Per person",
+        "person": "Person",
+        "label": "Label",
+        "all": "all",
+        "windows": "Windows",
+        "regions": "Regions",
+        "empty": "No person had enough windows to measure."
+      },
+      "byLabel": {
+        "title": "By label",
+        "meanSd": "{mean} ± {sd}",
+        "people": "People"
       }
     }
   },

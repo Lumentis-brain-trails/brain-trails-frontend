@@ -32,6 +32,9 @@ const KNOWN = [
   "stale_document",
   "env_mismatch",
   "token_not_allowed",
+  "lab_unavailable",
+  "lab_busy",
+  "no_run",
 ] as const;
 
 type Known = (typeof KNOWN)[number];

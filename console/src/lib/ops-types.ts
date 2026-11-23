@@ -318,6 +318,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/lab/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Options
+         * @description The filter and label values of the request's environment, from aggregate reads.
+         *
+         *     Raises:
+         *         OpsError: 503 `read_unavailable`, 422 `unknown_env`.
+         */
+        get: operations["get_options_ops_v1_lab_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runs
+         * @description The request's environment's runs, newest first (at most 100), without results.
+         */
+        get: operations["list_runs_ops_v1_lab_runs_get"];
+        put?: never;
+        /**
+         * Create Run
+         * @description Queue an experiment on the request's environment; it runs in the background.
+         *
+         *     Raises:
+         *         OpsError: 503 `lab_unavailable` / `read_unavailable`; 429 `lab_busy`; 422.
+         */
+        post: operations["create_run_ops_v1_lab_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Run
+         * @description One run, with its result once it is `done`, whatever the switch shows.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_run`.
+         */
+        get: operations["get_run_ops_v1_lab_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/runs/{run_id}/rerun": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rerun
+         * @description Queue the same experiment again, on the environment the run read.
+         *
+         *     The data may have changed since; the new run's `data_fingerprint` says whether it did.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_run`; 503 `lab_unavailable`; 429 `lab_busy`.
+         */
+        post: operations["rerun_ops_v1_lab_runs__run_id__rerun_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/me": {
         parameters: {
             query?: never;
@@ -1064,6 +1162,56 @@ export interface components {
             status: string;
         };
         /**
+         * CapsOut
+         * @description What one run may read and draw.
+         */
+        CapsOut: {
+            /** Max Nodes */
+            max_nodes: number;
+            /** Max Recordings */
+            max_recordings: number;
+            /** Max Windows */
+            max_windows: number;
+            /** Max Windows Per Person */
+            max_windows_per_person: number;
+            /** Points */
+            points: number;
+            /** Time Limit S */
+            time_limit_s: number;
+        };
+        /**
+         * ClassifierOut
+         * @description A against B by logistic regression, cross-validated by person.
+         *
+         *     Folds leave whole people out (`StratifiedGroupKFold`: grouped by person, A and B
+         *     balanced across folds).
+         *
+         *     `status`: `done`; `too_few_people` (fewer than three people with labelled windows);
+         *     `one_class` (no window of A or none of B); `unscorable` (no test fold held both).
+         *     `warnings` are codes: `few_people` below ten people.
+         */
+        ClassifierOut: {
+            embeddings?: components["schemas"]["ScoreOut"] | null;
+            /** N People */
+            n_people: number;
+            /** N People A */
+            n_people_a: number;
+            /** N People B */
+            n_people_b: number;
+            /** N Splits */
+            n_splits: number;
+            /** N Windows */
+            n_windows: number;
+            reduction?: components["schemas"]["ScoreOut"] | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "too_few_people" | "one_class" | "unscorable";
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
          * CodeIn
          * @description A six-digit code from the authenticator app.
          */
@@ -1082,6 +1230,16 @@ export interface components {
             name: string;
             /** Profile */
             profile: string | null;
+        };
+        /**
+         * ContextItemOut
+         * @description One questionnaire item and its most frequent answers.
+         */
+        ContextItemOut: {
+            /** Key */
+            key: string;
+            /** Values */
+            values: components["schemas"]["OptionOut"][];
         };
         /**
          * DocumentIn
@@ -1299,6 +1457,44 @@ export interface components {
             home: "dev" | "beta" | "prod";
         };
         /**
+         * ExperimentIn
+         * @description One experiment, the pipeline's steps in order.
+         *
+         *     `preprocessing`, `artefacts` and `encoding` are `standard` in phase 1: today's
+         *     cleaner, its artefact handling, and the REVE window embeddings the product stored.
+         */
+        ExperimentIn: {
+            /**
+             * Artefacts
+             * @default standard
+             * @constant
+             */
+            artefacts: "standard";
+            /**
+             * Encoding
+             * @default standard
+             * @constant
+             */
+            encoding: "standard";
+            filters?: components["schemas"]["FiltersIn"];
+            graph?: components["schemas"]["GraphIn"];
+            /** Metrics */
+            metrics?: components["schemas"]["Metric"][];
+            /**
+             * Preprocessing
+             * @default standard
+             * @constant
+             */
+            preprocessing: "standard";
+            question?: components["schemas"]["QuestionIn"];
+            reduction?: components["schemas"]["ReductionIn"];
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+        };
+        /**
          * FacetOut
          * @description A filter value and how many entries carry it.
          */
@@ -1317,6 +1513,104 @@ export interface components {
             areas: components["schemas"]["FacetOut"][];
             /** Threads */
             threads: components["schemas"]["FacetOut"][];
+        };
+        /**
+         * FiltersIn
+         * @description Which recordings and windows the run reads.
+         *
+         *     Every filter is optional. `block_kind` / `block_label` keep only the windows inside
+         *     such blocks; `research_consent_only` keeps the people who agreed to broader research
+         *     (V3-0011), the default because a lab experiment is that.
+         */
+        FiltersIn: {
+            /** Age Band */
+            age_band?: ("<18" | "18-24" | "25-34" | "35-44" | "45-54" | "55-64" | "65+") | null;
+            /** Block Kind */
+            block_kind?: string | null;
+            /** Block Label */
+            block_label?: string | null;
+            /** Date From */
+            date_from?: string | null;
+            /** Date To */
+            date_to?: string | null;
+            /** Device */
+            device?: string | null;
+            /**
+             * Max Recordings
+             * @default 50
+             */
+            max_recordings: number;
+            /** Min Quality */
+            min_quality?: ("usable" | "good") | null;
+            /** Protocol Id */
+            protocol_id?: string | null;
+            /**
+             * Research Consent Only
+             * @default true
+             */
+            research_consent_only: boolean;
+            /** Sex */
+            sex?: string | null;
+        };
+        /**
+         * GraphIn
+         * @description Ball Mapper's one parameter: the radius, in the run's reduced space; None = auto.
+         */
+        GraphIn: {
+            /** Eps */
+            eps?: number | null;
+        };
+        /**
+         * GraphNodeOut
+         * @description One ball of the cover, laid out in 2-D (MDS of the cover, as the landscape does).
+         *
+         *     `mass` is the windows assigned to it, `labels` how many of them carry each label.
+         */
+        GraphNodeOut: {
+            /** Labels */
+            labels: {
+                [key: string]: number;
+            };
+            /** Mass */
+            mass: number;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
+        /**
+         * GraphOut
+         * @description The Ball Mapper cover of every window of the run, and its shape.
+         *
+         *     `epsilon` is in the run's reduced space; `auto` says the default chose it (the
+         *     radius whose cover comes closest to a legible node count).
+         */
+        GraphOut: {
+            /** Auto */
+            auto: boolean;
+            /** Betti1 */
+            betti1: number;
+            /** Betti1 Per Node */
+            betti1_per_node: number | null;
+            /** Degree Entropy Normalized */
+            degree_entropy_normalized: number | null;
+            /** Edges */
+            edges: [
+                number,
+                number
+            ][];
+            /** Epsilon */
+            epsilon: number;
+            /** N Components */
+            n_components: number;
+            /** N Edges */
+            n_edges: number;
+            /** N Nodes */
+            n_nodes: number;
+            /** Nodes */
+            nodes: components["schemas"]["GraphNodeOut"][];
+            /** Stress */
+            stress: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1414,6 +1708,198 @@ export interface components {
             revision: number;
         };
         /**
+         * LabOptionsOut
+         * @description What the form can offer on this environment.
+         *
+         *     `available` is false (with `reason`) when a run could not start here: no bucket or
+         *     key for this environment, or no salt. `reductions` are what this build offers;
+         *     `unavailable_reductions` are named so the form can say why they are missing (UMAP
+         *     is not a dependency of the backend).
+         */
+        LabOptionsOut: {
+            /** Age Bands */
+            age_bands: components["schemas"]["OptionOut"][];
+            /** Available */
+            available: boolean;
+            /** Block Kinds */
+            block_kinds: components["schemas"]["OptionOut"][];
+            /** Block Labels */
+            block_labels: components["schemas"]["OptionOut"][];
+            caps: components["schemas"]["CapsOut"];
+            /** Context Items */
+            context_items: components["schemas"]["ContextItemOut"][];
+            /** Date First */
+            date_first: string | null;
+            /** Date Last */
+            date_last: string | null;
+            /** Devices */
+            devices: components["schemas"]["OptionOut"][];
+            /**
+             * Env
+             * @enum {string}
+             */
+            env: "dev" | "beta" | "prod";
+            /** People */
+            people: number;
+            /** Protocols */
+            protocols: components["schemas"]["OptionOut"][];
+            /** Qualities */
+            qualities: components["schemas"]["OptionOut"][];
+            /** Reason */
+            reason: string | null;
+            /** Recordings */
+            recordings: number;
+            /** Reductions */
+            reductions: string[];
+            /** Research Recordings */
+            research_recordings: number;
+            /** Sexes */
+            sexes: components["schemas"]["OptionOut"][];
+            /** Task Labels */
+            task_labels: components["schemas"]["OptionOut"][];
+            /** Trial Labels */
+            trial_labels: components["schemas"]["OptionOut"][];
+            /** Unavailable Reductions */
+            unavailable_reductions: string[];
+        };
+        /**
+         * LabResultOut
+         * @description Everything a finished run answers.
+         */
+        LabResultOut: {
+            /** By Label */
+            by_label: components["schemas"]["LabelMetricsOut"][];
+            classifier: components["schemas"]["ClassifierOut"] | null;
+            graph: components["schemas"]["GraphOut"];
+            /** Metrics */
+            metrics: components["schemas"]["Metric"][];
+            points: components["schemas"]["PointsOut"];
+            summary: components["schemas"]["SummaryOut"];
+            /** Table */
+            table: components["schemas"]["MetricsRowOut"][];
+            /** Timing */
+            timing: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * LabRunOut
+         * @description A run with its result once `done`.
+         */
+        LabRunOut: {
+            config: components["schemas"]["ExperimentIn"];
+            /** Config Hash */
+            config_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Env
+             * @enum {string}
+             */
+            env: "dev" | "beta" | "prod";
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rerun Of */
+            rerun_of: string | null;
+            result: components["schemas"]["LabResultOut"] | null;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["RunStatus"];
+            /** Title */
+            title: string;
+        };
+        /**
+         * LabRunSummaryOut
+         * @description A run in a list: everything but its result.
+         */
+        LabRunSummaryOut: {
+            config: components["schemas"]["ExperimentIn"];
+            /** Config Hash */
+            config_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Env
+             * @enum {string}
+             */
+            env: "dev" | "beta" | "prod";
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rerun Of */
+            rerun_of: string | null;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["RunStatus"];
+            /** Title */
+            title: string;
+        };
+        /**
+         * LabelCount
+         * @description How many windows and people one label has in the run.
+         */
+        LabelCount: {
+            /** Label */
+            label: string;
+            /** People */
+            people: number;
+            /** Windows */
+            windows: number;
+        };
+        /**
+         * LabelMetricsOut
+         * @description One label's NeuroMetrics across people: each person counts once.
+         */
+        LabelMetricsOut: {
+            /** Label */
+            label: string | null;
+            /** Metrics */
+            metrics: {
+                [key: string]: components["schemas"]["MeanSd"];
+            };
+            /** People */
+            people: number;
+            /** Windows */
+            windows: number;
+        };
+        /**
+         * LabelSource
+         * @description Where a window's label comes from.
+         *
+         *     - `block_kind`: the kind of the protocol block the window falls in (`baseline`,
+         *       `gonogo`, `video`...);
+         *     - `block_label`: that block's label as the protocol names it ("Eyes closed");
+         *     - `trial`: the trial nearest the window's centre inside a task block
+         *       (`pipeline.features.dynamics.window_labels`: `cargo_pressed`, `congruent_right`...);
+         *     - `task_label`: the recording's own task label (`rest_eyes_open`...);
+         *     - `context`: one answer of the questionnaire before the session (`context_item`).
+         * @enum {string}
+         */
+        LabelSource: "block_kind" | "block_label" | "trial" | "task_label" | "context";
+        /**
          * LayoutIn
          * @description The whole strip, in order.
          */
@@ -1478,6 +1964,52 @@ export interface components {
             scopes: string[];
         };
         /**
+         * MeanSd
+         * @description A metric across people: mean, standard deviation, and how many people had one.
+         */
+        MeanSd: {
+            /** Mean */
+            mean: number | null;
+            /** People */
+            people: number;
+            /** Sd */
+            sd: number | null;
+        };
+        /**
+         * Metric
+         * @description The NeuroMetrics a run reports per person and label (`pipeline.features.dynamics`).
+         * @enum {string}
+         */
+        Metric: "entropy" | "recurrence" | "diameter" | "stretching" | "modularity";
+        /**
+         * MetricsRowOut
+         * @description NeuroMetrics of one person's windows with one label (`label` None: all of them).
+         *
+         *     Counted in the regions of the run's cover. `modularity` is on the person's rows
+         *     only: how strongly their windows of each label keep to regions of their own. A value
+         *     is None when the run did not ask for it or the windows were too few.
+         */
+        MetricsRowOut: {
+            /** Diameter */
+            diameter?: number | null;
+            /** Entropy */
+            entropy?: number | null;
+            /** Label */
+            label: string | null;
+            /** Modularity */
+            modularity?: number | null;
+            /** N Regions */
+            n_regions: number;
+            /** N Windows */
+            n_windows: number;
+            /** Person */
+            person: string;
+            /** Recurrence */
+            recurrence?: number | null;
+            /** Stretching */
+            stretching?: number | null;
+        };
+        /**
          * MilestoneOut
          * @description A result reached, by project area.
          */
@@ -1521,6 +2053,20 @@ export interface components {
             semver?: string | null;
         };
         /**
+         * OptionOut
+         * @description One value a filter or a label can take, and how many recordings have it.
+         *
+         *     `label` is a display name where the value is an id (a protocol's title).
+         */
+        OptionOut: {
+            /** Label */
+            label: string | null;
+            /** Recordings */
+            recordings: number;
+            /** Value */
+            value: string;
+        };
+        /**
          * PinIn
          * @description One app on the side rail; `semver` null follows the current version.
          */
@@ -1559,6 +2105,74 @@ export interface components {
             sprint: string;
             /** Status */
             status: string;
+        };
+        /**
+         * PointsOut
+         * @description At most 5 000 windows in 2-D, as parallel arrays to keep the result small.
+         *
+         *     `label[i]` indexes `labels` (-1: no label), `person[i]` indexes `people`. `n_total`
+         *     is how many windows the run had, of which these are a sample.
+         */
+        PointsOut: {
+            /** Label */
+            label: number[];
+            /** Labels */
+            labels: string[];
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "pca" | "tsne";
+            /** N Total */
+            n_total: number;
+            /** People */
+            people: string[];
+            /** Person */
+            person: number[];
+            /** X */
+            x: number[];
+            /** Y */
+            y: number[];
+        };
+        /**
+         * QuestionIn
+         * @description What the run asks: explore the map (optionally coloured), or A against B.
+         *
+         *     `label` colours an exploration and is required for `ab`, where `a` and `b` are the
+         *     two values compared. `context_item` names the questionnaire item when the label
+         *     source is `context`.
+         */
+        QuestionIn: {
+            /** A */
+            a?: string | null;
+            /** B */
+            b?: string | null;
+            /** Context Item */
+            context_item?: string | null;
+            /**
+             * Kind
+             * @default explore
+             * @enum {string}
+             */
+            kind: "explore" | "ab";
+            label?: components["schemas"]["LabelSource"] | null;
+        };
+        /**
+         * ReductionIn
+         * @description The 2-D view: PCA, or t-SNE on at most 5 000 windows. UMAP is not a dependency.
+         */
+        ReductionIn: {
+            /**
+             * Method
+             * @default pca
+             * @enum {string}
+             */
+            method: "pca" | "tsne";
+            /**
+             * Perplexity
+             * @default 30
+             */
+            perplexity: number;
         };
         /**
          * RefreshIn
@@ -1668,6 +2282,32 @@ export interface components {
              * Format: date
              */
             updated: string;
+        };
+        /**
+         * RunStatus
+         * @description Where a run stands: waiting for the worker, running, finished, or failed.
+         * @enum {string}
+         */
+        RunStatus: "queued" | "running" | "done" | "failed";
+        /**
+         * ScoreOut
+         * @description Cross-validated AUC of one classifier; `folds` lists the scored folds' AUCs.
+         *
+         *     `transductive` is true for the t-SNE map, fitted on every window including the test
+         *     people's: its AUC describes the picture, it does not predict.
+         */
+        ScoreOut: {
+            /** Auc Mean */
+            auc_mean: number | null;
+            /** Auc Sd */
+            auc_sd: number | null;
+            /** Folds */
+            folds: number[];
+            /**
+             * Transductive
+             * @default false
+             */
+            transductive: boolean;
         };
         /**
          * SessionIn
@@ -1810,6 +2450,41 @@ export interface components {
             title: string;
             /** Widget */
             widget: string;
+        };
+        /**
+         * SummaryOut
+         * @description What the run read: counts, the embedder, what it left out and why.
+         *
+         *     `data_fingerprint` is a salted hash of the analyses read, so two runs can tell
+         *     whether they saw the same data without naming it. `skipped` counts recordings left
+         *     out by reason (`no_windows`, `other_embedder`, `unreadable`, `window_cap`,
+         *     `person_cap`, `no_labelled_windows`).
+         */
+        SummaryOut: {
+            /** Data Fingerprint */
+            data_fingerprint: string;
+            /** Date First */
+            date_first: string | null;
+            /** Date Last */
+            date_last: string | null;
+            /** Dim */
+            dim: number;
+            /** Embedder */
+            embedder: string | null;
+            /** Labels */
+            labels: components["schemas"]["LabelCount"][];
+            /** N People */
+            n_people: number;
+            /** N Recordings */
+            n_recordings: number;
+            /** N Windows */
+            n_windows: number;
+            /** Reduced Dim */
+            reduced_dim: number;
+            /** Skipped */
+            skipped: {
+                [key: string]: number;
+            };
         };
         /**
          * TaskOut
@@ -2558,6 +3233,177 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_options_ops_v1_lab_options_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabOptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runs_ops_v1_lab_runs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_run_ops_v1_lab_runs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_ops_v1_lab_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rerun_ops_v1_lab_runs__run_id__rerun_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunOut"];
                 };
             };
             /** @description Validation Error */

@@ -46,7 +46,10 @@
       "unknown_env": "La console non conosce questo ambiente.",
       "stale_document": "Qualcuno ha salvato questo documento dopo che l'hai aperto.",
       "env_mismatch": "Quel link nomina un ambiente e la pagina ne legge un altro. Riaprilo dall'app.",
-      "token_not_allowed": "Un token di accesso non può creare token. Entra nella console per crearne uno."
+      "token_not_allowed": "Un token di accesso non può creare token. Entra nella console per crearne uno.",
+      "lab_unavailable": "Il laboratorio non può ancora leggere questo ambiente: manca la chiave del bucket o il sale.",
+      "lab_busy": "Troppe esecuzioni in attesa. Riprova quando una è finita.",
+      "no_run": "Quell'esecuzione non esiste."
     },
     "age": {
       "now": "adesso",
@@ -635,6 +638,211 @@
       },
       "widgets": {
         "drafts": "{total, plural, one {su # documento} other {su # documenti}}"
+      }
+    },
+    "pipelineLab": {
+      "intro": "Esperimenti sugli embedding EEG per finestra già salvati: scegli i dati e la domanda, poi leggi la tabella e la mappa 2-D. I risultati contengono chiavi pseudonime delle persone, mai un id, un'email o un nome, e ogni esecuzione è registrata con il suo ambiente.",
+      "sections": "Sezioni",
+      "new": "Nuovo esperimento",
+      "runs": "Esecuzioni",
+      "unavailableTitle": "Il laboratorio non può girare su {env}",
+      "unavailableText": "Gli serve l'accesso in lettura al bucket di questo ambiente e un sale per le chiavi delle persone (LAB_S3_* e LAB_SALT in bt-ops-secrets).",
+      "overview": "{env}: {recordings, plural, one {# registrazione analizzata} other {# registrazioni analizzate}} di {people, plural, one {# persona} other {# persone}}, {research} con consenso alla ricerca.",
+      "span": "Dal {first} al {last}.",
+      "any": "Tutti",
+      "choose": "Scegli…",
+      "option": "{label} ({recordings})",
+      "standard": "Standard",
+      "phase2": "La fase 2 aggiunge opzioni qui.",
+      "title": "Titolo",
+      "titlePlaceholder": "Riposo contro compito, dati di ricerca",
+      "question": {
+        "title": "Domanda",
+        "kind": "Tipo",
+        "explore": "Esplora la mappa",
+        "ab": "A contro B",
+        "exploreHint": "L'etichetta colora solo la mappa e divide la tabella.",
+        "abHint": "Un classificatore distingue A da B, con validazione incrociata per persona: nessuno è sia nell'addestramento sia nel test di una partizione.",
+        "label": "Etichetta le finestre per",
+        "labelNone": "Niente (un colore)",
+        "contextItem": "Voce del questionario",
+        "a": "A",
+        "b": "B",
+        "source": {
+          "block_kind": "Tipo di blocco",
+          "block_label": "Blocco",
+          "trial": "Prova",
+          "task_label": "Compito della registrazione",
+          "context": "Risposta al questionario"
+        }
+      },
+      "data": {
+        "title": "Dati",
+        "protocol": "Protocollo",
+        "blockKind": "Solo finestre in blocchi di tipo",
+        "blockLabel": "Solo finestre nel blocco",
+        "ageBand": "Età",
+        "sex": "Sesso alla nascita",
+        "device": "Dispositivo",
+        "dateFrom": "Registrate dal",
+        "dateTo": "Registrate fino al",
+        "minQuality": "Qualità almeno",
+        "quality": {
+          "usable": "Utilizzabile",
+          "good": "Buona"
+        },
+        "researchOnly": "Solo persone che hanno accettato l'uso per la ricerca",
+        "researchHint": "Attivo di default: un esperimento del laboratorio è ricerca (V3-0011).",
+        "maxRecordings": "Registrazioni, al massimo",
+        "maxHint": "Prese a turno da ogni persona, fino a {max}."
+      },
+      "preprocessing": {
+        "title": "Preelaborazione",
+        "text": "Notch, filtro passa-banda e bridging, come per ogni registrazione."
+      },
+      "artefacts": {
+        "title": "Rimozione degli artefatti",
+        "text": "Pulizia ASR e i flag di artefatto per finestra dell'analisi salvata."
+      },
+      "encoding": {
+        "title": "Codifica",
+        "text": "Gli embedding REVE salvati, 512 numeri per finestra."
+      },
+      "reduction": {
+        "title": "Riduzione dimensionale",
+        "method": "Vista 2-D",
+        "pca": "PCA",
+        "tsne": "t-SNE",
+        "umap": "UMAP",
+        "umapNote": "UMAP non è disponibile: non è una dipendenza del servizio.",
+        "perplexity": "Perplessità",
+        "tsneNote": "t-SNE disegna al massimo {points} finestre e non sa collocarne di nuove, quindi il suo punteggio A/B è transduttivo.",
+        "pcaNote": "Le NeuroMetrics girano sulla riduzione PCA della sessione; questa scelta cambia solo la vista 2-D."
+      },
+      "graph": {
+        "title": "Grafo (Ball Mapper)",
+        "eps": "Raggio",
+        "epsHint": "Vuoto: scelto per una copertura di dimensione leggibile (al massimo {nodes} nodi). Nelle unità dello spazio ridotto."
+      },
+      "metrics": {
+        "title": "NeuroMetrics",
+        "entropy": "Entropia",
+        "recurrence": "Ricorrenza",
+        "diameter": "Diametro",
+        "stretching": "Stiramento",
+        "modularity": "Modularità"
+      },
+      "caps": "Un'esecuzione legge al massimo {windows} finestre ({perPerson} per persona) e si ferma dopo {minutes} minuti.",
+      "start": "Esegui l'esperimento",
+      "starting": "Avvio…",
+      "problems": {
+        "title": "Dai un titolo all'esperimento.",
+        "label": "Una domanda A/B ha bisogno di una fonte di etichette.",
+        "contextItem": "Scegli la voce del questionario.",
+        "values": "Scegli A e B.",
+        "sameValues": "A e B devono essere diversi.",
+        "dates": "La data di inizio è dopo quella di fine.",
+        "eps": "Il raggio è un numero positivo.",
+        "perplexity": "La perplessità è tra 5 e 100.",
+        "maxRecordings": "Tra 1 e {max} registrazioni.",
+        "metrics": "Scegli almeno una metrica."
+      },
+      "status": {
+        "queued": "In coda",
+        "running": "In corso",
+        "done": "Fatta",
+        "failed": "Fallita"
+      },
+      "list": {
+        "emptyTitle": "Ancora nessuna esecuzione su {env}",
+        "emptyText": "Qui arrivano gli esperimenti eseguiti su questo ambiente.",
+        "line": "{when} da {who}",
+        "someone": "qualcuno",
+        "rerun": "ripetuta"
+      },
+      "run": {
+        "back": "Tutte le esecuzioni",
+        "rerun": "Esegui di nuovo",
+        "copy": "Modifica una copia",
+        "config": "Configurazione {hash}",
+        "queued": "In attesa del worker. Questa pagina rilegge l'esecuzione ogni 3 secondi.",
+        "running": "In corso. Questa pagina rilegge l'esecuzione ogni 3 secondi.",
+        "detail": "Dettaglio: {message}",
+        "took": "Ci ha messo {seconds} s.",
+        "errors": {
+          "lab_unavailable": "Il laboratorio non ha potuto leggere questo ambiente: manca la chiave del bucket o il sale.",
+          "no_recordings": "Nessuna registrazione corrisponde a questi filtri.",
+          "no_windows": "Le registrazioni scelte non hanno finestre da leggere.",
+          "too_few_windows": "Troppe poche finestre per una mappa. Allarga i filtri.",
+          "eps_too_small": "Questo raggio crea troppe sfere. Scegline uno più grande, o lascialo vuoto.",
+          "time_limit": "L'esecuzione ha superato il suo limite di tempo. Restringi i dati.",
+          "interrupted": "bt-ops si è riavviato durante l'esecuzione. Eseguila di nuovo.",
+          "failed": "L'esecuzione è fallita. Il log del servizio ha i dettagli."
+        }
+      },
+      "summary": {
+        "title": "Dati",
+        "recordings": "Registrazioni",
+        "people": "Persone",
+        "windows": "Finestre",
+        "embedder": "Embedder",
+        "dims": "Dimensioni",
+        "dimsValue": "{dim} → {reduced}",
+        "dates": "Registrate",
+        "fingerprint": "Impronta dei dati",
+        "skipped": "Escluse",
+        "skip": {
+          "other_embedder": "altro embedder",
+          "no_windows": "senza finestre",
+          "no_labelled_windows": "senza finestre con A o B",
+          "window_cap": "oltre il tetto di finestre",
+          "person_cap": "oltre il tetto per persona",
+          "unreadable": "embedding illeggibili"
+        },
+        "skipLine": "{reason}: {n}",
+        "labels": "Etichette",
+        "labelLine": "{windows} finestre, {people, plural, one {# persona} other {# persone}}"
+      },
+      "classifier": {
+        "title": "A contro B",
+        "auc": "AUC",
+        "onEmbeddings": "Sugli embedding",
+        "onView": "Sulla vista 2-D",
+        "transductive": "Transduttivo: la mappa è stata disegnata con tutte le finestre, comprese quelle delle persone di test.",
+        "folds": "{n} partizioni per persona",
+        "people": "{n, plural, one {# persona} other {# persone}} ({a} con A, {b} con B), {windows} finestre.",
+        "fewPeople": "Meno di 10 persone: leggi questo punteggio come un indizio, non come un risultato.",
+        "too_few_people": "Troppe poche persone per una validazione incrociata per persona (ne servono almeno 3).",
+        "one_class": "Nei dati c'è solo uno tra A e B.",
+        "unscorable": "Nessuna partizione è valutabile: ogni partizione di test conteneva solo A o solo B."
+      },
+      "map": {
+        "title": "Mappa ({method})",
+        "sample": "{shown} di {total} finestre disegnate.",
+        "aria": "Le finestre sulla mappa 2-D, colorate per etichetta",
+        "noLabel": "senza etichetta",
+        "oneColour": "Un colore: la domanda non nomina un'etichetta."
+      },
+      "graphView": {
+        "title": "Grafo",
+        "line": "Raggio {eps} ({how}) · {nodes} nodi · {edges} archi · {components} componenti · betti-1 {betti}",
+        "auto": "scelto",
+        "manual": "impostato",
+        "aria": "Il grafo Ball Mapper, ogni sfera colorata con la sua etichetta più frequente"
+      },
+      "table": {
+        "title": "Per persona",
+        "person": "Persona",
+        "label": "Etichetta",
+        "all": "tutte",
+        "windows": "Finestre",
+        "regions": "Regioni",
+        "empty": "Nessuna persona aveva abbastanza finestre da misurare."
+      },
+      "byLabel": {
+        "title": "Per etichetta",
+        "meanSd": "{mean} ± {sd}",
+        "people": "Persone"
       }
     }
   },
