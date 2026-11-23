@@ -139,7 +139,14 @@ export default function WaitingPage() {
         {state === "open" && (
           <section className="space-y-3">
             <h1 className="type-title">{t("open.title")}</h1>
-            <Button onClick={() => router.replace("/home")}>
+            <Button
+              onClick={() => {
+                // the shell's cached `me` still holds the old hold: without this it
+                // would send the student straight back here once
+                queryClient.clear();
+                router.replace("/home");
+              }}
+            >
               {t("open.go")}
             </Button>
           </section>
