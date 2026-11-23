@@ -29,6 +29,9 @@ describe("middleware", () => {
       "/my",
       "/my/:path*",
       "/organisations/:path*",
+      // a teacher's school and a held student's waiting page (backend V4-0012)
+      "/school",
+      "/waiting",
       "/account",
       "/library",
       "/library/:path*",

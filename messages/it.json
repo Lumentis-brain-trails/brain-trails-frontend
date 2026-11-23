@@ -48,7 +48,17 @@
     "self_consent_required": "Un adulto firma il proprio consenso.",
     "minors_not_admitted": "Un laboratorio non ammette partecipanti minorenni.",
     "minor_no_account": "Gli account sono per maggiorenni. Un minore viene registrato dalla sua clinica, senza account.",
-    "reconsent_required": "Ora è maggiorenne: attesta il suo consenso prima della prossima sessione."
+    "reconsent_required": "Ora è maggiorenne: attesta il suo consenso prima della prossima sessione.",
+    "awaiting_teacher": "Il tuo insegnante non ha ancora verificato il tuo account.",
+    "enrolment_refused": "Il tuo insegnante non ha potuto verificare il tuo account.",
+    "own_consent_required": "Ora hai 18 anni: dai il tuo consenso per continuare.",
+    "minor_needs_school": "Sotto i 18 anni entri in Brain Trails tramite la tua scuola: chiedi il codice di classe al tuo insegnante.",
+    "school_code_invalid": "Nessuna scuola ha questo codice. Controllalo con il tuo insegnante.",
+    "guardian_required": "Aggiungi il nome del tuo genitore o tutore e chi è per te.",
+    "attestation_required": "Spunta entrambe le dichiarazioni per richiedere una scuola.",
+    "confirmation_required": "Spunta di aver controllato il consenso del tutore.",
+    "under_age": "Brain Trails è per chi ha almeno 18 anni.",
+    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica."
   },
   "application": {
     "step": "Candidatura",
@@ -2390,7 +2400,8 @@
         "title": "Registrazione ricevuta.",
         "body": "Un admin la esaminerà. Una volta approvata, potrai accedere con l'email e la password che hai scelto."
       },
-      "signIn": "Vai all'accesso"
+      "signIn": "Vai all'accesso",
+      "teacher": "Hai meno di 18 anni, quindi il tuo insegnante controlla il modulo di consenso della scuola prima che tu possa usare l'account. Riceverai un'email quando l'avrà fatto."
     },
     "verify": {
       "working": "Verifica dell'email in corso…",
@@ -2455,7 +2466,8 @@
       "patients": "Pazienti",
       "participants": "Partecipanti",
       "my": "Le mie sessioni",
-      "neurofeedback": "Neurofeedback"
+      "neurofeedback": "Neurofeedback",
+      "school": "Scuola"
     },
     "sections": "Sezioni",
     "you": "Tu",
@@ -2496,7 +2508,8 @@
     "kinds": {
       "personal": "Personale",
       "practice": "Clinica",
-      "lab": "Laboratorio"
+      "lab": "Laboratorio",
+      "school": "Scuola"
     },
     "editions": {
       "personal": "Le tue registrazioni",
@@ -2528,6 +2541,20 @@
       "active": "Approvata",
       "rejected": "Non approvata",
       "archived": "Chiusa"
+    },
+    "schoolHint": "Per chi insegna e presenta Brain Trails nella propria scuola. Gli studenti si iscrivono con il tuo codice di classe; tu verifichi chi ha meno di 18 anni quando il modulo della scuola mostra che un genitore ha acconsentito. Non vedi mai le loro registrazioni.",
+    "school": {
+      "name": "Scuola",
+      "nameHint": "Il nome della scuola, come lo conoscono i tuoi studenti.",
+      "city": "Città",
+      "country": "Paese",
+      "countryHint": "Due lettere, per esempio IT.",
+      "role": "Il tuo ruolo",
+      "roleHint": "Per esempio: insegnante di scienze, psicologo scolastico.",
+      "qualification": "La tua qualifica",
+      "qualificationHint": "La tua abilitazione all'insegnamento o iscrizione professionale.",
+      "attestGuardians": "Posso verificare, tramite la mia scuola, il consenso dei genitori o tutori di ogni studente.",
+      "attestPermission": "La mia scuola mi autorizza a presentare Brain Trails ai suoi studenti."
     }
   },
   "people": {
@@ -2897,7 +2924,8 @@
       "gone": "account eliminato",
       "seats": "{count, plural, one {# posto} other {# posti}}",
       "approve": "Approva",
-      "reject": "Rifiuta"
+      "reject": "Rifiuta",
+      "school": "{city}, {country} · {role} · {qualification} · dichiarazione {version}"
     }
   },
   "official": {
@@ -4234,6 +4262,95 @@
         "tuning": "Prima un minuto per vedere dove sei. Poi ascolta: le due note si accordano quando arrivi.",
         "ribbons": "Prima un minuto per vedere dove sei. Poi i nastri si mettono a fuoco quando arrivi."
       }
+    }
+  },
+  "schools": {
+    "relationships": {
+      "parent": "Genitore",
+      "legal_guardian": "Tutore legale"
+    },
+    "signup": {
+      "code": "Codice di classe (studenti)",
+      "codeHint": "Se il tuo insegnante te ne ha dato uno. Sotto i 18 anni ti serve per iscriverti.",
+      "found": "{name}, {city}",
+      "minorNeedsCode": "Sotto i 18 anni entri in Brain Trails tramite la tua scuola: chiedi il codice di classe al tuo insegnante.",
+      "version": "Studenti e tutori, versione {version}",
+      "studentTick": "Sono lo studente: ho letto l'informativa sulla privacy e acconsento.",
+      "guardianTitle": "Il tuo genitore o tutore",
+      "guardianText": "Poiché hai meno di 18 anni, deve accettare anche un genitore o tutore legale. Compila questa parte insieme a lui: il tuo insegnante la confronterà con il modulo raccolto dalla scuola.",
+      "guardianName": "Nome e cognome",
+      "guardianRelationship": "Chi è per te",
+      "guardianTick": "Sono il genitore o tutore legale di questo studente: ho letto l'informativa sulla privacy e accetto."
+    },
+    "waiting": {
+      "loading": "Caricamento…",
+      "pending": {
+        "title": "In attesa del tuo insegnante.",
+        "body": "Il tuo account per {school} è aperto, ma prima il tuo insegnante deve controllare il modulo di consenso della scuola. Riceverai un'email quando ti avrà verificato."
+      },
+      "refused": {
+        "title": "Il tuo insegnante non ha potuto verificare l'account.",
+        "body": "Il tuo insegnante di {school} non ha verificato questo account, che quindi resta chiuso. Se è un errore, parlane con il tuo insegnante; puoi anche cancellare l'account qui sotto.",
+        "reason": "Il tuo insegnante ha scritto"
+      },
+      "ofAge": {
+        "title": "Ora hai 18 anni.",
+        "body": "Quando ti sei iscritto, un genitore o tutore ha accettato per te. Ora la scelta è tua: leggi l'informativa sulla privacy e dai il tuo consenso per continuare. Tutto quello che hai registrato è ancora qui.",
+        "policy": "Leggi l'informativa sulla privacy",
+        "version": "Versione {version}",
+        "tick": "Ho letto l'informativa sulla privacy e acconsento.",
+        "submit": "Continua"
+      },
+      "open": {
+        "title": "Il tuo account è aperto.",
+        "go": "Vai a Brain Trails"
+      },
+      "signOut": "Esci",
+      "erase": {
+        "open": "Cancella il mio account",
+        "title": "Cancella il tuo account",
+        "body": "Il tuo account, il tuo profilo e tutto quello che hai registrato vengono eliminati. Non si può annullare.",
+        "password": "La tua password",
+        "cancel": "Tienilo",
+        "confirm": "Cancella definitivamente",
+        "erasing": "Cancellazione…"
+      }
+    },
+    "page": {
+      "title": "La tua scuola",
+      "none": "Non insegni in una scuola su Brain Trails.",
+      "where": "{city}, {country}",
+      "intro": "Condividi il codice di classe con i tuoi studenti, insieme al modulo di consenso della scuola per i genitori. Chi ha meno di 18 anni aspetta qui finché non hai controllato il modulo. Non vedi mai le loro registrazioni.",
+      "code": "Codice di classe",
+      "codeHint": "Gli studenti lo inseriscono quando si iscrivono. Chiunque lo abbia può chiedere di entrare, quindi condividilo tramite i canali della scuola.",
+      "regenerate": "Nuovo codice",
+      "regenerateText": "Il codice attuale smette subito di funzionare. Gli studenti già iscritti non cambiano.",
+      "regenerateConfirm": "Crea un nuovo codice",
+      "cancel": "Annulla",
+      "students": "Studenti",
+      "tabs": {
+        "pending": "In attesa ({count})",
+        "verified": "Verificati ({count})",
+        "refused": "Rifiutati ({count})"
+      },
+      "empty": {
+        "pending": "Nessuno in attesa.",
+        "verified": "Ancora nessuno studente verificato.",
+        "refused": "Nessun rifiuto."
+      },
+      "born": "Nato nel {year}",
+      "minor": "minorenne",
+      "guardian": "{relationship}: {name}",
+      "consents": "Lo studente ha accettato il {student} · il tutore ha accettato il {guardian}",
+      "ownConsent": "Ha accettato da sé, il {date}",
+      "reasonGiven": "Il tuo motivo: {reason}",
+      "verify": "Verifica",
+      "refuse": "Rifiuta",
+      "verifyTitle": "Verifica {name}",
+      "verifyTick": "Ho controllato tramite la scuola che il genitore o tutore di questo studente ha acconsentito.",
+      "refuseTitle": "Rifiuta {name}",
+      "reason": "Motivo (facoltativo)",
+      "reasonHint": "Lo studente lo legge quando accede. Non viene inviato per email."
     }
   }
 }

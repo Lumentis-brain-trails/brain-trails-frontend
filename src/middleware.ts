@@ -20,6 +20,8 @@ export const config = {
     "/my",
     "/my/:path*",
     "/organisations/:path*",
+    "/school",
+    "/waiting",
     "/account",
     "/library",
     "/library/:path*",

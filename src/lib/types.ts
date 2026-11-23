@@ -81,6 +81,12 @@ export interface UserInfo {
   shell?: "app" | "client";
   /** Whether the account is somebody's subject at all, so `/my` is offered beside the app. */
   is_client?: boolean;
+  /**
+   * Why a school student's account waits (backend V4-0012): for the teacher, after a
+   * refusal, or for their own consent at 18. Null for every other account.
+   */
+  hold?:
+    "awaiting_teacher" | "enrolment_refused" | "own_consent_required" | null;
 }
 
 export const TASK_LABELS = [

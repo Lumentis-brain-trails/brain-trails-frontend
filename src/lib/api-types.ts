@@ -583,6 +583,9 @@ export interface paths {
         /**
          * Me
          * @description Return the caller's own account record, with the shell it lands in (T3).
+         *
+         *     Answered for a held school student too, with `hold` set (V4-0012): it is how the
+         *     frontend knows to show the waiting page.
          */
         get: operations["me_auth_me_get"];
         put?: never;
@@ -728,7 +731,8 @@ export interface paths {
          *     Registration no longer asks for any of this, so a fresh account has no profile row at
          *     all and `GET` answers 404 until this runs. Replaces the whole profile rather than
          *     patching it: the account page owns the form, and an answer removed there has to
-         *     disappear here too.
+         *     disappear here too. A year of birth under 18 is refused (422 `under_age`) unless the
+         *     account is a school student's (V4-0012).
          */
         put: operations["put_my_profile_auth_me_profile_put"];
         post?: never;
@@ -763,6 +767,12 @@ export interface paths {
          *     published consent text (503 `consent_unavailable`) - no one should agree to a
          *     placeholder. The email is lower-cased and must be unique (409 `email_taken`).
          *     Rate-limited per client address.
+         *
+         *     Under 18 by the profile's year (V4-0012): refused (422 `minor_needs_school`, or
+         *     `under_age` without the `schools` flag) unless `school` carries a class code; with
+         *     one, the guardian's name, relationship and tick are required, the account opens
+         *     self-service and waits for the teacher (`app.schools.enrol`). An adult with a code
+         *     joins the school on their own consent.
          */
         post: operations["register_auth_register_post"];
         delete?: never;
@@ -2008,6 +2018,178 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/schools/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lookup Code
+         * @description The school a class code belongs to (unauthenticated, rate-limited like sign-up).
+         *
+         *     The code travels in the body so it never lands in an access log. 422
+         *     `school_code_invalid` for a code no active school holds.
+         */
+        post: operations["lookup_code_schools_lookup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Enrolment
+         * @description The caller's enrolment in a school (404 `not_found` without one).
+         */
+        get: operations["my_enrolment_schools_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/me/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * My Own Consent
+         * @description Give one's own consent after turning 18; the account is let in again.
+         *
+         *     422 `consent_required` without the tick; 409 `invalid_state` when none is due.
+         */
+        post: operations["my_own_consent_schools_me_consent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/{workspace_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get School
+         * @description The school, its class code and how many students wait (owner or admin).
+         */
+        get: operations["get_school_schools__workspace_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/{workspace_id}/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * New Code
+         * @description Replace the class code; the old one stops working at once (owner or admin).
+         */
+        post: operations["new_code_schools__workspace_id__code_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/{workspace_id}/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Students
+         * @description The school's students, oldest sign-up first; `?status=` narrows (owner or admin).
+         *
+         *     Keyset-paged on `(created_at, user_id)`.
+         */
+        get: operations["list_students_schools__workspace_id__students_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/{workspace_id}/students/{user_id}/refuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refuse Student
+         * @description Refuse a waiting student: the account stays locked (owner or admin). Audited, mailed.
+         *
+         *     404 for someone who is not this school's student; 409 `invalid_state` unless pending.
+         */
+        post: operations["refuse_student_schools__workspace_id__students__user_id__refuse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/{workspace_id}/students/{user_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Student
+         * @description Verify a waiting student: their account opens (owner or admin). Audited, mailed.
+         *
+         *     422 `confirmation_required` without `guardian_agreed`; 404 for someone who is not
+         *     this school's student; 409 `invalid_state` unless they are pending.
+         */
+        post: operations["verify_student_schools__workspace_id__students__user_id__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions": {
         parameters: {
             query?: never;
@@ -2650,9 +2832,12 @@ export interface paths {
         put?: never;
         /**
          * Request Organisation
-         * @description Ask for a clinic or a laboratory; it is `pending` until an admin decides.
+         * @description Ask for a clinic, a laboratory or a school; it is `pending` until an admin decides.
          *
-         *     409 `too_many_requests` with three requests already open.
+         *     409 `too_many_requests` with three requests already open. A school needs the
+         *     `schools` flag (404 without it) and its teacher's declaration (422
+         *     `school_details_required`, `attestation_required`); the other kinds take none (422
+         *     `school_details_not_allowed`).
          */
         post: operations["request_organisation_workspaces_post"];
         delete?: never;
@@ -2898,6 +3083,8 @@ export interface components {
         /**
          * AdminWorkspaceRow
          * @description One organisation as the queue shows it: who asked, when, what was decided.
+         *
+         *     `school` is the teacher's declaration, for a school only.
          */
         AdminWorkspaceRow: {
             /**
@@ -2920,6 +3107,7 @@ export interface components {
             region: string;
             /** Requested By */
             requested_by: string | null;
+            school?: components["schemas"]["SchoolDeclaration"] | null;
             /** Seats */
             seats: number;
             /** Status */
@@ -3915,6 +4103,14 @@ export interface components {
             email: string;
         };
         /**
+         * CodeIn
+         * @description A class code as typed; dashes and spaces are ignored.
+         */
+        CodeIn: {
+            /** Code */
+            code: string;
+        };
+        /**
          * CohortIn
          * @description Create or change a cohort: a name, the profile it is for, and a target size.
          */
@@ -4040,6 +4236,8 @@ export interface components {
                 review: boolean;
                 /** @description Sessions capture EEG in the browser and upload it at finish (S16). */
                 run_capture: boolean;
+                /** @description Schools: a teacher's class code; students, minors too, verified (V4-0012). */
+                schools: boolean;
                 /** @description Studies, participants and arms (S24). */
                 studies: boolean;
                 /** @description Therapy edition: patient timeline, review queue, clinic home, sharing (V4 T6). */
@@ -4049,6 +4247,8 @@ export interface components {
             };
             /** Live Url */
             live_url?: string | null;
+            /** School Consent Version */
+            school_consent_version: string;
             /** Version */
             version: string;
             /** Workspace Kind */
@@ -5181,6 +5381,32 @@ export interface components {
             visibility: string;
         };
         /**
+         * MyEnrolment
+         * @description Where the caller's enrolment stands; what the waiting page shows.
+         *
+         *     `refusal_reason` is the teacher's words, shown only to this student. `hold` is the
+         *     same answer as `GET /auth/me`'s.
+         */
+        MyEnrolment: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Hold */
+            hold: string | null;
+            /** Own Consent Required */
+            own_consent_required: boolean;
+            /** Refusal Reason */
+            refusal_reason: string | null;
+            /** School Name */
+            school_name: string | null;
+            /** Status */
+            status: string;
+        };
+        /**
          * MySession
          * @description A past run, as the person who ran it sees it: when, what, and whether it finished.
          */
@@ -5375,6 +5601,14 @@ export interface components {
             label: string;
         };
         /**
+         * OwnConsentIn
+         * @description The student's own consent, at 18, to the text published today.
+         */
+        OwnConsentIn: {
+            /** Consent */
+            consent: boolean;
+        };
+        /**
          * PeersOut
          * @description Where this environment can send recordings, and where it can take them from.
          */
@@ -5491,7 +5725,9 @@ export interface components {
          *
          *     `birth_year` carries the age floor. Only a year is collected, so the check is coarse at
          *     the boundary; sharpening it would mean asking for a birthdate, which is more personal
-         *     data to guard exactly the wrong way round.
+         *     data to guard exactly the wrong way round. The floor itself is checked by the routes
+         *     (`app.schools.check_account_age`), not here: since V4-0012 a minor's year is allowed
+         *     on a school student's account, which only a database read can tell.
          */
         ProfileIn: {
             /** Alcohol Use */
@@ -5549,9 +5785,7 @@ export interface components {
          *
          *     A row written before a list existed - or before one was tightened - must still be
          *     readable on the admin board and on the account page. Validation belongs on the way
-         *     in, where the person can still fix the answer. The age floor is skipped for the same
-         *     reason: a profile written before V3-0011 must stay readable, and refusing to render it
-         *     would lock its owner out of the account page they need to correct or delete it.
+         *     in, where the person can still fix the answer.
          */
         ProfileOut: {
             /** Alcohol Use */
@@ -5835,6 +6069,14 @@ export interface components {
             title: string;
         };
         /**
+         * RefuseIn
+         * @description Why the teacher could not verify; shown to the student, never mailed.
+         */
+        RefuseIn: {
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
          * RegisterIn
          * @description Registration payload; `consent` must be true and passwords are 10..200 characters.
          *
@@ -5862,6 +6104,9 @@ export interface components {
          *
          *     `locale` is the language of the form the person filled in, when the client knows it:
          *     the account's first mail is written in it. Left out, the account has no language yet.
+         *
+         *     `school` is a student's sign-up with a class code (V4-0012, flag `schools`); it needs
+         *     `profile`, whose year of birth decides whether a guardian must accept too.
          */
         RegisterIn: {
             application?: components["schemas"]["ApplicationIn"] | null;
@@ -5891,6 +6136,7 @@ export interface components {
              * @default false
              */
             research_consent: boolean;
+            school?: components["schemas"]["SchoolSignupIn"] | null;
             /**
              * Wants Beta
              * @default false
@@ -5966,6 +6212,120 @@ export interface components {
          * @enum {string}
          */
         ReviewState: "none" | "pending" | "approved" | "refused";
+        /**
+         * SchoolDeclaration
+         * @description What a teacher declared with a school request (V4-0012), for the admin to judge.
+         */
+        SchoolDeclaration: {
+            /** Attestation Version */
+            attestation_version: string;
+            /** City */
+            city: string;
+            /** Country */
+            country: string;
+            /**
+             * Guardians Attested At
+             * Format: date-time
+             */
+            guardians_attested_at: string;
+            /**
+             * Permission Attested At
+             * Format: date-time
+             */
+            permission_attested_at: string;
+            /** Qualification */
+            qualification: string;
+            /** Teacher Role */
+            teacher_role: string;
+        };
+        /**
+         * SchoolOut
+         * @description A school as its teacher sees it: what was declared, the code, the counts.
+         */
+        SchoolOut: {
+            /** City */
+            city: string;
+            /** Class Code */
+            class_code: string | null;
+            /** Class Code At */
+            class_code_at: string | null;
+            /** Country */
+            country: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Pending */
+            pending: number;
+            /** Qualification */
+            qualification: string;
+            /** Refused */
+            refused: number;
+            /** Teacher Role */
+            teacher_role: string;
+            /** Verified */
+            verified: number;
+        };
+        /**
+         * SchoolPreview
+         * @description What a class code names: the school, never its people.
+         */
+        SchoolPreview: {
+            /** City */
+            city: string;
+            /** Country */
+            country: string;
+            /** Name */
+            name: string;
+        };
+        /**
+         * SchoolRequestIn
+         * @description What a teacher declares when asking for a school (V4-0012).
+         *
+         *     `name` (the request's) is the school's. The two attestations must both be true:
+         *     that they can verify the consent of their students' parents or guardians, and that
+         *     their school allows them to present Brain Trails. Their time and the version of the
+         *     text are stored with the request.
+         */
+        SchoolRequestIn: {
+            /** Attest Guardians */
+            attest_guardians: boolean;
+            /** Attest Permission */
+            attest_permission: boolean;
+            /** City */
+            city: string;
+            /** Country */
+            country: string;
+            /** Qualification */
+            qualification: string;
+            /** Teacher Role */
+            teacher_role: string;
+        };
+        /**
+         * SchoolSignupIn
+         * @description A student's class code and, for a minor, the guardian who accepts (V4-0012).
+         *
+         *     The year of birth that decides "minor" is the registration's `profile.birth_year`,
+         *     and the student's own tick is the registration's `consent`. `guardian_consent` is the
+         *     second tick, the guardian's: "I am the parent or guardian and I accept". Guardian
+         *     fields sent for an adult are not kept.
+         */
+        SchoolSignupIn: {
+            /** Code */
+            code: string;
+            /**
+             * Guardian Consent
+             * @default false
+             */
+            guardian_consent: boolean;
+            /** Guardian Name */
+            guardian_name?: string | null;
+            /** Guardian Relationship */
+            guardian_relationship?: ("parent" | "legal_guardian") | null;
+        };
         /**
          * SeatIn
          * @description The seat to hold from now on.
@@ -6348,6 +6708,53 @@ export interface components {
             recording_id: string;
             /** Ws Path */
             ws_path: string;
+        };
+        /**
+         * StudentRow
+         * @description One student as the teacher sees them: what is needed to match the school's form.
+         *
+         *     The declared name and year of birth, the guardian's name and relationship (minors
+         *     only), when each consent was given, and the decision. Nothing of what the student
+         *     records or does.
+         */
+        StudentRow: {
+            /** Birth Year */
+            birth_year: number;
+            /** Consent By */
+            consent_by: string;
+            /** Consent Version */
+            consent_version: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Guardian Consent At */
+            guardian_consent_at: string | null;
+            /** Guardian Name */
+            guardian_name: string | null;
+            /** Guardian Relationship */
+            guardian_relationship: string | null;
+            /** Minor */
+            minor: boolean;
+            /** Refusal Reason */
+            refusal_reason: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Student Consent At
+             * Format: date-time
+             */
+            student_consent_at: string;
+            /** Student Name */
+            student_name: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /**
          * SubjectIn
@@ -6813,6 +7220,11 @@ export interface components {
          *     nothing else - `app` for everyone else. `is_client` says the account is somebody's
          *     subject at all, so a private user who is also a clinic's patient gets a way to `/my`.
          *     Both are answered by `GET /auth/me` only.
+         *
+         *     `hold` says why a school student's account cannot use the product yet (V4-0012):
+         *     `awaiting_teacher`, `enrolment_refused` or `own_consent_required`; null for every
+         *     other account. Also answered by `GET /auth/me` only - it is the one route besides the
+         *     waiting page's that a held account may call.
          */
         UserOut: {
             /**
@@ -6829,6 +7241,8 @@ export interface components {
             email: string;
             /** Email Verified At */
             email_verified_at: string | null;
+            /** Hold */
+            hold?: ("awaiting_teacher" | "enrolment_refused" | "own_consent_required") | null;
             /**
              * Id
              * Format: uuid
@@ -6878,6 +7292,14 @@ export interface components {
             ok: boolean;
             /** Warnings */
             warnings: components["schemas"]["IssueOut"][];
+        };
+        /**
+         * VerifyIn
+         * @description The teacher's confirmation: "I checked through the school that the guardian agreed".
+         */
+        VerifyIn: {
+            /** Guardian Agreed */
+            guardian_agreed: boolean;
         };
         /**
          * WaitingRoomOut
@@ -6932,16 +7354,20 @@ export interface components {
         };
         /**
          * WorkspaceRequestIn
-         * @description A request for a clinic (`practice`) or a laboratory (`lab`).
+         * @description A request for a clinic (`practice`), a laboratory (`lab`) or a `school`.
+         *
+         *     `school` carries the teacher's declaration and is required for a school, refused
+         *     for the other kinds.
          */
         WorkspaceRequestIn: {
             /**
              * Kind
              * @enum {string}
              */
-            kind: "practice" | "lab";
+            kind: "practice" | "lab" | "school";
             /** Name */
             name: string;
+            school?: components["schemas"]["SchoolRequestIn"] | null;
         };
         /**
          * PresignForm
@@ -7599,7 +8025,7 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "pending" | "active" | "rejected" | "archived" | "all";
-                kind?: ("practice" | "lab") | null;
+                kind?: ("practice" | "lab" | "school") | null;
                 limit?: number;
                 cursor?: string | null;
             };
@@ -10020,6 +10446,235 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_code_schools_lookup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_enrolment_schools_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyEnrolment"];
+                };
+            };
+        };
+    };
+    my_own_consent_schools_me_consent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnConsentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyEnrolment"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_school_schools__workspace_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolOut"];
+                };
+            };
+        };
+    };
+    new_code_schools__workspace_id__code_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolOut"];
+                };
+            };
+        };
+    };
+    list_students_schools__workspace_id__students_get: {
+        parameters: {
+            query?: {
+                status?: ("pending" | "verified" | "refused") | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentRow"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refuse_student_schools__workspace_id__students__user_id__refuse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefuseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_student_schools__workspace_id__students__user_id__verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentRow"];
                 };
             };
             /** @description Validation Error */

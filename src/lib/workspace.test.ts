@@ -76,6 +76,11 @@ describe("pickCurrent", () => {
     expect(pickCurrent([PERSONAL, PENDING], "q")).toBe(PERSONAL);
   });
 
+  it("never lands in a school: a teacher reaches it from /school (V4-0012)", () => {
+    const school = ws("s", "school", ["owner"]);
+    expect(pickCurrent([PERSONAL, school], "s")).toBe(PERSONAL);
+  });
+
   it("falls back when the chosen seat is gone", () => {
     expect(pickCurrent([PERSONAL], "c")).toBe(PERSONAL);
   });

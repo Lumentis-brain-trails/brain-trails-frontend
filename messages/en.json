@@ -48,7 +48,17 @@
     "self_consent_required": "An adult signs their own consent.",
     "minors_not_admitted": "A laboratory admits no participants under 18.",
     "minor_no_account": "Accounts are for adults. A minor is recorded by their clinic, without one.",
-    "reconsent_required": "They are now 18: attest their own consent before the next session."
+    "reconsent_required": "They are now 18: attest their own consent before the next session.",
+    "awaiting_teacher": "Your teacher has not verified your account yet.",
+    "enrolment_refused": "Your teacher could not verify your account.",
+    "own_consent_required": "You are 18 now: give your own consent to go on.",
+    "minor_needs_school": "Under 18, you join Brain Trails through your school: ask your teacher for the class code.",
+    "school_code_invalid": "No school has this code. Check it with your teacher.",
+    "guardian_required": "Add your parent's or guardian's name and who they are to you.",
+    "attestation_required": "Tick both declarations to ask for a school.",
+    "confirmation_required": "Tick that you checked the guardian's consent.",
+    "under_age": "Brain Trails is for people aged 18 and over.",
+    "school_details_required": "A school needs its city, country, your role and your qualification."
   },
   "application": {
     "step": "Application",
@@ -2390,7 +2400,8 @@
         "title": "Registration received.",
         "body": "An administrator will review it. Once approved you can sign in with the email and password you chose."
       },
-      "signIn": "Go to sign in"
+      "signIn": "Go to sign in",
+      "teacher": "You are under 18, so your teacher checks your school's consent form before you can use your account. You will get an email when they have."
     },
     "verify": {
       "working": "Verifying your email…",
@@ -2455,7 +2466,8 @@
       "patients": "Patients",
       "participants": "Participants",
       "my": "My sessions",
-      "neurofeedback": "Neurofeedback"
+      "neurofeedback": "Neurofeedback",
+      "school": "School"
     },
     "sections": "Sections",
     "you": "You",
@@ -2496,7 +2508,8 @@
     "kinds": {
       "personal": "Personal",
       "practice": "Clinic",
-      "lab": "Laboratory"
+      "lab": "Laboratory",
+      "school": "School"
     },
     "editions": {
       "personal": "Your own recordings",
@@ -2528,6 +2541,20 @@
       "active": "Approved",
       "rejected": "Not approved",
       "archived": "Closed"
+    },
+    "schoolHint": "For a teacher presenting Brain Trails in their school. Students sign up with your class code; you verify the ones under 18 once the school's form shows a parent agreed. You never see what they record.",
+    "school": {
+      "name": "School",
+      "nameHint": "The school's name, as your students know it.",
+      "city": "City",
+      "country": "Country",
+      "countryHint": "Two letters, for example IT.",
+      "role": "Your role",
+      "roleHint": "For example: science teacher, school psychologist.",
+      "qualification": "Your qualification",
+      "qualificationHint": "Your teaching qualification or professional registration.",
+      "attestGuardians": "I can verify, through my school, the consent of each student's parents or guardians.",
+      "attestPermission": "I have my school's permission to present Brain Trails to its students."
     }
   },
   "people": {
@@ -2897,7 +2924,8 @@
       "gone": "account deleted",
       "seats": "{count, plural, one {# seat} other {# seats}}",
       "approve": "Approve",
-      "reject": "Reject"
+      "reject": "Reject",
+      "school": "{city}, {country} · {role} · {qualification} · declaration {version}"
     }
   },
   "official": {
@@ -4234,6 +4262,95 @@
         "tuning": "First a minute to see where you are. Then listen: the two notes come into tune when you get there.",
         "ribbons": "First a minute to see where you are. Then the ribbons come into focus when you get there."
       }
+    }
+  },
+  "schools": {
+    "relationships": {
+      "parent": "Parent",
+      "legal_guardian": "Legal guardian"
+    },
+    "signup": {
+      "code": "Class code (students)",
+      "codeHint": "If your teacher gave you one. Under 18, you need it to join.",
+      "found": "{name}, {city}",
+      "minorNeedsCode": "Under 18, you join Brain Trails through your school: ask your teacher for the class code.",
+      "version": "Students and guardians, version {version}",
+      "studentTick": "I am the student: I have read the privacy note and I consent.",
+      "guardianTitle": "Your parent or guardian",
+      "guardianText": "Because you are under 18, a parent or legal guardian must accept too. Fill this in with them: your teacher will check it against the form your school collected.",
+      "guardianName": "Their full name",
+      "guardianRelationship": "Who they are to you",
+      "guardianTick": "I am this student's parent or legal guardian: I have read the privacy note and I accept."
+    },
+    "waiting": {
+      "loading": "Loading…",
+      "pending": {
+        "title": "Waiting for your teacher.",
+        "body": "Your account at {school} is open, but your teacher has to check your school's consent form first. You will get an email when they have verified you."
+      },
+      "refused": {
+        "title": "Your teacher could not verify your account.",
+        "body": "Your teacher at {school} did not verify this account, so it stays closed. If this is a mistake, talk to your teacher; you can also erase the account below.",
+        "reason": "Your teacher wrote"
+      },
+      "ofAge": {
+        "title": "You are 18 now.",
+        "body": "When you joined, a parent or guardian accepted for you. Now the choice is yours: read the privacy note and give your own consent to go on. Everything you recorded is still here.",
+        "policy": "Read the privacy note",
+        "version": "Version {version}",
+        "tick": "I have read the privacy note and I consent.",
+        "submit": "Continue"
+      },
+      "open": {
+        "title": "Your account is open.",
+        "go": "Go to Brain Trails"
+      },
+      "signOut": "Sign out",
+      "erase": {
+        "open": "Erase my account",
+        "title": "Erase your account",
+        "body": "Your account, your profile and everything you recorded are deleted. This cannot be undone.",
+        "password": "Your password",
+        "cancel": "Keep it",
+        "confirm": "Erase for good",
+        "erasing": "Erasing…"
+      }
+    },
+    "page": {
+      "title": "Your school",
+      "none": "You do not teach in a school on Brain Trails.",
+      "where": "{city}, {country}",
+      "intro": "Share the class code with your students, together with your school's consent form for their parents. Students under 18 wait here until you have checked the form. You never see what they record.",
+      "code": "Class code",
+      "codeHint": "Students type it when they sign up. Anyone with it can ask to join, so share it through your school's own channels.",
+      "regenerate": "New code",
+      "regenerateText": "The current code stops working at once. Students who already signed up are not affected.",
+      "regenerateConfirm": "Make a new code",
+      "cancel": "Cancel",
+      "students": "Students",
+      "tabs": {
+        "pending": "Waiting ({count})",
+        "verified": "Verified ({count})",
+        "refused": "Refused ({count})"
+      },
+      "empty": {
+        "pending": "Nobody is waiting.",
+        "verified": "No verified students yet.",
+        "refused": "Nobody refused."
+      },
+      "born": "Born in {year}",
+      "minor": "under 18",
+      "guardian": "{relationship}: {name}",
+      "consents": "Student accepted {student} · guardian accepted {guardian}",
+      "ownConsent": "Accepted on their own, {date}",
+      "reasonGiven": "Your reason: {reason}",
+      "verify": "Verify",
+      "refuse": "Refuse",
+      "verifyTitle": "Verify {name}",
+      "verifyTick": "I checked through the school that this student's parent or guardian agreed.",
+      "refuseTitle": "Refuse {name}",
+      "reason": "Reason (optional)",
+      "reasonHint": "The student reads it when they sign in. It is not emailed."
     }
   }
 }

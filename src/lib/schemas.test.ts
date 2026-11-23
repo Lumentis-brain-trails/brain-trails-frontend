@@ -162,6 +162,46 @@ describe("schemas", () => {
     });
   });
 
+  test("a class code travels apart from the profile, with its guardian (V4-0012)", () => {
+    const basics = basicsSchema.parse({
+      full_name: "Luca Bianchi",
+      birth_year: String(new Date().getFullYear() - 13),
+      handedness: "right",
+      school_code: "ABCD-EFGH",
+    });
+    const school = {
+      code: "ABCDEFGH",
+      guardian_name: "Maria Rossi",
+      guardian_relationship: "parent" as const,
+      guardian_consent: true,
+    };
+    const payload = toRegisterPayload(
+      { email: "a@b.it", password: "long-enough-pw" },
+      { core: true, research: false, newsletter: false },
+      basics,
+      false,
+      undefined,
+      school
+    );
+    expect(payload.school).toEqual(school);
+    expect(payload.profile).not.toHaveProperty("school_code");
+  });
+
+  test("under 18, a class code is the way past the age floor", () => {
+    const young = {
+      full_name: "Luca Bianchi",
+      birth_year: String(new Date().getFullYear() - 13),
+      handedness: "right",
+    };
+    expect(messages(basicsSchema.safeParse(young))).toEqual(["minAge"]);
+    expect(
+      basicsSchema.safeParse({ ...young, school_code: "ABCD-EFGH" }).success
+    ).toBe(true);
+    expect(
+      messages(basicsSchema.safeParse({ ...young, school_code: " - " }))
+    ).toEqual(["minAge"]);
+  });
+
   test("registration says which language the form was filled in", () => {
     const payload = toRegisterPayload(
       { email: "a@b.it", password: "long-enough-pw" },
