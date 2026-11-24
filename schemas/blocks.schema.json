@@ -1100,6 +1100,53 @@
                 "focus",
                 "custom"
               ]
+            },
+            "reward": {
+              "default": "closeness",
+              "type": "string",
+              "enum": [
+                "closeness",
+                "direction",
+                "blend"
+              ]
+            },
+            "spring": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
             }
           },
           "required": [

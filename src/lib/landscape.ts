@@ -1,10 +1,11 @@
 /**
  * The energy landscape, evaluated in the browser.
  *
- * The backend sends node positions, masses and a kernel width rather than a rendered
- * grid: a few dozen Gaussians cost microseconds to sum here, the payload stays small,
- * and the bandwidth can be a slider instead of a job. The Python reference these must
- * agree with is `pipeline/neurometrics/landscape.py`.
+ * Two halves. A density from node positions and masses (`densityField`, whose Python
+ * reference is `pipeline/neurometrics/landscape.py`). And the potential every view
+ * draws its wells with (`potential`, `wellsOf`): `U = -log(p + epsilon)`, shared by the
+ * Brain Landscape's energy layers (`landscapeLayers.ts`) and the 3D surfaces' "Wells"
+ * relief (`brainLandscape.ts`), so the two read a place the same way.
  *
  * Energy is the negative log of a *relative* density, in arbitrary units. It is not a
  * free energy and nothing here licenses reading it as one.
@@ -70,37 +71,96 @@ export function densityField(
   return { xs, ys, z };
 }
 
+/** The floor added under `p` before its log, when a view sets none. */
+export const DEFAULT_EPSILON = 0.01;
+
 /**
- * Turn a density into `-log` energy, floored so empty ground does not diverge and
- * shifted so the deepest basin sits at zero.
- *
- * @param density - Output of {@link densityField}.
- * @param floorQuantile - Quantile of the positive density used as the floor.
+ * Share of the peak below which ground counts as unexplored: the backend's `VISIBLE`
+ * (`pipeline/neurometrics/brain.py`), where the hover stops because nothing happened.
  */
-export function energyField(density: Field, floorQuantile = 0.02): Field {
-  const positive = density.z.flat().filter((v) => v > 0);
-  if (positive.length === 0) return density;
+export const EXPLORED_SHARE = 0.02;
 
-  const sorted = [...positive].sort((a, b) => a - b);
-  const index = Math.min(
-    sorted.length - 1,
-    Math.floor(floorQuantile * sorted.length)
-  );
-  const floor = Math.max(sorted[index], Number.MIN_VALUE);
+/**
+ * The potential of a share of time, `U = -log(p + epsilon)`, capped at `cutoff` when one
+ * is set. The one definition the Brain Landscape's energy layers and the 3D surfaces'
+ * wells both use, so the two never disagree. `epsilon` (> 0, else the default) floors
+ * empty ground at a finite height instead of an infinite one; a negative `p` reads as 0.
+ * Arbitrary units: not a free energy, and nothing here licenses reading it as one.
+ */
+export function potential(
+  p: number,
+  epsilon: number = DEFAULT_EPSILON,
+  cutoff: number | null = null
+): number {
+  const floor = epsilon > 0 ? epsilon : DEFAULT_EPSILON;
+  const u = -Math.log(Math.max(0, p) + floor);
+  return cutoff === null ? u : Math.min(u, cutoff);
+}
 
-  let lowest = Infinity;
-  const raw = density.z.map((row) =>
-    row.map((value) => {
-      const energy = -Math.log(Math.max(value, floor));
-      if (energy < lowest) lowest = energy;
-      return energy;
-    })
-  );
-  return {
-    xs: density.xs,
-    ys: density.ys,
-    z: raw.map((row) => row.map((v) => v - lowest)),
-  };
+/**
+ * The highest a potential reaches with these settings: the cutoff, or `-log epsilon`
+ * (empty ground) without one. Views draw their energies over it, so two with the same
+ * settings share a scale.
+ */
+export function potentialCeiling(
+  epsilon: number = DEFAULT_EPSILON,
+  cutoff: number | null = null
+): number {
+  return cutoff ?? -Math.log(epsilon > 0 ? epsilon : DEFAULT_EPSILON);
+}
+
+/** A height grid read as wells; every grid `[row][column]`, like the heights. */
+export interface Wells {
+  /** 0 at the deepest well, 1 on the plateau of unexplored ground. */
+  z: number[][];
+  /** `1 - z` on explored ground, 0 on the plateau: how much time, on a log scale. */
+  depth: number[][];
+  /** Whether the ground reached `explored` of the peak. */
+  explored: boolean[][];
+}
+
+/**
+ * A height grid peaking at 1 (the backend's density over its peak) turned into Andrea's
+ * wells: `U = -log max(p, p0)`, where the brain spent its time is a basin and the
+ * ground it never reached is floored.
+ *
+ * The floor is the explored share (`p0`): the potential is capped there, so all the
+ * unexplored ground is one flat plateau at height 1 and cannot draw relief of its own
+ * (without the cap, the ground between nothing and the explored share would slope over
+ * about a quarter of the scale). The deepest well sits at 0. Heights are rescaled by the grid's own peak, so
+ * a grid whose peak is not exactly 1 still spans [0, 1]; an empty or flat-zero grid is
+ * all plateau.
+ */
+export function wellsOf(
+  height: readonly (readonly number[])[],
+  epsilon: number = DEFAULT_EPSILON,
+  explored: number = EXPLORED_SHARE
+): Wells {
+  let peak = 0;
+  for (const row of height) for (const v of row) if (v > peak) peak = v;
+  const cutoff = potential(explored, epsilon);
+  const bottom = potential(1, epsilon);
+  const span = cutoff - bottom || 1;
+  const z: number[][] = [];
+  const depth: number[][] = [];
+  const known: boolean[][] = [];
+  for (const row of height) {
+    const zr: number[] = [];
+    const dr: number[] = [];
+    const kr: boolean[] = [];
+    for (const v of row) {
+      const p = peak > 0 ? v / peak : 0;
+      const h = (potential(p, epsilon, cutoff) - bottom) / span;
+      const reached = p >= explored;
+      zr.push(h);
+      dr.push(reached ? 1 - h : 0);
+      kr.push(reached);
+    }
+    z.push(zr);
+    depth.push(dr);
+    known.push(kr);
+  }
+  return { z, depth, explored: known };
 }
 
 /** Read a field at an arbitrary layout coordinate, nearest cell. */

@@ -3,11 +3,12 @@ import { NextIntlClientProvider } from "next-intl";
 import { useState } from "react";
 import { afterEach, describe, expect, test } from "vitest";
 import messages from "../../../messages/en.json";
+import blocks from "../../../schemas/blocks.schema.json";
 import { SchemaForm } from "./SchemaForm";
 import type { JsonSchema } from "@/lib/builder/fields";
 
 /** The form is controlled: the harness owns the value, as the builder page does. */
-function renderForm(schema: JsonSchema, initial: unknown = {}) {
+function renderForm(schema: JsonSchema, initial: unknown = {}, kind?: string) {
   const seen = { value: initial, changes: [] as unknown[] };
   function Harness() {
     const [value, setValue] = useState<unknown>(initial);
@@ -15,6 +16,7 @@ function renderForm(schema: JsonSchema, initial: unknown = {}) {
       <NextIntlClientProvider locale="en" messages={messages}>
         <SchemaForm
           schema={schema}
+          kind={kind}
           value={value}
           onChange={(next) => {
             seen.value = next;
@@ -205,5 +207,45 @@ describe("SchemaForm", () => {
     expect(
       screen.getByText(messages.builder.form.unsupported)
     ).toBeInTheDocument();
+  });
+});
+
+describe("a neurofeedback block's reward", () => {
+  afterEach(cleanup);
+  const schema = (blocks as { kinds: Record<string, JsonSchema> }).kinds
+    .neurofeedback;
+  const words = messages.builder.fields.neurofeedback["targets/reward"];
+  const landscape = {
+    signal: "landscape_region",
+    feedback: "plane",
+    targets: { points: [[1, 2]], radius: 0.5, epoch: 3, preset: "focus" },
+  };
+
+  test("a landscape block offers it, explained, left to its default at first", () => {
+    const seen = renderForm(schema, landscape, "neurofeedback");
+    const select = screen.getByLabelText(new RegExp(`^${words.label}`));
+    expect(select.tagName).toBe("SELECT");
+    // unset: the schema's default, closeness, the first of the choices
+    expect((select as HTMLSelectElement).value).toBe("");
+    expect(
+      [...(select as HTMLSelectElement).options].map((o) => o.value)
+    ).toEqual(["", "closeness", "direction", "blend"]);
+    expect(
+      screen.getByRole("button", { name: `About: ${words.label}` })
+    ).toBeInTheDocument();
+    expect(screen.getByText(words.options.direction)).toBeInTheDocument();
+    fireEvent.change(select, { target: { value: "direction" } });
+    // the targets the Neurofeedback page chose are kept around it
+    expect(seen.value).toMatchObject({
+      targets: { ...landscape.targets, reward: "direction" },
+    });
+  });
+
+  test("a band block has no such setting, and the spring is never drawn", () => {
+    renderForm(schema, { signal: "alpha", feedback: "plane" }, "neurofeedback");
+    expect(screen.queryByLabelText(new RegExp(`^${words.label}`))).toBeNull();
+    cleanup();
+    renderForm(schema, landscape, "neurofeedback");
+    expect(screen.queryByLabelText(/spring/i)).toBeNull();
   });
 });

@@ -8,6 +8,7 @@
  * nothing else: no re-fitting, no re-blurring, the scale is the backend's.
  */
 import type { components } from "@/lib/api-types";
+import { wellsOf } from "@/lib/landscape";
 
 export type BrainLandscape = components["schemas"]["BrainLandscapeOut"];
 export type LandscapeCategory =
@@ -103,6 +104,71 @@ export function hoverMatrix(
       .join("<br>");
   }
   return text;
+}
+
+/**
+ * How the height is drawn: `hills` (the backend's density over its peak: peaks are where
+ * the time was spent) or `wells` (the same map as a potential, `U = -log p`: where the
+ * time was spent is a basin, the ground never reached a flat plateau; Andrea's
+ * "mountains that become wells").
+ */
+export type Relief = "hills" | "wells";
+export const RELIEFS: readonly Relief[] = ["hills", "wells"];
+
+/**
+ * The share of the colour scale kept for the plateau of unexplored ground in the wells
+ * relief: colour values below it are the faded plateau, the landscape's own ramp is
+ * spread over the rest.
+ */
+export const PLATEAU_BAND = 0.04;
+
+/** A map's ground, drawn with one relief. */
+export interface Ground {
+  /** The map with its heights replaced: every height lookup (`heightAt`) reads these. */
+  landscape: BrainLandscape;
+  /**
+   * The colour of each grid point, `[row][column]`, in [0, 1], for the wells: below
+   * `PLATEAU_BAND` the faded plateau, above it how deep the well is (the most time the
+   * most saturated, as on the hills). Null for the hills, which are coloured by height.
+   */
+  colour: number[][] | null;
+}
+
+/**
+ * The map's ground with `relief` applied. The heights themselves are replaced, not only
+ * drawn differently, so a trail, a cursor or a target lifted with `heightAt` on the
+ * returned map sits on the drawn surface whichever the relief. The hills are the map as
+ * it came.
+ */
+export function groundOf(landscape: BrainLandscape, relief: Relief): Ground {
+  if (relief === "hills") return { landscape, colour: null };
+  const wells = wellsOf(landscape.grid.z);
+  return {
+    landscape: { ...landscape, grid: { ...landscape.grid, z: wells.z } },
+    colour: wells.depth.map((row, j) =>
+      row.map((d, i) =>
+        wells.explored[j][i] ? PLATEAU_BAND + d * (1 - PLATEAU_BAND) : 0
+      )
+    ),
+  };
+}
+
+/**
+ * A colour scale for `Ground.colour`: the faded plateau under `PLATEAU_BAND`, the
+ * landscape's own ramp (`stops`, low to high) over the rest.
+ */
+export function wellsColorscale(
+  stops: readonly (readonly [number, string])[],
+  faded: string
+): [number, string][] {
+  return [
+    [0, faded],
+    [PLATEAU_BAND / 2, faded],
+    ...stops.map(([at, colour]): [number, string] => [
+      PLATEAU_BAND + at * (1 - PLATEAU_BAND),
+      colour,
+    ]),
+  ];
 }
 
 /** Why there is no landscape to draw: still being built, not on this server, or broken. */

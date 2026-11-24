@@ -29,6 +29,7 @@
  * energy and nothing licenses reading it as one.
  */
 import type { components } from "@/lib/api-types";
+import { DEFAULT_EPSILON, potential, potentialCeiling } from "@/lib/landscape";
 
 export type LayerSource = components["schemas"]["BrainLandscapeLayersOut"];
 export type LayerLabel = components["schemas"]["BrainLandscapeLabelOut"];
@@ -182,7 +183,7 @@ export const MIN_SUPPORT = 0.5;
 export const FULL_SUPPORT = 2;
 /** At most this many landscapes on the page: each is a WebGL scene of its own. */
 export const MAX_VIEWS = 4;
-export const DEFAULT_EPSILON = 0.01;
+export { DEFAULT_EPSILON };
 /** The widest extra blur offered, in map widths: past it the map is one blob. */
 export const MAX_SMOOTH = 10;
 /** Kernels stop at four widths, like `scipy.ndimage.gaussian_filter`'s default. */
@@ -793,19 +794,16 @@ function mainTask(
 /**
  * `U = -log(p + epsilon)`, capped at the cutoff; drawn over its own ceiling (the cutoff,
  * or `-log epsilon`) so energies with the same settings share a scale. Wells are where
- * it happened most.
+ * it happened most. The potential is `landscape.ts`'s, the one the 3D surfaces' wells
+ * use too.
  */
 function energy(
   grid: Grid,
   frequency: Frequency,
   spec: MeasureSpec
 ): ContinuousField {
-  const epsilon = spec.epsilon > 0 ? spec.epsilon : DEFAULT_EPSILON;
-  const ceiling = spec.cutoff ?? -Math.log(epsilon);
-  const u = (c: number) => {
-    const value = -Math.log(frequency.p[c] + epsilon);
-    return spec.cutoff === null ? value : Math.min(value, spec.cutoff);
-  };
+  const ceiling = potentialCeiling(spec.epsilon, spec.cutoff);
+  const u = (c: number) => potential(frequency.p[c], spec.epsilon, spec.cutoff);
   const shown = (c: number) => !frequency.mask || frequency.mask(c);
   const support = frequency.support;
   return {

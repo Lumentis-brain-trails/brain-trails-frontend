@@ -11,8 +11,9 @@
  * luminance limit (H4).
  *
  * Every update is a timeline event, as the band block's are: `nf_update` with the
- * window, the closeness, the averaged position and its distance to the nearest target,
- * and `age_ms` from the worker's lag plus the frame's way here. One a second: a 30
+ * window, the reward (`smoothed`, and which one: `reward`), the closeness and the raw
+ * direction cosine it was made of, the averaged position and its distance to the
+ * nearest target, and `age_ms` from the worker's lag plus the frame's way here. One a second: a 30
  * minute block is 1,800 of them.
  */
 
@@ -30,7 +31,10 @@ import {
   MAP_SMOOTH,
   STEP_S,
 } from "@/lib/neurofeedback/landscape";
-import type { NeurofeedbackConfig } from "@/lib/protocol/blocks";
+import {
+  IDENTITY_SPRING,
+  type NeurofeedbackConfig,
+} from "@/lib/protocol/blocks";
 import { FRAME_MS, timingMeta } from "@/lib/protocol/marker";
 import type { TaskContext } from "@/lib/protocol/types";
 import { Stage, useFinish, useLatest } from "./shared";
@@ -81,6 +85,7 @@ export function LandscapeRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
     direction: engine.direction,
     targets: targets.points.length,
     preset: targets.preset,
+    reward: targets.reward ?? "closeness",
     updates: tally.current.updates,
     in_target_updates: tally.current.inTarget,
     gated_updates: tally.current.gated,
@@ -107,6 +112,8 @@ export function LandscapeRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
         radius: targets.radius,
         epoch: targets.epoch,
         preset: targets.preset,
+        reward: targets.reward ?? "closeness",
+        spring: targets.spring ?? IDENTITY_SPRING,
         step_s: STEP_S,
         smooth_windows: MAP_SMOOTH,
         threshold_mode: config.threshold.mode,
@@ -157,6 +164,9 @@ export function LandscapeRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
                   window: u.window,
                   value: sig(u.value),
                   smoothed: sig(u.smoothed),
+                  reward: u.reward,
+                  closeness: sig(u.closeness),
+                  cos: sig(u.cos),
                   x: sig(u.x),
                   y: sig(u.y),
                   distance: sig(u.distance),

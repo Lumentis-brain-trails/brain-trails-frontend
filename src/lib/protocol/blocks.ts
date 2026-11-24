@@ -220,6 +220,32 @@ export const NF_FEEDBACK = ["video", "plane", "tuning", "ribbons"] as const;
 /** Most points a landscape target may hold. */
 export const NF_MAX_TARGETS = 3;
 
+/**
+ * What a landscape block rewards (V4-0010, amended for Andrea's direction feedback):
+ * being close to the target, heading towards it, or a blend of the two that leads with
+ * the direction far away and with the closeness near
+ * (`lib/neurofeedback/landscape.ts`).
+ */
+export const NF_REWARDS = ["closeness", "direction", "blend"] as const;
+
+/** The spring `K` when a block sets none: every direction of the map pulls alike. */
+export const IDENTITY_SPRING: [[number, number], [number, number]] = [
+  [1, 0],
+  [0, 1],
+];
+
+/**
+ * Whether `[[a, b], [b', c]]` is a spring the direction reward can use: symmetric
+ * (`b = b'`) and positive definite (`a > 0` and `ac - b^2 > 0`), so `K v` never turns a
+ * pull towards the target into one away from it.
+ */
+export function isSpring(k: readonly (readonly number[])[]): boolean {
+  if (k.length !== 2 || k.some((row) => row.length !== 2)) return false;
+  const [[a, b], [b2, c]] = k;
+  if (![a, b, b2, c].every(Number.isFinite)) return false;
+  return b === b2 && a > 0 && a * c - b * b > 0;
+}
+
 /** The Muse's electrodes, in its own order (`lib/muse/protocol.ts`). */
 const NF_CHANNELS = ["TP9", "AF7", "AF8", "TP10"] as const;
 
@@ -245,7 +271,8 @@ export const neurofeedbackConfigSchema = z
     /**
      * `landscape_region` only (V4-0010): points of the person's own landscape, in its
      * coordinates, and the map's epoch they were chosen on. The reward is the closeness
-     * to the nearest point, 1 on it and 1/2 at `radius`.
+     * to the nearest point, 1 on it and 1/2 at `radius`, or (`reward`) the direction the
+     * person is heading in, or a blend of the two.
      */
     targets: z
       .object({
@@ -257,6 +284,23 @@ export const neurofeedbackConfigSchema = z
         epoch: z.number().int().min(1),
         /** Where the points came from: a preset of the map, or the person's own clicks. */
         preset: z.enum(["focus", "custom"]).default("custom"),
+        /** What is rewarded; closeness, the original reward, when left out. */
+        reward: z.enum(NF_REWARDS).default("closeness"),
+        /**
+         * The direction reward's `K` in `cos(step, K (target - here))`: symmetric
+         * positive definite, `[[a, b], [b, c]]`; the identity when left out.
+         */
+        spring: z
+          .tuple([
+            z.tuple([z.number().positive(), z.number()]),
+            z.tuple([z.number(), z.number().positive()]),
+          ])
+          .optional(),
+      })
+      .refine((t) => t.spring === undefined || isSpring(t.spring), {
+        message:
+          "spring must be symmetric positive definite: [[a, b], [b, c]] with a > 0 and ac - b² > 0",
+        path: ["spring"],
       })
       .optional(),
     direction: z.enum(["up", "down"]).optional(),

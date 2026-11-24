@@ -10,6 +10,7 @@
 import type { BrainLandscape } from "@/lib/brainLandscape";
 import type { ChannelQuality } from "@/lib/muse/quality";
 import type { EegChannel } from "@/lib/muse/protocol";
+import { landscapeTargets } from "@/lib/neurofeedback/landscape";
 import type { RunnerState } from "@/lib/protocol/commands";
 import type { LiveFrame } from "./socket";
 
@@ -35,6 +36,8 @@ export interface PlanStep {
   id: string;
   label: string;
   kind: string;
+  /** A neurofeedback block toward places of the map (V4-0010): where it leads. */
+  targets?: { points: number[][]; radius: number; epoch: number };
 }
 
 export interface RoomQuality {
@@ -132,10 +135,12 @@ function planSteps(plan: unknown): PlanStep[] {
   if (!Array.isArray(steps)) return [];
   return steps.map((s) => {
     const step = s as { id?: unknown; label?: unknown; kind?: unknown };
+    const targets = landscapeTargets(s);
     return {
       id: String(step.id ?? ""),
       label: String(step.label ?? step.id ?? ""),
       kind: String(step.kind ?? ""),
+      ...(targets ? { targets } : {}),
     };
   });
 }

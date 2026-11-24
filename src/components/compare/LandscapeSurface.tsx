@@ -12,6 +12,11 @@
  * The vertical axis is kept low (`ASPECT`) so ridges hide as little of a trail as
  * possible, and the camera can be shared: the comparison view hands both columns one
  * camera, so turning one landscape turns the other and the two blocks stay comparable.
+ *
+ * `relief` turns the hills into wells (`groundOf`): the same map as a potential, the
+ * time spent a basin, the ground never reached a flat plateau faded into the page. The
+ * heights are replaced before anything is lifted onto them, so trails, the cursor and
+ * neurofeedback targets sit on whichever surface is drawn.
  */
 import dynamic from "next/dynamic";
 import { useMemo, useSyncExternalStore } from "react";
@@ -19,11 +24,15 @@ import type { Data, Layout } from "plotly.js";
 import { useLabelNamer } from "@/components/compare/useLabelNamer";
 import {
   type BrainLandscape,
+  type Ground,
+  type Relief,
   axes,
   framedTrail,
+  groundOf,
   heightAt,
   hoverMatrix,
   onMap,
+  wellsColorscale,
 } from "@/lib/brainLandscape";
 import {
   CHART_THEMES,
@@ -76,6 +85,13 @@ const CONTOUR_STEP = 0.05;
 const LIFT = 0.025;
 /** How high the live position's stem rises above the ground, so no ridge hides it. */
 const STEM = 0.35;
+/**
+ * In the wells the dot sits in a basin and the plateau around it is the highest ground:
+ * the stem's top clears the plateau (height 1) by half a stem, wherever the dot is.
+ */
+const WELLS_STEM_TOP = 1 + STEM / 2;
+/** Points around a target's radius, draped on the ground. */
+const RING_POINTS = 48;
 
 export type Camera = NonNullable<NonNullable<Layout["scene"]>["camera"]>;
 
@@ -98,6 +114,14 @@ export interface SurfaceTrail {
   faint?: boolean;
 }
 
+/** Where a neurofeedback block leads (V4-0010): points of the map, and their radius. */
+export interface SurfaceTargets {
+  points: readonly (readonly number[])[];
+  radius: number;
+  /** The drawing of the map the points belong to; on another one they are not drawn. */
+  epoch: number;
+}
+
 export function LandscapeSurface({
   landscape,
   trails = [],
@@ -108,6 +132,8 @@ export function LandscapeSurface({
   hover = true,
   live = false,
   scheme,
+  relief = "hills",
+  targets = null,
   title,
 }: {
   landscape: BrainLandscape;
@@ -126,6 +152,10 @@ export function LandscapeSurface({
   live?: boolean;
   /** A fixed scheme, for a view over the black stage whatever the page's theme. */
   scheme?: ThemeName;
+  /** Hills (the default) or wells (`groundOf`). */
+  relief?: Relief;
+  /** A neurofeedback block's targets, each a dot and its radius on the ground. */
+  targets?: SurfaceTargets | null;
   title: string;
 }) {
   const pageTheme = useChartTheme();
@@ -133,6 +163,11 @@ export function LandscapeSurface({
   const namer = useLabelNamer();
   const narrow = useNarrow();
   const plotHeight = narrow ? Math.min(height, NARROW_MAX_HEIGHT) : height;
+  // the drawn ground: every height below is read from it, never from `landscape`
+  const shaped = useMemo(
+    () => groundOf(landscape, relief),
+    [landscape, relief]
+  );
   const ground = useMemo(() => {
     const { xs, ys } = axes(landscape);
     return {
@@ -150,24 +185,42 @@ export function LandscapeSurface({
   const cy = cursor?.y ?? null;
   const hasCursor = cursor !== null;
   const data = useMemo((): Data[] => {
-    const lift = (x: number, y: number) => heightAt(landscape, x, y) + LIFT;
+    const map = shaped.landscape;
+    const lift = (x: number, y: number) => heightAt(map, x, y) + LIFT;
     const at =
-      cx !== null && cy !== null && onMap(landscape, cx, cy)
+      cx !== null && cy !== null && onMap(map, cx, cy)
         ? { x: cx, y: cy }
         : null;
+    const stemTop =
+      relief === "wells" ? () => WELLS_STEM_TOP : (g: number) => g + STEM;
+    const shownTargets =
+      targets && targets.epoch === map.epoch ? targets : null;
     return [
-      surfaceTrace(landscape, ground, hover, theme),
-      ...trails.map((trail) => trailTrace(landscape, trail, lift, theme)),
+      surfaceTrace(shaped, ground, hover, theme),
+      ...trails.map((trail) => trailTrace(map, trail, lift, theme)),
+      ...(shownTargets ? targetTraces(map, shownTargets, lift, theme) : []),
       // The cursor's traces are always there, hidden when it is off the map: a figure
       // whose number of traces changes is torn down and rebuilt, which shows as a
       // flash each time a live position crosses the map's edge.
       ...(live
-        ? liveCursor(at, at ? lift(at.x, at.y) : 0, theme.trailEnd)
+        ? liveCursor(at, at ? lift(at.x, at.y) : 0, theme.trailEnd, stemTop)
         : hasCursor
           ? [sliderCursor(at, at ? lift(at.x, at.y) : 0, theme)]
           : []),
     ];
-  }, [landscape, ground, hover, theme, trails, live, cx, cy, hasCursor]);
+  }, [
+    shaped,
+    ground,
+    hover,
+    theme,
+    trails,
+    targets,
+    relief,
+    live,
+    cx,
+    cy,
+    hasCursor,
+  ]);
 
   // the scene is the map's frame, not every point's: the backend frames 90% of the
   // windows, and a trail's outliers fall outside it rather than zooming the map out
@@ -220,16 +273,17 @@ export function LandscapeSurface({
 const PLOT_CONFIG = { displayModeBar: false, responsive: true };
 
 function surfaceTrace(
-  landscape: BrainLandscape,
+  shaped: Ground,
   ground: { xs: number[]; ys: number[]; text: unknown },
   hover: boolean,
   theme: ChartTheme
 ): Data {
+  const wells = shaped.colour !== null;
   return {
     type: "surface",
     x: ground.xs,
     y: ground.ys,
-    z: landscape.grid.z,
+    z: shaped.landscape.grid.z,
     ...(hover && ground.text
       ? {
           text: ground.text as unknown as string[],
@@ -237,17 +291,28 @@ function surfaceTrace(
         }
       : { hoverinfo: "skip" as const }),
     showscale: false,
-    colorscale: theme.landscape.map(([at, colour]) => [at, colour]) as [
-      number,
-      string,
-    ][],
+    // the wells are coloured by depth, the plateau faded into the page: the most time
+    // is the most saturated colour in both reliefs
+    ...(shaped.colour !== null
+      ? {
+          surfacecolor: shaped.colour,
+          cmin: 0,
+          cmax: 1,
+          colorscale: wellsColorscale(theme.landscape, theme.canvas),
+        }
+      : {
+          colorscale: theme.landscape.map(([at, colour]) => [at, colour]) as [
+            number,
+            string,
+          ][],
+        }),
     // contour lines every twentieth of the peak: the landscape read as a topographic
-    // map, fine enough that two close hills keep their own rings
+    // map, fine enough that two close hills keep their own rings; none on the plateau
     contours: {
       z: {
         show: true,
         start: CONTOUR_STEP,
-        end: 1,
+        end: wells ? 1 - CONTOUR_STEP / 2 : 1,
         size: CONTOUR_STEP,
         color: theme.contour,
         width: 1,
@@ -324,13 +389,71 @@ function sliderCursor(
   } as Data;
 }
 
+/**
+ * A neurofeedback block's targets: each radius (where the reward is a half) draped on
+ * the ground as a dotted ring, and a ring marker on each point. One trace per ring and
+ * one for the points, so the figure keeps its traces while the targets do not change.
+ */
+function targetTraces(
+  landscape: BrainLandscape,
+  targets: SurfaceTargets,
+  lift: (x: number, y: number) => number,
+  theme: ChartTheme
+): Data[] {
+  const points = targets.points.filter(
+    (p) => p.length === 2 && onMap(landscape, p[0], p[1])
+  );
+  const rings = points.map((p): Data => {
+    const xs: (number | null)[] = [];
+    const ys: (number | null)[] = [];
+    const zs: (number | null)[] = [];
+    for (let k = 0; k <= RING_POINTS; k += 1) {
+      const angle = (2 * Math.PI * k) / RING_POINTS;
+      const x = p[0] + targets.radius * Math.cos(angle);
+      const y = p[1] + targets.radius * Math.sin(angle);
+      const inside = onMap(landscape, x, y);
+      xs.push(inside ? x : null);
+      ys.push(inside ? y : null);
+      zs.push(inside ? lift(x, y) : null);
+    }
+    return {
+      type: "scatter3d",
+      mode: "lines",
+      x: xs,
+      y: ys,
+      z: zs,
+      connectgaps: false,
+      hoverinfo: "skip",
+      line: { color: theme.ink, width: 3, dash: "dot" },
+    } as Data;
+  });
+  return [
+    ...rings,
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: points.map((p) => p[0]),
+      y: points.map((p) => p[1]),
+      z: points.map((p) => lift(p[0], p[1]) + LIFT),
+      hoverinfo: "skip",
+      marker: {
+        size: 8,
+        color: theme.canvas,
+        symbol: "circle-open",
+        line: { color: theme.ink, width: 3 },
+      },
+    } as Data,
+  ];
+}
+
 /** The live position: a stem from the ground, a halo and a bright dot at its top. */
 function liveCursor(
   at: { x: number; y: number } | null,
   ground: number,
-  accent: string
+  accent: string,
+  stemTop: (ground: number) => number
 ): Data[] {
-  const top = ground + STEM;
+  const top = stemTop(ground);
   // off the map (or none yet): the same three traces, hidden
   const visible = at !== null;
   const cursor = at ?? { x: 0, y: 0 };

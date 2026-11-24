@@ -14,17 +14,39 @@
  *
  * The buttons never take the focus: a task answered with the space bar would otherwise
  * press the last one clicked.
+ *
+ * During a run that trains toward places of the map (V4-0010, `targets`), the landscape
+ * is drawn as wells by default (the place the person heads for is a basin they fall
+ * into) and the targets are on it; elsewhere hills. Either way the reader can switch,
+ * and the choice is remembered for runs of that sort (`useRelief`).
  */
 
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
+import {
+  LandscapeSurface,
+  type SurfaceTargets,
+} from "@/components/compare/LandscapeSurface";
+import { RELIEFS, type Relief } from "@/lib/brainLandscape";
+import { useRelief } from "@/lib/relief";
 import { useLiveGround } from "@/lib/live/useLiveGround";
 import { useLiveRoom } from "@/lib/live/useLiveRoom";
 import { LiveTrail } from "./LiveTrail";
 
-export function SelfTrail({ sessionId }: { sessionId: string }) {
+export function SelfTrail({
+  sessionId,
+  targets = null,
+}: {
+  sessionId: string;
+  /** The run's neurofeedback targets, when a block trains toward places of the map. */
+  targets?: SurfaceTargets | null;
+}) {
   const t = useTranslations("run.surface");
+  const tr = useTranslations("landscape.relief");
+  const [relief, setRelief] = useRelief(
+    targets ? "run-neurofeedback" : "run",
+    targets ? "wells" : "hills"
+  );
   const { room } = useLiveRoom(sessionId, true);
   const ground = useLiveGround(sessionId, room, true);
   const [view, setView] = useState<"trail" | "landscape">("trail");
@@ -45,23 +67,31 @@ export function SelfTrail({ sessionId }: { sessionId: string }) {
     ];
   }, [ground.x, ground.y]);
 
-  const choice = (value: "trail" | "landscape", label: string, off = false) => (
+  const pill = (
+    pressed: boolean,
+    onClick: () => void,
+    label: string,
+    off = false
+  ) => (
     <button
+      key={label}
       type="button"
       tabIndex={-1}
       disabled={off}
-      aria-pressed={shown === value}
+      aria-pressed={pressed}
       onMouseDown={(e) => e.preventDefault()}
-      onClick={() => setView(value)}
+      onClick={onClick}
       className={`rounded-full px-2.5 py-0.5 text-[11px] transition-colors disabled:opacity-40 ${
-        shown === value
-          ? "bg-white/90 text-black"
-          : "text-white/70 hover:text-white"
+        pressed ? "bg-white/90 text-black" : "text-white/70 hover:text-white"
       }`}
     >
       {label}
     </button>
   );
+  const choice = (value: "trail" | "landscape", label: string, off = false) =>
+    pill(shown === value, () => setView(value), label, off);
+  const reliefChoice = (value: Relief) =>
+    pill(relief === value, () => setRelief(value), tr(value));
 
   return (
     <div
@@ -80,6 +110,8 @@ export function SelfTrail({ sessionId }: { sessionId: string }) {
           live
           cursor={here}
           trails={trails}
+          relief={relief}
+          targets={targets}
         />
       ) : (
         <LiveTrail
@@ -95,6 +127,16 @@ export function SelfTrail({ sessionId }: { sessionId: string }) {
         aria-label={t("selfView")}
         className="pointer-events-auto mt-1 flex justify-end gap-1"
       >
+        {shown === "landscape" && (
+          <span
+            role="group"
+            aria-label={tr("label")}
+            title={tr("hint")}
+            className="mr-auto flex gap-1"
+          >
+            {RELIEFS.map(reliefChoice)}
+          </span>
+        )}
         {choice("trail", t("selfViewTrail"))}
         {choice("landscape", t("selfViewLandscape"), !ground.landscape)}
       </div>
