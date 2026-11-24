@@ -824,6 +824,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/context-variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Context Variables
+         * @description The caller's questionnaire: the defaults plus their own changes (404 when off).
+         */
+        get: operations["get_context_variables_context_variables_get"];
+        /**
+         * Put Context Variables
+         * @description Replace the caller's personalisation; returns the list as it now stands.
+         *
+         *     422 `bad_context_variables` for a hidden key that is not a built-in item, options
+         *     added to an item that takes none, a duplicate key, a choice item with fewer than two
+         *     options, a scale with options, or more than the allowed number of live items.
+         */
+        put: operations["put_context_variables_context_variables_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/fair": {
         parameters: {
             query?: never;
@@ -992,6 +1020,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/landscape/redraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Redraw My Landscape
+         * @description Redraw the caller's map from scratch, now.
+         *
+         *     A map is otherwise only rebuilt when a recording is analysed or deleted, and then
+         *     extends its stored geometry; a change to how maps are drawn (a new blur, a new cover)
+         *     reaches an existing map only through a refit. This queues one: reduction, radius,
+         *     cover and layout fitted again on every recording, a new epoch. 409 `not_ready`
+         *     without a finished recording to draw from. Answers the status, `pending` true.
+         */
+        post: operations["redraw_my_landscape_landscape_redraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/landscape/status": {
         parameters: {
             query?: never;
@@ -1096,9 +1150,34 @@ export interface paths {
          * My Sessions
          * @description The sessions recorded of the caller's own subjects, newest first, keyset-paged.
          *
-         *     A plain list (V4-0006): no trail, no metric, no link to the recording.
+         *     A plain list (V4-0006): no trail, no metric, and no link to the recording unless
+         *     the person's carer shares their results in full (`share_results = full`, T6).
          */
         get: operations["my_sessions_me_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/summaries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Summaries
+         * @description The caller's own after-session summaries, newest first.
+         *
+         *     Only for subjects whose carer shares at least a summary, in an organisation whose
+         *     kind has `client_summary` on; otherwise an empty list - the client shell then says
+         *     "done" and nothing else (V4-0006).
+         */
+        get: operations["my_summaries_me_summaries_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2013,6 +2092,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sessions/{session_id}/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session Context
+         * @description The answers given before this run; 404 `not_found` when none were stored.
+         */
+        get: operations["get_session_context_sessions__session_id__context_get"];
+        /**
+         * Put Session Context
+         * @description Store (or replace) the answers given before this run; idempotent.
+         *
+         *     Validated against the caller's own list as it is now. 422 `bad_context_answer` for
+         *     an item the list does not have, a value of the wrong shape, an option not offered,
+         *     or answers on a skipped questionnaire. 404 when the flag is off.
+         */
+        put: operations["put_session_context_sessions__session_id__context_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions/{session_id}/events": {
         parameters: {
             query?: never;
@@ -2305,6 +2412,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/subjects/{subject_id}/landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Subject Landscape
+         * @description The patient's map and all their trails. 409 `not_ready` while there is none.
+         */
+        get: operations["subject_landscape_subjects__subject_id__landscape_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/subjects/{subject_id}/sessions": {
         parameters: {
             query?: never;
@@ -2317,6 +2444,50 @@ export interface paths {
          * @description The subject's sessions, newest first (its carers). Audited as a read of them.
          */
         get: operations["subject_sessions_subjects__subject_id__sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Share Results
+         * @description Set `nothing`, `summary` or `full` for the patient; audited, from-and-to.
+         *
+         *     `full` lets their own account read their recordings and sessions (never the carers'
+         *     notes); `summary` only the after-session picture, and only where `client_summary` is
+         *     on. 404 outside the therapy edition.
+         */
+        put: operations["share_results_subjects__subject_id__share_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects/{subject_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Subject Timeline
+         * @description The patient at a glance, for whoever reads them (carers, a lab's data readers).
+         */
+        get: operations["subject_timeline_subjects__subject_id__timeline_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2342,6 +2513,93 @@ export interface paths {
          *     anyone has an account, and it reads no database (decision 0014).
          */
         get: operations["taxonomies_taxonomies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transfers/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make Export
+         * @description A one-time link to the caller's own recordings, for another environment to redeem.
+         */
+        post: operations["make_export_transfers_exports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transfers/exports/manifest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Manifest
+         * @description Redeem a link: the admin's own recordings as a versioned manifest (server to server).
+         *
+         *     Public, because the token is the credential: it is random, single-use, lives for
+         *     15 minutes, and opens only the recordings of the admin who made it.
+         */
+        get: operations["manifest_transfers_exports_manifest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transfers/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Import
+         * @description Redeem a link at its source and copy the caller's recordings here (202).
+         *
+         *     The manifest is read before answering, so a bad link fails here. The copy runs after
+         *     the answer, recording by recording, and can be repeated: what is here already is
+         *     skipped.
+         */
+        post: operations["start_import_transfers_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transfers/peers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Peers
+         * @description This environment's place in the transfer graph (admin only).
+         */
+        get: operations["get_peers_transfers_peers_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2554,6 +2812,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspace_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Waiting For Review
+         * @description The clinic home's "waiting for review": the last 30 days, newest first.
+         *
+         *     Opening a recording (its page) is what takes it off the list - the read audit T3
+         *     already keeps, so there is no "mark as reviewed" to forget.
+         */
+        get: operations["waiting_for_review_workspaces__workspace_id__review_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/subjects": {
         parameters: {
             query?: never;
@@ -2600,6 +2881,18 @@ export interface components {
              * @enum {string}
              */
             access: "open" | "locked";
+        };
+        /**
+         * AdherenceOut
+         * @description Runs done out of runs assigned in the window; `share` null with nothing assigned.
+         */
+        AdherenceOut: {
+            /** Assigned */
+            assigned: number;
+            /** Done */
+            done: number;
+            /** Share */
+            share: number | null;
         };
         /**
          * AdminWorkspaceRow
@@ -3452,6 +3745,9 @@ export interface components {
         /**
          * BrainLandscapeTargetsOut
          * @description A neurofeedback preset on the map (V4-0010): points, their radius, why them.
+         *
+         *     It carries no `epoch`: the points belong to the map that holds them, so a block's
+         *     `targets.epoch` is copied from that map's own `epoch`.
          */
         BrainLandscapeTargetsOut: {
             /** Enrichment */
@@ -3542,6 +3838,26 @@ export interface components {
             user_id: string;
             /** You */
             you: boolean;
+        };
+        /**
+         * ChangeOut
+         * @description The last session against the one before: a direction, and whether it reads better.
+         */
+        ChangeOut: {
+            /** Direction */
+            direction: string;
+            /** Family */
+            family: string;
+            /** Key */
+            key: string;
+            /** Last */
+            last: number;
+            /** Metric */
+            metric: string;
+            /** Previous */
+            previous: number;
+            /** Reading */
+            reading: string | null;
         };
         /**
          * ClientInvitationIn
@@ -3697,10 +4013,14 @@ export interface components {
                 builder: boolean;
                 /** @description Protocol catalog with detail page and Play; /library is gone (S16). */
                 catalog: boolean;
+                /** @description The patient's after-session picture; off until counsel answers (T6). */
+                client_summary: boolean;
                 /** @description Operator console on the same machine (S21). */
                 console: boolean;
                 /** @description Remote console: waiting room, observers, commands at a distance (V4 T5). */
                 console_remote: boolean;
+                /** @description Context variables asked before every run, personal per account. */
+                context_questionnaire: boolean;
                 /** @description BIDS exports (S25). */
                 exports: boolean;
                 /** @description Workspace, public and official circles; review queue (S17). */
@@ -3721,6 +4041,8 @@ export interface components {
                 run_capture: boolean;
                 /** @description Studies, participants and arms (S24). */
                 studies: boolean;
+                /** @description Therapy edition: patient timeline, review queue, clinic home, sharing (V4 T6). */
+                therapy: boolean;
                 /** @description Clinics and laboratories: requests, seats, invitations (V4 T2). */
                 workspaces_multi: boolean;
             };
@@ -3778,6 +4100,104 @@ export interface components {
             research_version: string | null;
         };
         /**
+         * ContextItem
+         * @description One question as the questionnaire shows it.
+         *
+         *     `hidden` is a built-in item the person turned off; `archived` a custom item they
+         *     removed. Neither is asked; both still read old answers. A `scale` is 1..5, worst to
+         *     best; `low_label`/`high_label` name its ends for a custom one.
+         */
+        ContextItem: {
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+            /**
+             * Custom
+             * @default false
+             */
+            custom: boolean;
+            /** Emoji */
+            emoji?: string | null;
+            /**
+             * Hidden
+             * @default false
+             */
+            hidden: boolean;
+            /** High Label */
+            high_label?: string | null;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "multi" | "single" | "scale" | "number";
+            /** Label */
+            label?: string | null;
+            /** Low Label */
+            low_label?: string | null;
+            /** Maximum */
+            maximum?: number | null;
+            /** Minimum */
+            minimum?: number | null;
+            /** Options */
+            options?: components["schemas"]["ContextOption"][];
+            /** Step */
+            step?: number | null;
+        };
+        /**
+         * ContextOption
+         * @description One answer of a choice item or one point of a scale.
+         *
+         *     `label` is null for a built-in option (the frontend has its words); `custom` marks
+         *     one the person added; `archived` ones are kept for old answers and not shown.
+         */
+        ContextOption: {
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+            /**
+             * Custom
+             * @default false
+             */
+            custom: boolean;
+            /** Emoji */
+            emoji: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label?: string | null;
+        };
+        /**
+         * ContextVariablesIn
+         * @description The whole personalisation, replacing the stored one.
+         *
+         *     A custom item or an added option missing here is kept as archived, never deleted:
+         *     answers stored against it must stay readable.
+         */
+        ContextVariablesIn: {
+            /** Custom */
+            custom?: components["schemas"]["CustomItemIn"][];
+            /** Extra Options */
+            extra_options?: {
+                [key: string]: components["schemas"]["CustomOptionIn"][];
+            };
+            /** Hidden */
+            hidden?: string[];
+        };
+        /**
+         * ContextVariablesOut
+         * @description The caller's whole list, defaults first, in the order it is asked.
+         */
+        ContextVariablesOut: {
+            /** Items */
+            items: components["schemas"]["ContextItem"][];
+        };
+        /**
          * CountingIntervalOut
          * @description One round of heartbeat counting; `actual` is null where the pulse was not clean.
          */
@@ -3794,6 +4214,57 @@ export interface components {
             interval_index: number;
             /** Reported */
             reported: number;
+        };
+        /**
+         * CustomItemIn
+         * @description An item of the person's own. Choice kinds need 2..16 options; a scale none.
+         */
+        CustomItemIn: {
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+            /**
+             * Emoji
+             * @default
+             */
+            emoji: string;
+            /** High Label */
+            high_label?: string | null;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "multi" | "single" | "scale";
+            /** Label */
+            label: string;
+            /** Low Label */
+            low_label?: string | null;
+            /** Options */
+            options?: components["schemas"]["CustomOptionIn"][];
+        };
+        /**
+         * CustomOptionIn
+         * @description An option of the person's own: a `c_` key, a label and an optional emoji.
+         */
+        CustomOptionIn: {
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+            /**
+             * Emoji
+             * @default
+             */
+            emoji: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
         };
         /**
          * DecideIn
@@ -3996,6 +4467,21 @@ export interface components {
             tau_ms: number | null;
         };
         /**
+         * ExportOut
+         * @description A one-time link to the caller's recordings, valid until `expires_at`.
+         */
+        ExportOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Source */
+            source: string;
+            /** Token */
+            token: string;
+        };
+        /**
          * FairModeIn
          * @description Whether the stand is open.
          */
@@ -4149,6 +4635,30 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ImportIn
+         * @description A link made on `source`, to redeem there.
+         */
+        ImportIn: {
+            /** Source */
+            source: string;
+            /** Token */
+            token: string;
+        };
+        /**
+         * ImportOut
+         * @description What the source holds: `queued` are being copied now, `already_here` were before.
+         */
+        ImportOut: {
+            /** Already Here */
+            already_here: number;
+            /** Found */
+            found: number;
+            /** Queued */
+            queued: number;
+            /** Source */
+            source: string;
         };
         /**
          * InteroceptionOut
@@ -4364,6 +4874,40 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /**
+         * MeasureOut
+         * @description A named measure over the weeks (QUESTIONS C1); `family` is a block kind or `session`.
+         */
+        MeasureOut: {
+            /** Family */
+            family: string;
+            /** Higher Is */
+            higher_is: string | null;
+            /** Key */
+            key: string;
+            /** Metric */
+            metric: string;
+            /** Points */
+            points: components["schemas"]["MeasurePoint"][];
+        };
+        /**
+         * MeasurePoint
+         * @description One session's value of one measure.
+         */
+        MeasurePoint: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Value */
+            value: number;
         };
         /**
          * MediaAccess
@@ -4647,6 +5191,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Recording Id */
+            recording_id?: string | null;
             /** Slug */
             slug?: string | null;
             /**
@@ -4826,6 +5372,18 @@ export interface components {
             kind: string;
             /** Label */
             label: string;
+        };
+        /**
+         * PeersOut
+         * @description Where this environment can send recordings, and where it can take them from.
+         */
+        PeersOut: {
+            /** Env */
+            env: string;
+            /** Export To */
+            export_to: components["schemas"]["Target"][];
+            /** Import From */
+            import_from: string[];
         };
         /**
          * PlanIn
@@ -5368,6 +5926,40 @@ export interface components {
             note?: string | null;
         };
         /**
+         * ReviewItemOut
+         * @description A finished session of one of the caller's patients they have not opened yet.
+         */
+        ReviewItemOut: {
+            /** Display Name */
+            display_name: string | null;
+            /**
+             * Recording Id
+             * Format: uuid
+             */
+            recording_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Subject Code */
+            subject_code: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /** Title */
+            title: string;
+            /** Verdict */
+            verdict: string | null;
+        };
+        /**
          * ReviewState
          * @description Where a publication request stands; during the beta every one is reviewed (V3-0008).
          * @enum {string}
@@ -5421,6 +6013,75 @@ export interface components {
             window_labels: (string | null)[] | null;
             /** Window T */
             window_t: number[];
+        };
+        /**
+         * SessionContextIn
+         * @description One run's answers.
+         *
+         *     `answers` maps item keys to a list of option keys (`multi`), one key (`single`), an
+         *     integer 1..5 (`scale`) or a number (`number`); a blank item is simply absent.
+         *     `skipped` records a questionnaire dismissed, and then `answers` must be empty.
+         *     `local_time` is the person's wall clock as ISO 8601 with its offset.
+         */
+        SessionContextIn: {
+            /** Answers */
+            answers?: {
+                [key: string]: unknown;
+            };
+            /** Local Time */
+            local_time?: string | null;
+            /**
+             * Skipped
+             * @default false
+             */
+            skipped: boolean;
+            /** Utc Offset Min */
+            utc_offset_min?: number | null;
+        };
+        /**
+         * SessionContextOut
+         * @description One run's answers, the questions as they were shown, and when.
+         */
+        SessionContextOut: {
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** Local Time */
+            local_time: string | null;
+            /**
+             * Recording Id
+             * Format: uuid
+             */
+            recording_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Skipped */
+            skipped: boolean;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Utc Offset Min */
+            utc_offset_min: number | null;
         };
         /**
          * SessionOut
@@ -5631,12 +6292,12 @@ export interface components {
          */
         SessionStatus: "running" | "done" | "aborted";
         /**
-         * ShareIn
-         * @description A request to show a protocol to the community.
+         * ShareOut
+         * @description The level now in force.
          */
-        ShareIn: {
-            /** Note */
-            note?: string | null;
+        ShareOut: {
+            /** Share Results */
+            share_results: string;
         };
         /**
          * SignalOut
@@ -5721,6 +6382,60 @@ export interface components {
             sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
         };
         /**
+         * SubjectLandscapeOut
+         * @description The patient's landscape with every recording's trail on it (T6's patient page).
+         */
+        SubjectLandscapeOut: {
+            /** Bounds */
+            bounds: number[];
+            /**
+             * Built At
+             * Format: date-time
+             */
+            built_at: string;
+            /** Categories */
+            categories: components["schemas"]["BrainLandscapeCategoryOut"][];
+            /** Cells */
+            cells: [
+                number,
+                number,
+                [
+                    number,
+                    number
+                ][]
+            ][];
+            /** Change */
+            change?: string | null;
+            /**
+             * Epoch
+             * @default 1
+             */
+            epoch: number;
+            grid: components["schemas"]["BrainLandscapeGridOut"];
+            /** N Recordings */
+            n_recordings: number;
+            /** N Windows */
+            n_windows: number;
+            /** Pending */
+            pending: boolean;
+            /**
+             * Presets
+             * @default {}
+             */
+            presets: {
+                [key: string]: components["schemas"]["BrainLandscapeTargetsOut"];
+            };
+            /** Sigma */
+            sigma?: number | null;
+            trail?: components["schemas"]["BrainLandscapeTrailOut"] | null;
+            /** Trails */
+            trails?: {
+                [key: string]: components["schemas"]["BrainLandscapeTrailOut"];
+            };
+            /** Version */
+            version: number;
+        };
+        /**
          * SubjectOut
          * @description A subject as the caller may see it.
          *
@@ -5775,6 +6490,8 @@ export interface components {
             sessions: number;
             /** Sex At Birth */
             sex_at_birth?: string | null;
+            /** Share Results */
+            share_results?: string | null;
             /**
              * Workspace Id
              * Format: uuid
@@ -5804,6 +6521,40 @@ export interface components {
             sex_at_birth?: ("female" | "male" | "intersex" | "prefer_not_to_say") | null;
         };
         /**
+         * SummaryOut
+         * @description One after-session picture for the patient: done and streak, or the map's change.
+         */
+        SummaryOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Session Id */
+            session_id: string | null;
+        };
+        /**
+         * Target
+         * @description An environment this one can send recordings to.
+         */
+        Target: {
+            /** Env */
+            env: string;
+            /** Web Url */
+            web_url: string;
+        };
+        /**
          * TicketOut
          * @description A ticket for one socket, and where to open it.
          */
@@ -5816,6 +6567,104 @@ export interface components {
             ticket: string;
             /** Ws Path */
             ws_path: string;
+        };
+        /**
+         * TimelineAssignmentOut
+         * @description An assignment in the window, with how far it got.
+         */
+        TimelineAssignmentOut: {
+            /** Close Reason */
+            close_reason: string | null;
+            /** Due At */
+            due_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Late */
+            late: boolean;
+            /** Open */
+            open: boolean;
+            /** Protocol Title */
+            protocol_title: string;
+            /** Runs Allowed */
+            runs_allowed: number | null;
+            /** Runs Done */
+            runs_done: number;
+        };
+        /**
+         * TimelineOut
+         * @description A patient over `weeks` weeks (T6): sessions, assignments, adherence, measures.
+         */
+        TimelineOut: {
+            adherence: components["schemas"]["AdherenceOut"];
+            /** Assignments */
+            assignments: components["schemas"]["TimelineAssignmentOut"][];
+            /** Changes */
+            changes: components["schemas"]["ChangeOut"][];
+            /** Measures */
+            measures: components["schemas"]["MeasureOut"][];
+            /** Sessions */
+            sessions: components["schemas"]["TimelineSessionOut"][];
+            /** Share Results */
+            share_results: string;
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /**
+             * Until
+             * Format: date-time
+             */
+            until: string;
+            /** Weeks */
+            weeks: number;
+        };
+        /**
+         * TimelineSessionOut
+         * @description One session on the patient's timeline; `opened` is whether the caller has read it.
+         */
+        TimelineSessionOut: {
+            /** Assignment Id */
+            assignment_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Measures */
+            measures: {
+                [key: string]: number;
+            };
+            /** Minutes */
+            minutes: number | null;
+            /** Notes */
+            notes: number;
+            /** Opened */
+            opened: boolean;
+            /**
+             * Recording Id
+             * Format: uuid
+             */
+            recording_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Verdict */
+            verdict: string | null;
         };
         /**
          * TokenIn
@@ -6066,6 +6915,14 @@ export interface components {
             url: string;
         };
         /**
+         * ShareIn
+         * @description A request to show a protocol to the community.
+         */
+        app__routers__protocols__ShareIn: {
+            /** Note */
+            note?: string | null;
+        };
+        /**
          * PresignForm
          * @description One presigned POST form the browser submits straight to S3.
          */
@@ -6078,6 +6935,17 @@ export interface components {
             key: string;
             /** Url */
             url: string;
+        };
+        /**
+         * ShareIn
+         * @description What the patient's own account may see of their results (QUESTIONS C3).
+         */
+        app__routers__therapy__ShareIn: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "nothing" | "summary" | "full";
         };
     };
     responses: never;
@@ -7349,6 +8217,59 @@ export interface operations {
             };
         };
     };
+    get_context_variables_context_variables_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContextVariablesOut"];
+                };
+            };
+        };
+    };
+    put_context_variables_context_variables_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContextVariablesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContextVariablesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     fair_fair_get: {
         parameters: {
             query?: never;
@@ -7530,6 +8451,26 @@ export interface operations {
             };
         };
     };
+    redraw_my_landscape_landscape_redraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrainLandscapeStatusOut"];
+                };
+            };
+        };
+    };
     my_landscape_status_landscape_status_get: {
         parameters: {
             query?: never;
@@ -7651,6 +8592,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MySession"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_summaries_me_summaries_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryOut"][];
                 };
             };
             /** @description Validation Error */
@@ -8329,7 +9301,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ShareIn"];
+                "application/json": components["schemas"]["app__routers__protocols__ShareIn"];
             };
         };
         responses: {
@@ -9147,6 +10119,72 @@ export interface operations {
             };
         };
     };
+    get_session_context_sessions__session_id__context_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionContextOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_session_context_sessions__session_id__context_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionContextIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionContextOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     append_events_sessions__session_id__events_post: {
         parameters: {
             query?: never;
@@ -9575,6 +10613,37 @@ export interface operations {
             };
         };
     };
+    subject_landscape_subjects__subject_id__landscape_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectLandscapeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     subject_sessions_subjects__subject_id__sessions_get: {
         parameters: {
             query?: {
@@ -9606,6 +10675,72 @@ export interface operations {
             };
         };
     };
+    share_results_subjects__subject_id__share_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__routers__therapy__ShareIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subject_timeline_subjects__subject_id__timeline_get: {
+        parameters: {
+            query?: {
+                weeks?: number;
+            };
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     taxonomies_taxonomies_get: {
         parameters: {
             query?: never;
@@ -9624,6 +10759,112 @@ export interface operations {
                     "application/json": {
                         [key: string]: string[];
                     };
+                };
+            };
+        };
+    };
+    make_export_transfers_exports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportOut"];
+                };
+            };
+        };
+    };
+    manifest_transfers_exports_manifest_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-transfer-token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_import_transfers_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_peers_transfers_peers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeersOut"];
                 };
             };
         };
@@ -9979,6 +11220,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    waiting_for_review_workspaces__workspace_id__review_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewItemOut"][];
+                };
             };
             /** @description Validation Error */
             422: {
