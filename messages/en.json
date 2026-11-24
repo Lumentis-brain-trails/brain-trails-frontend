@@ -4110,6 +4110,8 @@
       "intro": "The waiting room is open. Tell the patient to open this assignment and press Play: their headband check appears here, and the session starts when they press Start.",
       "unavailable": "The remote console is not available here yet.",
       "opening": "Opening the room…",
+      "closed": "The waiting room is closed.",
+      "retry": "Try again",
       "patientAway": "Waiting for the patient to open the assignment.",
       "patientHere": "The patient is here.",
       "headbandOn": "Headband {model} connected · battery {battery}%",

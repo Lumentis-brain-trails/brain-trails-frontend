@@ -63,8 +63,8 @@ export type ConsoleMessage =
   | { type: "command"; command: OperatorCommand }
   /**
    * One EEG packet as the console's headband delivered it, `hostMs` in the console's
-   * frame: what a neurofeedback block computes from (V4-0009). ~85 small messages a
-   * second, ~4 KB/s.
+   * frame: what a neurofeedback block computes from (V4-0009). Sent only while one is on
+   * screen (`RunnerState.nudgeable`): ~85 small messages a second, ~4 KB/s.
    */
   | { type: "eeg"; packet: EegPacket }
   /** To a second window opened while the first still runs: it cannot take over. */

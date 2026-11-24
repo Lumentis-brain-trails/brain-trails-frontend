@@ -91,6 +91,8 @@ import { devToolsAllowed } from "@/lib/env";
 import { type ProtocolDetail, planFor } from "@/lib/protocol/catalog";
 import { officialSlug, useOfficialTexts } from "@/lib/protocol/official";
 import {
+  type CaptureKeys,
+  type FinishProgress,
   type StimulusSessionStart,
   finishSession,
   postPlan,
@@ -121,6 +123,10 @@ interface Ending {
   summary: Record<string, unknown>;
   aborted: boolean;
   files: CaptureFiles | null;
+  /** The capture's keys once uploaded (`null`: nothing went up), so a retry skips it. */
+  capture?: CaptureKeys | null;
+  /** How far finish got: once it was sent, a retry sends finish alone. */
+  progress: FinishProgress;
 }
 
 export function RunProtocol({
@@ -321,19 +327,29 @@ export function RunProtocol({
     setPhase("saving");
     setError(null);
     try {
-      const capture =
+      // a retry does not upload again what already went up
+      end.capture ??=
         end.files && session.upload
           ? await uploadCapture(session.upload, end.files, setProgress)
-          : undefined;
-      // what the batches already delivered is not sent again: only what is still owed
-      await sink?.flush().catch(() => undefined);
-      const owed = sink ? sink.unacknowledged() : markers.current;
-      await finishSession(session.id, {
-        summary: end.summary,
-        aborted: end.aborted || capture === undefined,
-        capture,
-        events: owed.map(toWireEvent),
-      });
+          : null;
+      const capture = end.capture ?? undefined;
+      // what the batches already delivered is not sent again: only what is still owed,
+      // and nothing once finish was sent (a retry after a lost answer, see finishSession)
+      let owed: readonly Marker[] = [];
+      if (!end.progress.finishSent) {
+        await sink?.flush().catch(() => undefined);
+        owed = sink ? sink.unacknowledged() : markers.current;
+      }
+      await finishSession(
+        session.id,
+        {
+          summary: end.summary,
+          aborted: end.aborted || capture === undefined,
+          capture,
+          events: owed.map(toWireEvent),
+        },
+        end.progress
+      );
       setPhase("saved");
     } catch (e) {
       setError(errorText(e));
@@ -359,7 +375,7 @@ export function RunProtocol({
               model: muse.model,
             })
           : null;
-      ending.current = { summary, aborted, files };
+      ending.current = { summary, aborted, files, progress: {} };
       setOutcome({ aborted, captured: files !== null, reason });
       await save();
     },

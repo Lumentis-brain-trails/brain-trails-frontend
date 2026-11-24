@@ -4110,6 +4110,8 @@
       "intro": "La sala d'attesa è aperta. Di' alla persona di aprire questa assegnazione e premere Play: il controllo della cuffia appare qui, e la sessione parte quando preme Inizia.",
       "unavailable": "La console a distanza non è ancora disponibile qui.",
       "opening": "Apertura della sala…",
+      "closed": "La sala d'attesa è chiusa.",
+      "retry": "Riprova",
       "patientAway": "In attesa che la persona apra l'assegnazione.",
       "patientHere": "La persona è collegata.",
       "headbandOn": "Cuffia {model} collegata · batteria {battery}%",

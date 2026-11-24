@@ -10,6 +10,10 @@
  * contact of each electrode, so both get it right before Start. Their Start opens the
  * session, the room announces it, and this page moves to the session's remote console.
  * Closing the room (or two hours) ends it.
+ *
+ * A refusal is final (backend 0014: nothing here asks the API on a timer): when the room
+ * cannot be opened (not yours, the assignment closed) the error stays on screen, when
+ * it was closed elsewhere the page says so, and only the carer's "Try again" asks again.
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -59,6 +63,8 @@ export default function WaitingRoomPage({
   const [patientHere, setPatientHere] = useState(false);
   const [preflight, setPreflight] = useState<Preflight | null>(null);
   const [failed, setFailed] = useState<unknown>(null);
+  // bumped by "Try again": the only thing that reopens a room the socket gave up on
+  const [attempt, setAttempt] = useState(0);
   const socketRef = useRef<LiveSocket | null>(null);
   // read when the session starts, not a reason to reopen the room
   const routerRef = useRef(router);
@@ -101,12 +107,21 @@ export default function WaitingRoomPage({
         if (started && typeof frame.session_id === "string")
           routerRef.current.push(`/live/${frame.session_id}`);
       },
-      onState: setSocketState,
+      onState: (state) => {
+        setSocketState(state);
+        if (state === "open") setFailed(null);
+      },
     });
     socketRef.current = socket;
     socket.start();
     return () => socket.close();
-  }, [assignment, baseUrl, enabled]);
+  }, [assignment, attempt, baseUrl, enabled]);
+
+  const retry = () => {
+    setFailed(null);
+    setSocketState("connecting");
+    setAttempt((n) => n + 1);
+  };
 
   const close = useMutation({
     mutationFn: () => api.delete(`assignments/${assignment}/live-room`),
@@ -137,7 +152,7 @@ export default function WaitingRoomPage({
       )}
       <Card className="mb-6 space-y-4">
         <p role="status" className="flex items-center gap-2 text-ink">
-          {socketState === "open" ? (
+          {socketState === "closed" ? null : socketState === "open" ? (
             <span
               aria-hidden
               className={
@@ -149,13 +164,20 @@ export default function WaitingRoomPage({
           ) : (
             <Spinner className="h-3 w-3" />
           )}
-          {socketState !== "open"
-            ? t("opening")
-            : patientHere
-              ? t("patientHere")
-              : t("patientAway")}
+          {socketState === "closed"
+            ? t("closed")
+            : socketState !== "open"
+              ? t("opening")
+              : patientHere
+                ? t("patientHere")
+                : t("patientAway")}
         </p>
-        {preflight && patientHere && (
+        {socketState === "closed" && (
+          <Button variant="secondary" onClick={retry}>
+            {t("retry")}
+          </Button>
+        )}
+        {preflight && patientHere && socketState !== "closed" && (
           <div className="space-y-3">
             <p className="text-[14px] text-ink-2">
               {preflight.status === "connected"
