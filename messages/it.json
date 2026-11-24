@@ -40,7 +40,15 @@
     "assignment_full": "Tutte le sessioni di questa assegnazione sono già in corso. Concludi o ferma prima l'altra.",
     "staff_not_client": "Un membro di questa organizzazione non può esserne paziente o partecipante.",
     "session_closed": "Questa sessione è già terminata.",
-    "photosensitivity_ack_required": "Questo protocollo mostra immagini lampeggianti: leggi e conferma l'avviso di fotosensibilità prima di iniziare."
+    "photosensitivity_ack_required": "Questo protocollo mostra immagini lampeggianti: leggi e conferma l'avviso di fotosensibilità prima di iniziare.",
+    "birth_year_required": "Inserisci prima l'anno di nascita: serve a sapere di chi è il consenso.",
+    "guardian_consent_required": "Per chi ha meno di 18 anni il consenso lo firma un genitore o il tutore legale, e anche il minore deve essere d'accordo.",
+    "guardian_relationship_required": "Indica chi ha firmato: un genitore o il tutore legale.",
+    "assent_required": "Conferma che il minore è stato informato e ha dato il suo assenso.",
+    "self_consent_required": "Un adulto firma il proprio consenso.",
+    "minors_not_admitted": "Un laboratorio non ammette partecipanti minorenni.",
+    "minor_no_account": "Gli account sono per maggiorenni. Un minore viene registrato dalla sua clinica, senza account.",
+    "reconsent_required": "Ora è maggiorenne: attesta il suo consenso prima della prossima sessione."
   },
   "application": {
     "step": "Candidatura",
@@ -3833,7 +3841,20 @@
       "languages": {
         "en": "English",
         "it": "Italiano"
-      }
+      },
+      "consentGuardian": "Un genitore o il tutore legale ha firmato il modulo di consenso",
+      "consentGuardianHint": "Ha meno di 18 anni. Lo attesti tu; data e nome vengono conservati, il nome di chi ha firmato resta sul modulo cartaceo.",
+      "guardianRelationship": "Chi ha firmato",
+      "guardianRelationships": {
+        "parent": "Un genitore",
+        "legal_guardian": "Il tutore legale"
+      },
+      "assent": "Il minore è stato informato con parole adatte alla sua età e ha dato il suo assenso",
+      "researchConsent": "Chi ha firmato acconsente anche che i risultati entrino, senza nome, nelle medie con cui si confrontano le altre persone",
+      "researchConsentHint": "Facoltativo. Senza questo consenso i risultati servono solo alla cura del minore.",
+      "birthYearForConsent": "Serve per attestare il consenso: dice di chi è il consenso.",
+      "labMinor": "Un laboratorio non ammette partecipanti minorenni.",
+      "reconsent": "Ora è maggiorenne: il consenso dato dal genitore o tutore non copre più le nuove sessioni. Attesta il suo."
     },
     "page": {
       "code": "Codice {code}",
@@ -3849,7 +3870,13 @@
       "archive": "Archivia",
       "archiveConfirm": "Archiviare {name}? Le assegnazioni aperte vengono annullate; le sessioni restano.",
       "restore": "Ripristina",
-      "record": "Registra una sessione"
+      "record": "Registra una sessione",
+      "minor": "Minorenne",
+      "consentByGuardian": "Firmato da {who}; il minore ha dato l'assenso il {date}",
+      "researchOn": "Entra nelle medie (consenso del {date})",
+      "researchOff": "Non entra nelle medie",
+      "reconsentTitle": "Ora è maggiorenne",
+      "reconsentText": "Il consenso del genitore o tutore non copre più le nuove sessioni. Modifica i dati e attesta il suo consenso."
     },
     "care": {
       "title": "Chi la segue",
@@ -3879,7 +3906,9 @@
       "send": "Invita",
       "sent": "Invito inviato. Il link resta valido 14 giorni.",
       "manual": "Questo ambiente non invia email. Passale tu questo link:",
-      "has": "Ha un suo account e vede ciò che le assegni."
+      "has": "Ha un suo account e vede ciò che le assegni.",
+      "minorTitle": "Nessun account sotto i 18 anni",
+      "minorText": "Un minore viene registrato qui, con te. Non può avere un account suo finché non compie 18 anni."
     }
   },
   "assignments": {

@@ -40,7 +40,15 @@
     "assignment_full": "Every session of this assignment is already under way. Finish or stop the other one first.",
     "staff_not_client": "A member of this organisation cannot be one of its patients or participants.",
     "session_closed": "This session has already ended.",
-    "photosensitivity_ack_required": "This protocol shows flashing images: read and confirm the photosensitivity warning before starting."
+    "photosensitivity_ack_required": "This protocol shows flashing images: read and confirm the photosensitivity warning before starting.",
+    "birth_year_required": "Add their year of birth first: it says whose consent is needed.",
+    "guardian_consent_required": "For someone under 18, a parent or legal guardian signs the consent, and the child agrees too.",
+    "guardian_relationship_required": "Say who signed: a parent or a legal guardian.",
+    "assent_required": "Confirm that the child was told what happens and agreed.",
+    "self_consent_required": "An adult signs their own consent.",
+    "minors_not_admitted": "A laboratory admits no participants under 18.",
+    "minor_no_account": "Accounts are for adults. A minor is recorded by their clinic, without one.",
+    "reconsent_required": "They are now 18: attest their own consent before the next session."
   },
   "application": {
     "step": "Application",
@@ -3833,7 +3841,20 @@
       "languages": {
         "en": "English",
         "it": "Italiano"
-      }
+      },
+      "consentGuardian": "A parent or legal guardian signed the consent form",
+      "consentGuardianHint": "They are under 18. You attest it; the date and your name are kept, the guardian's name stays on the paper.",
+      "guardianRelationship": "Who signed",
+      "guardianRelationships": {
+        "parent": "A parent",
+        "legal_guardian": "A legal guardian"
+      },
+      "assent": "The child was told what happens, in words they understand, and agreed",
+      "researchConsent": "The guardian also agrees that the results count, without a name, in the averages other people are compared with",
+      "researchConsentHint": "Optional. Without it, the child's results serve their own care only.",
+      "birthYearForConsent": "Needed to attest consent: it says whose consent it is.",
+      "labMinor": "A laboratory admits no participants under 18.",
+      "reconsent": "They are now 18: the consent their guardian gave no longer covers new sessions. Attest their own."
     },
     "page": {
       "code": "Code {code}",
@@ -3849,7 +3870,13 @@
       "archive": "Archive",
       "archiveConfirm": "Archive {name}? Their open assignments are cancelled; their sessions stay.",
       "restore": "Restore",
-      "record": "Record a session"
+      "record": "Record a session",
+      "minor": "Under 18",
+      "consentByGuardian": "Signed by {who}; the child agreed on {date}",
+      "researchOn": "Counts in the averages (guardian's consent of {date})",
+      "researchOff": "Not counted in the averages",
+      "reconsentTitle": "Now of age",
+      "reconsentText": "Their guardian's consent no longer covers new sessions. Edit the details and attest their own consent."
     },
     "care": {
       "title": "Care team",
@@ -3879,7 +3906,9 @@
       "send": "Invite",
       "sent": "Invitation sent. The link is good for 14 days.",
       "manual": "This environment sends no email. Give them this link yourself:",
-      "has": "They have their own account and see what you assign."
+      "has": "They have their own account and see what you assign.",
+      "minorTitle": "No account under 18",
+      "minorText": "A minor is recorded here, with you. They cannot have an account of their own until they are 18."
     }
   },
   "assignments": {

@@ -140,7 +140,16 @@ export default function SubjectPage({
           />
         )}
         {s.readable && assignmentsOn && <Assignments subject={s} />}
-        {s.readable && assignmentsOn && <Invite subject={s} />}
+        {s.readable && s.reconsent_required && (
+          <Notice
+            title={t("page.reconsentTitle")}
+            text={t("page.reconsentText")}
+          />
+        )}
+        {s.readable && assignmentsOn && !s.minor && <Invite subject={s} />}
+        {s.readable && assignmentsOn && s.minor && !s.has_account && (
+          <Notice title={t("invite.minorTitle")} text={t("invite.minorText")} />
+        )}
         {s.readable && <Sessions subject={s} />}
         {s.readable && <ArchiveButton subject={s} />}
       </div>
@@ -198,10 +207,14 @@ function Details({ subject: s, lab }: { subject: Subject; lab: boolean }) {
       language: (s.language as "en" | "it") ?? "en",
       consent: false,
       consentVersion: "",
+      guardianRelationship: "",
+      assent: false,
+      researchConsent: s.research_consent_at != null,
     });
     setEditing(true);
   };
   const facts = [
+    s.minor ? t("page.minor") : null,
     s.birth_year ? `${tForm("birthYear")}: ${s.birth_year}` : null,
     s.sex_at_birth
       ? `${tForm("sex")}: ${tForm(`sexes.${s.sex_at_birth as "female"}`)}`
@@ -235,6 +248,25 @@ function Details({ subject: s, lab }: { subject: Subject; lab: boolean }) {
             <span className="text-danger">{t("page.consentMissing")}</span>
           )}
         </p>
+        {s.consent_at && s.consent_by === "guardian" && s.assent_at && (
+          <p className="mt-1 text-[14px] text-ink-2">
+            {t("page.consentByGuardian", {
+              who: tForm(
+                `guardianRelationships.${s.guardian_relationship as "parent"}`
+              ),
+              date: formatDate(s.assent_at, locale),
+            })}
+          </p>
+        )}
+        {s.minor && !lab && (
+          <p className="mt-1 text-[14px] text-ink-2">
+            {s.research_consent_at
+              ? t("page.researchOn", {
+                  date: formatDate(s.research_consent_at, locale),
+                })
+              : t("page.researchOff")}
+          </p>
+        )}
       </Card>
       {editing && form && (
         <Sheet title={t("page.edit")} onClose={() => setEditing(false)}>
@@ -257,7 +289,8 @@ function Details({ subject: s, lab }: { subject: Subject; lab: boolean }) {
               form={form}
               onChange={setForm}
               lab={lab}
-              consentGiven={s.consent_at != null}
+              consentGiven={s.consent_at != null && !s.reconsent_required}
+              reconsent={s.reconsent_required}
             />
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" onClick={() => setEditing(false)}>
@@ -561,7 +594,8 @@ function Sessions({ subject: s }: { subject: Subject }) {
       <SectionTitle
         action={
           s.archived_at == null &&
-          s.consent_at != null && (
+          s.consent_at != null &&
+          !s.reconsent_required && (
             <Button
               size="sm"
               variant="secondary"
