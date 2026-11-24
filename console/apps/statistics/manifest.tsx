@@ -7,6 +7,7 @@ export const manifest: AppManifest = {
   slug: "statistics",
   version: "1.0.0",
   dataApi: "ops/v1",
+  followsEnv: true,
   Page: StatisticsApp,
   widgets: {
     signups_14d: (payload) => <SignupsWidget payload={payload} />,

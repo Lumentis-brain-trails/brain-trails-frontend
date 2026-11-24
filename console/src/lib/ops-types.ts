@@ -144,6 +144,153 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Documents
+         * @description Documents, newest update first (at most 200), filtered by kind, status, text.
+         */
+        get: operations["list_documents_ops_v1_documents_get"];
+        put?: never;
+        /**
+         * Create Document
+         * @description Make a document at revision 1, status `draft`.
+         *
+         *     Raises:
+         *         OpsError: 409 `duplicate_slug`; 422 `invalid_slug`.
+         */
+        post: operations["create_document_ops_v1_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document
+         * @description One document with its current text.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`.
+         */
+        get: operations["get_document_ops_v1_documents__slug__get"];
+        /**
+         * Save Document
+         * @description Save a new revision of the document.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`; 409 `stale_document` when `revision` is not the
+         *             current one.
+         */
+        put: operations["save_document_ops_v1_documents__slug__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Revisions
+         * @description The document's history, newest first, without the texts.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`.
+         */
+        get: operations["list_revisions_ops_v1_documents__slug__revisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}/revisions/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Revision
+         * @description One revision with its whole text.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`, `no_revision`.
+         */
+        get: operations["get_revision_ops_v1_documents__slug__revisions__number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Document Status
+         * @description Mark the document `draft`, `final` or `archived`.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`; 409 `stale_document`.
+         */
+        post: operations["set_document_status_ops_v1_documents__slug__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/envs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Envs
+         * @description The environments, dev first; the home one is always listed, read URL or not.
+         */
+        get: operations["list_envs_ops_v1_envs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/health/logs": {
         parameters: {
             query?: never;
@@ -441,11 +588,12 @@ export interface paths {
         };
         /**
          * Get Snapshot
-         * @description The newest snapshot of a panel and its age; reads `braintrails_ops` only.
+         * @description The newest snapshot of a panel on the request's environment; reads `braintrails_ops`.
          *
          *     Raises:
          *         OpsError: 404 `no_panel`, 403 `forbidden` without the panel's scope, 404
-         *             `no_snapshot` when it was never taken (the client offers a refresh).
+         *             `no_snapshot` when it was never taken there (the client offers a refresh),
+         *             422 `unknown_env` / `env_mismatch`, 503 `read_unavailable` (see `target_env`).
          */
         get: operations["get_snapshot_ops_v1_snapshots__key__get"];
         put?: never;
@@ -467,10 +615,13 @@ export interface paths {
         put?: never;
         /**
          * Refresh Snapshot
-         * @description Run the panel now, store the result, return it: a person's click, never a timer.
+         * @description Run the panel now on the request's environment, store the result, return it.
+         *
+         *     A person's click, never a timer.
          *
          *     Raises:
-         *         OpsError: 404 `no_panel`, 403 `forbidden`, 503 `read_unavailable`.
+         *         OpsError: 404 `no_panel`, 403 `forbidden`, 422 `unknown_env` / `env_mismatch`,
+         *             503 `read_unavailable`.
          */
         post: operations["refresh_snapshot_ops_v1_snapshots__key__refresh_post"];
         delete?: never;
@@ -488,10 +639,11 @@ export interface paths {
         };
         /**
          * Get Cohorts
-         * @description The beta cohorts, by name: one small read of the product, for the picker.
+         * @description The beta cohorts of the request's environment, by name: one small read, for the picker.
          *
          *     Raises:
-         *         OpsError: 503 `read_unavailable` without a read connection.
+         *         OpsError: 503 `read_unavailable` without a read connection to that environment,
+         *             422 `unknown_env`.
          */
         get: operations["get_cohorts_ops_v1_stats_cohorts_get"];
         put?: never;
@@ -517,6 +669,57 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tokens
+         * @description The caller's own tokens, newest first, revoked and expired ones included.
+         */
+        get: operations["list_tokens_ops_v1_tokens_get"];
+        put?: never;
+        /**
+         * Make Token
+         * @description Make a token for the caller's own account; the answer is the only time it shows.
+         *
+         *     Raises:
+         *         OpsError: 403 `token_not_allowed` when called with a token, 422
+         *             `scope_not_allowed` for a scope outside the allow-list (documents only).
+         */
+        post: operations["make_token_ops_v1_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Token
+         * @description Revoke one of the caller's tokens: it stops working at once. Revoking twice is fine.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_token` for a token that is not the caller's.
+         */
+        delete: operations["revoke_token_ops_v1_tokens__token_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -881,6 +1084,125 @@ export interface components {
             profile: string | null;
         };
         /**
+         * DocumentIn
+         * @description A new document; `slug` is derived from the title when absent.
+         */
+        DocumentIn: {
+            /**
+             * Audience
+             * @default
+             */
+            audience: string;
+            /** Body */
+            body: string;
+            kind: components["schemas"]["DocumentKind"];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Slug */
+            slug?: string | null;
+            /** Title */
+            title: string;
+        };
+        /**
+         * DocumentKind
+         * @description What a document is: a report for someone, a draft, a brief, an analysis, a note.
+         * @enum {string}
+         */
+        DocumentKind: "report" | "draft" | "brief" | "analysis" | "note";
+        /**
+         * DocumentOut
+         * @description A document with its current text (Markdown) and that revision's note.
+         */
+        DocumentOut: {
+            /** Audience */
+            audience: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            kind: components["schemas"]["DocumentKind"];
+            /** Note */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Slug */
+            slug: string;
+            status: components["schemas"]["DocumentStatus"];
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+        };
+        /**
+         * DocumentSave
+         * @description A save made on `revision`; `kind` and `audience` change only when given.
+         */
+        DocumentSave: {
+            /** Audience */
+            audience?: string | null;
+            /** Body */
+            body: string;
+            kind?: components["schemas"]["DocumentKind"] | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * DocumentStatus
+         * @description Where a document stands: being written, final (sent or agreed), archived.
+         * @enum {string}
+         */
+        DocumentStatus: "draft" | "final" | "archived";
+        /**
+         * DocumentSummaryOut
+         * @description A document in a list: everything but its text. `revision` is the current one.
+         */
+        DocumentSummaryOut: {
+            /** Audience */
+            audience: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            kind: components["schemas"]["DocumentKind"];
+            /** Revision */
+            revision: number;
+            /** Slug */
+            slug: string;
+            status: components["schemas"]["DocumentStatus"];
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+        };
+        /**
          * EnrollOut
          * @description What an authenticator app needs: the URI as a QR code, and the secret to type.
          */
@@ -950,6 +1272,32 @@ export interface components {
          * @enum {string}
          */
         EntryStatus: "done" | "in_progress";
+        /**
+         * EnvOut
+         * @description One environment of the switch; `available` is false when it has no read URL.
+         */
+        EnvOut: {
+            /** Available */
+            available: boolean;
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "dev" | "beta" | "prod";
+        };
+        /**
+         * EnvsOut
+         * @description Where the console lives, and every environment it might read.
+         */
+        EnvsOut: {
+            /** Envs */
+            envs: components["schemas"]["EnvOut"][];
+            /**
+             * Home
+             * @enum {string}
+             */
+            home: "dev" | "beta" | "prod";
+        };
         /**
          * FacetOut
          * @description A filter value and how many entries carry it.
@@ -1223,6 +1571,50 @@ export interface components {
             };
         };
         /**
+         * RevisionOut
+         * @description One save with its whole text.
+         */
+        RevisionOut: {
+            /** Author */
+            author: string | null;
+            /** Body */
+            body: string;
+            /** Chars */
+            chars: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Note */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * RevisionSummaryOut
+         * @description One save in a document's history; `chars` is the body's length.
+         */
+        RevisionSummaryOut: {
+            /** Author */
+            author: string | null;
+            /** Chars */
+            chars: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Note */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Title */
+            title: string;
+        };
+        /**
          * RoadmapLinkOut
          * @description A link of an item: a pull request, a plan page, a paper.
          */
@@ -1314,7 +1706,7 @@ export interface components {
         };
         /**
          * SnapshotOut
-         * @description A panel's stored result and how old it is.
+         * @description A panel's stored result, the environment it was read on, and how old it is.
          */
         SnapshotOut: {
             /** Age Seconds */
@@ -1323,6 +1715,8 @@ export interface components {
             app: string;
             /** Duration Ms */
             duration_ms: number;
+            /** Env */
+            env: string;
             /** Key */
             key: string;
             /** Panel */
@@ -1342,6 +1736,15 @@ export interface components {
             taken_by: string | null;
             /** Version */
             version: string;
+        };
+        /**
+         * StatusIn
+         * @description A status change made on `revision`.
+         */
+        StatusIn: {
+            /** Revision */
+            revision: number;
+            status: components["schemas"]["DocumentStatus"];
         };
         /**
          * StatusOut
@@ -1377,6 +1780,9 @@ export interface components {
         /**
          * StripItemOut
          * @description A place on the strip with the widget's newest snapshot (null: never taken).
+         *
+         *     `key` is the full snapshot key (`<env>/<app>.<panel>`) and `env` where it reads: the
+         *     request's environment for a panel that follows the switch, home otherwise.
          */
         StripItemOut: {
             /** App */
@@ -1388,6 +1794,8 @@ export interface components {
              * @enum {string}
              */
             as: "stat" | "sparkline" | "bar" | "line";
+            /** Env */
+            env: string;
             /** Key */
             key: string;
             /** Panel */
@@ -1412,6 +1820,81 @@ export interface components {
             day: string;
             /** Text */
             text: string;
+        };
+        /**
+         * TokenIn
+         * @description A token to make: a name that says where it lives, its scopes, its lifetime.
+         */
+        TokenIn: {
+            /**
+             * Expires In Days
+             * @default 30
+             */
+            expires_in_days: number;
+            /** Name */
+            name: string;
+            /** Scopes */
+            scopes: string[];
+        };
+        /**
+         * TokenMadeOut
+         * @description A token just made: `token` is shown this once and never stored.
+         */
+        TokenMadeOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Scopes */
+            scopes: string[];
+            /** Token */
+            token: string;
+        };
+        /**
+         * TokenOut
+         * @description A token as its owner sees it later: everything but the token.
+         */
+        TokenOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Scopes */
+            scopes: string[];
         };
         /**
          * TotalOut
@@ -1754,6 +2237,289 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_documents_ops_v1_documents_get: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["DocumentKind"] | null;
+                status?: components["schemas"]["DocumentStatus"] | null;
+                q?: string | null;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_document_ops_v1_documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_ops_v1_documents__slug__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_document_ops_v1_documents__slug__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_revisions_ops_v1_documents__slug__revisions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevisionSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_revision_ops_v1_documents__slug__revisions__number__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevisionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_document_status_ops_v1_documents__slug__status_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_envs_ops_v1_envs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvsOut"];
                 };
             };
             /** @description Validation Error */
@@ -2298,6 +3064,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path: {
                 key: string;
@@ -2332,6 +3099,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path: {
                 key: string;
@@ -2370,6 +3138,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -2418,6 +3187,106 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tokens_ops_v1_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_token_ops_v1_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenMadeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_token_ops_v1_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2536,6 +3405,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path?: never;
             cookie?: never;

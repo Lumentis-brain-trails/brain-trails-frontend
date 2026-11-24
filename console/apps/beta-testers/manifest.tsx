@@ -7,6 +7,7 @@ export const manifest: AppManifest = {
   slug: "beta-testers",
   version: "1.0.0",
   dataApi: "ops/v1",
+  followsEnv: true,
   Page: BetaTestersApp,
   widgets: {
     pending_applications: (payload) => <PendingWidget payload={payload} />,

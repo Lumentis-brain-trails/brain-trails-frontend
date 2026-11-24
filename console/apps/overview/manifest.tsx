@@ -6,6 +6,7 @@ export const manifest: AppManifest = {
   slug: "overview",
   version: "1.1.0",
   dataApi: "ops/v1",
+  followsEnv: true,
   Page: OverviewApp,
   widgets: {
     recordings_14d: (payload) => <RecordingsWidget payload={payload} />,

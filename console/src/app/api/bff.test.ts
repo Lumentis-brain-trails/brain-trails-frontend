@@ -184,6 +184,118 @@ describe("the bt-ops proxy", () => {
   });
 });
 
+describe("environments (OPS-0005)", () => {
+  test("X-Ops-Env goes to bt-ops when it names dev, beta or prod", async () => {
+    jar.set("bto_session", "ops-token");
+    for (const env of ["dev", "beta", "prod"]) {
+      await opsProxy.GET(
+        new NextRequest("http://c/api/ops/snapshots/statistics.signups", {
+          headers: { "x-ops-env": env },
+        }),
+        ctx(["snapshots", "statistics.signups"])
+      );
+    }
+    expect(
+      fetchSpy.mock.calls.map((_, i) => call(i).init.headers["X-Ops-Env"])
+    ).toEqual(["dev", "beta", "prod"]);
+  });
+
+  test("any other value is dropped, and bt-ops reads home", async () => {
+    jar.set("bto_session", "ops-token");
+    for (const env of ["PROD", "prod,dev", "staging", "prod2", ""]) {
+      await opsProxy.GET(
+        new NextRequest("http://c/api/ops/stats/cohorts", {
+          headers: { "x-ops-env": env },
+        }),
+        ctx(["stats", "cohorts"])
+      );
+    }
+    await opsProxy.GET(new NextRequest("http://c/x"), ctx(["envs"]));
+    for (let i = 0; i < fetchSpy.mock.calls.length; i++)
+      expect(call(i).init.headers["X-Ops-Env"]).toBeUndefined();
+    expect(call(5).url).toBe("http://localhost:8100/ops/v1/envs");
+  });
+
+  test("the product proxy never passes it on", async () => {
+    jar.set("bto_product", "p");
+    await productProxy.GET(
+      new NextRequest("http://c/x", { headers: { "x-ops-env": "prod" } }),
+      ctx(["admin", "users"])
+    );
+    expect(call(0).init.headers["X-Ops-Env"]).toBeUndefined();
+  });
+});
+
+describe("access tokens (OPS-0005)", () => {
+  const TOKEN = "btc_" + "A1b2_C3d4-E5f6G7h8I9j0";
+  const withBearer = (
+    url: string,
+    init: { method?: string; body?: string } = {}
+  ) =>
+    new NextRequest(url, {
+      ...init,
+      headers: { authorization: `Bearer ${TOKEN}` },
+    });
+
+  test("without a cookie, a btc_ token reaches documents, reads and writes", async () => {
+    await opsProxy.GET(
+      withBearer("http://c/api/ops/documents?kind=report"),
+      ctx(["documents"])
+    );
+    await opsProxy.PUT(
+      withBearer("http://c/api/ops/documents/roadmap-report", {
+        method: "PUT",
+        body: "{}",
+      }),
+      ctx(["documents", "roadmap-report"])
+    );
+    expect(call(0).url).toBe(
+      "http://localhost:8100/ops/v1/documents?kind=report"
+    );
+    expect(call(0).init.headers.Authorization).toBe(`Bearer ${TOKEN}`);
+    expect(call(0).init.headers["X-Ops-Key"]).toBe("local-ops-bff-key");
+    expect(call(1).init.method).toBe("PUT");
+    expect(call(1).init.headers.Authorization).toBe(`Bearer ${TOKEN}`);
+  });
+
+  test("on any other path it is not forwarded: bt-ops sees a signed-out call", async () => {
+    for (const path of [["me"], ["tokens"], ["snapshots", "x"], ["envs"]]) {
+      await opsProxy.GET(withBearer("http://c/x"), ctx(path));
+    }
+    for (let i = 0; i < 4; i++)
+      expect(call(i).init.headers.Authorization).toBeUndefined();
+  });
+
+  test("only the btc_ shape is forwarded", async () => {
+    for (const auth of [
+      "Bearer ops-session-token",
+      "Bearer btc_short",
+      `bearer ${TOKEN}`,
+      `Bearer ${TOKEN} extra`,
+      `Basic ${TOKEN}`,
+      `Bearer btc_${"a".repeat(20)}!`,
+    ]) {
+      await opsProxy.GET(
+        new NextRequest("http://c/x", { headers: { authorization: auth } }),
+        ctx(["documents"])
+      );
+    }
+    for (let i = 0; i < fetchSpy.mock.calls.length; i++)
+      expect(call(i).init.headers.Authorization).toBeUndefined();
+  });
+
+  test("with a session cookie, the cookie is the caller and the header is ignored", async () => {
+    jar.set("bto_session", "ops-token");
+    await opsProxy.GET(withBearer("http://c/x"), ctx(["documents"]));
+    expect(call(0).init.headers.Authorization).toBe("Bearer ops-token");
+  });
+
+  test("a token never reaches the product API", async () => {
+    await productProxy.GET(withBearer("http://c/x"), ctx(["admin", "users"]));
+    expect(call(0).init.headers.Authorization).toBeUndefined();
+  });
+});
+
 describe("the product proxy", () => {
   test("reaches the product's admin routes with the product token only", async () => {
     jar.set("bto_product", "product-token");

@@ -30,7 +30,7 @@
       "product_unavailable": "The product did not answer. Try again in a moment.",
       "upstream_unavailable": "The console's service did not answer. Try again in a moment.",
       "console_unavailable": "This console is not configured yet.",
-      "read_unavailable": "This console has no read connection to the product database yet.",
+      "read_unavailable": "This console has no read connection to this environment's database yet.",
       "already_enrolled": "This account already has its second factor. Sign in again to enter a code.",
       "cluster_unavailable": "This console cannot reach the cluster (it runs outside a pod, or the cluster did not answer).",
       "cluster_forbidden": "The console may not read the cluster yet: its Role (infra/k8s/rbac/bt-ops.yaml) is not applied in this namespace.",
@@ -42,7 +42,11 @@
       "invalid_roadmap": "The roadmap would contradict itself.",
       "id_mismatch": "An entry keeps its id.",
       "no_item": "This entry is no longer on the roadmap.",
-      "validation_error": "Something in the form is not valid."
+      "validation_error": "Something in the form is not valid.",
+      "unknown_env": "The console does not know that environment.",
+      "stale_document": "Someone saved this document after you opened it.",
+      "env_mismatch": "That link names one environment and the page reads another. Open it again from the app.",
+      "token_not_allowed": "An access token cannot make tokens. Sign in to the console to make one."
     },
     "age": {
       "now": "just now",
@@ -355,7 +359,8 @@
       "widgets": {
         "failedJobs": "{loops} in a retry loop · {stale} stale",
         "restarts": "{oom} out of memory · {pods} pods"
-      }
+      },
+      "homeCluster": "Pods and logs read the home environment's cluster ({home}), not {env}."
     },
     "betaTesters": {
       "intro": "Who gets into the beta and who is in it. Moved here from the app's Admin pages: every decision is the product's own, made with your product account and recorded in its audit log.",
@@ -365,6 +370,13 @@
       "organisations": "Organisations",
       "widgets": {
         "pending": "{stand} from the stand · {organisations} organisations"
+      },
+      "elsewhere": {
+        "pending": "Waiting for a decision",
+        "waiting": "Applications waiting",
+        "fromStand": "Of those, asked at the stand",
+        "organisations": "Organisation requests waiting",
+        "decision": "Decision: {decision}"
       }
     },
     "moderation": {
@@ -375,6 +387,13 @@
       "fair": "The stand",
       "widgets": {
         "queue": "{media} media · {protocols} protocols · {stand} at the stand"
+      },
+      "elsewhere": {
+        "queue": "Review queue",
+        "review": "Waiting for review",
+        "media": "Media",
+        "protocols": "Protocols",
+        "stand": "Waiting at the stand"
       }
     },
     "statistics": {
@@ -459,6 +478,163 @@
         "lastWeek": "week of {week}",
         "sessions": "Finished sessions per week",
         "active": "Active people per week"
+      }
+    },
+    "env": {
+      "switch": "Environment",
+      "name": {
+        "dev": "Dev",
+        "beta": "Beta",
+        "prod": "Prod"
+      },
+      "unavailable": "This console has no read connection to this environment.",
+      "readingHome": "The console's home environment: you read and act here.",
+      "readingOther": "Read only: this page reads this environment's database. Actions stay in {home}.",
+      "actionsElsewhere": "You are reading {env}. Decisions and the board act on the console's home environment ({home}) only, so they are not shown here; to act on {env}, use the product's own admin pages there."
+    },
+    "documents": {
+      "intro": "Every report, draft, brief and analysis written for the team, in Markdown, with every revision kept. Documents quote aggregates or pseudonymised keys, never a person's name or email.",
+      "sections": "Sections",
+      "library": "Documents",
+      "kind": {
+        "report": "Report",
+        "draft": "Draft",
+        "brief": "Brief",
+        "analysis": "Analysis",
+        "note": "Note"
+      },
+      "status": {
+        "draft": "Draft",
+        "final": "Final",
+        "archived": "Archived"
+      },
+      "list": {
+        "kind": "Kind",
+        "statusLabel": "Status",
+        "any": "Any",
+        "search": "Search",
+        "searchPlaceholder": "Title or text",
+        "find": "Search",
+        "new": "New document",
+        "noneFound": "No document matches.",
+        "emptyTitle": "No documents yet",
+        "emptyText": "Reports, drafts and analyses written for the team land here.",
+        "title": "Title",
+        "audience": "For",
+        "updated": "Last saved",
+        "updatedLine": "{when} by {who} · rev. {revision}"
+      },
+      "editor": {
+        "newTitle": "New document",
+        "editTitle": "Editing, on revision {revision}",
+        "stale": "Someone saved this document after you opened it. Your text is still here, unsaved. Reload their version: it shows beside yours, and your next save is made on it.",
+        "reload": "Reload their version",
+        "theirs": "Their version: revision {revision}, by {who}",
+        "theirsHint": "Your text is in the editor below. Take what you need from theirs, then save.",
+        "theirsBody": "Their text",
+        "title": "Title",
+        "slug": "Address",
+        "slugHint": "Lowercase words joined by hyphens; made from the title if you leave it.",
+        "kind": "Kind",
+        "audience": "For",
+        "audienceHint": "Who it is written for: Gabriella, Andrea, the team.",
+        "bodyLabel": "Text (Markdown)",
+        "mode": "Write or preview",
+        "write": "Write",
+        "preview": "Preview",
+        "length": "{n} of {max} characters",
+        "nothingToPreview": "Nothing to preview yet.",
+        "privacy": "No names or emails of users: quote aggregates or pseudonymised keys.",
+        "note": "What changed",
+        "noteHint": "One line, kept in the history.",
+        "saving": "Saving…",
+        "save": "Save",
+        "cancel": "Cancel",
+        "discard": "Discard your changes?",
+        "saved": "Document saved.",
+        "errors": {
+          "titleRequired": "Give it a title.",
+          "titleTooLong": "At most 200 characters.",
+          "slugInvalid": "Lowercase letters, digits and single hyphens only.",
+          "audienceRequired": "Say who it is for.",
+          "audienceTooLong": "At most 120 characters.",
+          "bodyTooLong": "At most 200 000 characters.",
+          "noteRequired": "Say in one line what changed.",
+          "noteTooLong": "At most 200 characters."
+        }
+      },
+      "history": {
+        "title": "History",
+        "revision": "Revision {revision}",
+        "current": "current",
+        "by": "{who}, {when}",
+        "noNote": "No note.",
+        "chars": "{chars, plural, one {# character} other {# characters}}"
+      },
+      "view": {
+        "to": {
+          "draft": "Back to draft",
+          "final": "Mark final",
+          "archived": "Archive"
+        },
+        "back": "← All documents",
+        "missingTitle": "No such document",
+        "missingText": "It may have a different address; look for it in the list.",
+        "for": "for {audience}",
+        "meta": "Revision {revision}, saved by {who} on {when}",
+        "edit": "Edit",
+        "hideHistory": "Hide history",
+        "showHistory": "History",
+        "oldRevision": "You are reading revision {revision} of {current}, by {who}: {note}",
+        "loadingRevision": "Loading revision {revision}…",
+        "toCurrent": "Back to the current revision",
+        "empty": "This document has no text yet.",
+        "created": "Created by {who} on {when}",
+        "note": "Last change: {note}"
+      },
+      "tokens": {
+        "title": "Access tokens",
+        "intro": "A token lets a working session read and write documents for you, without your password or your second factor. It opens Documents only, for at most 90 days. Revoke one you no longer use.",
+        "newTitle": "New token",
+        "name": "Name",
+        "nameHint": "Where it will be used, e.g. \"Claude, Alessio's Mac\".",
+        "scopes": "It may",
+        "scope": {
+          "read": "Read documents",
+          "write": "Write documents"
+        },
+        "expiry": "Expires after",
+        "expiryHint": "At most 90 days.",
+        "days": "{n, plural, one {# day} other {# days}}",
+        "create": "Create token",
+        "yours": "Your tokens",
+        "none": "You have no tokens.",
+        "revoked": "Revoked",
+        "active": "Active",
+        "expired": "Expired",
+        "dates": "Made {created}, expires {expires}",
+        "lastUsed": "last used {when}",
+        "neverUsed": "never used",
+        "revokeConfirm": "Revoke it? Anything using it stops working.",
+        "revokeYes": "Revoke",
+        "revokeNo": "Keep",
+        "revoke": "Revoke",
+        "created": {
+          "title": "Token \"{name}\" made",
+          "warning": "Copy it now: it is shown this once and cannot be read again. Keep it in a file only you can read, and never paste it into a chat or a document.",
+          "copy": "Copy",
+          "copied": "Copied",
+          "copyFailed": "Copying failed: select the token and copy it by hand.",
+          "done": "I have stored it"
+        },
+        "errors": {
+          "nameRequired": "Give it a name.",
+          "nameTooLong": "At most 80 characters.",
+          "scopesRequired": "Choose at least one."
+        }
+      },
+      "widgets": {
+        "drafts": "{total, plural, one {of # document} other {of # documents}}"
       }
     }
   },

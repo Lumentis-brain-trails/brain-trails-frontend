@@ -13,6 +13,7 @@ import {
   useWidgets,
 } from "@console/components/data";
 import type { StripItem } from "@console/lib/client";
+import { isEnv } from "@console/lib/env";
 
 const WIDTH = { s: "w-44", m: "w-60", l: "w-80" } as const;
 
@@ -32,7 +33,11 @@ function RefreshGlyph() {
   );
 }
 
-/** One widget: its title, its snapshot drawn by its app, its age and a refresh button. */
+/**
+ * One widget: its title, its snapshot drawn by its app, its age and a refresh button.
+ * The refresh names the panel (`<app>.<panel>`) and the widget's own environment in
+ * `X-Ops-Env`; the item's full `key` is the strip's identifier and is not parsed.
+ */
 function WidgetCard({ item }: { item: StripItem }) {
   const t = useTranslations("console.strip");
   const errorText = useErrorText();
@@ -50,7 +55,12 @@ function WidgetCard({ item }: { item: StripItem }) {
         <h3 className="text-[13px] font-semibold text-ink-2">{item.title}</h3>
         <button
           type="button"
-          onClick={() => refresh.mutate(item.key)}
+          onClick={() =>
+            refresh.mutate({
+              key: `${item.app}.${item.panel}`,
+              env: isEnv(item.env) ? item.env : null,
+            })
+          }
           disabled={refresh.isPending}
           className="pressable text-ink-3 hover:text-ink"
           aria-label={t("refresh", { title: item.title })}

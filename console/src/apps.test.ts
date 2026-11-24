@@ -8,6 +8,7 @@ import { APPS, appFor } from "./apps";
  */
 const BACKEND = {
   "beta-testers": { version: "1.0.0", widgets: ["pending_applications"] },
+  documents: { version: "1.0.0", widgets: ["drafts"] },
   health: { version: "0.1.0", widgets: ["failed_jobs", "restarts_24h"] },
   moderation: { version: "1.0.0", widgets: ["review_queue"] },
   overview: { version: "1.1.0", widgets: ["recordings_14d"] },
@@ -19,6 +20,15 @@ const BACKEND = {
   worklog: { version: "1.1.0", widgets: ["tokens_week", "work_week"] },
 };
 
+/** The apps whose header carries the environment switch (OPS-0005): product data. */
+const FOLLOWS_ENV = [
+  "beta-testers",
+  "health",
+  "moderation",
+  "overview",
+  "statistics",
+];
+
 describe("the app registry", () => {
   test("the frontend draws exactly the backend's apps, at the same versions", () => {
     expect(Object.keys(APPS).sort()).toEqual(Object.keys(BACKEND));
@@ -29,5 +39,14 @@ describe("the app registry", () => {
       expect(Object.keys(manifest.widgets).sort()).toEqual(expected.widgets);
     }
     expect(appFor("nothing")).toBeUndefined();
+  });
+
+  test("the apps that read product data, and only those, follow the switch", () => {
+    expect(
+      Object.values(APPS)
+        .filter((m) => m.followsEnv)
+        .map((m) => m.slug)
+        .sort()
+    ).toEqual(FOLLOWS_ENV);
   });
 });

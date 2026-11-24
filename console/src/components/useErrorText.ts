@@ -28,6 +28,10 @@ const KNOWN = [
   "id_mismatch",
   "no_item",
   "validation_error",
+  "unknown_env",
+  "stale_document",
+  "env_mismatch",
+  "token_not_allowed",
 ] as const;
 
 type Known = (typeof KNOWN)[number];

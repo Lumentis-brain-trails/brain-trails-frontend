@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import {
   EmptyState,
   ErrorBanner,
@@ -14,8 +14,90 @@ import {
 import { appFor } from "@console/apps";
 import { useErrorText } from "@console/components/useErrorText";
 import { useApp } from "@console/components/data";
+import {
+  EnvBand,
+  EnvProvider,
+  EnvSwitch,
+  useAppEnv,
+  useEnvs,
+} from "@console/components/env";
 import { ops, type Version } from "@console/lib/client";
 import { appPath, parseAppRef } from "@console/lib/appRef";
+import type { AppPageProps } from "@console/lib/manifest";
+
+/** The title row of an open app: its name, the switch when it has one, its version. */
+function AppHeader({
+  slug,
+  name,
+  semver,
+  children,
+}: {
+  slug: string;
+  name: string;
+  semver: string;
+  children?: React.ReactNode;
+}) {
+  const t = useTranslations("console.app");
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="flex flex-wrap items-center gap-4">
+        <h1 className="type-title">{name}</h1>
+        {children}
+      </div>
+      <Link
+        href={`${appPath(slug)}/about`}
+        className="text-[13px] text-ink-2 hover:text-ink"
+      >
+        {t("versionAbout", { semver })}
+      </Link>
+    </div>
+  );
+}
+
+/**
+ * An app that reads product data (backend OPS-0005): the environment switch in its
+ * header, the environment's colour on the header, and every read inside naming the
+ * environment. The page remounts on a switch, so nothing read on one environment stays
+ * on screen under another's header. If the console cannot say which environments it
+ * reads (a bt-ops from before OPS-0005), the app opens as before, on home.
+ */
+function EnvApp({
+  slug,
+  name,
+  semver,
+  Page,
+}: {
+  slug: string;
+  name: string;
+  semver: string;
+  Page: React.ComponentType<AppPageProps>;
+}) {
+  const envs = useEnvs(true);
+  const { env, choose } = useAppEnv(slug, envs.data);
+  if (envs.isPending) return <Skeleton className="h-64" />;
+  if (!envs.data || !env) {
+    return (
+      <div>
+        <div className="mb-6">
+          <AppHeader slug={slug} name={name} semver={semver} />
+        </div>
+        <Page semver={semver} />
+      </div>
+    );
+  }
+  return (
+    <div>
+      <EnvBand env={env} home={envs.data.home}>
+        <AppHeader slug={slug} name={name} semver={semver}>
+          <EnvSwitch envs={envs.data} value={env} onChange={choose} />
+        </AppHeader>
+      </EnvBand>
+      <EnvProvider env={env} home={envs.data.home}>
+        <Page key={env} semver={semver} />
+      </EnvProvider>
+    </div>
+  );
+}
 
 /**
  * An open app: `/apps/<slug>` at its current version, `/apps/<slug>@<semver>` at a named
@@ -78,16 +160,22 @@ export default function AppPage() {
   }
 
   const Page = manifest.Page;
+  if (manifest.followsEnv) {
+    return (
+      <Suspense fallback={<Skeleton className="h-64" />}>
+        <EnvApp
+          slug={ref.slug}
+          name={app.data.name}
+          semver={current}
+          Page={Page}
+        />
+      </Suspense>
+    );
+  }
   return (
     <div>
-      <div className="mb-6 flex items-baseline justify-between gap-4">
-        <h1 className="type-title">{app.data.name}</h1>
-        <Link
-          href={`${appPath(ref.slug)}/about`}
-          className="text-[13px] text-ink-2 hover:text-ink"
-        >
-          {t("versionAbout", { semver: current })}
-        </Link>
+      <div className="mb-6">
+        <AppHeader slug={ref.slug} name={app.data.name} semver={current} />
       </div>
       <Page semver={current} />
     </div>

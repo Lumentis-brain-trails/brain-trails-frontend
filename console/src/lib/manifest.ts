@@ -20,6 +20,12 @@ export interface AppManifest {
   version: string;
   dataApi: "ops/v1";
   Page: ComponentType<AppPageProps>;
+  /**
+   * Whether the app reads product data and so carries the environment switch (backend
+   * OPS-0005): its header shows dev, beta or prod, and its reads send `X-Ops-Env`. Apps
+   * of the console's own data (work log, roadmap, documents) leave it out.
+   */
+  followsEnv?: boolean;
   /** By widget id, as the backend manifest exports them. */
   widgets: Record<string, WidgetRenderer>;
 }
