@@ -104,7 +104,7 @@ the map before and after - behind `client_summary`, off) and, when shared in ful
 project (root directory `console/`): the shell (launcher, side rail, widget strip), its
 BFF (`/api/session`, `/api/ops` to bt-ops, `/api/product` to the API), one directory
 per app under `console/apps/<slug>/` (Work log, Health, Beta testers, Moderation, Statistics,
-Documents; Overview deprecated)
+Documents, Pipeline lab; Overview deprecated)
 and its strings under `console.*` in `console/messages/` (plus `admin.*`, the keys of the
 pages moved from the user app's `/admin` in O2). Product actions go through
 `@console/lib/product` and the BFF's `/api/product` allow-list. It imports the product's tokens, `ui` primitives

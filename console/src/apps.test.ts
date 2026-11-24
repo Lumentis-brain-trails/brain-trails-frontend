@@ -12,6 +12,7 @@ const BACKEND = {
   health: { version: "0.1.0", widgets: ["failed_jobs", "restarts_24h"] },
   moderation: { version: "1.0.0", widgets: ["review_queue"] },
   overview: { version: "1.1.0", widgets: ["recordings_14d"] },
+  "pipeline-lab": { version: "1.0.0", widgets: [] },
   roadmap: { version: "1.1.0", widgets: ["next_milestone"] },
   statistics: {
     version: "1.0.0",
@@ -26,6 +27,7 @@ const FOLLOWS_ENV = [
   "health",
   "moderation",
   "overview",
+  "pipeline-lab",
   "statistics",
 ];
 

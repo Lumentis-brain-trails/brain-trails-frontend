@@ -33,6 +33,7 @@ export const OPS_ALLOWED = [
   "envs",
   "documents",
   "tokens",
+  "lab",
 ] as const;
 
 /** Where an access token, instead of a session, may reach (OPS-0005). */

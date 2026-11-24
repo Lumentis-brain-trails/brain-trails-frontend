@@ -111,6 +111,32 @@ describe("the bt-ops proxy", () => {
     expect(call(0).url).toBe("http://localhost:8100/ops/v1/stats/definitions");
   });
 
+  test("reaches the Pipeline lab's runs with the environment, and posts reruns", async () => {
+    jar.set("bto_session", "ops-token");
+    const id = "0b6c1f0e-8a52-4bb2-9d0b-3c4c8f9f1a11";
+    const res = await opsProxy.GET(
+      new NextRequest(`http://c/api/ops/lab/runs/${id}`, {
+        headers: { "x-ops-env": "beta" },
+      }),
+      ctx(["lab", "runs", id])
+    );
+    expect(res.status).toBe(200);
+    expect(call(0).url).toBe(`http://localhost:8100/ops/v1/lab/runs/${id}`);
+    expect(call(0).init.headers["X-Ops-Env"]).toBe("beta");
+    const again = await opsProxy.POST(
+      new NextRequest(`http://c/api/ops/lab/runs/${id}/rerun`, {
+        method: "POST",
+        headers: { "x-ops-env": "beta" },
+      }),
+      ctx(["lab", "runs", id, "rerun"])
+    );
+    expect(again.status).toBe(200);
+    expect(call(1).url).toBe(
+      `http://localhost:8100/ops/v1/lab/runs/${id}/rerun`
+    );
+    expect(call(1).init.method).toBe("POST");
+  });
+
   test("reaches Health's log route with its query", async () => {
     jar.set("bto_session", "ops-token");
     const res = await opsProxy.GET(

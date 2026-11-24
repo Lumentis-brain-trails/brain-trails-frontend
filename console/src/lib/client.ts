@@ -38,6 +38,18 @@ export type TokenOut = Schemas["TokenOut"];
 /** A token just made: the row and, this once, the token itself. */
 export type TokenCreatedOut = Schemas["TokenMadeOut"];
 export type TokenIn = Schemas["TokenIn"];
+/** What the Pipeline lab can run on one environment (backend OPS-0006). */
+export type LabOptions = Schemas["LabOptionsOut"];
+/** An experiment, as the form sends it and a run stores it. */
+export type LabExperiment = Schemas["ExperimentIn"];
+/** A row of the run list. */
+export type LabRunItem = Schemas["LabRunSummaryOut"];
+/** A run with its result, once it is done. */
+export type LabRun = Schemas["LabRunOut"];
+export type LabResult = Schemas["LabResultOut"];
+export type LabRunStatus = Schemas["RunStatus"];
+export type LabLabelSource = Schemas["LabelSource"];
+export type LabMetric = Schemas["Metric"];
 
 /** A refusal from the BFF or bt-ops, with the backend's error code. */
 export class OpsRequestError extends Error {
