@@ -84,11 +84,23 @@ export default function AdminOrganisationsPage() {
                 <span className="block truncate font-medium">{w.name}</span>
                 <span className="block text-[13px] text-ink-3">
                   {t("line", {
-                    kind: tKinds(w.kind as "practice" | "lab"),
+                    kind: tKinds(w.kind as "practice" | "lab" | "school"),
                     email: w.requested_by ?? t("gone"),
                     date: formatDate(w.created_at, locale),
                   })}
                 </span>
+                {w.school && (
+                  // what the teacher declared (backend V4-0012): the admin judges it
+                  <span className="block text-[13px] text-ink-2">
+                    {t("school", {
+                      city: w.school.city,
+                      country: w.school.country,
+                      role: w.school.teacher_role,
+                      qualification: w.school.qualification,
+                      version: w.school.attestation_version,
+                    })}
+                  </span>
+                )}
               </span>
               {tab === "active" && (
                 <span className="text-[13px] text-ink-2">

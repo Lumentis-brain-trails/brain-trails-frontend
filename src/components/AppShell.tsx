@@ -13,6 +13,7 @@ import {
   subscribeSeenEpoch,
 } from "@/lib/landscapeStatus";
 import { useFeature } from "@/lib/features";
+import { heldRedirect, taughtSchools } from "@/lib/schools";
 import { useSignOut } from "@/lib/signOut";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
@@ -20,6 +21,7 @@ import {
   type Edition,
   useEdition,
   useReloadOnWorkspaceChange,
+  useWorkspaces,
 } from "@/lib/workspace";
 import { Logo } from "@/components/Logo";
 import { BRAND, cn, Icon, type IconName } from "@/components/ui";
@@ -39,6 +41,7 @@ type SectionKey =
   | "participants"
   | "people"
   | "my"
+  | "school"
   | "account"
   | "admin";
 
@@ -143,6 +146,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (client) router.replace("/my");
   }, [client, router]);
 
+  // A school student's account waiting for the teacher, refused, or owing its own
+  // consent at 18 (backend V4-0012): the API refuses everything else, so the shell shows
+  // the one page that works instead of a screen of errors.
+  const held = heldRedirect(me.data?.hold, pathname);
+  useEffect(() => {
+    if (held) router.replace(held);
+  }, [held, router]);
+
   // Following a link inside the drawer closes it: the state resets when the path
   // it was opened on is no longer the current one.
   if (open && openedAt !== pathname) setOpen(false);
@@ -154,7 +165,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  if (client) return null;
+  if (client || held) return null;
   if (stale && consent.data) return <PolicyUpdateGate consent={consent.data} />;
 
   return (
@@ -240,6 +251,9 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
   const edition = useEdition();
   const me = useMe();
   const assignments = useFeature("assignments");
+  const schoolsFlag = useFeature("schools");
+  const workspaces = useWorkspaces();
+  const teaches = schoolsFlag && taughtSchools(workspaces.data).length > 0;
   const nfFlag = useFeature("neurofeedback");
   const liveFlag = useFeature("live");
   const neurofeedback = nfFlag && liveFlag;
@@ -247,6 +261,10 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
     // a private user or a therapist who is also somebody's patient (V4 question A8)
     ...(assignments && me.data?.is_client
       ? [{ href: "/my", key: "my", icon: "protocol" } as const]
+      : []),
+    // a teacher's school: the class code and the students (backend V4-0012)
+    ...(teaches
+      ? [{ href: "/school", key: "school", icon: "people" } as const]
       : []),
     { href: "/account", key: "account", icon: "person" },
     ...(me.data?.role === "admin"

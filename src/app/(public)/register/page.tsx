@@ -9,8 +9,15 @@
  * later, by the backend, right before the first recording, where it is about to matter
  * and the person is already sitting down. Being a beta tester is asked last of all, once
  * they have tried a protocol and know what they would be testing.
+ *
+ * A student (backend V4-0012, flag `schools`) adds their school's class code. Under 18
+ * that code is the only way in, and the consent step asks for the guardian too: their
+ * name and relationship, and a second tick that is the guardian's own. A minor is not
+ * asked the research question or the newsletter; the account then waits for the
+ * teacher to check the school's form.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -18,8 +25,19 @@ import { useState } from "react";
 import { type Resolver, useForm, useWatch } from "react-hook-form";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
-import { useAppConfig } from "@/lib/features";
+import { useAppConfig, useFeature } from "@/lib/features";
 import { useFairOpen } from "@/lib/fair";
+import {
+  GUARDIAN_RELATIONSHIPS,
+  type GuardianRelationship,
+  type SchoolPreview,
+  type StudentAnswers,
+  isCompleteCode,
+  normalCode,
+  signupReady,
+  toSchoolSignup,
+} from "@/lib/schools";
+import { isMinor } from "@/lib/subjects";
 import { useTaxonomies } from "@/lib/taxonomies";
 import { useValidationMessage } from "@/lib/validationMessage";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -32,7 +50,7 @@ import {
   basicsSchema,
   toRegisterPayload,
 } from "@/lib/schemas";
-import { Button, ErrorBanner, Field, Input, cn } from "@/components/ui";
+import { Button, ErrorBanner, Field, Input, Select, cn } from "@/components/ui";
 
 /**
  * Three ticks (V3-0011, amended). The first is the consent the service needs to run at
@@ -104,6 +122,14 @@ export default function RegisterPage() {
   const [newsletter, setNewsletter] = useState(false);
   const [wantsDeviceTest, setWantsDeviceTest] = useState(false);
   const fairOpen = useFairOpen();
+  const schoolsOn = useFeature("schools");
+  const tSchool = useTranslations("schools.signup");
+  const tRel = useTranslations("schools.relationships");
+  const [guardian, setGuardian] = useState<Omit<StudentAnswers, "code">>({
+    guardianName: "",
+    guardianRelationship: "",
+    guardianConsent: false,
+  });
   // The thrown error, put into words at render so it follows the language.
   const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -126,9 +152,29 @@ export default function RegisterPage() {
     control: basicsForm.control,
     name: "handedness",
   });
+  const typedCode = useWatch({
+    control: basicsForm.control,
+    name: "school_code",
+  });
+  // Which school a complete code names, so the student sees they typed the right one.
+  const preview = useQuery({
+    queryKey: ["school-code", normalCode(typedCode ?? "")],
+    queryFn: () =>
+      api.post<SchoolPreview>("schools/lookup", { code: typedCode ?? "" }),
+    enabled: schoolsOn && isCompleteCode(typedCode ?? ""),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const answers: StudentAnswers = {
+    code: schoolsOn ? (basics?.school_code ?? "") : "",
+    ...guardian,
+  };
+  const student = normalCode(answers.code).length > 0;
+  const minor = isMinor(basics?.birth_year);
 
   async function submitAll() {
-    if (!account || !basics || !coreConsent) return;
+    if (!account || !basics) return;
+    if (!signupReady(answers, basics.birth_year, coreConsent)) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -136,15 +182,23 @@ export default function RegisterPage() {
         "auth/register",
         toRegisterPayload(
           account,
-          { core: coreConsent, research: researchConsent, newsletter },
+          {
+            core: coreConsent,
+            // a minor is not asked either (V4-0012): the backend would not keep them
+            research: researchConsent && !minor,
+            newsletter: newsletter && !minor,
+          },
           basics,
           fairOpen && wantsDeviceTest,
-          locale
+          locale,
+          toSchoolSignup(answers, basics.birth_year)
         )
       );
       // Where they go depends on what the account already is: open and waiting for the
-      // email, open outright, or still an application waiting for an admin.
-      router.push(`/pending?status=${user.status}`);
+      // email, open outright, or still an application waiting for an admin - and, for a
+      // student under 18, waiting for their teacher as well.
+      const teacher = student && minor ? "&teacher=1" : "";
+      router.push(`/pending?status=${user.status}${teacher}`);
     } catch (e) {
       setError(e);
       setSubmitting(false);
@@ -282,6 +336,38 @@ export default function RegisterPage() {
               </div>
             </section>
 
+            {schoolsOn && (
+              <section className="space-y-3 border-t border-hairline pt-6">
+                <Field label={tSchool("code")} hint={tSchool("codeHint")}>
+                  <Input
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    placeholder="ABCD-EFGH"
+                    {...basicsForm.register("school_code")}
+                  />
+                </Field>
+                {preview.data && (
+                  <p role="status" className="text-[14px] text-ok">
+                    {tSchool("found", {
+                      name: preview.data.name,
+                      city: preview.data.city,
+                    })}
+                  </p>
+                )}
+                {preview.isError && (
+                  <p role="alert" className="text-[14px] text-danger">
+                    {errorMessage(preview.error)}
+                  </p>
+                )}
+                {basicsForm.formState.errors.birth_year?.message ===
+                  "minAge" && (
+                  <p className="text-[14px] text-ink-2">
+                    {tSchool("minorNeedsCode")}
+                  </p>
+                )}
+              </section>
+            )}
+
             {fairOpen && (
               <section className="enter-up space-y-4 border-t border-hairline pt-6">
                 <label className="flex cursor-pointer items-start gap-3">
@@ -338,6 +424,13 @@ export default function RegisterPage() {
                 })}
               </p>
             )}
+            {student && config.data?.school_consent_version && (
+              <p className="text-[13px] text-ink-3">
+                {tSchool("version", {
+                  version: config.data.school_consent_version,
+                })}
+              </p>
+            )}
             <label className="flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"
@@ -345,45 +438,112 @@ export default function RegisterPage() {
                 onChange={(e) => setCoreConsent(e.target.checked)}
                 className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
               />
-              <span>{t("consent.coreTick")}</span>
+              <span>
+                {student && minor
+                  ? tSchool("studentTick")
+                  : t("consent.coreTick")}
+              </span>
             </label>
 
-            <section className="space-y-4 border-t border-hairline pt-6">
-              <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
-                {t("consent.research")}
-              </p>
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={researchConsent}
-                  onChange={(e) => setResearchConsent(e.target.checked)}
-                  className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
-                />
-                <span>
-                  <span className="block">{t("consent.researchTick")}</span>
-                  <span className="type-caption text-ink-3">
-                    {t("consent.researchHint")}
-                  </span>
-                </span>
-              </label>
-            </section>
+            {student && minor && (
+              <section className="space-y-4 border-t border-hairline pt-6">
+                <div>
+                  <h2 className="type-heading">{tSchool("guardianTitle")}</h2>
+                  <p className="mt-2 text-pretty text-ink-2">
+                    {tSchool("guardianText")}
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label={tSchool("guardianName")}>
+                    <Input
+                      autoComplete="off"
+                      maxLength={200}
+                      value={guardian.guardianName}
+                      onChange={(e) =>
+                        setGuardian({
+                          ...guardian,
+                          guardianName: e.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field label={tSchool("guardianRelationship")}>
+                    <Select
+                      value={guardian.guardianRelationship}
+                      onChange={(e) =>
+                        setGuardian({
+                          ...guardian,
+                          guardianRelationship: e.target.value as
+                            GuardianRelationship | "",
+                        })
+                      }
+                    >
+                      <option value="">{t("select")}</option>
+                      {GUARDIAN_RELATIONSHIPS.map((r) => (
+                        <option key={r} value={r}>
+                          {tRel(r)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={guardian.guardianConsent}
+                    onChange={(e) =>
+                      setGuardian({
+                        ...guardian,
+                        guardianConsent: e.target.checked,
+                      })
+                    }
+                    className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                  />
+                  <span>{tSchool("guardianTick")}</span>
+                </label>
+              </section>
+            )}
 
-            <section className="border-t border-hairline pt-6">
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={newsletter}
-                  onChange={(e) => setNewsletter(e.target.checked)}
-                  className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
-                />
-                <span>
-                  <span className="block">{t("consent.newsletterTick")}</span>
-                  <span className="type-caption text-ink-3">
-                    {t("consent.newsletterHint")}
+            {!minor && (
+              <section className="space-y-4 border-t border-hairline pt-6">
+                <p className="rounded-[var(--radius-card)] bg-surface-2 p-5 text-pretty text-ink-2">
+                  {t("consent.research")}
+                </p>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={researchConsent}
+                    onChange={(e) => setResearchConsent(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                  />
+                  <span>
+                    <span className="block">{t("consent.researchTick")}</span>
+                    <span className="type-caption text-ink-3">
+                      {t("consent.researchHint")}
+                    </span>
                   </span>
-                </span>
-              </label>
-            </section>
+                </label>
+              </section>
+            )}
+
+            {!minor && (
+              <section className="border-t border-hairline pt-6">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={newsletter}
+                    onChange={(e) => setNewsletter(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded-md accent-(--accent)"
+                  />
+                  <span>
+                    <span className="block">{t("consent.newsletterTick")}</span>
+                    <span className="type-caption text-ink-3">
+                      {t("consent.newsletterHint")}
+                    </span>
+                  </span>
+                </label>
+              </section>
+            )}
 
             <div className="flex gap-2">
               <Button
@@ -393,7 +553,13 @@ export default function RegisterPage() {
               >
                 {t("back")}
               </Button>
-              <Button onClick={submitAll} disabled={!coreConsent || submitting}>
+              <Button
+                onClick={submitAll}
+                disabled={
+                  !signupReady(answers, basics?.birth_year, coreConsent) ||
+                  submitting
+                }
+              >
                 {submitting ? t("creating") : t("create")}
               </Button>
             </div>

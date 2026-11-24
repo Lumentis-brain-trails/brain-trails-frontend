@@ -35,6 +35,9 @@ const ALLOWED_PREFIXES = [
   "assignments/",
   // the client shell's own reads: what was assigned, what was run (V4-0006)
   "me/",
+  // schools (backend V4-0012): a class code's school (public), the teacher's list, a
+  // student's own enrolment and their consent at 18
+  "schools/",
   // an admin's own recordings between environments: peers, links, imports (backend
   // app.transfers); the manifest is fetched server to server, never through here
   "transfers/peers",
