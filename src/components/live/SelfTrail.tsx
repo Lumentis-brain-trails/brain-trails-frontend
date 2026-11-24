@@ -17,7 +17,7 @@
  */
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LandscapeSurface } from "@/components/compare/LandscapeSurface";
 import { useLiveGround } from "@/lib/live/useLiveGround";
 import { useLiveRoom } from "@/lib/live/useLiveRoom";
@@ -32,6 +32,18 @@ export function SelfTrail({ sessionId }: { sessionId: string }) {
     view === "landscape" && ground.landscape ? "landscape" : "trail";
   const last = ground.x.length - 1;
   const here = last >= 0 ? { x: ground.x[last], y: ground.y[last] } : null;
+  // the same arrays until a window moves the dot: the 3D view is redrawn only then
+  const trails = useMemo(() => {
+    const x = ground.x.slice(-60);
+    return [
+      {
+        x,
+        y: ground.y.slice(-60),
+        colors: x.map(() => "#ffffff"),
+        faint: true,
+      },
+    ];
+  }, [ground.x, ground.y]);
 
   const choice = (value: "trail" | "landscape", label: string, off = false) => (
     <button
@@ -67,14 +79,7 @@ export function SelfTrail({ sessionId }: { sessionId: string }) {
           scheme="dark"
           live
           cursor={here}
-          trails={[
-            {
-              x: ground.x.slice(-60),
-              y: ground.y.slice(-60),
-              colors: ground.x.slice(-60).map(() => "#ffffff"),
-              faint: true,
-            },
-          ]}
+          trails={trails}
         />
       ) : (
         <LiveTrail

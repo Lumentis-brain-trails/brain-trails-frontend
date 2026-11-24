@@ -25,7 +25,12 @@ import {
   hoverMatrix,
   onMap,
 } from "@/lib/brainLandscape";
-import { CHART_THEMES, type ThemeName, useChartTheme } from "@/lib/theme";
+import {
+  CHART_THEMES,
+  type ChartTheme,
+  type ThemeName,
+  useChartTheme,
+} from "@/lib/theme";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -137,136 +142,69 @@ export function LandscapeSurface({
     };
   }, [hover, landscape, namer.category]);
 
-  const lift = (x: number, y: number) => heightAt(landscape, x, y) + LIFT;
+  // Plotly redraws the whole 3D scene, contours included, whenever it is handed a new
+  // figure: a live room re-renders this several times a second (signal, quality,
+  // windows), so the figure is rebuilt only when what it shows changes, and the
+  // cursor is read by value, not by the object a caller makes on every render.
+  const cx = cursor?.x ?? null;
+  const cy = cursor?.y ?? null;
+  const hasCursor = cursor !== null;
+  const data = useMemo((): Data[] => {
+    const lift = (x: number, y: number) => heightAt(landscape, x, y) + LIFT;
+    const at =
+      cx !== null && cy !== null && onMap(landscape, cx, cy)
+        ? { x: cx, y: cy }
+        : null;
+    return [
+      surfaceTrace(landscape, ground, hover, theme),
+      ...trails.map((trail) => trailTrace(landscape, trail, lift, theme)),
+      // The cursor's traces are always there, hidden when it is off the map: a figure
+      // whose number of traces changes is torn down and rebuilt, which shows as a
+      // flash each time a live position crosses the map's edge.
+      ...(live
+        ? liveCursor(at, at ? lift(at.x, at.y) : 0, theme.trailEnd)
+        : hasCursor
+          ? [sliderCursor(at, at ? lift(at.x, at.y) : 0, theme)]
+          : []),
+    ];
+  }, [landscape, ground, hover, theme, trails, live, cx, cy, hasCursor]);
 
-  const data: Data[] = [
-    {
-      type: "surface",
-      x: ground.xs,
-      y: ground.ys,
-      z: landscape.grid.z,
-      ...(hover && ground.text
-        ? {
-            text: ground.text as unknown as string[],
-            hovertemplate: "%{text}<extra></extra>",
-          }
-        : { hoverinfo: "skip" as const }),
-      showscale: false,
-      colorscale: theme.landscape.map(([at, colour]) => [at, colour]) as [
-        number,
-        string,
-      ][],
-      // contour lines every twentieth of the peak: the landscape read as a topographic
-      // map, fine enough that two close hills keep their own rings
-      contours: {
-        z: {
-          show: true,
-          start: CONTOUR_STEP,
-          end: 1,
-          size: CONTOUR_STEP,
-          color: theme.contour,
-          width: 1,
-          highlight: false,
-        },
-        x: { highlight: false },
-        y: { highlight: false },
-      } as never,
-      lighting: LIGHTING,
-      lightposition: LIGHT,
-    } as Data,
-    // Optional keys are left out, never set to undefined: Plotly's data cleaning reads
-    // `"line" in trace.marker` and throws on a marker that is present but undefined.
-    ...trails.map((trail): Data => {
-      const { x, y } = framedTrail(landscape, trail.x, trail.y);
-      return {
-        type: "scatter3d",
-        mode: trail.faint ? "lines" : "lines+markers",
-        x,
-        y,
-        z: x.map((xi, i) => {
-          const yi = y[i];
-          return xi === null || yi === null ? null : lift(xi, yi);
-        }),
-        connectgaps: false,
-        line: {
-          color: trail.faint ? theme.ink3 : theme.ink,
-          width: trail.faint ? 2 : 3,
-        },
-        opacity: trail.faint ? 0.45 : 1,
-        ...(trail.text
-          ? { text: [...trail.text], hovertemplate: "%{text}<extra></extra>" }
-          : { hoverinfo: "skip" as const }),
-        ...(trail.faint
-          ? {}
-          : {
-              marker: {
-                size: 4,
-                color: [...trail.colors],
-                symbol: trail.symbols
-                  ? ([...trail.symbols] as never)
-                  : "circle",
-                line: { color: theme.canvas, width: 0.5 },
-              },
-            }),
-      } as Data;
-    }),
-    ...(live && cursor && onMap(landscape, cursor.x, cursor.y)
-      ? liveCursor(cursor, lift(cursor.x, cursor.y), theme.trailEnd)
-      : []),
-    ...(!live && cursor && onMap(landscape, cursor.x, cursor.y)
-      ? [
-          {
-            type: "scatter3d",
-            mode: "markers",
-            x: [cursor.x],
-            y: [cursor.y],
-            z: [lift(cursor.x, cursor.y) + LIFT],
-            hoverinfo: "skip",
-            marker: {
-              size: 9,
-              color: theme.canvas,
-              symbol: "circle-open",
-              line: { color: theme.ink, width: 3 },
-            },
-          } as Data,
-        ]
-      : []),
-  ];
-
-  const hidden = { visible: false, showspikes: false } as const;
   // the scene is the map's frame, not every point's: the backend frames 90% of the
   // windows, and a trail's outliers fall outside it rather than zooming the map out
-  const [x0, x1, y0, y1] = landscape.bounds;
-  const layout: Partial<Layout> = {
-    height: plotHeight,
-    margin: { l: 0, r: 0, t: 0, b: 0 },
-    paper_bgcolor: "rgba(0,0,0,0)",
-    showlegend: false,
-    hoverlabel: {
-      bgcolor: theme.ink,
-      bordercolor: theme.ink,
-      font: { color: theme.canvas, size: 12 },
-    },
-    // a new camera from the other column replaces this one; the reader's own turning is
-    // kept between renders otherwise
-    uirevision: JSON.stringify(camera),
-    scene: {
-      xaxis: { ...hidden, range: [x0, x1], autorange: false },
-      yaxis: { ...hidden, range: [y0, y1], autorange: false },
-      zaxis: hidden,
-      aspectmode: "manual",
-      aspectratio: narrow ? ASPECT_NARROW : ASPECT,
-      camera,
-      bgcolor: "rgba(0,0,0,0)",
-    },
-  };
+  const layout = useMemo((): Partial<Layout> => {
+    const hidden = { visible: false, showspikes: false } as const;
+    const [x0, x1, y0, y1] = landscape.bounds;
+    return {
+      height: plotHeight,
+      margin: { l: 0, r: 0, t: 0, b: 0 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      showlegend: false,
+      hoverlabel: {
+        bgcolor: theme.ink,
+        bordercolor: theme.ink,
+        font: { color: theme.canvas, size: 12 },
+      },
+      // a new camera from the other column replaces this one; the reader's own turning
+      // is kept between renders otherwise
+      uirevision: JSON.stringify(camera),
+      scene: {
+        xaxis: { ...hidden, range: [x0, x1], autorange: false },
+        yaxis: { ...hidden, range: [y0, y1], autorange: false },
+        zaxis: hidden,
+        aspectmode: "manual",
+        aspectratio: narrow ? ASPECT_NARROW : ASPECT,
+        camera,
+        bgcolor: "rgba(0,0,0,0)",
+      },
+    };
+  }, [camera, landscape.bounds, narrow, plotHeight, theme]);
 
   return (
     <div role="img" aria-label={title} className="w-full">
       <Plot
         data={data}
         layout={layout}
-        config={{ displayModeBar: false, responsive: true }}
+        config={PLOT_CONFIG}
         useResizeHandler
         style={{ width: "100%", height: plotHeight }}
         onRelayout={(event) => {
@@ -278,16 +216,128 @@ export function LandscapeSurface({
   );
 }
 
+/** One object for every render: Plotly compares a new config and may start again. */
+const PLOT_CONFIG = { displayModeBar: false, responsive: true };
+
+function surfaceTrace(
+  landscape: BrainLandscape,
+  ground: { xs: number[]; ys: number[]; text: unknown },
+  hover: boolean,
+  theme: ChartTheme
+): Data {
+  return {
+    type: "surface",
+    x: ground.xs,
+    y: ground.ys,
+    z: landscape.grid.z,
+    ...(hover && ground.text
+      ? {
+          text: ground.text as unknown as string[],
+          hovertemplate: "%{text}<extra></extra>",
+        }
+      : { hoverinfo: "skip" as const }),
+    showscale: false,
+    colorscale: theme.landscape.map(([at, colour]) => [at, colour]) as [
+      number,
+      string,
+    ][],
+    // contour lines every twentieth of the peak: the landscape read as a topographic
+    // map, fine enough that two close hills keep their own rings
+    contours: {
+      z: {
+        show: true,
+        start: CONTOUR_STEP,
+        end: 1,
+        size: CONTOUR_STEP,
+        color: theme.contour,
+        width: 1,
+        highlight: false,
+      },
+      x: { highlight: false },
+      y: { highlight: false },
+    } as never,
+    lighting: LIGHTING,
+    lightposition: LIGHT,
+  } as Data;
+}
+
+// Optional keys are left out, never set to undefined: Plotly's data cleaning reads
+// `"line" in trace.marker` and throws on a marker that is present but undefined.
+function trailTrace(
+  landscape: BrainLandscape,
+  trail: SurfaceTrail,
+  lift: (x: number, y: number) => number,
+  theme: ChartTheme
+): Data {
+  const { x, y } = framedTrail(landscape, trail.x, trail.y);
+  return {
+    type: "scatter3d",
+    mode: trail.faint ? "lines" : "lines+markers",
+    x,
+    y,
+    z: x.map((xi, i) => {
+      const yi = y[i];
+      return xi === null || yi === null ? null : lift(xi, yi);
+    }),
+    connectgaps: false,
+    line: {
+      color: trail.faint ? theme.ink3 : theme.ink,
+      width: trail.faint ? 2 : 3,
+    },
+    opacity: trail.faint ? 0.45 : 1,
+    ...(trail.text
+      ? { text: [...trail.text], hovertemplate: "%{text}<extra></extra>" }
+      : { hoverinfo: "skip" as const }),
+    ...(trail.faint
+      ? {}
+      : {
+          marker: {
+            size: 4,
+            color: [...trail.colors],
+            symbol: trail.symbols ? ([...trail.symbols] as never) : "circle",
+            line: { color: theme.canvas, width: 0.5 },
+          },
+        }),
+  } as Data;
+}
+
+/** The window under a comparison's slider: an open ring just over the trail. */
+function sliderCursor(
+  at: { x: number; y: number } | null,
+  ground: number,
+  theme: ChartTheme
+): Data {
+  return {
+    type: "scatter3d",
+    mode: "markers",
+    visible: at !== null,
+    x: [at?.x ?? 0],
+    y: [at?.y ?? 0],
+    z: [ground + LIFT],
+    hoverinfo: "skip",
+    marker: {
+      size: 9,
+      color: theme.canvas,
+      symbol: "circle-open",
+      line: { color: theme.ink, width: 3 },
+    },
+  } as Data;
+}
+
 /** The live position: a stem from the ground, a halo and a bright dot at its top. */
 function liveCursor(
-  cursor: { x: number; y: number },
+  at: { x: number; y: number } | null,
   ground: number,
   accent: string
 ): Data[] {
   const top = ground + STEM;
+  // off the map (or none yet): the same three traces, hidden
+  const visible = at !== null;
+  const cursor = at ?? { x: 0, y: 0 };
   return [
     {
       type: "scatter3d",
+      visible,
       mode: "lines",
       x: [cursor.x, cursor.x],
       y: [cursor.y, cursor.y],
@@ -297,6 +347,7 @@ function liveCursor(
     } as Data,
     {
       type: "scatter3d",
+      visible,
       mode: "markers",
       x: [cursor.x, cursor.x],
       y: [cursor.y, cursor.y],
@@ -306,6 +357,7 @@ function liveCursor(
     } as Data,
     {
       type: "scatter3d",
+      visible,
       mode: "markers",
       x: [cursor.x],
       y: [cursor.y],
