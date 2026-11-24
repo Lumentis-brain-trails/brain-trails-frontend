@@ -12,7 +12,6 @@ const API_DEPLOYED =
 const ALLOWED_PREFIXES = [
   "auth/",
   "recordings",
-  "admin/",
   "sessions",
   "media",
   "protocols",
