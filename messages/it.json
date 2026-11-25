@@ -4804,7 +4804,8 @@
         "and": "I quattro ingressi di AND",
         "groups": "Due gruppi di esempi",
         "show": "Mostra la retta",
-        "hide": "Nascondi la retta"
+        "hide": "Nascondi la retta",
+        "split": "Ogni punto è dal suo lato della retta."
       },
       "line": {
         "xorTitle": "Ora prova con XOR",
@@ -4946,7 +4947,8 @@
           "options": {
             "and": "AND: si attiva solo quando entrambi gli ingressi sono accesi",
             "or": "OR: si attiva quando almeno un ingresso è acceso",
-            "neither": "Nessuno dei due"
+            "neither": "Nessuno dei due",
+            "xor": "XOR: si attiva quando esattamente un ingresso è acceso"
           },
           "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>. Con b = -0.5 sarebbe OR.</p>"
         },
@@ -4971,20 +4973,22 @@
           "options": {
             "slides": "La fa scorrere senza ruotarla",
             "turns": "La fa ruotare attorno a un punto",
-            "colours": "Cambia quali punti sono blu"
+            "colours": "Cambia quali punti sono blu",
+            "nothing": "Niente: solo i pesi muovono la retta"
           },
           "explain": "<p>Il bias fa <b>scorrere</b> la retta parallela a sé stessa; i pesi ne fissano la direzione. I colori dei punti sono le etichette: appartengono ai dati, non al neurone.</p>"
         },
         "nnWhichLine": {
           "prompt": "Quale neurone mette giusti tutti i punti?",
-          "explain": "<p>Quello in mezzo: blu sul lato colorato, arancioni sull’altro. L’ultimo disegna la stessa retta ma si attiva dal lato sbagliato: il segno dei pesi decide quale lato si attiva.</p>"
+          "explain": "<p>Quella in diagonale con tutti i punti blu sul lato colorato e tutti gli arancioni sull’altro. Un’altra disegna la stessa retta ma si attiva dal lato sbagliato: il segno dei pesi decide quale lato si attiva. Quelle dritte tagliano un gruppo.</p>"
         },
         "nnXorBest": {
           "prompt": "Con una retta, al massimo quanti dei quattro angoli di XOR puoi mettere giusti?",
           "options": {
             "two": "Due",
             "three": "Tre",
-            "four": "Tutti e quattro"
+            "four": "Tutti e quattro",
+            "one": "Uno"
           },
           "explain": "<p><b>Tre</b>. Qualunque retta che tiene insieme i due angoli blu lascia con loro almeno un angolo arancione.</p>"
         },
@@ -4997,7 +5001,8 @@
           "options": {
             "or": "OR",
             "and": "AND",
-            "xor": "XOR"
+            "xor": "XOR",
+            "nand": "NAND (non entrambi)"
           },
           "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso. Il secondo è \"non entrambi\", e l’uscita è l’AND dei due.</p>"
         },
@@ -5006,7 +5011,8 @@
           "options": {
             "up": "Su",
             "down": "Giù",
-            "same": "Non deve muoversi"
+            "same": "Non deve muoversi",
+            "zero": "Va messo a 0"
           },
           "explain": "<p><b>Giù</b>. La risposta era troppo alta, e w₁ moltiplicava un ingresso di 1, quindi spingeva la risposta in su: abbassarlo avvicina la risposta a 0.</p>"
         },
@@ -5015,7 +5021,8 @@
           "options": {
             "up": "Su",
             "down": "Giù",
-            "same": "Non deve muoversi"
+            "same": "Non deve muoversi",
+            "zero": "Va messo a 0"
           },
           "explain": "<p><b>Non deve muoversi</b>: un ingresso di 0 per qualsiasi peso fa 0, quindi w₁ non ha contribuito a questo errore. La retropropagazione dà a ogni peso una parte dell’errore in proporzione a ciò che ha fatto. (Il bias b invece si muove.)</p>"
         },
@@ -5039,7 +5046,8 @@
           "options": {
             "shape": "Perché impari cosa hanno in comune tutti i 3, e riconosca 3 che non ha mai visto",
             "memory": "Perché possa ricordare ogni immagine a memoria",
-            "faster": "Perché con più immagini l’allenamento è più veloce"
+            "faster": "Perché con più immagini l’allenamento è più veloce",
+            "pixels": "Così impara quanti pixel ha ogni cifra"
           },
           "explain": "<p>L’obiettivo è <b>generalizzare</b>: riconoscere disegni nuovi. Una rete che si limita a memorizzare i suoi esempi sbaglia al primo nuovo. Per questo la mettiamo alla prova su cifre che non ha mai visto.</p>"
         },
@@ -5048,20 +5056,30 @@
           "options": {
             "summary": "Una descrizione breve dell’immagine che la rete si è inventata per fare il suo lavoro",
             "copy": "Una copia di 12 dei pixel",
-            "answer": "La probabilità di ogni cifra"
+            "answer": "La probabilità di ogni cifra",
+            "random": "Numeri a caso, diversi ogni volta"
           },
           "explain": "<p>Una <b>descrizione breve</b>: 35 pixel sono diventati 12 numeri che tengono ciò che serve per distinguere le cifre. Nessuno ha detto alla rete cosa metterci. Come descrivere qualcosa con pochi numeri è l’argomento del prossimo modulo, Codifica.</p>"
         },
-        "nnRecap": {
-          "prompt": "Metti in ordine le idee di questo modulo, come le abbiamo incontrate.",
-          "steps": {
-            "neuron": "Un neurone pesa i suoi ingressi e si attiva sopra una soglia",
-            "line": "Un neurone divide il piano con una retta",
-            "hidden": "Uno strato nascosto risolve ciò che una retta non può (XOR)",
-            "data": "Un dataset dà tanti esempi con la risposta giusta",
-            "learn": "La retropropagazione sposta ogni peso per rendere l’errore più piccolo"
-          },
-          "explain": "<p>Neurone, retta, strato nascosto, dataset, retropropagazione: tutta la storia delle reti neurali in cinque passi.</p>"
+        "nnTfThreshold": {
+          "prompt": "Un neurone somma i suoi ingressi pesati e il bias, e si attiva quando la somma è sopra lo zero.",
+          "explain": "<p><b>Vero.</b> È tutta la macchina: pesare, sommare, decidere.</p>"
+        },
+        "nnTfXorOne": {
+          "prompt": "Con i pesi giusti, un neurone da solo può calcolare XOR.",
+          "explain": "<p><b>Falso.</b> Un neurone disegna una retta, e nessuna retta separa gli angoli di XOR: al massimo tre su quattro. Serve uno strato nascosto.</p>"
+        },
+        "nnTfHidden": {
+          "prompt": "Uno strato nascosto permette a una rete di risolvere problemi che una sola retta non risolve.",
+          "explain": "<p><b>Vero.</b> Ogni neurone nascosto disegna la sua retta, e lo strato dopo le combina: è così che si risolve XOR.</p>"
+        },
+        "nnTfByHand": {
+          "prompt": "In una rete vera, i pesi li sceglie una persona a mano.",
+          "explain": "<p><b>Falso.</b> Sono troppi. La rete li impara da un dataset di esempi con l’etichetta.</p>"
+        },
+        "nnTfBackprop": {
+          "prompt": "La backpropagation sposta ogni peso nella direzione che rende l’errore più piccolo.",
+          "explain": "<p><b>Vero.</b> L’errore viene mandato indietro attraverso gli strati, e ogni peso si sposta un poco, in proporzione alla sua parte nell’errore.</p>"
         }
       }
     },

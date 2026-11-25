@@ -4804,7 +4804,8 @@
         "and": "The four inputs of AND",
         "groups": "Two groups of examples",
         "show": "Show the line",
-        "hide": "Hide the line"
+        "hide": "Hide the line",
+        "split": "Every dot is on its own side of the line."
       },
       "line": {
         "xorTitle": "Now try XOR",
@@ -4946,7 +4947,8 @@
           "options": {
             "and": "AND: it fires only when both inputs are on",
             "or": "OR: it fires when at least one input is on",
-            "neither": "Neither"
+            "neither": "Neither",
+            "xor": "XOR: it fires when exactly one input is on"
           },
           "explain": "<p>With one input on the sum is 1 - 1.5 = -0.5: quiet. With both on it is 2 - 1.5 = 0.5: it fires. That is <b>AND</b>. With b = -0.5 it would be OR.</p>"
         },
@@ -4971,20 +4973,22 @@
           "options": {
             "slides": "It slides the line without turning it",
             "turns": "It turns the line around a point",
-            "colours": "It changes which dots are blue"
+            "colours": "It changes which dots are blue",
+            "nothing": "Nothing: only the weights move the line"
           },
           "explain": "<p>The bias <b>slides</b> the line parallel to itself; the weights set its direction. The dots' colours are the labels: they belong to the data, not to the neuron.</p>"
         },
         "nnWhichLine": {
           "prompt": "Which neuron gets every dot right?",
-          "explain": "<p>The middle one: blue on the shaded side, amber on the other. The last one draws the same line but fires on the wrong side: the sign of the weights decides which side fires.</p>"
+          "explain": "<p>The diagonal one with every blue dot on the shaded side and every amber dot on the other. Another draws the same line but fires on the wrong side: the sign of the weights decides which side fires. The straight ones cut through a group.</p>"
         },
         "nnXorBest": {
           "prompt": "With one line, at best how many of the four XOR corners can you get right?",
           "options": {
             "two": "Two",
             "three": "Three",
-            "four": "All four"
+            "four": "All four",
+            "one": "One"
           },
           "explain": "<p><b>Three</b>. Any line that keeps both blue corners together leaves at least one amber corner with them.</p>"
         },
@@ -4997,7 +5001,8 @@
           "options": {
             "or": "OR",
             "and": "AND",
-            "xor": "XOR"
+            "xor": "XOR",
+            "nand": "NAND (not both)"
           },
           "explain": "<p><b>OR</b>: it fires when at least one input is on. The second one is \"not both\", and the output is the AND of the two.</p>"
         },
@@ -5006,7 +5011,8 @@
           "options": {
             "up": "Up",
             "down": "Down",
-            "same": "It should not move"
+            "same": "It should not move",
+            "zero": "It should be set to 0"
           },
           "explain": "<p><b>Down</b>. The answer was too high, and w₁ multiplied an input of 1, so it pushed the answer up: lowering it brings the answer towards 0.</p>"
         },
@@ -5015,7 +5021,8 @@
           "options": {
             "up": "Up",
             "down": "Down",
-            "same": "It should not move"
+            "same": "It should not move",
+            "zero": "It should be set to 0"
           },
           "explain": "<p>It <b>should not move</b>: an input of 0 times any weight is 0, so w₁ did not contribute to this mistake. Backpropagation gives each weight a share of the error in proportion to what it did. (The bias b still moves.)</p>"
         },
@@ -5039,7 +5046,8 @@
           "options": {
             "shape": "So it learns what all 3s have in common, and recognises 3s it has never seen",
             "memory": "So it can remember every picture by heart",
-            "faster": "Because training is faster with more pictures"
+            "faster": "Because training is faster with more pictures",
+            "pixels": "So it learns how many pixels each digit has"
           },
           "explain": "<p>The goal is to <b>generalise</b>: to recognise new drawings. A network that only memorises its examples fails on the first new one. That is why we test it on digits it has never seen.</p>"
         },
@@ -5048,20 +5056,30 @@
           "options": {
             "summary": "A short description of the picture that the network invented to do its job",
             "copy": "A copy of 12 of the pixels",
-            "answer": "The probability of each digit"
+            "answer": "The probability of each digit",
+            "random": "Random numbers, different every time"
           },
           "explain": "<p>A <b>short description</b>: 35 pixels became 12 numbers that keep what matters to tell digits apart. Nobody told the network what to put there. How to describe something with a few numbers is the subject of the next module, Encoding.</p>"
         },
-        "nnRecap": {
-          "prompt": "Put the ideas of this module in the order we met them.",
-          "steps": {
-            "neuron": "A neuron weighs its inputs and fires above a threshold",
-            "line": "One neuron splits the plane with a line",
-            "hidden": "A hidden layer solves what one line cannot (XOR)",
-            "data": "A dataset gives many examples with the right answer",
-            "learn": "Backpropagation nudges every weight to make the error smaller"
-          },
-          "explain": "<p>Neuron, line, hidden layer, dataset, backpropagation: the whole story of neural networks in five steps.</p>"
+        "nnTfThreshold": {
+          "prompt": "A neuron adds up its weighted inputs and the bias, and fires when the sum is above zero.",
+          "explain": "<p><b>True.</b> That is the whole machine: weigh, add, decide.</p>"
+        },
+        "nnTfXorOne": {
+          "prompt": "With the right weights, one neuron alone can compute XOR.",
+          "explain": "<p><b>False.</b> One neuron draws one line, and no line splits XOR's corners: at best three out of four. It takes a hidden layer.</p>"
+        },
+        "nnTfHidden": {
+          "prompt": "A hidden layer lets a network solve problems a single line cannot.",
+          "explain": "<p><b>True.</b> Each hidden neuron draws its own line, and the next layer combines them: that is how XOR is solved.</p>"
+        },
+        "nnTfByHand": {
+          "prompt": "In a real network, people choose the weights by hand.",
+          "explain": "<p><b>False.</b> There are far too many. The network learns them from a dataset of labelled examples.</p>"
+        },
+        "nnTfBackprop": {
+          "prompt": "Backpropagation nudges each weight in the direction that makes the error smaller.",
+          "explain": "<p><b>True.</b> The error is sent back through the layers, and each weight moves a little, in proportion to its share of the mistake.</p>"
         }
       }
     },

@@ -444,3 +444,22 @@ html[data-focus] .app-main {
   opacity: var(--ribbon-opacity);
   pointer-events: none;
 }
+
+/* ---- learning: a right answer ------------------------------------------- */
+/* A short green glow when a question or a lab goes right (Learning modules). */
+@keyframes learning-right {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--ok) 0%, transparent);
+  }
+}
+.learning-right {
+  animation: learning-right 0.7s var(--m-out, ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .learning-right {
+    animation: none;
+  }
+}
