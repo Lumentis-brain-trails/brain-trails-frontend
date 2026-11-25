@@ -489,6 +489,7 @@ function MatchBoard({
   onChange: (placed: Record<string, string>) => void;
 }) {
   const t = useTranslations("learning.question");
+  const words = useWords();
   const [held, setHeld] = useState<string | null>(null);
   const tray = shuffled(question.items, question.id).filter(
     (i) => !placed[i.id]
@@ -560,9 +561,11 @@ function MatchBoard({
               )}
             >
               <span className="text-center font-mono text-[14px] tabular-nums">
-                {slot.count !== undefined
-                  ? t("numbers", { n: slot.count })
-                  : formatCode(slot.code ?? [])}
+                {slot.words
+                  ? words.text(slot.words)
+                  : slot.count !== undefined
+                    ? t("numbers", { n: slot.count })
+                    : formatCode(slot.code ?? [])}
               </span>
               {item ? (
                 <button

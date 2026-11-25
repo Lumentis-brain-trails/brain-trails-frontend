@@ -89,7 +89,19 @@ export type FigureSpec =
       ticks?: boolean;
     }
   /** The variational autoencoder's diagram: signal, encoder, `latent` numbers, decoder. */
-  | { kind: "vae"; latent: number };
+  | { kind: "vae"; latent: number }
+  /** Dots of two groups on the unit square, and a neuron's line if `line` is given. */
+  | {
+      kind: "dots";
+      dots: { x: number; y: number; label: 0 | 1 }[];
+      line?: { w1: number; w2: number; b: number };
+    }
+  /** A fully connected network: how many neurons in each layer, inputs first. */
+  | { kind: "network"; layers: number[] }
+  /** A small picture of pixels (`width` per row, 1 for ink), such as a 5x7 digit. */
+  | { kind: "pixels"; pixels: number[]; width: number }
+  /** One artificial neuron with its parts named: inputs, weights, sum, firing. */
+  | { kind: "neuron" };
 
 /** A picture with its code: what the gallery shows and the matching game drags. */
 export interface Example {
@@ -159,8 +171,11 @@ export type Question =
       id: string;
       prompt: Words;
       items: Item[];
-      /** A slot shows a code (`μ = 3, A = 1`) or a count of numbers ("3 numbers"). */
-      slots: { id: string; code?: Param[]; count?: number }[];
+      /**
+       * A slot shows a code (`μ = 3, A = 1`), a count of numbers ("3 numbers") or
+       * words (a name to match a name to).
+       */
+      slots: { id: string; code?: Param[]; count?: number; words?: Words }[];
       /** Item id -> slot id. */
       answer: Record<string, string>;
       explain: Words;
@@ -237,5 +252,7 @@ export function wordsOf(question: Question): Words[] {
     for (const o of question.options) if (o.words) words.push(o.words);
   if (question.kind === "order" || question.kind === "match")
     for (const i of question.items) if (i.words) words.push(i.words);
+  if (question.kind === "match")
+    for (const s of question.slots) if (s.words) words.push(s.words);
   return words;
 }

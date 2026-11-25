@@ -52,15 +52,23 @@ export interface Playground {
   yRange: [number, number];
 }
 
-/** One screen of a module. */
+/**
+ * The interactive pieces a step can hold: the heartbeat taken apart (`ecg`), and the
+ * Neural Networks module's labs - a neuron as a logic gate (`gates`), a line that splits
+ * dots (`line`, `lineXor`), the hand-wired XOR network (`xor`), a neuron learning
+ * (`learn`), a network learning digits (`digits`).
+ */
+export type Lab =
+  "ecg" | "gates" | "line" | "lineXor" | "xor" | "learn" | "digits";
+
+/** One screen of a module; its words are under `learning.<module key>.steps.<id>`. */
 export interface Step {
-  id: EncodingStepId;
+  id: string;
   /** Nine pictures of one family, their codes hidden until asked for. */
   gallery?: Example[];
   /** One larger picture. */
   figure?: FigureSpec;
-  /** The heartbeat with its eight bells, each switched on and off. */
-  explorer?: "ecg";
+  lab?: Lab;
   playground?: Playground;
   questions: Question[];
 }
@@ -305,7 +313,7 @@ function options(question: string, ids: string[]) {
 }
 
 /** The module, in order. */
-export const ENCODING: Step[] = [
+export const ENCODING: (Step & { id: EncodingStepId })[] = [
   {
     id: "intro",
     figure: ECG_FIGURE,
@@ -594,7 +602,7 @@ export const ENCODING: Step[] = [
   },
   {
     id: "ecg",
-    explorer: "ecg",
+    lab: "ecg",
     questions: [
       {
         kind: "count",

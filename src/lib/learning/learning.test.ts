@@ -8,6 +8,30 @@ import {
   playgroundParts,
 } from "@/lib/learning/encoding";
 import { MODULES, moduleOf, stepIndex } from "@/lib/learning/modules";
+import { NEURAL_NETWORKS } from "@/lib/learning/neuralNetworks";
+import {
+  type Dot,
+  GATES,
+  PAIRS,
+  accuracy,
+  computes,
+  correctCount,
+  digitPixels,
+  digitSamples,
+  fires,
+  forward,
+  gateDots,
+  learnStep,
+  loss,
+  makeMlp,
+  parameterCount,
+  predict,
+  sigmoid,
+  trainEpoch,
+  truthTable,
+  twoGroups,
+  xorForward,
+} from "@/lib/learning/neurons";
 import {
   type Question,
   formatCode,
@@ -295,13 +319,14 @@ describe("the Encoding module", () => {
 });
 
 describe("modules", () => {
-  test("Encoding is the second module and the only one ready", () => {
+  test("Encoding is the second module; plasticity is still to come", () => {
     expect(MODULES.map((m) => m.slug)).toEqual([
       "neural-networks",
       "encoding",
       "brain-plasticity",
     ]);
     expect(MODULES.filter((m) => m.steps.length).map((m) => m.key)).toEqual([
+      "neuralNetworks",
       "encoding",
     ]);
     for (const m of MODULES) {
@@ -323,5 +348,99 @@ describe("modules", () => {
     expect(stepIndex("-3", 13)).toBe(0);
     expect(stepIndex("abc", 13)).toBe(0);
     expect(stepIndex("3", 0)).toBe(0);
+  });
+});
+
+describe("the Neural Networks module", () => {
+  const questions = NEURAL_NETWORKS.flatMap((s) => s.questions);
+
+  test("every step and question has its words", () => {
+    for (const step of NEURAL_NETWORKS) {
+      expect(message(`neuralNetworks.steps.${step.id}.title`)).toBeTypeOf(
+        "string"
+      );
+      expect(message(`neuralNetworks.steps.${step.id}.body`)).toBeTypeOf(
+        "string"
+      );
+    }
+    for (const q of questions)
+      for (const w of wordsOf(q))
+        expect(message(w.key), w.key).toBeTypeOf("string");
+  });
+
+  test("question ids are unique across the course", () => {
+    const ids = MODULES.flatMap((m) =>
+      m.steps.flatMap((s) => s.questions.map((q) => q.id))
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test("the numbers in the questions are the ones the labs compute", () => {
+    const byId = new Map(questions.map((q) => [q.id, q]));
+    expect(byId.get("nnXorParams")).toMatchObject({ answer: 9 });
+    expect(byId.get("nnDigitParams")).toMatchObject({ answer: 562 });
+    expect(computes({ w1: 1, w2: 1, b: -1.5 }, "and")).toBe(true);
+    const line = byId.get("nnWhichLine");
+    if (line?.kind !== "choice") throw new Error("nnWhichLine");
+    for (const o of line.options) {
+      if (o.figure?.kind !== "dots" || !o.figure.line) throw new Error(o.id);
+      const right = correctCount(o.figure.line, o.figure.dots as Dot[]);
+      expect(right === o.figure.dots.length, o.id).toBe(o.id === line.answer);
+    }
+  });
+});
+
+describe("neurons", () => {
+  test("a neuron computes AND and OR but no weights give XOR", () => {
+    expect(truthTable({ w1: 1, w2: 1, b: -0.5 })).toEqual(GATES.or);
+    expect(computes({ w1: 1, w2: 1, b: -1.5 }, "and")).toBe(true);
+    for (let w1 = -2; w1 <= 2; w1 += 0.5)
+      for (let w2 = -2; w2 <= 2; w2 += 0.5)
+        for (let b = -2; b <= 2; b += 0.25)
+          expect(computes({ w1, w2, b }, "xor")).toBe(false);
+  });
+
+  test("the hidden layer computes XOR", () => {
+    expect(PAIRS.map(([a, b]) => xorForward(a, b).out)).toEqual(GATES.xor);
+  });
+
+  test("gate dots carry the gate's labels and two groups are separable", () => {
+    const dots = gateDots("xor", 2);
+    expect(dots).toHaveLength(8);
+    expect(dots.map((d) => d.label)).toEqual([0, 0, 1, 1, 1, 1, 0, 0]);
+    const groups = twoGroups();
+    expect(correctCount({ w1: 1, w2: 1, b: -1 }, groups)).toBe(groups.length);
+  });
+
+  test("learning lowers the error and finds a separating line", () => {
+    const dots = twoGroups();
+    let n = { w1: -1, w2: 1.5, b: 0.2 };
+    const before = loss(n, dots);
+    for (let i = 0; i < 200; i++) n = learnStep(n, dots, 2);
+    expect(loss(n, dots)).toBeLessThan(before / 3);
+    expect(correctCount(n, dots)).toBe(dots.length);
+    expect(sigmoid(0)).toBe(0.5);
+    expect(fires(n, 0.8, 0.8)).toBe(1);
+  });
+
+  test("parameters are weights plus biases, layer by layer", () => {
+    expect(parameterCount([2, 2, 1])).toBe(9);
+    expect(parameterCount([35, 12, 10])).toBe(562);
+  });
+
+  test("a small network learns the digits and reads new ones", () => {
+    expect(digitPixels(1)).toHaveLength(35);
+    const train = digitSamples(20, 0.08, 5);
+    const test = digitSamples(10, 0.08, 99);
+    let net = makeMlp(35, 12, 10, 1);
+    const before = accuracy(net, test);
+    for (let i = 0; i < 15; i++) net = trainEpoch(net, train, 0.5);
+    expect(accuracy(net, test)).toBeGreaterThan(0.9);
+    expect(before).toBeLessThan(0.5);
+    for (let d = 0; d < 10; d++) expect(predict(net, digitPixels(d))).toBe(d);
+    const { hidden, probs } = forward(net, digitPixels(3));
+    expect(hidden).toHaveLength(12);
+    expect(probs.reduce((a, b) => a + b, 0)).toBeCloseTo(1);
+    expect(accuracy(net, [])).toBe(0);
   });
 });

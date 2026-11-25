@@ -6,6 +6,7 @@
  * `messages/*.json` under `learning.modules.<key>`.
  */
 import { ENCODING, type Step } from "@/lib/learning/encoding";
+import { NEURAL_NETWORKS } from "@/lib/learning/neuralNetworks";
 
 /** A module's key in `learning.modules`. */
 export type ModuleKey = "neuralNetworks" | "encoding" | "plasticity";
@@ -15,11 +16,13 @@ export interface LearningModule {
   key: ModuleKey;
   /** Empty until the module is written. */
   steps: Step[];
+  /** Pin Encoding's three questions (how many, which values, how to rebuild) on top. */
+  refrain?: boolean;
 }
 
 export const MODULES: LearningModule[] = [
-  { slug: "neural-networks", key: "neuralNetworks", steps: [] },
-  { slug: "encoding", key: "encoding", steps: ENCODING },
+  { slug: "neural-networks", key: "neuralNetworks", steps: NEURAL_NETWORKS },
+  { slug: "encoding", key: "encoding", steps: ENCODING, refrain: true },
   { slug: "brain-plasticity", key: "plasticity", steps: [] },
 ];
 

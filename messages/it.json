@@ -4444,7 +4444,11 @@
       "decoder": "decoder",
       "latent": "il codice",
       "input": "EEG",
-      "output": "ricostruito"
+      "output": "ricostruito",
+      "inputs": "ingressi",
+      "weights": "pesi",
+      "sum": "somma",
+      "fires": "si attiva?"
     },
     "encoding": {
       "steps": {
@@ -4665,6 +4669,221 @@
             "decode": "Decodifica: ricostruisci l'immagine dai suoi numeri, e controlla che somigli all'originale"
           },
           "explain": "<p>Ricetta, quanti numeri, codifica, decodifica. Quando la ricetta non si conosce, come per l'EEG, la impara una rete neurale.</p>"
+        }
+      }
+    },
+    "labs": {
+      "gates": {
+        "title": "Sii il neurone",
+        "text": "Tocca i due ingressi per accenderli e spegnerli. Il neurone moltiplica ognuno per il suo peso, aggiunge il bias e si attiva se la somma è sopra lo zero. Trova i pesi che gli fanno calcolare AND, poi OR.",
+        "sum": "somma = {s}",
+        "output": "uscita",
+        "goal": "Obiettivo",
+        "and": "AND (entrambi accesi)",
+        "or": "OR (almeno uno acceso)",
+        "done": "Il tuo neurone lo calcola!",
+        "wanted": "atteso",
+        "neuron": "neurone"
+      },
+      "line": {
+        "title": "Dividi i punti con una retta",
+        "xorTitle": "Ora prova con XOR",
+        "text": "Il neurone si attiva sul lato colorato della sua retta. Muovi i pesi e il bias finché ogni punto blu non è sul lato colorato e nessun punto arancione lo è.",
+        "fire": "deve attivarsi (1)",
+        "quiet": "deve restare spento (0)",
+        "score": "{right} punti su {total} dal lato giusto"
+      },
+      "xor": {
+        "title": "Due neuroni, poi un altro",
+        "text": "Scegli un ingresso. I due neuroni nascosti disegnano ognuno la sua retta; il neurone d’uscita si attiva solo quando si attivano entrambi.",
+        "lines": "La retta del primo neurone nascosto (a sinistra) e quella del secondo (a destra): i punti di XOR finiscono tra le due.",
+        "result": "nascosti: {h1} e {h2}, quindi l’uscita è {out}"
+      },
+      "learn": {
+        "title": "Lascia imparare il neurone",
+        "text": "Il neurone parte con pesi sbagliati. Ogni passo di apprendimento guarda tutti i punti, misura l’errore e sposta un po’ ogni peso nella direzione che rende l’errore più piccolo.",
+        "error": "errore = {e}",
+        "one": "Impara un passo",
+        "twenty": "Impara 20 passi",
+        "reset": "Ricomincia",
+        "steps": "{n, plural, one {# passo} other {# passi}} finora"
+      },
+      "digits": {
+        "title": "Insegna a una rete a leggere le cifre",
+        "text": "Ogni immagine è di 5 × 7 = 35 pixel. Una rete con 35 ingressi, 12 neuroni nascosti e 10 uscite (una per cifra) impara da 200 esempi etichettati. Allenala, poi disegna la tua cifra.",
+        "examples": "Alcuni degli esempi da cui impara: ognuno un po’ diverso.",
+        "train": "Allena un giro",
+        "trainTen": "Allena dieci giri",
+        "progress": "{n, plural, one {# giro} other {# giri}} di allenamento · {acc}% giuste su cifre mai viste",
+        "draw": "Disegna una cifra (tocca i quadratini)",
+        "clear": "Cancella",
+        "pixel": "Pixel {n}",
+        "guess": "Cosa pensa la rete che sia",
+        "verdict": "Legge un {d} (sicura al {p}%)",
+        "hidden": "I suoi {n} neuroni nascosti per il tuo disegno"
+      }
+    },
+    "neuralNetworks": {
+      "steps": {
+        "neuron": {
+          "title": "Un neurone, una decisione",
+          "body": "<p>Un <b>neurone artificiale</b> è una macchina molto semplice. Riceve alcuni numeri (i suoi <b>ingressi</b>), moltiplica ognuno per il proprio <b>peso</b>, li somma insieme a un <b>bias</b>, e poi decide: se la somma è sopra lo zero si <b>attiva</b> (1), altrimenti resta spento (0).</p><p>I pesi dicono quanto conta ogni ingresso; il bias dice quanto facilmente il neurone si attiva. Con i numeri giusti, un solo neurone sa già prendere decisioni semplici, come le porte logiche AND e OR.</p>"
+        },
+        "biology": {
+          "title": "Il neurone nella tua testa",
+          "body": "<p>L’idea viene dal cervello. Un neurone biologico raccoglie segnali da altri neuroni attraverso i <b>dendriti</b>. Ogni collegamento, una <b>sinapsi</b>, può essere forte o debole. Il <b>corpo cellulare</b> somma ciò che arriva, e quando il totale supera una soglia il neurone manda un <b>impulso</b> lungo l’assone ai neuroni successivi.</p><p>Il neurone artificiale ne è una caricatura: molto più semplice, ma con le stesse parti.</p>"
+        },
+        "line": {
+          "title": "Un neurone disegna una retta",
+          "body": "<p>Dai al neurone come ingressi le due coordinate di un punto. Dov’è esattamente il confine tra attivarsi e non attivarsi? Dove w₁·x + w₂·y + b = 0: è l’equazione di una <b>retta</b>.</p><p>Quindi un neurone divide il piano in due: da una parte si attiva, dall’altra no. Scegliere i suoi tre numeri vuol dire scegliere una retta. Prova a separare i punti blu da quelli arancioni.</p>"
+        },
+        "xor": {
+          "title": "Il problema che una retta non risolve",
+          "body": "<p>XOR (o esclusivo) si attiva quando è acceso <i>esattamente un</i> ingresso: (0, 1) e (1, 0) sì, (0, 0) e (1, 1) no. Disegnati come punti, i due gruppi stanno agli angoli opposti del quadrato.</p><p>Prova quanto vuoi: nessuna retta mette entrambi gli angoli blu da una parte ed entrambi quelli arancioni dall’altra. Un solo neurone non può calcolare XOR. Nel 1969 questo semplice fatto rallentò per anni la ricerca sulle reti neurali.</p>"
+        },
+        "hidden": {
+          "title": "Aggiungi uno strato nascosto",
+          "body": "<p>La soluzione è usare più neuroni, a <b>strati</b>. Due neuroni guardano gli ingressi, e ognuno disegna la sua retta: uno calcola OR, l’altro \"non entrambi\". Si chiamano <b>nascosti</b> perché nessuno vede direttamente la loro uscita. Un terzo neurone guarda i due nascosti e si attiva solo quando si attivano entrambi.</p><p>Insieme calcolano XOR. Ogni strato trasforma il problema in uno più facile per lo strato dopo: è questo che rende così potenti le reti con tanti strati (le reti <b>profonde</b>).</p>"
+        },
+        "learning": {
+          "title": "Imparare dagli esempi",
+          "body": "<p>Finora abbiamo scelto i pesi a mano. Una rete vera ha migliaia o milioni di pesi: nessuno può sceglierli. Le diamo invece un <b>dataset</b>: tanti esempi con la risposta giusta (l’<b>etichetta</b>), e la lasciamo imparare.</p><p>L’apprendimento funziona così. La rete risponde a ogni esempio, e misuriamo quanto ha sbagliato (l’<b>errore</b>). Poi l’errore viene mandato <b>all’indietro</b> attraverso la rete, e ogni peso viene spostato un po’ nella direzione che rende l’errore più piccolo. Un peso il cui ingresso era grande riceve una spinta più grande; un peso il cui ingresso era zero non ha contribuito, quindi non si muove. Questa è la <b>retropropagazione</b> (backpropagation). Ripetuta tante volte, i pesi trovano la loro strada.</p>"
+        },
+        "digits": {
+          "title": "Leggere cifre scritte a mano",
+          "body": "<p>Un classico banco di prova per le reti neurali: riconoscere cifre scritte a mano. Qui ogni cifra è una minuscola immagine di 5 × 7, quindi entrano 35 pixel, uno per neurone d’ingresso. Escono dieci neuroni, uno per cifra: quello che si attiva di più è la risposta della rete.</p><p>In mezzo c’è uno strato nascosto di 12 neuroni. Dopo l’allenamento, quei 12 numeri sono la descrizione breve dell’immagine che la rete si è fatta da sola: ha trovato da sé quali caratteristiche servono per distinguere un 3 da un 8. Tienilo a mente: trasformare un’immagine in pochi numeri che hanno senso è proprio l’argomento del prossimo modulo.</p>"
+        },
+        "recap": {
+          "title": "Riepilogo",
+          "body": "<p>Un neurone pesa i suoi ingressi e decide. Un neurone disegna una retta; strati di neuroni disegnano qualsiasi forma. Nessuno sceglie i pesi a mano: la rete li impara da esempi etichettati, mandando l’errore all’indietro attraverso gli strati (retropropagazione). E strada facendo, gli strati nascosti imparano una descrizione compatta di ciò che vedono.</p>"
+        }
+      },
+      "q": {
+        "nnNeuronCount": {
+          "prompt": "Quanti numeri impara questo neurone?",
+          "explain": "<p><b>Tre</b>: i pesi w₁ e w₂ e il bias b. Gli ingressi non si imparano: arrivano da fuori.</p>"
+        },
+        "nnWhichGate": {
+          "prompt": "Un neurone ha w₁ = 1, w₂ = 1 e b = -1.5. Cosa calcola?",
+          "options": {
+            "and": "AND: si attiva solo quando entrambi gli ingressi sono accesi",
+            "or": "OR: si attiva quando almeno un ingresso è acceso",
+            "neither": "Nessuno dei due"
+          },
+          "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>. Con b = -0.5 sarebbe OR.</p>"
+        },
+        "nnBiology": {
+          "prompt": "Abbina ogni parte di un neurone biologico alla sua versione artificiale.",
+          "items": {
+            "dendrites": "Dendriti",
+            "synapse": "Forza di una sinapsi",
+            "body": "Corpo cellulare",
+            "spike": "Impulso"
+          },
+          "slots": {
+            "inputs": "Ingressi",
+            "weights": "Pesi",
+            "sum": "Somma pesata",
+            "fires": "Uscita (si attiva o no)"
+          },
+          "explain": "<p>I dendriti portano gli <b>ingressi</b>, la forza di ogni sinapsi è un <b>peso</b>, il corpo cellulare calcola la <b>somma</b>, e l’impulso è l’<b>uscita</b>. Imparare, anche nel cervello, vuol dire soprattutto cambiare la forza delle sinapsi.</p>"
+        },
+        "nnBias": {
+          "prompt": "Cosa fa alla retta cambiare il bias b?",
+          "options": {
+            "slides": "La fa scorrere senza ruotarla",
+            "turns": "La fa ruotare attorno a un punto",
+            "colours": "Cambia quali punti sono blu"
+          },
+          "explain": "<p>Il bias fa <b>scorrere</b> la retta parallela a sé stessa; i pesi ne fissano la direzione. I colori dei punti sono le etichette: appartengono ai dati, non al neurone.</p>"
+        },
+        "nnWhichLine": {
+          "prompt": "Quale neurone mette giusti tutti i punti?",
+          "explain": "<p>Quello in mezzo: blu sul lato colorato, arancioni sull’altro. L’ultimo disegna la stessa retta ma si attiva dal lato sbagliato: il segno dei pesi decide quale lato si attiva.</p>"
+        },
+        "nnXorBest": {
+          "prompt": "Con una retta, al massimo quanti dei quattro angoli di XOR puoi mettere giusti?",
+          "options": {
+            "two": "Due",
+            "three": "Tre",
+            "four": "Tutti e quattro"
+          },
+          "explain": "<p><b>Tre</b>. Qualunque retta che tiene insieme i due angoli blu lascia con loro almeno un angolo arancione.</p>"
+        },
+        "nnXorParams": {
+          "prompt": "Questa rete ha 2 ingressi, 2 neuroni nascosti e 1 uscita. Quanti numeri impara?",
+          "explain": "<p>Ogni neurone nascosto ha 2 pesi e 1 bias: 6. Il neurone d’uscita ha 2 pesi e 1 bias: 3. In tutto, <b>9</b>.</p>"
+        },
+        "nnHiddenOne": {
+          "prompt": "Nel laboratorio qui sopra, il primo neurone nascosto si attiva per (0, 1), (1, 0) e (1, 1). Che porta è?",
+          "options": {
+            "or": "OR",
+            "and": "AND",
+            "xor": "XOR"
+          },
+          "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso. Il secondo è \"non entrambi\", e l’uscita è l’AND dei due.</p>"
+        },
+        "nnNudgeDown": {
+          "prompt": "Il neurone ha risposto 0.9 per un punto con etichetta 0, e la x di quel punto è 1. In che direzione deve muoversi w₁?",
+          "options": {
+            "up": "Su",
+            "down": "Giù",
+            "same": "Non deve muoversi"
+          },
+          "explain": "<p><b>Giù</b>. La risposta era troppo alta, e w₁ moltiplicava un ingresso di 1, quindi spingeva la risposta in su: abbassarlo avvicina la risposta a 0.</p>"
+        },
+        "nnNudgeZero": {
+          "prompt": "Stesso errore, ma la x di questo punto è 0. In che direzione deve muoversi w₁?",
+          "options": {
+            "up": "Su",
+            "down": "Giù",
+            "same": "Non deve muoversi"
+          },
+          "explain": "<p><b>Non deve muoversi</b>: un ingresso di 0 per qualsiasi peso fa 0, quindi w₁ non ha contribuito a questo errore. La retropropagazione dà a ogni peso una parte dell’errore in proporzione a ciò che ha fatto. (Il bias b invece si muove.)</p>"
+        },
+        "nnBackprop": {
+          "prompt": "Metti in ordine i passi dell’apprendimento.",
+          "steps": {
+            "forward": "La rete risponde a un esempio",
+            "compare": "La risposta si confronta con l’etichetta: ne viene l’errore",
+            "back": "L’errore viene mandato all’indietro, strato per strato, a ogni peso",
+            "nudge": "Ogni peso si sposta un po’ nella direzione che rende l’errore più piccolo",
+            "repeat": "Si ripete con l’esempio successivo, tante volte su tutto il dataset"
+          },
+          "explain": "<p>Rispondi, confronta, manda indietro, sposta, ripeti. Ogni passo è minuscolo; migliaia di passi fanno una rete che funziona.</p>"
+        },
+        "nnDigitParams": {
+          "prompt": "35 ingressi, 12 neuroni nascosti, 10 uscite. Quanti numeri impara questa rete?",
+          "explain": "<p>Strato nascosto: 35 × 12 pesi + 12 bias = 432. Strato d’uscita: 12 × 10 pesi + 10 bias = 130. In tutto, <b>562</b>. Le reti che leggono foto vere ne hanno milioni.</p>"
+        },
+        "nnWhyMany": {
+          "prompt": "Perché la alleniamo su tanti 3 un po’ diversi invece che su un solo 3 perfetto?",
+          "options": {
+            "shape": "Perché impari cosa hanno in comune tutti i 3, e riconosca 3 che non ha mai visto",
+            "memory": "Perché possa ricordare ogni immagine a memoria",
+            "faster": "Perché con più immagini l’allenamento è più veloce"
+          },
+          "explain": "<p>L’obiettivo è <b>generalizzare</b>: riconoscere disegni nuovi. Una rete che si limita a memorizzare i suoi esempi sbaglia al primo nuovo. Per questo la mettiamo alla prova su cifre che non ha mai visto.</p>"
+        },
+        "nnHiddenCode": {
+          "prompt": "Cosa sono, per un’immagine, i 12 numeri dello strato nascosto?",
+          "options": {
+            "summary": "Una descrizione breve dell’immagine che la rete si è inventata per fare il suo lavoro",
+            "copy": "Una copia di 12 dei pixel",
+            "answer": "La probabilità di ogni cifra"
+          },
+          "explain": "<p>Una <b>descrizione breve</b>: 35 pixel sono diventati 12 numeri che tengono ciò che serve per distinguere le cifre. Nessuno ha detto alla rete cosa metterci. Come descrivere qualcosa con pochi numeri è l’argomento del prossimo modulo, Codifica.</p>"
+        },
+        "nnRecap": {
+          "prompt": "Metti in ordine le idee di questo modulo, come le abbiamo incontrate.",
+          "steps": {
+            "neuron": "Un neurone pesa i suoi ingressi e si attiva sopra una soglia",
+            "line": "Un neurone divide il piano con una retta",
+            "hidden": "Uno strato nascosto risolve ciò che una retta non può (XOR)",
+            "data": "Un dataset dà tanti esempi con la risposta giusta",
+            "learn": "La retropropagazione sposta ogni peso per rendere l’errore più piccolo"
+          },
+          "explain": "<p>Neurone, retta, strato nascosto, dataset, retropropagazione: tutta la storia delle reti neurali in cinque passi.</p>"
         }
       }
     }

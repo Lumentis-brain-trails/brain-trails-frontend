@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { EcgExplorer } from "@/components/learning/EcgExplorer";
 import { Gallery } from "@/components/learning/Gallery";
+import { NeuronLab } from "@/components/learning/NeuronLabs";
 import { LearningFigure } from "@/components/learning/LearningFigure";
 import { Playground } from "@/components/learning/Playground";
 import { QuestionCard, useWords } from "@/components/learning/QuestionCard";
@@ -98,16 +99,20 @@ export function ModuleView({ module }: { module: LearningModule }) {
         ))}
       </nav>
 
-      <div className="mb-6 grid grid-cols-3 gap-2">
-        {(["count", "values", "decode"] as const).map((q) => (
-          <div
-            key={q}
-            className="rounded-xl border border-hairline px-3 py-2 text-center"
-          >
-            <span className="type-caption text-ink-2">{t(`refrain.${q}`)}</span>
-          </div>
-        ))}
-      </div>
+      {module.refrain && (
+        <div className="mb-6 grid grid-cols-3 gap-2">
+          {(["count", "values", "decode"] as const).map((q) => (
+            <div
+              key={q}
+              className="rounded-xl border border-hairline px-3 py-2 text-center"
+            >
+              <span className="type-caption text-ink-2">
+                {t(`refrain.${q}`)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <article className="space-y-6">
         <div>
@@ -122,7 +127,8 @@ export function ModuleView({ module }: { module: LearningModule }) {
             <LearningFigure spec={step.figure} className="mx-auto max-w-3xl" />
           </Card>
         )}
-        {step.explorer === "ecg" && <EcgExplorer />}
+        {step.lab === "ecg" && <EcgExplorer />}
+        {step.lab && step.lab !== "ecg" && <NeuronLab lab={step.lab} />}
         {step.gallery && <Gallery examples={step.gallery} />}
         {step.playground && <Playground spec={step.playground} />}
 
