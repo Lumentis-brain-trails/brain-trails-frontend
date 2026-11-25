@@ -12,6 +12,7 @@ import {
   useWorkspaces,
 } from "@/lib/workspace";
 import { cn, Icon } from "@/components/ui";
+import { useFeature } from "@/lib/features";
 
 /** A workspace's mark on the rail: the first letter of its name, or P for personal. */
 function initial(workspace: Workspace | undefined, personal: string): string {
@@ -32,6 +33,7 @@ function initial(workspace: Workspace | undefined, personal: string): string {
  */
 export function WorkspaceSwitcher() {
   const t = useTranslations("workspaces");
+  const schoolsOn = useFeature("schools");
   const workspaces = useWorkspaces().data ?? [];
   const current = useCurrentWorkspace();
   const [open, setOpen] = useState(false);
@@ -156,7 +158,7 @@ export function WorkspaceSwitcher() {
             className="pressable flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-ink-2 hover:bg-surface-2 hover:text-ink"
           >
             <Icon name="plus" className="h-4 w-4" />
-            {t("switcher.request")}
+            {t(schoolsOn ? "switcher.requestWithSchool" : "switcher.request")}
           </Link>
         </div>
       )}
