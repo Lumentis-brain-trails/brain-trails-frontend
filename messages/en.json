@@ -4253,7 +4253,10 @@
       "reveal": "Show the answer",
       "next": "Next question",
       "hideCount": "Hide the count",
-      "showCount": "Show the count"
+      "showCount": "Show the count",
+      "games": "Class games",
+      "braid": "The braided path",
+      "braidFrom": "Brain plasticity"
     },
     "player": {
       "off": "Class games are not available here.",
@@ -4278,6 +4281,16 @@
     "call": {
       "title": "Your class has a live game",
       "join": "Join"
+    },
+    "braid": {
+      "title": "The braided path",
+      "round": "Round {round} of {rounds}, choice {steps}",
+      "history": "Choices per round: {steps}",
+      "start": "Start the first round",
+      "next": "Next round",
+      "arrived": "The class reached the end in {steps} choices.",
+      "over": "Every round played. Did the path get shorter and thicker?",
+      "again": "Play again"
     }
   },
   "neurofeedback": {
@@ -4429,6 +4442,19 @@
       "refuseTitle": "Refuse {name}",
       "reason": "Reason (optional)",
       "reasonHint": "The student reads it when they sign in. It is not emailed."
+    },
+    "speakers": {
+      "title": "Teachers and speakers",
+      "intro": "Anyone here can run this class: the class code, the students and the class game. Invite a speaker who will present a lesson; they get a link by email.",
+      "teacher": "Teacher",
+      "speaker": "Speaker",
+      "member": "Member",
+      "you": "you",
+      "invited": "Invited",
+      "revoke": "Cancel",
+      "email": "Speaker's email",
+      "invite": "Invite as speaker",
+      "link": "Send this link yourself:"
     }
   },
   "learning": {

@@ -4253,7 +4253,10 @@
       "reveal": "Mostra la risposta",
       "next": "Domanda successiva",
       "hideCount": "Nascondi il conteggio",
-      "showCount": "Mostra il conteggio"
+      "showCount": "Mostra il conteggio",
+      "games": "Giochi di classe",
+      "braid": "Il sentiero intrecciato",
+      "braidFrom": "Plasticità cerebrale"
     },
     "player": {
       "off": "I giochi di classe non sono disponibili qui.",
@@ -4278,6 +4281,16 @@
     "call": {
       "title": "La tua classe ha un gioco in corso",
       "join": "Entra"
+    },
+    "braid": {
+      "title": "Il sentiero intrecciato",
+      "round": "Giro {round} di {rounds}, scelta {steps}",
+      "history": "Scelte per giro: {steps}",
+      "start": "Inizia il primo giro",
+      "next": "Giro successivo",
+      "arrived": "La classe è arrivata in fondo in {steps} scelte.",
+      "over": "Tutti i giri giocati. Il sentiero è diventato più corto e più spesso?",
+      "again": "Gioca di nuovo"
     }
   },
   "neurofeedback": {
@@ -4429,6 +4442,19 @@
       "refuseTitle": "Rifiuta {name}",
       "reason": "Motivo (facoltativo)",
       "reasonHint": "Lo studente lo legge quando accede. Non viene inviato per email."
+    },
+    "speakers": {
+      "title": "Insegnanti e relatori",
+      "intro": "Chiunque qui può gestire questa classe: il codice, gli studenti e il gioco di classe. Invita un relatore che presenterà una lezione; riceve un link via email.",
+      "teacher": "Insegnante",
+      "speaker": "Relatore",
+      "member": "Membro",
+      "you": "tu",
+      "invited": "Invitato",
+      "revoke": "Annulla",
+      "email": "Email del relatore",
+      "invite": "Invita come relatore",
+      "link": "Invia tu questo link:"
     }
   },
   "learning": {

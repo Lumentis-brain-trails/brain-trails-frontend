@@ -23,6 +23,7 @@ import { formatDate } from "@/lib/format";
 import { type SchoolOut, type StudentRow, taughtSchools } from "@/lib/schools";
 import { useWorkspaces } from "@/lib/workspace";
 import { Sheet } from "@/components/Sheet";
+import { Speakers } from "@/components/school/Speakers";
 import {
   Button,
   buttonClass,
@@ -65,6 +66,7 @@ function SchoolSection({ id }: { id: string }) {
   const t = useTranslations("schools.page");
   const tg = useTranslations("classGame.host");
   const games = useFeature("class_games");
+  const multi = useFeature("workspaces_multi");
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("pending");
@@ -186,6 +188,7 @@ function SchoolSection({ id }: { id: string }) {
           </div>
         </Sheet>
       )}
+      {multi && <Speakers school={id} />}
     </section>
   );
 }

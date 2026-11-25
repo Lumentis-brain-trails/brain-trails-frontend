@@ -1,0 +1,213 @@
+"use client";
+
+/**
+ * The braided path, played by a class (Brain Plasticity): the teacher's screen shows
+ * the network, each phone shows the coloured edges the pointer may take next, and the
+ * class votes. The rules are `src/lib/learning/braid.ts`'s: a vote counts with its
+ * edge's thickness; the pointer moves when the leading edge reaches two thirds of the
+ * class, or after `VOTE_SECONDS` to the leader (a tie drawn by thickness); a crossed
+ * edge thickens, unused ones thin between rounds. A round is about ten choices, a game
+ * `ROUNDS` rounds, so the class sees its own habit form.
+ *
+ * The teacher's screen runs the loop; the server only counts (`useHostGame`).
+ */
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BraidBoard, choiceColours } from "@/components/learning/BraidBoard";
+import { Button, Card } from "@/components/ui";
+import type { useHostGame } from "@/lib/classgame/useClassGame";
+import {
+  FOG,
+  VOTE_SECONDS,
+  type BraidState,
+  arrived,
+  choicesAt,
+  decide,
+  endRound,
+  makeBraid,
+  move,
+  startState,
+} from "@/lib/learning/braid";
+
+/** Rounds in one game: enough for the path to thicken visibly. */
+export const ROUNDS = 5;
+/** How long the class sees where it went before the next choice. */
+const PAUSE_MS = 1200;
+/** The solo version's seed, so the class meets the same network. */
+const SEED = 4;
+
+type Host = ReturnType<typeof useHostGame>;
+
+export function BraidStage({ game }: { game: Host }) {
+  const t = useTranslations("classGame.braid");
+  const braid = useMemo(() => makeBraid(SEED), []);
+  const [state, setState] = useState<BraidState>(() => startState(braid));
+  const [askedAt, setAskedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [between, setBetween] = useState(true); // before a round, or after one
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+  const resolving = useRef(false);
+  const [nonce] = useState(() => Date.now().toString(36));
+
+  const { view, askRound, close, reveal } = game;
+  const live = game.socketState === "open";
+  const current = view.question?.kind === "braid" ? view.question : null;
+  const counts = useMemo(
+    () => (current && view.tally ? view.tally.counts : {}),
+    [current, view.tally]
+  );
+
+  // Asks the class at `s`; a node with a single way on is taken without a vote (the
+  // room needs two options, and a vote with one answer is no choice).
+  const ask = useCallback(
+    function ask(s: BraidState) {
+      const colours = choiceColours(braid, s);
+      const ids = choicesAt(braid, s).map((e) => e.id);
+      resolving.current = false;
+      if (ids.length < 2) {
+        setAskedAt(null);
+        if (ids.length === 1) setTimeout(() => advance(ids[0]), PAUSE_MS);
+        return;
+      }
+      askRound({
+        id: `braid-${nonce}-${s.round}-${s.steps}`,
+        kind: "braid",
+        options: ids,
+        buttons: ids.map((id) => ({ id, colour: colours[id] })),
+      });
+      setAskedAt(Date.now());
+
+      function advance(edge: string) {
+        const next = move(braid, stateRef.current, edge);
+        setState(next);
+        if (arrived(braid, next)) setBetween(true);
+        else ask(next);
+      }
+    },
+    [askRound, braid, nonce]
+  );
+
+  const resolve = useCallback(
+    (edge: string) => {
+      if (resolving.current) return;
+      resolving.current = true;
+      setAskedAt(null);
+      close();
+      reveal(edge);
+      setTimeout(() => {
+        const next = move(braid, stateRef.current, edge);
+        setState(next);
+        if (arrived(braid, next)) setBetween(true);
+        else ask(next);
+      }, PAUSE_MS);
+    },
+    [ask, braid, close, reveal]
+  );
+
+  // the clock for the countdown and the time limit
+  useEffect(() => {
+    if (askedAt === null) return;
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [askedAt]);
+
+  const elapsed = askedAt === null ? 0 : now - askedAt;
+  const timedOut = askedAt !== null && elapsed >= VOTE_SECONDS * 1000;
+  useEffect(() => {
+    if (askedAt === null || !current || view.phase !== "open") return;
+    const edge = decide(braid, state, counts, view.players, { timedOut });
+    if (edge) resolve(edge);
+  }, [
+    askedAt,
+    current,
+    view.phase,
+    braid,
+    state,
+    counts,
+    view.players,
+    timedOut,
+    resolve,
+  ]);
+
+  const done = arrived(braid, state);
+  const over = done && state.round >= ROUNDS;
+  const startRound = () => {
+    const next = done ? endRound(state) : state;
+    setState(next);
+    setBetween(false);
+    ask(next);
+  };
+  const restart = () => {
+    const fresh = startState(braid);
+    setState(fresh);
+    setBetween(true);
+  };
+  const finished = done ? [...state.finished, state.steps] : state.finished;
+
+  return (
+    <Card className="space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="type-heading">{t("title")}</h2>
+          <p className="text-ink-2">
+            {t("round", {
+              round: state.round,
+              rounds: ROUNDS,
+              steps: state.steps,
+            })}
+          </p>
+        </div>
+        {askedAt !== null && (
+          <div className="flex w-48 items-center gap-2" aria-hidden>
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
+              <div
+                className="h-full rounded-full bg-accent transition-[width] duration-200"
+                style={{
+                  width: `${Math.max(0, 100 - (elapsed / (VOTE_SECONDS * 1000)) * 100)}%`,
+                }}
+              />
+            </div>
+            <span className="w-8 text-right text-sm tabular-nums text-ink-2">
+              {Math.max(0, Math.ceil(VOTE_SECONDS - elapsed / 1000))}
+            </span>
+          </div>
+        )}
+      </header>
+
+      <BraidBoard braid={braid} state={state} fog={FOG} votes={counts} />
+
+      {finished.length > 0 && (
+        <p className="text-sm text-ink-2">
+          {t("history", { steps: finished.join(" · ") })}
+        </p>
+      )}
+
+      {between && (
+        <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
+          {over ? (
+            <>
+              <p className="text-ink-2">{t("over")}</p>
+              <Button variant="secondary" onClick={restart}>
+                {t("again")}
+              </Button>
+            </>
+          ) : (
+            <>
+              {done && (
+                <p className="text-ink-2">
+                  {t("arrived", { steps: state.steps })}
+                </p>
+              )}
+              <Button disabled={!live} onClick={startRound}>
+                {t(done ? "next" : "start")}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}

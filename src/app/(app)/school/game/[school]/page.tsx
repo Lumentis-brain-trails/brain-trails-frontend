@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { BackLink } from "@/components/BackLink";
+import { BraidStage } from "@/components/classgame/BraidStage";
 import { LiveChoice } from "@/components/classgame/LiveChoice";
 import { useWords } from "@/components/learning/QuestionCard";
 import { Button, Card, EmptyState, Icon, cn } from "@/components/ui";
@@ -79,6 +80,7 @@ function HostStage({
   const tm = useTranslations("learning.modules");
   const words = useWords();
   const [showCount, setShowCount] = useState(true);
+  const [mode, setMode] = useState<"questions" | "braid">("questions");
   const game = useHostGame(school, true);
   const { view } = game;
   const entries = useMemo(() => liveQuestions(MODULES), []);
@@ -91,16 +93,33 @@ function HostStage({
   }, [view.ended, game.socketState, onEnded]);
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[18rem_1fr]">
+    <main className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[18rem_1fr]">
       <aside className="space-y-3 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
-        <p className="type-eyebrow text-ink-3">{t("questions")}</p>
+        <p className="type-eyebrow text-ink-3">{t("games")}</p>
+        <button
+          type="button"
+          onClick={() => setMode("braid")}
+          className={cn(
+            "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
+            mode === "braid"
+              ? "border-accent bg-accent-soft"
+              : "border-hairline hover:bg-surface-2"
+          )}
+        >
+          <span className="block text-xs text-ink-3">{t("braidFrom")}</span>
+          <span>{t("braid")}</span>
+        </button>
+        <p className="type-eyebrow pt-3 text-ink-3">{t("questions")}</p>
         <ol className="space-y-1.5">
           {entries.map((e) => (
             <li key={e.question.id}>
               <button
                 type="button"
                 disabled={!live}
-                onClick={() => game.ask(e.question)}
+                onClick={() => {
+                  setMode("questions");
+                  game.ask(e.question);
+                }}
                 className={cn(
                   "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
                   e.question.id === current
@@ -147,7 +166,9 @@ function HostStage({
           </Button>
         </header>
 
-        {!view.question?.choice ? (
+        {mode === "braid" ? (
+          <BraidStage game={game} />
+        ) : !view.question?.choice ? (
           <Card>
             <EmptyState
               title={t("pick")}
