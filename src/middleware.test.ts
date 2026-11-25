@@ -32,6 +32,9 @@ describe("middleware", () => {
       // a teacher's school and a held student's waiting page (backend V4-0012)
       "/school",
       "/waiting",
+      // the Learning modules, for a class
+      "/learning",
+      "/learning/:path*",
       "/account",
       "/library",
       "/library/:path*",

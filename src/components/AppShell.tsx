@@ -42,6 +42,7 @@ type SectionKey =
   | "people"
   | "my"
   | "school"
+  | "learning"
   | "account"
   | "admin";
 
@@ -266,6 +267,8 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
     ...(teaches
       ? [{ href: "/school", key: "school", icon: "people" } as const]
       : []),
+    // short interactive lessons for a class (Encoding first)
+    { href: "/learning", key: "learning", icon: "learn" },
     { href: "/account", key: "account", icon: "person" },
     ...(me.data?.role === "admin"
       ? [{ href: "/admin", key: "admin", icon: "shield" } as const]
