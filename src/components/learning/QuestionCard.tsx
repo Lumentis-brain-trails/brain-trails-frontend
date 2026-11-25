@@ -1,0 +1,593 @@
+"use client";
+
+/**
+ * One Learning question, of any kind (`Question`): asked, answered, checked with
+ * `isCorrect`, then explained.
+ *
+ * The explanation shows once the answer is right or the person asks for it, because the
+ * point is the reasoning, not the score; a wrong answer can be changed and checked
+ * again. Ordering and matching work by dragging with a mouse and by tapping on a phone
+ * or tablet (tap a picture, then tap where it goes), with arrows as a keyboard path.
+ */
+import { useTranslations } from "next-intl";
+import { type ReactNode, useState } from "react";
+import { Button, Card, Icon, cn } from "@/components/ui";
+import { LearningFigure } from "@/components/learning/LearningFigure";
+import {
+  type Answer,
+  type Item,
+  type Question,
+  type Words,
+  PARAM_SYMBOL,
+  formatCode,
+  isCorrect,
+  shuffled,
+} from "@/lib/learning/questions";
+
+/** Resolves `Words` against `learning.*`: keys are data here, checked by a unit test. */
+export function useWords() {
+  const t = useTranslations("learning");
+  const plain = t as unknown as (
+    key: string,
+    values?: Record<string, string | number>
+  ) => string;
+  const rich = t.rich as unknown as (
+    key: string,
+    values?: Record<string, unknown>
+  ) => ReactNode;
+  return {
+    text: (w: Words) => plain(w.key, w.values),
+    rich: (w: Words) =>
+      rich(w.key, {
+        ...w.values,
+        b: (c: ReactNode) => <strong className="font-semibold">{c}</strong>,
+        i: (c: ReactNode) => <em>{c}</em>,
+        p: (c: ReactNode) => <p>{c}</p>,
+      }),
+  };
+}
+
+type Verdict = "right" | "wrong" | "shown" | null;
+
+export function QuestionCard({
+  question,
+  index,
+}: {
+  question: Question;
+  index: number;
+}) {
+  const t = useTranslations("learning.question");
+  const words = useWords();
+  const [answer, setAnswer] = useState<Answer>(() => initial(question));
+  const [verdict, setVerdict] = useState<Verdict>(null);
+  const [version, setVersion] = useState(0);
+
+  const change = (a: Answer) => {
+    setAnswer(a);
+    if (verdict === "wrong") setVerdict(null);
+  };
+  const check = () =>
+    setVerdict(isCorrect(question, answer) ? "right" : "wrong");
+  const show = () => {
+    setAnswer(solution(question));
+    setVersion((v) => v + 1);
+    setVerdict("shown");
+  };
+  const reset = () => {
+    setAnswer(initial(question));
+    setVersion((v) => v + 1);
+    setVerdict(null);
+  };
+  const done = verdict === "right" || verdict === "shown";
+
+  return (
+    <Card className="space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="type-eyebrow mt-1 shrink-0 text-ink-3">
+          {t("number", { n: index + 1 })}
+        </span>
+        <p className="type-subhead text-pretty">
+          {words.rich(question.prompt)}
+        </p>
+      </div>
+
+      {"figures" in question && question.figures && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {question.figures.map((f, i) => (
+            <div
+              key={i}
+              className={cn(
+                "rounded-xl border border-hairline p-2",
+                question.figures?.length === 1 && "sm:col-span-2"
+              )}
+            >
+              <LearningFigure spec={f} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Body
+        key={version}
+        question={question}
+        answer={answer}
+        onChange={change}
+        locked={done}
+      />
+
+      <div className="flex flex-wrap items-center gap-2">
+        {!done && (
+          <Button size="sm" onClick={check}>
+            {t("check")}
+          </Button>
+        )}
+        {!done && (
+          <Button size="sm" variant="ghost" onClick={show}>
+            {t("show")}
+          </Button>
+        )}
+        {done && (
+          <Button size="sm" variant="secondary" onClick={reset}>
+            {t("again")}
+          </Button>
+        )}
+        {verdict === "right" && (
+          <span className="inline-flex items-center gap-1.5 font-medium text-ok">
+            <Icon name="check" /> {t("right")}
+          </span>
+        )}
+        {verdict === "wrong" && (
+          <span className="font-medium text-warn">{t("wrong")}</span>
+        )}
+      </div>
+
+      {done && (
+        <div className="space-y-2 rounded-xl bg-surface-2 p-4 text-pretty text-ink-2 [&_p+p]:mt-2">
+          {words.rich(question.explain)}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** The empty answer each kind starts from (orders start shuffled, the same everywhere). */
+function initial(q: Question): Answer {
+  switch (q.kind) {
+    case "count":
+      return { kind: "count", value: Number.NaN };
+    case "value":
+      return { kind: "value", values: q.labels.map(() => Number.NaN) };
+    case "choice":
+      return { kind: "choice", id: "" };
+    case "order":
+      return { kind: "order", ids: shuffled(q.answer, q.id) };
+    case "match":
+      return { kind: "match", placed: {} };
+  }
+}
+
+/** The right answer, to show it. */
+function solution(q: Question): Answer {
+  switch (q.kind) {
+    case "count":
+      return { kind: "count", value: q.answer };
+    case "value":
+      return { kind: "value", values: q.answer };
+    case "choice":
+      return { kind: "choice", id: q.answer };
+    case "order":
+      return { kind: "order", ids: q.answer };
+    case "match":
+      return { kind: "match", placed: q.answer };
+  }
+}
+
+function Body({
+  question,
+  answer,
+  onChange,
+  locked,
+}: {
+  question: Question;
+  answer: Answer;
+  onChange: (a: Answer) => void;
+  locked: boolean;
+}) {
+  if (question.kind === "count" && answer.kind === "count")
+    return (
+      <CountInput
+        value={answer.value}
+        locked={locked}
+        onChange={(value) => onChange({ kind: "count", value })}
+      />
+    );
+  if (question.kind === "value" && answer.kind === "value")
+    return (
+      <div className="flex flex-wrap gap-4">
+        {question.labels.map((name, i) => (
+          <label key={name} className="flex items-center gap-2">
+            <span className="font-mono text-[15px]">
+              {PARAM_SYMBOL[name]} =
+            </span>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="any"
+              disabled={locked}
+              value={Number.isNaN(answer.values[i]) ? "" : answer.values[i]}
+              onChange={(e) => {
+                const values = [...answer.values];
+                values[i] =
+                  e.target.value === "" ? Number.NaN : Number(e.target.value);
+                onChange({ kind: "value", values });
+              }}
+              className="h-10 w-24 rounded-[var(--radius-control)] border border-hairline-strong bg-surface px-3 tabular-nums"
+            />
+          </label>
+        ))}
+      </div>
+    );
+  if (question.kind === "choice" && answer.kind === "choice")
+    return (
+      <Choices
+        options={question.options}
+        selected={answer.id}
+        locked={locked}
+        onPick={(id) => onChange({ kind: "choice", id })}
+      />
+    );
+  if (question.kind === "order" && answer.kind === "order")
+    return (
+      <OrderList
+        items={question.items}
+        ids={answer.ids}
+        locked={locked}
+        onChange={(ids) => onChange({ kind: "order", ids })}
+      />
+    );
+  if (question.kind === "match" && answer.kind === "match")
+    return (
+      <MatchBoard
+        question={question}
+        placed={answer.placed}
+        locked={locked}
+        onChange={(placed) => onChange({ kind: "match", placed })}
+      />
+    );
+  return null;
+}
+
+function CountInput({
+  value,
+  locked,
+  onChange,
+}: {
+  value: number;
+  locked: boolean;
+  onChange: (v: number) => void;
+}) {
+  const t = useTranslations("learning.question");
+  const n = Number.isNaN(value) ? 0 : value;
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={locked || n <= 0}
+        aria-label={t("less")}
+        onClick={() => onChange(Math.max(0, n - 1))}
+      >
+        −
+      </Button>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={0}
+        disabled={locked}
+        value={Number.isNaN(value) ? "" : value}
+        aria-label={t("howMany")}
+        onChange={(e) =>
+          onChange(
+            e.target.value === ""
+              ? Number.NaN
+              : Math.round(Number(e.target.value))
+          )
+        }
+        className="type-figure h-12 w-20 rounded-[var(--radius-control)] border border-hairline-strong bg-surface text-center"
+      />
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={locked}
+        aria-label={t("more")}
+        onClick={() => onChange(n + 1)}
+      >
+        +
+      </Button>
+    </div>
+  );
+}
+
+function ItemFace({ item }: { item: Item }) {
+  const words = useWords();
+  return (
+    <>
+      {item.figure && <LearningFigure spec={item.figure} />}
+      {item.words && (
+        <span className="text-pretty">{words.text(item.words)}</span>
+      )}
+    </>
+  );
+}
+
+function Choices({
+  options,
+  selected,
+  locked,
+  onPick,
+}: {
+  options: Item[];
+  selected: string;
+  locked: boolean;
+  onPick: (id: string) => void;
+}) {
+  const pictures = options.some((o) => o.figure);
+  return (
+    <div
+      role="radiogroup"
+      className={cn(
+        "grid gap-2",
+        pictures ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1"
+      )}
+    >
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={selected === o.id}
+          disabled={locked}
+          onClick={() => onPick(o.id)}
+          className={cn(
+            "pressable rounded-xl border p-3 text-left transition-colors",
+            selected === o.id
+              ? "border-accent bg-accent-soft"
+              : "border-hairline hover:bg-surface-2"
+          )}
+        >
+          <ItemFace item={o} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Items to put in order. Drag one onto another to move it there (mouse), tap one and
+ * then tap where it goes (touch), or use its arrows (keyboard).
+ */
+function OrderList({
+  items,
+  ids,
+  locked,
+  onChange,
+}: {
+  items: Item[];
+  ids: string[];
+  locked: boolean;
+  onChange: (ids: string[]) => void;
+}) {
+  const t = useTranslations("learning.question");
+  const [held, setHeld] = useState<string | null>(null);
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const pictures = items.some((i) => i.figure);
+  const move = (id: string, to: number) => {
+    const next = ids.filter((x) => x !== id);
+    next.splice(to, 0, id);
+    onChange(next);
+  };
+  return (
+    <div>
+      {!locked && (
+        <p className="type-caption mb-2 text-ink-3">{t("orderHint")}</p>
+      )}
+      <ol
+        className={cn(
+          "grid gap-2",
+          pictures ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1"
+        )}
+      >
+        {ids.map((id, i) => {
+          const item = byId.get(id);
+          if (!item) return null;
+          return (
+            <li
+              key={id}
+              draggable={!locked}
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", id);
+                setHeld(id);
+              }}
+              onDragEnd={() => setHeld(null)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const from = e.dataTransfer.getData("text/plain");
+                if (from) move(from, i);
+                setHeld(null);
+              }}
+              onClick={() => {
+                if (locked) return;
+                if (held && held !== id) {
+                  move(held, i);
+                  setHeld(null);
+                } else setHeld(held === id ? null : id);
+              }}
+              className={cn(
+                "flex items-center gap-3 rounded-xl border bg-surface p-3 select-none",
+                pictures && "flex-col items-stretch",
+                !locked && "cursor-grab",
+                held === id ? "border-accent bg-accent-soft" : "border-hairline"
+              )}
+            >
+              <span className="type-figure w-6 shrink-0 text-[18px] text-ink-3">
+                {i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <ItemFace item={item} />
+              </div>
+              {!locked && (
+                <span className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    aria-label={t("up")}
+                    disabled={i === 0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      move(id, i - 1);
+                    }}
+                    className="pressable rounded-full p-1.5 text-ink-2 hover:bg-surface-2 disabled:opacity-30"
+                  >
+                    <Icon name="chevron" className="-rotate-90" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("down")}
+                    disabled={i === ids.length - 1}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      move(id, i + 1);
+                    }}
+                    className="pressable rounded-full p-1.5 text-ink-2 hover:bg-surface-2 disabled:opacity-30"
+                  >
+                    <Icon name="chevron" className="rotate-90" />
+                  </button>
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/**
+ * Pictures to drop onto their codes. A slot holds one picture; dropping onto a full slot
+ * swaps the one already there back to the tray. Tap a picture, then tap a slot, on a
+ * touch screen; tap a placed picture to take it back.
+ */
+function MatchBoard({
+  question,
+  placed,
+  locked,
+  onChange,
+}: {
+  question: Extract<Question, { kind: "match" }>;
+  placed: Record<string, string>;
+  locked: boolean;
+  onChange: (placed: Record<string, string>) => void;
+}) {
+  const t = useTranslations("learning.question");
+  const words = useWords();
+  const [held, setHeld] = useState<string | null>(null);
+  const tray = shuffled(question.items, question.id).filter(
+    (i) => !placed[i.id]
+  );
+  const inSlot = (slot: string) =>
+    question.items.find((i) => placed[i.id] === slot);
+  const put = (item: string, slot: string) => {
+    const next = { ...placed };
+    for (const [k, v] of Object.entries(next)) if (v === slot) delete next[k];
+    next[item] = slot;
+    onChange(next);
+    setHeld(null);
+  };
+  const takeBack = (item: string) => {
+    const next = { ...placed };
+    delete next[item];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      {!locked && <p className="type-caption text-ink-3">{t("matchHint")}</p>}
+      {tray.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface-2 p-2 sm:grid-cols-3 lg:grid-cols-5">
+          {tray.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              draggable={!locked}
+              disabled={locked}
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", item.id);
+                setHeld(item.id);
+              }}
+              onDragEnd={() => setHeld(null)}
+              onClick={() => setHeld(held === item.id ? null : item.id)}
+              className={cn(
+                "pressable cursor-grab rounded-xl border bg-surface p-2",
+                held === item.id
+                  ? "border-accent ring-2 ring-accent"
+                  : "border-hairline"
+              )}
+            >
+              <ItemFace item={item} />
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {question.slots.map((slot) => {
+          const item = inSlot(slot.id);
+          return (
+            <div
+              key={slot.id}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData("text/plain");
+                if (id && !locked) put(id, slot.id);
+              }}
+              onClick={() => {
+                if (!locked && held) put(held, slot.id);
+              }}
+              className={cn(
+                "flex min-h-28 flex-col gap-2 rounded-xl border border-dashed p-2",
+                held && !locked
+                  ? "cursor-pointer border-accent"
+                  : "border-hairline-strong"
+              )}
+            >
+              <span className="text-center font-mono text-[14px] tabular-nums">
+                {slot.words
+                  ? words.text(slot.words)
+                  : slot.count !== undefined
+                    ? t("numbers", { n: slot.count })
+                    : formatCode(slot.code ?? [])}
+              </span>
+              {item ? (
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    takeBack(item.id);
+                  }}
+                  className="rounded-lg bg-surface p-1"
+                >
+                  <ItemFace item={item} />
+                </button>
+              ) : (
+                <span className="type-caption m-auto text-ink-3">
+                  {t("dropHere")}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
