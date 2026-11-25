@@ -35,6 +35,21 @@ function steps(question: string, ids: string[]) {
   return ids.map((id) => ({ id, words: w(`q.${question}.steps.${id}`) }));
 }
 
+/** A true/false statement for the recap: two options, `true` and `false`. */
+function trueFalse(id: string, answer: boolean) {
+  return {
+    kind: "choice" as const,
+    id,
+    prompt: w(`q.${id}.prompt`),
+    options: [
+      { id: "true", words: { key: "question.true" } },
+      { id: "false", words: { key: "question.false" } },
+    ],
+    answer: answer ? "true" : "false",
+    explain: w(`q.${id}.explain`),
+  };
+}
+
 /** The digit network's sizes: 35 pixels in, 12 hidden neurons, 10 digits out. */
 export const DIGIT_LAYERS = [DIGIT_W * DIGIT_H, 12, 10];
 
@@ -49,7 +64,7 @@ export const NEURAL_NETWORKS: Step[] = [
         kind: "choice",
         id: "nnWhichGate",
         prompt: w("q.nnWhichGate.prompt"),
-        options: options("nnWhichGate", ["and", "or", "neither"]),
+        options: options("nnWhichGate", ["and", "or", "xor", "neither"]),
         answer: "and",
         explain: w("q.nnWhichGate.explain"),
       },
@@ -131,6 +146,14 @@ export const NEURAL_NETWORKS: Step[] = [
               line: { w1: -1, w2: -1, b: 1 },
             },
           },
+          {
+            id: "d",
+            figure: {
+              kind: "dots",
+              dots: twoGroups(),
+              line: { w1: 0, w2: 1, b: -0.75 },
+            },
+          },
         ],
         answer: "b",
         explain: w("q.nnWhichLine.explain"),
@@ -145,7 +168,7 @@ export const NEURAL_NETWORKS: Step[] = [
         kind: "choice",
         id: "nnBias",
         prompt: w("q.nnBias.prompt"),
-        options: options("nnBias", ["slides", "turns", "colours"]),
+        options: options("nnBias", ["slides", "turns", "colours", "nothing"]),
         answer: "slides",
         explain: w("q.nnBias.explain"),
       },
@@ -160,7 +183,7 @@ export const NEURAL_NETWORKS: Step[] = [
         id: "nnXorBest",
         prompt: w("q.nnXorBest.prompt"),
         figures: [{ kind: "dots", dots: gateDots("xor") }],
-        options: options("nnXorBest", ["two", "three", "four"]),
+        options: options("nnXorBest", ["one", "two", "three", "four"]),
         answer: "three",
         explain: w("q.nnXorBest.explain"),
       },
@@ -182,7 +205,7 @@ export const NEURAL_NETWORKS: Step[] = [
         kind: "choice",
         id: "nnHiddenOne",
         prompt: w("q.nnHiddenOne.prompt"),
-        options: options("nnHiddenOne", ["or", "and", "xor"]),
+        options: options("nnHiddenOne", ["or", "and", "xor", "nand"]),
         answer: "or",
         explain: w("q.nnHiddenOne.explain"),
       },
@@ -196,7 +219,7 @@ export const NEURAL_NETWORKS: Step[] = [
         kind: "choice",
         id: "nnNudgeDown",
         prompt: w("q.nnNudgeDown.prompt"),
-        options: options("nnNudgeDown", ["up", "down", "same"]),
+        options: options("nnNudgeDown", ["up", "down", "same", "zero"]),
         answer: "down",
         explain: w("q.nnNudgeDown.explain"),
       },
@@ -204,7 +227,7 @@ export const NEURAL_NETWORKS: Step[] = [
         kind: "choice",
         id: "nnNudgeZero",
         prompt: w("q.nnNudgeZero.prompt"),
-        options: options("nnNudgeZero", ["up", "down", "same"]),
+        options: options("nnNudgeZero", ["up", "down", "same", "zero"]),
         answer: "same",
         explain: w("q.nnNudgeZero.explain"),
       },
@@ -244,7 +267,7 @@ export const NEURAL_NETWORKS: Step[] = [
           { kind: "pixels", pixels: digitPixels(3), width: DIGIT_W },
           { kind: "pixels", pixels: noisy[3].pixels, width: DIGIT_W },
         ],
-        options: options("nnWhyMany", ["shape", "memory", "faster"]),
+        options: options("nnWhyMany", ["shape", "memory", "faster", "pixels"]),
         answer: "shape",
         explain: w("q.nnWhyMany.explain"),
       },
@@ -252,7 +275,12 @@ export const NEURAL_NETWORKS: Step[] = [
         kind: "choice",
         id: "nnHiddenCode",
         prompt: w("q.nnHiddenCode.prompt"),
-        options: options("nnHiddenCode", ["summary", "copy", "answer"]),
+        options: options("nnHiddenCode", [
+          "summary",
+          "copy",
+          "answer",
+          "random",
+        ]),
         answer: "summary",
         explain: w("q.nnHiddenCode.explain"),
       },
@@ -261,14 +289,11 @@ export const NEURAL_NETWORKS: Step[] = [
   {
     id: "recap",
     questions: [
-      {
-        kind: "order",
-        id: "nnRecap",
-        prompt: w("q.nnRecap.prompt"),
-        items: steps("nnRecap", ["neuron", "line", "hidden", "data", "learn"]),
-        answer: ["neuron", "line", "hidden", "data", "learn"],
-        explain: w("q.nnRecap.explain"),
-      },
+      trueFalse("nnTfThreshold", true),
+      trueFalse("nnTfXorOne", false),
+      trueFalse("nnTfHidden", true),
+      trueFalse("nnTfByHand", false),
+      trueFalse("nnTfBackprop", true),
     ],
   },
 ];

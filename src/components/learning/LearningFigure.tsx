@@ -422,10 +422,13 @@ export const GROUP_COLOURS = ["#f59e0b", "#3b82f6"] as const;
 export function DotsFigure({
   dots,
   line,
+  ok = false,
   className,
 }: {
   dots: { x: number; y: number; label: 0 | 1 }[];
   line?: { w1: number; w2: number; b: number };
+  /** Every dot on its side: the line and its half-plane turn green. */
+  ok?: boolean;
   className?: string;
 }) {
   const size = 200;
@@ -488,15 +491,21 @@ export function DotsFigure({
         stroke="currentColor"
         opacity={0.15}
       />
-      {shade && <path d={shade} fill={GROUP_COLOURS[1]} opacity={0.1} />}
+      {shade && (
+        <path
+          d={shade}
+          fill={ok ? "var(--ok)" : GROUP_COLOURS[1]}
+          opacity={ok ? 0.14 : 0.1}
+        />
+      )}
       {lineEnds && (
         <line
           x1={lineEnds[0]}
           y1={lineEnds[1]}
           x2={lineEnds[2]}
           y2={lineEnds[3]}
-          stroke="currentColor"
-          strokeWidth={2}
+          stroke={ok ? "var(--ok)" : "currentColor"}
+          strokeWidth={ok ? 3 : 2}
         />
       )}
       {dots.map((d, i) => (
@@ -506,8 +515,8 @@ export function DotsFigure({
           cy={size - s(d.y)}
           r={5}
           fill={GROUP_COLOURS[d.label]}
-          stroke="var(--surface)"
-          strokeWidth={1.2}
+          stroke={ok ? "var(--ok)" : "var(--surface)"}
+          strokeWidth={ok ? 2 : 1.2}
         />
       ))}
     </svg>

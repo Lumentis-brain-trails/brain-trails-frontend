@@ -266,12 +266,18 @@ function GatesLab({
       </p>
 
       {learnable && (
-        <div className="space-y-3 border-t border-hairline pt-4">
+        <div
+          className={cn(
+            "space-y-3 rounded-xl border-t border-hairline p-1 pt-4 transition-colors",
+            computes(neuron, "or") && "learning-right bg-ok-soft"
+          )}
+        >
           <p className="type-subhead">{t("gates.task")}</p>
           <Legend />
           <DotsFigure
             dots={OR_CORNERS}
             line={neuron}
+            ok={computes(neuron, "or")}
             className="mx-auto max-w-[300px]"
           />
           <NeuronSliders neuron={neuron} onChange={setNeuron} />
@@ -459,11 +465,23 @@ function ClassifyLab() {
       <DotsFigure
         dots={dots}
         line={shown ? (which === "and" ? AND_NEURON : GROUPS_LINE) : undefined}
+        ok={shown}
         className="mx-auto max-w-[360px]"
       />
-      <Button size="sm" variant="secondary" onClick={() => setShown((s) => !s)}>
-        {t(shown ? "classify.hide" : "classify.show")}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setShown((s) => !s)}
+        >
+          {t(shown ? "classify.hide" : "classify.show")}
+        </Button>
+        {shown && (
+          <span className="inline-flex items-center gap-1.5 font-medium text-ok">
+            <Icon name="check" /> {t("classify.split")}
+          </span>
+        )}
+      </div>
     </Card>
   );
 }
@@ -481,7 +499,7 @@ function LineLab() {
         <p className="mt-1 text-ink-2">{t("line.text")}</p>
       </div>
       <Legend />
-      <DotsFigure dots={dots} line={neuron} />
+      <DotsFigure dots={dots} line={neuron} ok={right === dots.length} />
       <NeuronSliders neuron={neuron} onChange={setNeuron} />
       <p
         className={cn(
@@ -580,7 +598,11 @@ function LearnLab() {
         <p className="mt-1 text-ink-2">{t("learn.text")}</p>
       </div>
       <Legend />
-      <DotsFigure dots={dots} line={neuron} />
+      <DotsFigure
+        dots={dots}
+        line={neuron}
+        ok={correctCount(neuron, dots) === dots.length}
+      />
       <div className="grid grid-cols-2 gap-2 font-mono text-[14px] tabular-nums sm:grid-cols-5">
         <span>{`w₁ = ${round(neuron.w1)}`}</span>
         <span>{`w₂ = ${round(neuron.w2)}`}</span>
