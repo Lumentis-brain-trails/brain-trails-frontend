@@ -9,11 +9,16 @@
  * whole class to the same screen, and the browser's back button walks the steps. The
  * three questions every step returns to - how many numbers, which values, how to rebuild
  * - stay pinned above the content as the module's refrain.
+ *
+ * A step's questions come one at a time: the next shows once the one before is right or
+ * its answer shown. In a teacher-paced lesson (`control`) the teacher's screen decides
+ * instead: the step and how many of its questions are out, with no way to wander off,
+ * and every verdict (and a lab's reached goal, as `lab:<step id>`) goes back to the room.
  */
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { EcgExplorer } from "@/components/learning/EcgExplorer";
 import { Gallery } from "@/components/learning/Gallery";
 import {
@@ -29,12 +34,44 @@ import { QuestionCard, useWords } from "@/components/learning/QuestionCard";
 import { Card, EmptyState, Icon, buttonClass, cn } from "@/components/ui";
 import { type LearningModule, stepIndex } from "@/lib/learning/modules";
 
-export function ModuleView({ module }: { module: LearningModule }) {
+/** What a teacher-paced lesson hands the module: see `ModuleView`. */
+export interface ModuleControl {
+  /** The step on screen, counted from zero. */
+  step: number;
+  /** The last question out (from zero); -1 shows the step without questions. */
+  upTo: number;
+  onVerdict: (questionId: string, verdict: "right" | "wrong" | "shown") => void;
+}
+
+type Verdict = "right" | "wrong" | "shown";
+
+export function ModuleView({
+  module,
+  control,
+}: {
+  module: LearningModule;
+  control?: ModuleControl;
+}) {
   const t = useTranslations("learning");
   const words = useWords();
   const router = useRouter();
   const params = useSearchParams();
-  const at = stepIndex(params.get("step"), module.steps.length);
+  const at = control
+    ? Math.min(Math.max(0, control.step), module.steps.length - 1)
+    : stepIndex(params.get("step"), module.steps.length);
+  // the verdicts of this step's questions, by id; a new step starts empty
+  const [verdicts, setVerdicts] = useState<{
+    step: number;
+    of: Record<string, Verdict>;
+  }>({ step: at, of: {} });
+  const seen = verdicts.step === at ? verdicts.of : {};
+  const heard = (id: string, v: Verdict) => {
+    setVerdicts((prev) => ({
+      step: at,
+      of: { ...(prev.step === at ? prev.of : {}), [id]: v },
+    }));
+    control?.onVerdict(id, v);
+  };
   const step = module.steps[at];
   const href = (i: number) => `/learning/${module.slug}?step=${i + 1}`;
 
@@ -43,6 +80,7 @@ export function ModuleView({ module }: { module: LearningModule }) {
   }, [at]);
 
   useEffect(() => {
+    if (control) return;
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select")) return;
@@ -77,33 +115,45 @@ export function ModuleView({ module }: { module: LearningModule }) {
     );
 
   const key = `${module.key}.steps.${step.id}`;
+  const labGoal = () => heard(`lab:${step.id}`, "right");
+  // solo: up to the first question not yet right or shown; paced: what the teacher allows
+  const firstOpen = step.questions.findIndex(
+    (q) => seen[q.id] !== "right" && seen[q.id] !== "shown"
+  );
+  const out = control
+    ? control.upTo + 1
+    : firstOpen === -1
+      ? step.questions.length
+      : firstOpen + 1;
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       {header}
 
-      <nav
-        aria-label={t("steps")}
-        className="mb-6 flex flex-wrap items-center gap-1.5"
-      >
-        {module.steps.map((s, i) => (
-          <Link
-            key={s.id}
-            href={href(i)}
-            aria-current={i === at ? "step" : undefined}
-            title={words.text({ key: `${module.key}.steps.${s.id}.title` })}
-            className={cn(
-              "pressable flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[12px] font-medium tabular-nums",
-              i === at
-                ? "bg-accent text-on-accent"
-                : i < at
-                  ? "bg-accent-soft text-ink"
-                  : "bg-surface-2 text-ink-3"
-            )}
-          >
-            {i + 1}
-          </Link>
-        ))}
-      </nav>
+      {!control && (
+        <nav
+          aria-label={t("steps")}
+          className="mb-6 flex flex-wrap items-center gap-1.5"
+        >
+          {module.steps.map((s, i) => (
+            <Link
+              key={s.id}
+              href={href(i)}
+              aria-current={i === at ? "step" : undefined}
+              title={words.text({ key: `${module.key}.steps.${s.id}.title` })}
+              className={cn(
+                "pressable flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[12px] font-medium tabular-nums",
+                i === at
+                  ? "bg-accent text-on-accent"
+                  : i < at
+                    ? "bg-accent-soft text-ink"
+                    : "bg-surface-2 text-ink-3"
+              )}
+            >
+              {i + 1}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {module.refrain && (
         <div className="mb-6 grid grid-cols-3 gap-2">
@@ -141,7 +191,7 @@ export function ModuleView({ module }: { module: LearningModule }) {
         {step.lab === "ballSoft" && <BallLab worlds={["soft"]} />}
         {step.lab === "ballWind" && <BallLab worlds={["wind"]} />}
         {step.lab && NEURON_LABS.has(step.lab) && (
-          <NeuronLab lab={step.lab as NeuronLabName} />
+          <NeuronLab lab={step.lab as NeuronLabName} onGoal={labGoal} />
         )}
         {step.gallery && <Gallery examples={step.gallery} />}
         {step.playground && <Playground spec={step.playground} />}
@@ -159,32 +209,39 @@ export function ModuleView({ module }: { module: LearningModule }) {
           </div>
         )}
 
-        {step.questions.map((q, i) => (
-          <QuestionCard key={`${step.id}-${q.id}`} question={q} index={i} />
+        {step.questions.slice(0, out).map((q, i) => (
+          <QuestionCard
+            key={`${step.id}-${q.id}`}
+            question={q}
+            index={i}
+            onVerdict={(v) => heard(q.id, v)}
+          />
         ))}
       </article>
 
-      <footer className="mt-10 flex items-center justify-between gap-3 border-t border-hairline pt-6">
-        {at > 0 ? (
-          <Link href={href(at - 1)} className={buttonClass("secondary")}>
-            {t("previous")}
-          </Link>
-        ) : (
-          <span />
-        )}
-        <span className="type-caption text-ink-3">
-          {t("stepOf", { n: at + 1, total: module.steps.length })}
-        </span>
-        {at < module.steps.length - 1 ? (
-          <Link href={href(at + 1)} className={buttonClass("primary")}>
-            {t("next")}
-          </Link>
-        ) : (
-          <Link href="/learning" className={buttonClass("primary")}>
-            {t("finish")}
-          </Link>
-        )}
-      </footer>
+      {!control && (
+        <footer className="mt-10 flex items-center justify-between gap-3 border-t border-hairline pt-6">
+          {at > 0 ? (
+            <Link href={href(at - 1)} className={buttonClass("secondary")}>
+              {t("previous")}
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="type-caption text-ink-3">
+            {t("stepOf", { n: at + 1, total: module.steps.length })}
+          </span>
+          {at < module.steps.length - 1 ? (
+            <Link href={href(at + 1)} className={buttonClass("primary")}>
+              {t("next")}
+            </Link>
+          ) : (
+            <Link href="/learning" className={buttonClass("primary")}>
+              {t("finish")}
+            </Link>
+          )}
+        </footer>
+      )}
     </main>
   );
 }
