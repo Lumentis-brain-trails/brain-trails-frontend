@@ -74,13 +74,17 @@ function Mark({ tone }: { tone: "accent" | "ok" | "warn" }) {
 
 function Outcome() {
   const t = useTranslations("public.pending");
-  const status = useSearchParams().get("status");
+  const params = useSearchParams();
+  const status = params.get("status");
+  // a student under 18 waits for their teacher too (backend V4-0012)
+  const teacher = params.get("teacher") === "1";
   const outcome: Outcome = isOutcome(status) ? status : "pending";
   return (
     <div className="enter-up max-w-md">
       <Mark tone={TONES[outcome]} />
       <h1 className="type-title">{t(`${outcome}.title`)}</h1>
       <p className="mt-4 text-pretty text-ink-2">{t(`${outcome}.body`)}</p>
+      {teacher && <p className="mt-4 text-pretty text-ink-2">{t("teacher")}</p>}
       <Link
         href="/login"
         className="pressable mt-8 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[16px] font-semibold text-on-accent hover:bg-accent-hover"

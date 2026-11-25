@@ -15,6 +15,8 @@ import {
 } from "@/components/account/ProfileCard";
 import { type ApplicationData, BetaCard } from "@/components/account/BetaCard";
 import { LanguageCard } from "@/components/account/LanguageCard";
+import { ContextSettingsCard } from "@/components/account/ContextSettingsCard";
+import { useContextEnabled } from "@/lib/context";
 import {
   type ConsentData,
   PrivacyCard,
@@ -31,6 +33,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { TransferCard } from "@/components/account/TransferCard";
 
 export default function AccountPage() {
   const signOut = useSignOut();
@@ -41,6 +44,7 @@ export default function AccountPage() {
   const [confirm, setConfirm] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const contextEnabled = useContextEnabled();
 
   const me = useQuery({
     queryKey: ["me"],
@@ -126,6 +130,8 @@ export default function AccountPage() {
           )}
         </section>
 
+        {contextEnabled && <ContextSettingsCard />}
+
         <section>
           {!consent.isLoading && <PrivacyCard data={consent.data} />}
         </section>
@@ -133,6 +139,8 @@ export default function AccountPage() {
         <section>
           {!application.isLoading && <BetaCard data={application.data} />}
         </section>
+
+        {me.data?.role === "admin" && <TransferCard />}
 
         <section>
           <SectionTitle>{t("data.title")}</SectionTitle>

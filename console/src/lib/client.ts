@@ -5,6 +5,7 @@
  * Errors carry the backend's `{error: {code}}` code, so a screen can tell "signed out"
  * (back to `/login`) from "second factor still owed" (to `/login/verify`) from the rest.
  */
+import { ENV_HEADER, type EnvId } from "./env";
 import type { components } from "./ops-types";
 
 export type Schemas = components["schemas"];
@@ -13,10 +14,42 @@ export type AppItem = Schemas["AppOut"];
 export type AppDetail = Schemas["AppDetailOut"];
 export type Version = Schemas["VersionOut"];
 export type Pin = Schemas["PinOut"];
+/** A stored panel; `env` names the environment it was read from (OPS-0005). */
 export type Snapshot = Schemas["SnapshotOut"];
 export type WidgetItem = Schemas["WidgetOut"];
+/** A widget on the strip; `key` is the full `<env>/<app>.<panel>`, never parsed here. */
 export type StripItem = Schemas["StripItemOut"];
 export type StripItemIn = Schemas["StripItemIn"];
+// Backend OPS-0005: environments, documents, access tokens.
+export type EnvsOut = Schemas["EnvsOut"];
+export type DocumentKind = Schemas["DocumentKind"];
+export type DocumentStatus = Schemas["DocumentStatus"];
+/** A row of the document list. */
+export type DocumentItem = Schemas["DocumentSummaryOut"];
+/** A document at its current revision, with its body and that revision's note. */
+export type DocumentOut = Schemas["DocumentOut"];
+export type DocumentIn = Schemas["DocumentIn"];
+/** A save, on the revision the editor was opened at. */
+export type DocumentUpdateIn = Schemas["DocumentSave"];
+export type DocumentStatusIn = Schemas["StatusIn"];
+export type RevisionItem = Schemas["RevisionSummaryOut"];
+export type RevisionOut = Schemas["RevisionOut"];
+export type TokenOut = Schemas["TokenOut"];
+/** A token just made: the row and, this once, the token itself. */
+export type TokenCreatedOut = Schemas["TokenMadeOut"];
+export type TokenIn = Schemas["TokenIn"];
+/** What the Pipeline lab can run on one environment (backend OPS-0006). */
+export type LabOptions = Schemas["LabOptionsOut"];
+/** An experiment, as the form sends it and a run stores it. */
+export type LabExperiment = Schemas["ExperimentIn"];
+/** A row of the run list. */
+export type LabRunItem = Schemas["LabRunSummaryOut"];
+/** A run with its result, once it is done. */
+export type LabRun = Schemas["LabRunOut"];
+export type LabResult = Schemas["LabResultOut"];
+export type LabRunStatus = Schemas["RunStatus"];
+export type LabLabelSource = Schemas["LabelSource"];
+export type LabMetric = Schemas["Metric"];
 
 /** A refusal from the BFF or bt-ops, with the backend's error code. */
 export class OpsRequestError extends Error {
@@ -73,15 +106,25 @@ export function query(
   return text ? `?${text}` : "";
 }
 
+function headersFor(
+  env: EnvId | null,
+  json: boolean
+): Record<string, string> | undefined {
+  const headers: Record<string, string> = {};
+  if (json) headers["Content-Type"] = "application/json";
+  if (env) headers[ENV_HEADER] = env;
+  return Object.keys(headers).length ? headers : undefined;
+}
+
 async function request<T>(
   method: string,
   path: string,
-  body?: unknown
+  body: unknown,
+  env: EnvId | null
 ): Promise<T> {
   const res = await fetch(`/api/ops/${path}`, {
     method,
-    headers:
-      body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: headersFor(env, body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   return parse<T>(res);
@@ -93,17 +136,40 @@ export interface Page<T> {
   next: string | null;
 }
 
-export const ops = {
-  get: <T>(path: string) => request<T>("GET", path),
-  post: <T>(path: string, body: unknown = {}) => request<T>("POST", path, body),
-  put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
+/** The client's calls, as one value. */
+export interface OpsClient {
+  get: <T>(path: string) => Promise<T>;
+  post: <T>(path: string, body?: unknown) => Promise<T>;
+  put: <T>(path: string, body: unknown) => Promise<T>;
+  delete: <T>(path: string) => Promise<T>;
   /** A list with its paging header. */
-  async page<T>(path: string): Promise<Page<T>> {
-    const res = await fetch(`/api/ops/${path}`);
-    const items = await parse<T[]>(res);
-    return { items, next: res.headers.get("x-next-cursor") };
-  },
-};
+  page: <T>(path: string) => Promise<Page<T>>;
+}
+
+/**
+ * The client for reads of one product environment (`X-Ops-Env`, backend OPS-0005);
+ * `null` sends no header, which bt-ops reads as the home environment. Only the apps that
+ * follow the switch use it - the console's own data has no environment.
+ */
+export function opsIn(env: EnvId | null): OpsClient {
+  return {
+    get: <T>(path: string) => request<T>("GET", path, undefined, env),
+    post: <T>(path: string, body: unknown = {}) =>
+      request<T>("POST", path, body, env),
+    put: <T>(path: string, body: unknown) => request<T>("PUT", path, body, env),
+    delete: <T>(path: string) => request<T>("DELETE", path, undefined, env),
+    async page<T>(path: string): Promise<Page<T>> {
+      const res = await fetch(`/api/ops/${path}`, {
+        headers: headersFor(env, false),
+      });
+      const items = await parse<T[]>(res);
+      return { items, next: res.headers.get("x-next-cursor") };
+    },
+  };
+}
+
+/** The client of the console's own data and of the home environment. */
+export const ops: OpsClient = opsIn(null);
 
 /** The sign-in steps, through the BFF's own routes. */
 export const session = {

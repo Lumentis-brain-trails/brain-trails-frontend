@@ -144,6 +144,153 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Documents
+         * @description Documents, newest update first (at most 200), filtered by kind, status, text.
+         */
+        get: operations["list_documents_ops_v1_documents_get"];
+        put?: never;
+        /**
+         * Create Document
+         * @description Make a document at revision 1, status `draft`.
+         *
+         *     Raises:
+         *         OpsError: 409 `duplicate_slug`; 422 `invalid_slug`.
+         */
+        post: operations["create_document_ops_v1_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document
+         * @description One document with its current text.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`.
+         */
+        get: operations["get_document_ops_v1_documents__slug__get"];
+        /**
+         * Save Document
+         * @description Save a new revision of the document.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`; 409 `stale_document` when `revision` is not the
+         *             current one.
+         */
+        put: operations["save_document_ops_v1_documents__slug__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Revisions
+         * @description The document's history, newest first, without the texts.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`.
+         */
+        get: operations["list_revisions_ops_v1_documents__slug__revisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}/revisions/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Revision
+         * @description One revision with its whole text.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`, `no_revision`.
+         */
+        get: operations["get_revision_ops_v1_documents__slug__revisions__number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/documents/{slug}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Document Status
+         * @description Mark the document `draft`, `final` or `archived`.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_document`; 409 `stale_document`.
+         */
+        post: operations["set_document_status_ops_v1_documents__slug__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/envs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Envs
+         * @description The environments, dev first; the home one is always listed, read URL or not.
+         */
+        get: operations["list_envs_ops_v1_envs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/health/logs": {
         parameters: {
             query?: never;
@@ -165,6 +312,109 @@ export interface paths {
         get: operations["get_logs_ops_v1_health_logs_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Options
+         * @description The filter and label values of the request's environment, from aggregate reads.
+         *
+         *     Values are counted over research-consented recordings unless
+         *     `research_consent_only=false`, and a value held by fewer than three recordings is
+         *     not offered (`data.MIN_OPTION_RECORDINGS`).
+         *
+         *     Raises:
+         *         OpsError: 503 `read_unavailable`, 422 `unknown_env`.
+         */
+        get: operations["get_options_ops_v1_lab_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runs
+         * @description The request's environment's runs, newest first (at most 100), without results.
+         */
+        get: operations["list_runs_ops_v1_lab_runs_get"];
+        put?: never;
+        /**
+         * Create Run
+         * @description Queue an experiment on the request's environment; it runs in the background.
+         *
+         *     Raises:
+         *         OpsError: 503 `lab_unavailable` / `read_unavailable`; 429 `lab_busy`; 422.
+         */
+        post: operations["create_run_ops_v1_lab_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Run
+         * @description One run of the request's environment, with its result once it is `done`.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_run`; 422 `env_mismatch`, `unknown_env`.
+         */
+        get: operations["get_run_ops_v1_lab_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/lab/runs/{run_id}/rerun": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rerun
+         * @description Queue the same experiment again, on the environment the run read (the switch's).
+         *
+         *     The data may have changed since; the new run's `data_fingerprint` says whether it did.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_run`; 422 `env_mismatch`, `unknown_env`; 503
+         *             `lab_unavailable`; 429 `lab_busy`.
+         */
+        post: operations["rerun_ops_v1_lab_runs__run_id__rerun_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -214,6 +464,133 @@ export interface paths {
         put: operations["put_pins_ops_v1_pins_put"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Roadmap
+         * @description The roadmap as it stands: tracks, items with their dates and status, milestones.
+         */
+        get: operations["get_roadmap_ops_v1_roadmap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Item
+         * @description Add an item.
+         *
+         *     Raises:
+         *         OpsError: 409 `stale_roadmap` or `duplicate_id`; 422 `invalid_roadmap` (unknown
+         *             track or dependency, end before start).
+         */
+        post: operations["add_item_ops_v1_roadmap_items_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Item
+         * @description Replace an item: its dates, status, name, tasks, anything but its id.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`; 422 `id_mismatch`, `invalid_roadmap`.
+         */
+        put: operations["put_item_ops_v1_roadmap_items__item_id__put"];
+        post?: never;
+        /**
+         * Delete Item
+         * @description Remove an item no other item depends on.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`, `depended_on`.
+         */
+        delete: operations["delete_item_ops_v1_roadmap_items__item_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Milestone
+         * @description Add a milestone.
+         *
+         *     Raises:
+         *         OpsError: 409 `stale_roadmap` or `duplicate_id`; 422 `invalid_roadmap`.
+         */
+        post: operations["add_milestone_ops_v1_roadmap_milestones_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/roadmap/milestones/{milestone_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Milestone
+         * @description Replace a milestone: its date, name, track or status.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`; 422 `id_mismatch`, `invalid_roadmap`.
+         */
+        put: operations["put_milestone_ops_v1_roadmap_milestones__milestone_id__put"];
+        post?: never;
+        /**
+         * Delete Milestone
+         * @description Remove a milestone.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_item`; 409 `stale_roadmap`.
+         */
+        delete: operations["delete_milestone_ops_v1_roadmap_milestones__milestone_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -314,11 +691,12 @@ export interface paths {
         };
         /**
          * Get Snapshot
-         * @description The newest snapshot of a panel and its age; reads `braintrails_ops` only.
+         * @description The newest snapshot of a panel on the request's environment; reads `braintrails_ops`.
          *
          *     Raises:
          *         OpsError: 404 `no_panel`, 403 `forbidden` without the panel's scope, 404
-         *             `no_snapshot` when it was never taken (the client offers a refresh).
+         *             `no_snapshot` when it was never taken there (the client offers a refresh),
+         *             422 `unknown_env` / `env_mismatch`, 503 `read_unavailable` (see `target_env`).
          */
         get: operations["get_snapshot_ops_v1_snapshots__key__get"];
         put?: never;
@@ -340,13 +718,111 @@ export interface paths {
         put?: never;
         /**
          * Refresh Snapshot
-         * @description Run the panel now, store the result, return it: a person's click, never a timer.
+         * @description Run the panel now on the request's environment, store the result, return it.
+         *
+         *     A person's click, never a timer.
          *
          *     Raises:
-         *         OpsError: 404 `no_panel`, 403 `forbidden`, 503 `read_unavailable`.
+         *         OpsError: 404 `no_panel`, 403 `forbidden`, 422 `unknown_env` / `env_mismatch`,
+         *             503 `read_unavailable`.
          */
         post: operations["refresh_snapshot_ops_v1_snapshots__key__refresh_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/stats/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Cohorts
+         * @description The beta cohorts of the request's environment, by name: one small read, for the picker.
+         *
+         *     Raises:
+         *         OpsError: 503 `read_unavailable` without a read connection to that environment,
+         *             422 `unknown_env`.
+         */
+        get: operations["get_cohorts_ops_v1_stats_cohorts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/stats/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Definitions
+         * @description What every number means (`definitions`); reads nothing.
+         */
+        get: operations["get_definitions_ops_v1_stats_definitions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tokens
+         * @description The caller's own tokens, newest first, revoked and expired ones included.
+         */
+        get: operations["list_tokens_ops_v1_tokens_get"];
+        put?: never;
+        /**
+         * Make Token
+         * @description Make a token for the caller's own account; the answer is the only time it shows.
+         *
+         *     Raises:
+         *         OpsError: 403 `token_not_allowed` when called with a token, 422
+         *             `scope_not_allowed` for a scope outside the allow-list (documents only).
+         */
+        post: operations["make_token_ops_v1_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Token
+         * @description Revoke one of the caller's tokens: it stops working at once. Revoking twice is fine.
+         *
+         *     Raises:
+         *         OpsError: 404 `no_token` for a token that is not the caller's.
+         */
+        delete: operations["revoke_token_ops_v1_tokens__token_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -563,6 +1039,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ops/v1/worklog/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Status
+         * @description The status report: where the project stands, where it goes, what is uncertain.
+         *
+         *     404 `no_status` until one is imported.
+         */
+        get: operations["get_status_ops_v1_worklog_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/v1/worklog/status.md": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status Markdown
+         * @description The status report as a Markdown file to send, its title as the first heading.
+         */
+        get: operations["status_markdown_ops_v1_worklog_status_md_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ops/v1/worklog/summary": {
         parameters: {
             query?: never;
@@ -649,12 +1167,204 @@ export interface components {
             status: string;
         };
         /**
+         * CapsOut
+         * @description What one run may read and draw.
+         */
+        CapsOut: {
+            /** Max Nodes */
+            max_nodes: number;
+            /** Max Recordings */
+            max_recordings: number;
+            /** Max Windows */
+            max_windows: number;
+            /** Max Windows Per Person */
+            max_windows_per_person: number;
+            /** Points */
+            points: number;
+            /** Time Limit S */
+            time_limit_s: number;
+        };
+        /**
+         * ClassifierOut
+         * @description A against B by logistic regression, cross-validated by person.
+         *
+         *     Folds leave whole people out (`StratifiedGroupKFold`: grouped by person, A and B
+         *     balanced across folds).
+         *
+         *     `status`: `done`; `too_few_people` (fewer than three people with labelled windows);
+         *     `one_class` (no window of A or none of B); `unscorable` (no test fold held both, or
+         *     the sample kept one person). `warnings` are codes: `few_people` below ten people,
+         *     `sample_one_person` when the windows' sample held one person only (no AUC).
+         */
+        ClassifierOut: {
+            embeddings?: components["schemas"]["ScoreOut"] | null;
+            /** N People */
+            n_people: number;
+            /** N People A */
+            n_people_a: number;
+            /** N People B */
+            n_people_b: number;
+            /** N Splits */
+            n_splits: number;
+            /** N Windows */
+            n_windows: number;
+            reduction?: components["schemas"]["ScoreOut"] | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "too_few_people" | "one_class" | "unscorable";
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
          * CodeIn
          * @description A six-digit code from the authenticator app.
          */
         CodeIn: {
             /** Code */
             code: string;
+        };
+        /**
+         * CohortOut
+         * @description A beta cohort the reports can be narrowed to.
+         */
+        CohortOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Profile */
+            profile: string | null;
+        };
+        /**
+         * ContextItemOut
+         * @description One questionnaire item and its most frequent answers.
+         */
+        ContextItemOut: {
+            /** Key */
+            key: string;
+            /** Values */
+            values: components["schemas"]["OptionOut"][];
+        };
+        /**
+         * DocumentIn
+         * @description A new document; `slug` is derived from the title when absent.
+         */
+        DocumentIn: {
+            /**
+             * Audience
+             * @default
+             */
+            audience: string;
+            /** Body */
+            body: string;
+            kind: components["schemas"]["DocumentKind"];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Slug */
+            slug?: string | null;
+            /** Title */
+            title: string;
+        };
+        /**
+         * DocumentKind
+         * @description What a document is: a report for someone, a draft, a brief, an analysis, a note.
+         * @enum {string}
+         */
+        DocumentKind: "report" | "draft" | "brief" | "analysis" | "note";
+        /**
+         * DocumentOut
+         * @description A document with its current text (Markdown) and that revision's note.
+         */
+        DocumentOut: {
+            /** Audience */
+            audience: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            kind: components["schemas"]["DocumentKind"];
+            /** Note */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Slug */
+            slug: string;
+            status: components["schemas"]["DocumentStatus"];
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+        };
+        /**
+         * DocumentSave
+         * @description A save made on `revision`; `kind` and `audience` change only when given.
+         */
+        DocumentSave: {
+            /** Audience */
+            audience?: string | null;
+            /** Body */
+            body: string;
+            kind?: components["schemas"]["DocumentKind"] | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * DocumentStatus
+         * @description Where a document stands: being written, final (sent or agreed), archived.
+         * @enum {string}
+         */
+        DocumentStatus: "draft" | "final" | "archived";
+        /**
+         * DocumentSummaryOut
+         * @description A document in a list: everything but its text. `revision` is the current one.
+         */
+        DocumentSummaryOut: {
+            /** Audience */
+            audience: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            kind: components["schemas"]["DocumentKind"];
+            /** Revision */
+            revision: number;
+            /** Slug */
+            slug: string;
+            status: components["schemas"]["DocumentStatus"];
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
         };
         /**
          * EnrollOut
@@ -727,6 +1437,70 @@ export interface components {
          */
         EntryStatus: "done" | "in_progress";
         /**
+         * EnvOut
+         * @description One environment of the switch; `available` is false when it has no read URL.
+         */
+        EnvOut: {
+            /** Available */
+            available: boolean;
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "dev" | "beta" | "prod";
+        };
+        /**
+         * EnvsOut
+         * @description Where the console lives, and every environment it might read.
+         */
+        EnvsOut: {
+            /** Envs */
+            envs: components["schemas"]["EnvOut"][];
+            /**
+             * Home
+             * @enum {string}
+             */
+            home: "dev" | "beta" | "prod";
+        };
+        /**
+         * ExperimentIn
+         * @description One experiment, the pipeline's steps in order.
+         *
+         *     `preprocessing`, `artefacts` and `encoding` are `standard` in phase 1: today's
+         *     cleaner, its artefact handling, and the REVE window embeddings the product stored.
+         */
+        ExperimentIn: {
+            /**
+             * Artefacts
+             * @default standard
+             * @constant
+             */
+            artefacts: "standard";
+            /**
+             * Encoding
+             * @default standard
+             * @constant
+             */
+            encoding: "standard";
+            filters?: components["schemas"]["FiltersIn"];
+            graph?: components["schemas"]["GraphIn"];
+            /** Metrics */
+            metrics?: components["schemas"]["Metric"][];
+            /**
+             * Preprocessing
+             * @default standard
+             * @constant
+             */
+            preprocessing: "standard";
+            question?: components["schemas"]["QuestionIn"];
+            reduction?: components["schemas"]["ReductionIn"];
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+        };
+        /**
          * FacetOut
          * @description A filter value and how many entries carry it.
          */
@@ -745,6 +1519,104 @@ export interface components {
             areas: components["schemas"]["FacetOut"][];
             /** Threads */
             threads: components["schemas"]["FacetOut"][];
+        };
+        /**
+         * FiltersIn
+         * @description Which recordings and windows the run reads.
+         *
+         *     Every filter is optional. `block_kind` / `block_label` keep only the windows inside
+         *     such blocks; `research_consent_only` keeps the people who agreed to broader research
+         *     (V3-0011), the default because a lab experiment is that.
+         */
+        FiltersIn: {
+            /** Age Band */
+            age_band?: ("<18" | "18-24" | "25-34" | "35-44" | "45-54" | "55-64" | "65+") | null;
+            /** Block Kind */
+            block_kind?: string | null;
+            /** Block Label */
+            block_label?: string | null;
+            /** Date From */
+            date_from?: string | null;
+            /** Date To */
+            date_to?: string | null;
+            /** Device */
+            device?: string | null;
+            /**
+             * Max Recordings
+             * @default 50
+             */
+            max_recordings: number;
+            /** Min Quality */
+            min_quality?: ("usable" | "good") | null;
+            /** Protocol Id */
+            protocol_id?: string | null;
+            /**
+             * Research Consent Only
+             * @default true
+             */
+            research_consent_only: boolean;
+            /** Sex */
+            sex?: string | null;
+        };
+        /**
+         * GraphIn
+         * @description Ball Mapper's one parameter: the radius, in the run's reduced space; None = auto.
+         */
+        GraphIn: {
+            /** Eps */
+            eps?: number | null;
+        };
+        /**
+         * GraphNodeOut
+         * @description One ball of the cover, laid out in 2-D (MDS of the cover, as the landscape does).
+         *
+         *     `mass` is the windows assigned to it, `labels` how many of them carry each label.
+         */
+        GraphNodeOut: {
+            /** Labels */
+            labels: {
+                [key: string]: number;
+            };
+            /** Mass */
+            mass: number;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
+        /**
+         * GraphOut
+         * @description The Ball Mapper cover of every window of the run, and its shape.
+         *
+         *     `epsilon` is in the run's reduced space; `auto` says the default chose it (the
+         *     radius whose cover comes closest to a legible node count).
+         */
+        GraphOut: {
+            /** Auto */
+            auto: boolean;
+            /** Betti1 */
+            betti1: number;
+            /** Betti1 Per Node */
+            betti1_per_node: number | null;
+            /** Degree Entropy Normalized */
+            degree_entropy_normalized: number | null;
+            /** Edges */
+            edges: [
+                number,
+                number
+            ][];
+            /** Epsilon */
+            epsilon: number;
+            /** N Components */
+            n_components: number;
+            /** N Edges */
+            n_edges: number;
+            /** N Nodes */
+            n_nodes: number;
+            /** Nodes */
+            nodes: components["schemas"]["GraphNodeOut"][];
+            /** Stress */
+            stress: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -786,6 +1658,253 @@ export interface components {
             /** Started Local */
             started_local: string | null;
         };
+        /**
+         * ItemOut
+         * @description A bar of the Gantt: a sprint or a piece of work with its dates and status.
+         */
+        ItemOut: {
+            /** Depends On */
+            depends_on?: string[];
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Links */
+            links?: components["schemas"]["RoadmapLinkOut"][];
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /** Questions */
+            questions?: string[];
+            /** Size */
+            size?: string | null;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress" | "review" | "planned" | "proposed";
+            /** Tasks */
+            tasks?: components["schemas"]["TaskOut"][];
+            /**
+             * Tentative
+             * @default false
+             */
+            tentative: boolean;
+            /** Track */
+            track: string;
+        };
+        /**
+         * ItemWrite
+         * @description An item to add or to put in place of one, made on `revision`.
+         */
+        ItemWrite: {
+            item: components["schemas"]["ItemOut"];
+            /** Revision */
+            revision: number;
+        };
+        /**
+         * LabOptionsOut
+         * @description What the form can offer on this environment.
+         *
+         *     `available` is false (with `reason`) when a run could not start here: no bucket or
+         *     key for this environment, or no salt. `reductions` are what this build offers;
+         *     `unavailable_reductions` are named so the form can say why they are missing (UMAP
+         *     is not a dependency of the backend).
+         */
+        LabOptionsOut: {
+            /** Age Bands */
+            age_bands: components["schemas"]["OptionOut"][];
+            /** Available */
+            available: boolean;
+            /** Block Kinds */
+            block_kinds: components["schemas"]["OptionOut"][];
+            /** Block Labels */
+            block_labels: components["schemas"]["OptionOut"][];
+            caps: components["schemas"]["CapsOut"];
+            /** Context Items */
+            context_items: components["schemas"]["ContextItemOut"][];
+            /** Date First */
+            date_first: string | null;
+            /** Date Last */
+            date_last: string | null;
+            /** Devices */
+            devices: components["schemas"]["OptionOut"][];
+            /**
+             * Env
+             * @enum {string}
+             */
+            env: "dev" | "beta" | "prod";
+            /** People */
+            people: number;
+            /** Protocols */
+            protocols: components["schemas"]["OptionOut"][];
+            /** Qualities */
+            qualities: components["schemas"]["OptionOut"][];
+            /** Reason */
+            reason: string | null;
+            /** Recordings */
+            recordings: number;
+            /** Reductions */
+            reductions: string[];
+            /** Research Recordings */
+            research_recordings: number;
+            /** Sexes */
+            sexes: components["schemas"]["OptionOut"][];
+            /** Task Labels */
+            task_labels: components["schemas"]["OptionOut"][];
+            /** Trial Labels */
+            trial_labels: components["schemas"]["OptionOut"][];
+            /** Unavailable Reductions */
+            unavailable_reductions: string[];
+        };
+        /**
+         * LabResultOut
+         * @description Everything a finished run answers.
+         */
+        LabResultOut: {
+            /** By Label */
+            by_label: components["schemas"]["LabelMetricsOut"][];
+            classifier: components["schemas"]["ClassifierOut"] | null;
+            graph: components["schemas"]["GraphOut"];
+            /** Metrics */
+            metrics: components["schemas"]["Metric"][];
+            points: components["schemas"]["PointsOut"];
+            summary: components["schemas"]["SummaryOut"];
+            /** Table */
+            table: components["schemas"]["MetricsRowOut"][];
+            /** Timing */
+            timing: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * LabRunOut
+         * @description A run with its result once `done`.
+         */
+        LabRunOut: {
+            config: components["schemas"]["ExperimentIn"];
+            /** Config Hash */
+            config_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Env
+             * @enum {string}
+             */
+            env: "dev" | "beta" | "prod";
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rerun Of */
+            rerun_of: string | null;
+            result: components["schemas"]["LabResultOut"] | null;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["RunStatus"];
+            /** Title */
+            title: string;
+        };
+        /**
+         * LabRunSummaryOut
+         * @description A run in a list: everything but its result.
+         */
+        LabRunSummaryOut: {
+            config: components["schemas"]["ExperimentIn"];
+            /** Config Hash */
+            config_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Env
+             * @enum {string}
+             */
+            env: "dev" | "beta" | "prod";
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rerun Of */
+            rerun_of: string | null;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["RunStatus"];
+            /** Title */
+            title: string;
+        };
+        /**
+         * LabelCount
+         * @description How many windows and people one label has in the run.
+         */
+        LabelCount: {
+            /** Label */
+            label: string;
+            /** People */
+            people: number;
+            /** Windows */
+            windows: number;
+        };
+        /**
+         * LabelMetricsOut
+         * @description One label's NeuroMetrics across people: each person counts once.
+         */
+        LabelMetricsOut: {
+            /** Label */
+            label: string | null;
+            /** Metrics */
+            metrics: {
+                [key: string]: components["schemas"]["MeanSd"];
+            };
+            /** People */
+            people: number;
+            /** Windows */
+            windows: number;
+        };
+        /**
+         * LabelSource
+         * @description Where a window's label comes from.
+         *
+         *     - `block_kind`: the kind of the protocol block the window falls in (`baseline`,
+         *       `gonogo`, `video`...);
+         *     - `block_label`: that block's label as the protocol names it ("Eyes closed");
+         *     - `trial`: the trial nearest the window's centre inside a task block
+         *       (`pipeline.features.dynamics.window_labels`: `cargo_pressed`, `congruent_right`...);
+         *     - `task_label`: the recording's own task label (`rest_eyes_open`...);
+         *     - `context`: one answer of the questionnaire before the session (`context_item`).
+         * @enum {string}
+         */
+        LabelSource: "block_kind" | "block_label" | "trial" | "task_label" | "context";
         /**
          * LayoutIn
          * @description The whole strip, in order.
@@ -851,6 +1970,52 @@ export interface components {
             scopes: string[];
         };
         /**
+         * MeanSd
+         * @description A metric across people: mean, standard deviation, and how many people had one.
+         */
+        MeanSd: {
+            /** Mean */
+            mean: number | null;
+            /** People */
+            people: number;
+            /** Sd */
+            sd: number | null;
+        };
+        /**
+         * Metric
+         * @description The NeuroMetrics a run reports per person and label (`pipeline.features.dynamics`).
+         * @enum {string}
+         */
+        Metric: "entropy" | "recurrence" | "diameter" | "stretching" | "modularity";
+        /**
+         * MetricsRowOut
+         * @description NeuroMetrics of one person's windows with one label (`label` None: all of them).
+         *
+         *     Counted in the regions of the run's cover. `modularity` is on the person's rows
+         *     only: how strongly their windows of each label keep to regions of their own. A value
+         *     is None when the run did not ask for it or the windows were too few.
+         */
+        MetricsRowOut: {
+            /** Diameter */
+            diameter?: number | null;
+            /** Entropy */
+            entropy?: number | null;
+            /** Label */
+            label: string | null;
+            /** Modularity */
+            modularity?: number | null;
+            /** N Regions */
+            n_regions: number;
+            /** N Windows */
+            n_windows: number;
+            /** Person */
+            person: string;
+            /** Recurrence */
+            recurrence?: number | null;
+            /** Stretching */
+            stretching?: number | null;
+        };
+        /**
          * MilestoneOut
          * @description A result reached, by project area.
          */
@@ -877,12 +2042,35 @@ export interface components {
             title: string;
         };
         /**
+         * MilestoneWrite
+         * @description A milestone to add or to put in place of one, made on `revision`.
+         */
+        MilestoneWrite: {
+            milestone: components["schemas"]["RoadmapMilestoneOut"];
+            /** Revision */
+            revision: number;
+        };
+        /**
          * OpenIn
          * @description Which version was opened; null is the current one.
          */
         OpenIn: {
             /** Semver */
             semver?: string | null;
+        };
+        /**
+         * OptionOut
+         * @description One value a filter or a label can take, and how many recordings have it.
+         *
+         *     `label` is a display name where the value is an id (a protocol's title).
+         */
+        OptionOut: {
+            /** Label */
+            label: string | null;
+            /** Recordings */
+            recordings: number;
+            /** Value */
+            value: string;
         };
         /**
          * PinIn
@@ -925,6 +2113,74 @@ export interface components {
             status: string;
         };
         /**
+         * PointsOut
+         * @description At most 5 000 windows in 2-D, as parallel arrays to keep the result small.
+         *
+         *     `label[i]` indexes `labels` (-1: no label), `person[i]` indexes `people`. `n_total`
+         *     is how many windows the run had, of which these are a sample.
+         */
+        PointsOut: {
+            /** Label */
+            label: number[];
+            /** Labels */
+            labels: string[];
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "pca" | "tsne";
+            /** N Total */
+            n_total: number;
+            /** People */
+            people: string[];
+            /** Person */
+            person: number[];
+            /** X */
+            x: number[];
+            /** Y */
+            y: number[];
+        };
+        /**
+         * QuestionIn
+         * @description What the run asks: explore the map (optionally coloured), or A against B.
+         *
+         *     `label` colours an exploration and is required for `ab`, where `a` and `b` are the
+         *     two values compared. `context_item` names the questionnaire item when the label
+         *     source is `context`.
+         */
+        QuestionIn: {
+            /** A */
+            a?: string | null;
+            /** B */
+            b?: string | null;
+            /** Context Item */
+            context_item?: string | null;
+            /**
+             * Kind
+             * @default explore
+             * @enum {string}
+             */
+            kind: "explore" | "ab";
+            label?: components["schemas"]["LabelSource"] | null;
+        };
+        /**
+         * ReductionIn
+         * @description The 2-D view: PCA, or t-SNE on at most 5 000 windows. UMAP is not a dependency.
+         */
+        ReductionIn: {
+            /**
+             * Method
+             * @default pca
+             * @enum {string}
+             */
+            method: "pca" | "tsne";
+            /**
+             * Perplexity
+             * @default 30
+             */
+            perplexity: number;
+        };
+        /**
          * RefreshIn
          * @description Parameters of the panel, when it takes any.
          */
@@ -933,6 +2189,131 @@ export interface components {
             params?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * RevisionOut
+         * @description One save with its whole text.
+         */
+        RevisionOut: {
+            /** Author */
+            author: string | null;
+            /** Body */
+            body: string;
+            /** Chars */
+            chars: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Note */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * RevisionSummaryOut
+         * @description One save in a document's history; `chars` is the body's length.
+         */
+        RevisionSummaryOut: {
+            /** Author */
+            author: string | null;
+            /** Chars */
+            chars: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Note */
+            note: string;
+            /** Revision */
+            revision: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * RoadmapLinkOut
+         * @description A link of an item: a pull request, a plan page, a paper.
+         */
+        RoadmapLinkOut: {
+            /** Label */
+            label: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * RoadmapMilestoneOut
+         * @description A dated point of the Gantt: something the plans promise on a day.
+         */
+        RoadmapMilestoneOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "in_progress" | "review" | "planned" | "proposed";
+            /** Track */
+            track: string;
+        };
+        /**
+         * RoadmapPageOut
+         * @description The roadmap, its revision (0 = the committed file) and whether the caller edits.
+         */
+        RoadmapPageOut: {
+            /** Assumptions */
+            assumptions: string;
+            /** Editable */
+            editable: boolean;
+            /** Items */
+            items: components["schemas"]["ItemOut"][];
+            /** Milestones */
+            milestones?: components["schemas"]["RoadmapMilestoneOut"][];
+            /** Revision */
+            revision: number;
+            /** Tracks */
+            tracks: components["schemas"]["TrackOut"][];
+            /**
+             * Updated
+             * Format: date
+             */
+            updated: string;
+        };
+        /**
+         * RunStatus
+         * @description Where a run stands: waiting for the worker, running, finished, or failed.
+         * @enum {string}
+         */
+        RunStatus: "queued" | "running" | "done" | "failed";
+        /**
+         * ScoreOut
+         * @description Cross-validated AUC of one classifier; `folds` lists the scored folds' AUCs.
+         *
+         *     `transductive` is true for the t-SNE map, fitted on every window including the test
+         *     people's: its AUC describes the picture, it does not predict.
+         */
+        ScoreOut: {
+            /** Auc Mean */
+            auc_mean: number | null;
+            /** Auc Sd */
+            auc_sd: number | null;
+            /** Folds */
+            folds: number[];
+            /**
+             * Transductive
+             * @default false
+             */
+            transductive: boolean;
         };
         /**
          * SessionIn
@@ -971,7 +2352,7 @@ export interface components {
         };
         /**
          * SnapshotOut
-         * @description A panel's stored result and how old it is.
+         * @description A panel's stored result, the environment it was read on, and how old it is.
          */
         SnapshotOut: {
             /** Age Seconds */
@@ -980,6 +2361,8 @@ export interface components {
             app: string;
             /** Duration Ms */
             duration_ms: number;
+            /** Env */
+            env: string;
             /** Key */
             key: string;
             /** Panel */
@@ -1001,6 +2384,30 @@ export interface components {
             version: string;
         };
         /**
+         * StatusIn
+         * @description A status change made on `revision`.
+         */
+        StatusIn: {
+            /** Revision */
+            revision: number;
+            status: components["schemas"]["DocumentStatus"];
+        };
+        /**
+         * StatusOut
+         * @description The status report as the page draws it.
+         *
+         *     `updated` is the day the report was written, as the `meta/status` document says;
+         *     `markdown` is the page itself (headings, lists, links), rendered by the console.
+         */
+        StatusOut: {
+            /** Markdown */
+            markdown: string;
+            /** Title */
+            title: string;
+            /** Updated */
+            updated: string | null;
+        };
+        /**
          * StripItemIn
          * @description One place on the strip.
          */
@@ -1019,6 +2426,9 @@ export interface components {
         /**
          * StripItemOut
          * @description A place on the strip with the widget's newest snapshot (null: never taken).
+         *
+         *     `key` is the full snapshot key (`<env>/<app>.<panel>`) and `env` where it reads: the
+         *     request's environment for a panel that follows the switch, home otherwise.
          */
         StripItemOut: {
             /** App */
@@ -1030,6 +2440,8 @@ export interface components {
              * @enum {string}
              */
             as: "stat" | "sparkline" | "bar" | "line";
+            /** Env */
+            env: string;
             /** Key */
             key: string;
             /** Panel */
@@ -1044,6 +2456,126 @@ export interface components {
             title: string;
             /** Widget */
             widget: string;
+        };
+        /**
+         * SummaryOut
+         * @description What the run read: counts, the embedder, what it left out and why.
+         *
+         *     `data_fingerprint` is a salted hash of the analyses read, so two runs can tell
+         *     whether they saw the same data without naming it. `skipped` counts recordings left
+         *     out by reason (`no_windows`, `other_embedder`, `unreadable`, `window_cap`,
+         *     `person_cap`, `no_labelled_windows`).
+         */
+        SummaryOut: {
+            /** Data Fingerprint */
+            data_fingerprint: string;
+            /** Date First */
+            date_first: string | null;
+            /** Date Last */
+            date_last: string | null;
+            /** Dim */
+            dim: number;
+            /** Embedder */
+            embedder: string | null;
+            /** Labels */
+            labels: components["schemas"]["LabelCount"][];
+            /** N People */
+            n_people: number;
+            /** N Recordings */
+            n_recordings: number;
+            /** N Windows */
+            n_windows: number;
+            /** Reduced Dim */
+            reduced_dim: number;
+            /** Skipped */
+            skipped: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * TaskOut
+         * @description One step of an item's task list, as the ten days of the phone app.
+         */
+        TaskOut: {
+            /** Day */
+            day: string;
+            /** Text */
+            text: string;
+        };
+        /**
+         * TokenIn
+         * @description A token to make: a name that says where it lives, its scopes, its lifetime.
+         */
+        TokenIn: {
+            /**
+             * Expires In Days
+             * @default 30
+             */
+            expires_in_days: number;
+            /** Name */
+            name: string;
+            /** Scopes */
+            scopes: string[];
+        };
+        /**
+         * TokenMadeOut
+         * @description A token just made: `token` is shown this once and never stored.
+         */
+        TokenMadeOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Scopes */
+            scopes: string[];
+            /** Token */
+            token: string;
+        };
+        /**
+         * TokenOut
+         * @description A token as its owner sees it later: everything but the token.
+         */
+        TokenOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Scopes */
+            scopes: string[];
         };
         /**
          * TotalOut
@@ -1089,6 +2621,18 @@ export interface components {
             tokens_cache: number;
             /** Tokens New */
             tokens_new: number;
+        };
+        /**
+         * TrackOut
+         * @description A row group of the Gantt: a plan, or a theme outside the plans.
+         */
+        TrackOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Plan */
+            plan?: string | null;
         };
         /**
          * UsageOut
@@ -1387,6 +2931,289 @@ export interface operations {
             };
         };
     };
+    list_documents_ops_v1_documents_get: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["DocumentKind"] | null;
+                status?: components["schemas"]["DocumentStatus"] | null;
+                q?: string | null;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_document_ops_v1_documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_ops_v1_documents__slug__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_document_ops_v1_documents__slug__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_revisions_ops_v1_documents__slug__revisions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevisionSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_revision_ops_v1_documents__slug__revisions__number__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevisionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_document_status_ops_v1_documents__slug__status_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_envs_ops_v1_envs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_logs_ops_v1_health_logs_get: {
         parameters: {
             query: {
@@ -1412,6 +3239,181 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_options_ops_v1_lab_options_get: {
+        parameters: {
+            query?: {
+                research_consent_only?: boolean;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabOptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runs_ops_v1_lab_runs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_run_ops_v1_lab_runs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_ops_v1_lab_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rerun_ops_v1_lab_runs__run_id__rerun_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunOut"];
                 };
             };
             /** @description Validation Error */
@@ -1512,6 +3514,258 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PinOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_roadmap_ops_v1_roadmap_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_item_ops_v1_roadmap_items_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_item_ops_v1_roadmap_items__item_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_item_ops_v1_roadmap_items__item_id__delete: {
+        parameters: {
+            query: {
+                revision: number;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_milestone_ops_v1_roadmap_milestones_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MilestoneWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_milestone_ops_v1_roadmap_milestones__milestone_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                milestone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MilestoneWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_milestone_ops_v1_roadmap_milestones__milestone_id__delete: {
+        parameters: {
+            query: {
+                revision: number;
+            };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                milestone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapPageOut"];
                 };
             };
             /** @description Validation Error */
@@ -1666,6 +3920,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path: {
                 key: string;
@@ -1700,6 +3955,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path: {
                 key: string;
@@ -1720,6 +3976,173 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SnapshotOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cohorts_ops_v1_stats_cohorts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+                "x-ops-env"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_definitions_ops_v1_stats_definitions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tokens_ops_v1_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_token_ops_v1_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenMadeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_token_ops_v1_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -1838,6 +4261,7 @@ export interface operations {
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;
+                "x-ops-env"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -2085,6 +4509,68 @@ export interface operations {
                 since?: string | null;
                 until?: string | null;
             };
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_status_ops_v1_worklog_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-ops-key"?: string | null;
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_markdown_ops_v1_worklog_status_md_get: {
+        parameters: {
+            query?: never;
             header?: {
                 "x-ops-key"?: string | null;
                 authorization?: string | null;

@@ -7,6 +7,7 @@ export const manifest: AppManifest = {
   slug: "moderation",
   version: "1.0.0",
   dataApi: "ops/v1",
+  followsEnv: true,
   Page: ModerationApp,
   widgets: {
     review_queue: (payload) => <ReviewQueueWidget payload={payload} />,

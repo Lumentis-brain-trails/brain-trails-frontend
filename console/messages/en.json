@@ -30,12 +30,26 @@
       "product_unavailable": "The product did not answer. Try again in a moment.",
       "upstream_unavailable": "The console's service did not answer. Try again in a moment.",
       "console_unavailable": "This console is not configured yet.",
-      "read_unavailable": "This console has no read connection to the product database yet.",
+      "read_unavailable": "This console has no read connection to this environment's database yet.",
       "already_enrolled": "This account already has its second factor. Sign in again to enter a code.",
       "cluster_unavailable": "This console cannot reach the cluster (it runs outside a pod, or the cluster did not answer).",
       "cluster_forbidden": "The console may not read the cluster yet: its Role (infra/k8s/rbac/bt-ops.yaml) is not applied in this namespace.",
       "no_pod": "No such pod, container or previous run. Refresh Pods and try again.",
-      "invalid_pod": "That is not a pod or container name."
+      "invalid_pod": "That is not a pod or container name.",
+      "stale_roadmap": "Someone saved the roadmap after you opened it. The chart now shows their version; check it and save again.",
+      "duplicate_id": "Another entry already has this id.",
+      "depended_on": "Other items depend on this one.",
+      "invalid_roadmap": "The roadmap would contradict itself.",
+      "id_mismatch": "An entry keeps its id.",
+      "no_item": "This entry is no longer on the roadmap.",
+      "validation_error": "Something in the form is not valid.",
+      "unknown_env": "The console does not know that environment.",
+      "stale_document": "Someone saved this document after you opened it.",
+      "env_mismatch": "That link names one environment and the page reads another. Open it again from the app.",
+      "token_not_allowed": "An access token cannot make tokens. Sign in to the console to make one.",
+      "lab_unavailable": "The lab cannot read this environment yet: its bucket key or salt is missing.",
+      "lab_busy": "Too many runs are waiting. Try again when one is done.",
+      "no_run": "That run does not exist."
     },
     "age": {
       "now": "just now",
@@ -146,6 +160,12 @@
         "pdf": "PDF",
         "markdown": "Markdown"
       },
+      "status": {
+        "title": "Status report",
+        "updated": "Updated {date}",
+        "download": "Markdown",
+        "none": "No status report imported yet."
+      },
       "entry": {
         "done": "done",
         "inProgress": "in progress",
@@ -188,6 +208,85 @@
       "count": "Recordings",
       "minutes": "Minutes recorded",
       "jobs": "Jobs {status}"
+    },
+    "roadmap": {
+      "intro": "Where the product is going: the plans' sprints, the phone app and the platform work as dated bars. Click a row to read the item; people who may edit change it there, or add one.",
+      "updated": "Updated {date}",
+      "chartLabel": "Gantt of the roadmap",
+      "today": "today",
+      "tentative": "tentative dates",
+      "milestone": "milestone",
+      "milestones": "Milestones",
+      "pick": "Pick an item on the chart to read its dates, dependencies, tasks and open questions.",
+      "assumptions": "How to read the dates",
+      "inDays": "in {days} days",
+      "daysAgo": "{days} days ago",
+      "status": {
+        "done": "done",
+        "in_progress": "in progress",
+        "review": "in review",
+        "planned": "planned",
+        "proposed": "proposed",
+        "late": "late"
+      },
+      "detail": {
+        "dates": "{start} – {end} ({days} days)",
+        "size": "size {size}",
+        "dependsOn": "Depends on:",
+        "tasks": "Tasks, day by day",
+        "questions": "Open questions",
+        "tentative": "tentative dates"
+      },
+      "widget": {
+        "none": "No milestone ahead.",
+        "today": "today",
+        "inDays": "{days} d",
+        "counts": "{review} in review · {planned} planned"
+      },
+      "edit": {
+        "edit": "Edit",
+        "addItem": "Add item",
+        "addMilestone": "Add milestone",
+        "newItem": "New item",
+        "editItem": "Edit item",
+        "newMilestone": "New milestone",
+        "editMilestone": "Edit milestone",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "confirmDelete": "Delete for good",
+        "saved": "Roadmap saved",
+        "label": "Code",
+        "name": "Name",
+        "start": "Start",
+        "end": "End",
+        "track": "Track",
+        "status": "Status",
+        "size": "Size",
+        "sizeHint": "An estimate, as 5-6 days.",
+        "tentative": "Tentative dates",
+        "id": "Id",
+        "idHint": "Lowercase letters, digits and dashes; other items depend on it, so it never changes.",
+        "note": "Note",
+        "dependsOn": "Depends on",
+        "tasks": "Tasks",
+        "tasksHint": "One per line: day | what (Day 1 · 6 Nov | Add the platform).",
+        "questions": "Open questions",
+        "linesHint": "One per line.",
+        "links": "Links",
+        "linksHint": "One per line: label | https://…",
+        "milestoneName": "Milestone",
+        "date": "Date",
+        "errors": {
+          "required": "Required.",
+          "badId": "Lowercase letters, digits and dashes, starting with a letter.",
+          "idTaken": "Another entry already has this id.",
+          "badDate": "Not a date.",
+          "endBeforeStart": "Ends before it starts.",
+          "badLine": "Every line needs a | between its two parts.",
+          "badUrl": "Links start with http:// or https://."
+        }
+      }
     },
     "panel": {
       "refresh": "Refresh",
@@ -263,7 +362,8 @@
       "widgets": {
         "failedJobs": "{loops} in a retry loop · {stale} stale",
         "restarts": "{oom} out of memory · {pods} pods"
-      }
+      },
+      "homeCluster": "Pods and logs read the home environment's cluster ({home}), not {env}."
     },
     "betaTesters": {
       "intro": "Who gets into the beta and who is in it. Moved here from the app's Admin pages: every decision is the product's own, made with your product account and recorded in its audit log.",
@@ -273,6 +373,13 @@
       "organisations": "Organisations",
       "widgets": {
         "pending": "{stand} from the stand · {organisations} organisations"
+      },
+      "elsewhere": {
+        "pending": "Waiting for a decision",
+        "waiting": "Applications waiting",
+        "fromStand": "Of those, asked at the stand",
+        "organisations": "Organisation requests waiting",
+        "decision": "Decision: {decision}"
       }
     },
     "moderation": {
@@ -283,6 +390,461 @@
       "fair": "The stand",
       "widgets": {
         "queue": "{media} media · {protocols} protocols · {stand} at the stand"
+      },
+      "elsewhere": {
+        "queue": "Review queue",
+        "review": "Waiting for review",
+        "media": "Media",
+        "protocols": "Protocols",
+        "stand": "Waiting at the stand"
+      }
+    },
+    "statistics": {
+      "intro": "How the product is used, and by whom. Every number is defined once, in the backend, and the Definitions tab says what each one counts. Staff and test accounts never count.",
+      "period": "Period",
+      "weeks": "{n} weeks",
+      "cohort": "Cohort",
+      "everyone": "Everyone",
+      "reports": "Reports",
+      "refreshAll": "Refresh all",
+      "refreshing": "Refreshing {step} of {total}…",
+      "snapshotsNote": "Each report shows its last refresh for this period and cohort. Refresh one, or all of them one after the other; nothing refreshes on its own.",
+      "steps": {
+        "registered": "Registered",
+        "accepted": "Accepted",
+        "verified": "Verified",
+        "first_session": "First session",
+        "second_session": "Second session"
+      },
+      "acquisition": {
+        "title": "Acquisition",
+        "funnel": "From registration to a second session",
+        "ofPrevious": "{share} of the step before",
+        "perWeek": "Per registration week",
+        "times": "Time between steps (median)",
+        "timeTo": {
+          "accepted": "Registration to acceptance:",
+          "verified": "Acceptance to verified email:",
+          "first_session": "Acceptance to first session:",
+          "second_session": "First to second session:"
+        },
+        "hours": "{n} h",
+        "days": "{n} days",
+        "ofPeople": "({people} people)",
+        "byProfile": "By requested profile",
+        "byCohort": "By cohort",
+        "noCohort": "No cohort"
+      },
+      "engagement": {
+        "title": "Engagement",
+        "perWeek": "Active people per week",
+        "perMonth": "Per month",
+        "active": "Active people",
+        "sessions": "Finished sessions",
+        "perPerson": "Finished sessions per active person, in the period",
+        "sessionsBucket": "{bucket, select, 1 {1 session} other {{bucket} sessions}}",
+        "retention": "Retention by first-session week",
+        "noRetention": "Nobody finished a first session in this period.",
+        "firstWeek": "First week",
+        "people": "People",
+        "weekN": "W{n}",
+        "idle": "Days since the last session (everyone who ever finished one)",
+        "daysBucket": "{bucket} days"
+      },
+      "consent": {
+        "title": "Consent",
+        "people": "People",
+        "summary": "{people} people; {newsletter} ticked the newsletter.",
+        "versions": "Privacy consent version",
+        "research": "Research consent version",
+        "none": "Not given",
+        "peopleColumn": "People",
+        "erasures": "Erased accounts per month, in the period",
+        "erasuresColumn": "Erasures",
+        "noErasures": "No account was erased in this period."
+      },
+      "definitions": {
+        "title": "Definitions",
+        "people": "People are product accounts that are neither staff nor test accounts. Staff: platform admins and anyone with console access. Test: emails matching {patterns}.",
+        "session": "A session is a protocol run. It counts for the person who ran it, who for a self-recording is the person recorded. A finished session reached its end (status done); aborted runs are not counted.",
+        "active": "Active in a week or month: finished at least one session in it.",
+        "retained": "Retained at week N: active in the N-th week after the week of the first finished session (week 0 is that week). The table shows weeks 0 to {last}; a dash is a week not reached yet.",
+        "weeks": "Weeks start on Monday, Rome time. A period of N weeks ends with the current week, which is still running.",
+        "verified": "Verified: the person proved their email address. The acceptance sends the link, so this step comes after it. Environments that do not ask for verification leave it empty, so the step reads 0 there.",
+        "accepted": "Accepted: the beta application was decided 'accepted'.",
+        "sessionsSteps": "The funnel counts the people who registered in the period; the session steps count their first and second finished sessions, whenever they happened.",
+        "small": "Small numbers: a group of fewer than {min} people is shown to collaborators as a dash, never as a number. Core people see every number.",
+        "erasures": "Erasures are counted from the product's audit log: the account is gone, so staff and test accounts cannot be told apart there."
+      },
+      "widgets": {
+        "signups": "Sign-ups per day, last 14 days",
+        "lastWeek": "week of {week}",
+        "sessions": "Finished sessions per week",
+        "active": "Active people per week"
+      }
+    },
+    "env": {
+      "switch": "Environment",
+      "name": {
+        "dev": "Dev",
+        "beta": "Beta",
+        "prod": "Prod"
+      },
+      "unavailable": "This console has no read connection to this environment.",
+      "readingHome": "The console's home environment: you read and act here.",
+      "readingOther": "Read only: this page reads this environment's database. Actions stay in {home}.",
+      "actionsElsewhere": "You are reading {env}. Decisions and the board act on the console's home environment ({home}) only, so they are not shown here; to act on {env}, use the product's own admin pages there."
+    },
+    "documents": {
+      "intro": "Every report, draft, brief and analysis written for the team, in Markdown, with every revision kept. Documents quote aggregates or pseudonymised keys, never a person's name or email.",
+      "sections": "Sections",
+      "library": "Documents",
+      "kind": {
+        "report": "Report",
+        "draft": "Draft",
+        "brief": "Brief",
+        "analysis": "Analysis",
+        "note": "Note"
+      },
+      "status": {
+        "draft": "Draft",
+        "final": "Final",
+        "archived": "Archived"
+      },
+      "list": {
+        "kind": "Kind",
+        "statusLabel": "Status",
+        "any": "Any",
+        "search": "Search",
+        "searchPlaceholder": "Title or text",
+        "find": "Search",
+        "new": "New document",
+        "noneFound": "No document matches.",
+        "emptyTitle": "No documents yet",
+        "emptyText": "Reports, drafts and analyses written for the team land here.",
+        "title": "Title",
+        "audience": "For",
+        "updated": "Last saved",
+        "updatedLine": "{when} by {who} · rev. {revision}"
+      },
+      "editor": {
+        "newTitle": "New document",
+        "editTitle": "Editing, on revision {revision}",
+        "stale": "Someone saved this document after you opened it. Your text is still here, unsaved. Reload their version: it shows beside yours, and your next save is made on it.",
+        "reload": "Reload their version",
+        "theirs": "Their version: revision {revision}, by {who}",
+        "theirsHint": "Your text is in the editor below. Take what you need from theirs, then save.",
+        "theirsBody": "Their text",
+        "title": "Title",
+        "slug": "Address",
+        "slugHint": "Lowercase words joined by hyphens; made from the title if you leave it.",
+        "kind": "Kind",
+        "audience": "For",
+        "audienceHint": "Who it is written for: Gabriella, Andrea, the team.",
+        "bodyLabel": "Text (Markdown)",
+        "mode": "Write or preview",
+        "write": "Write",
+        "preview": "Preview",
+        "length": "{n} of {max} characters",
+        "nothingToPreview": "Nothing to preview yet.",
+        "privacy": "No names or emails of users: quote aggregates or pseudonymised keys.",
+        "note": "What changed",
+        "noteHint": "One line, kept in the history.",
+        "saving": "Saving…",
+        "save": "Save",
+        "cancel": "Cancel",
+        "discard": "Discard your changes?",
+        "saved": "Document saved.",
+        "errors": {
+          "titleRequired": "Give it a title.",
+          "titleTooLong": "At most 200 characters.",
+          "slugInvalid": "Lowercase letters, digits and single hyphens only.",
+          "audienceRequired": "Say who it is for.",
+          "audienceTooLong": "At most 120 characters.",
+          "bodyTooLong": "At most 200 000 characters.",
+          "noteRequired": "Say in one line what changed.",
+          "noteTooLong": "At most 200 characters."
+        }
+      },
+      "history": {
+        "title": "History",
+        "revision": "Revision {revision}",
+        "current": "current",
+        "by": "{who}, {when}",
+        "noNote": "No note.",
+        "chars": "{chars, plural, one {# character} other {# characters}}"
+      },
+      "view": {
+        "to": {
+          "draft": "Back to draft",
+          "final": "Mark final",
+          "archived": "Archive"
+        },
+        "back": "← All documents",
+        "missingTitle": "No such document",
+        "missingText": "It may have a different address; look for it in the list.",
+        "for": "for {audience}",
+        "meta": "Revision {revision}, saved by {who} on {when}",
+        "edit": "Edit",
+        "hideHistory": "Hide history",
+        "showHistory": "History",
+        "oldRevision": "You are reading revision {revision} of {current}, by {who}: {note}",
+        "loadingRevision": "Loading revision {revision}…",
+        "toCurrent": "Back to the current revision",
+        "empty": "This document has no text yet.",
+        "created": "Created by {who} on {when}",
+        "note": "Last change: {note}"
+      },
+      "tokens": {
+        "title": "Access tokens",
+        "intro": "A token lets a working session read and write documents for you, without your password or your second factor. It opens Documents only, for at most 90 days. Revoke one you no longer use.",
+        "newTitle": "New token",
+        "name": "Name",
+        "nameHint": "Where it will be used, e.g. \"Claude, Alessio's Mac\".",
+        "scopes": "It may",
+        "scope": {
+          "read": "Read documents",
+          "write": "Write documents"
+        },
+        "expiry": "Expires after",
+        "expiryHint": "At most 90 days.",
+        "days": "{n, plural, one {# day} other {# days}}",
+        "create": "Create token",
+        "yours": "Your tokens",
+        "none": "You have no tokens.",
+        "revoked": "Revoked",
+        "active": "Active",
+        "expired": "Expired",
+        "dates": "Made {created}, expires {expires}",
+        "lastUsed": "last used {when}",
+        "neverUsed": "never used",
+        "revokeConfirm": "Revoke it? Anything using it stops working.",
+        "revokeYes": "Revoke",
+        "revokeNo": "Keep",
+        "revoke": "Revoke",
+        "created": {
+          "title": "Token \"{name}\" made",
+          "warning": "Copy it now: it is shown this once and cannot be read again. Keep it in a file only you can read, and never paste it into a chat or a document.",
+          "copy": "Copy",
+          "copied": "Copied",
+          "copyFailed": "Copying failed: select the token and copy it by hand.",
+          "done": "I have stored it"
+        },
+        "errors": {
+          "nameRequired": "Give it a name.",
+          "nameTooLong": "At most 80 characters.",
+          "scopesRequired": "Choose at least one."
+        }
+      },
+      "widgets": {
+        "drafts": "{total, plural, one {of # document} other {of # documents}}"
+      }
+    },
+    "pipelineLab": {
+      "intro": "Experiments on the EEG window embeddings already stored: choose the data and the question, then read the table and the 2-D map. Results hold pseudonymised person keys, never an id, an email or a name, and every run is audited with its environment.",
+      "sections": "Sections",
+      "new": "New experiment",
+      "runs": "Runs",
+      "unavailableTitle": "The lab cannot run on {env}",
+      "unavailableText": "It needs read access to this environment's bucket and a salt for person keys (LAB_S3_* and LAB_SALT in bt-ops-secrets).",
+      "overview": "{env}: {recordings, plural, one {# analysed recording} other {# analysed recordings}} of {people, plural, one {# person} other {# people}}, {research} with research consent.",
+      "span": "From {first} to {last}.",
+      "any": "Any",
+      "choose": "Choose…",
+      "option": "{label} ({recordings})",
+      "standard": "Standard",
+      "phase2": "Phase 2 adds options here.",
+      "title": "Title",
+      "titlePlaceholder": "Rest against task, research data",
+      "question": {
+        "title": "Question",
+        "kind": "Kind",
+        "explore": "Explore the map",
+        "ab": "A against B",
+        "exploreHint": "The label only colours the map and splits the table.",
+        "abHint": "A classifier tells A from B, cross-validated by person: nobody is in both the training and the test of a fold.",
+        "label": "Label windows by",
+        "labelNone": "Nothing (one colour)",
+        "contextItem": "Questionnaire item",
+        "a": "A",
+        "b": "B",
+        "source": {
+          "block_kind": "Block kind",
+          "block_label": "Block",
+          "trial": "Trial",
+          "task_label": "Task of the recording",
+          "context": "Questionnaire answer"
+        }
+      },
+      "data": {
+        "title": "Data",
+        "protocol": "Protocol",
+        "blockKind": "Only windows in blocks of kind",
+        "blockLabel": "Only windows in the block",
+        "ageBand": "Age",
+        "sex": "Sex at birth",
+        "device": "Device",
+        "dateFrom": "Recorded from",
+        "dateTo": "Recorded until",
+        "minQuality": "Quality at least",
+        "quality": {
+          "usable": "Usable",
+          "good": "Good"
+        },
+        "researchOnly": "Only people who agreed to research use",
+        "researchHint": "On by default: a lab experiment is research (V3-0011).",
+        "maxRecordings": "Recordings, at most",
+        "maxHint": "Taken in turn from each person, up to {max}."
+      },
+      "preprocessing": {
+        "title": "Preprocessing",
+        "text": "Notch, band-pass filter and bridging, as every recording gets them."
+      },
+      "artefacts": {
+        "title": "Artefact removal",
+        "text": "ASR cleaning and the per-window artefact flags of the stored analysis."
+      },
+      "encoding": {
+        "title": "Encoding",
+        "text": "The stored REVE embeddings, 512 numbers per window."
+      },
+      "reduction": {
+        "title": "Dimensionality reduction",
+        "method": "2-D view",
+        "pca": "PCA",
+        "tsne": "t-SNE",
+        "umap": "UMAP",
+        "umapNote": "UMAP is not available: it is not a dependency of the service.",
+        "perplexity": "Perplexity",
+        "tsneNote": "t-SNE draws at most {points} windows and cannot place new ones, so its A/B score is transductive.",
+        "pcaNote": "The NeuroMetrics run on the session's own PCA reduction; this choice changes only the 2-D view."
+      },
+      "graph": {
+        "title": "Graph (Ball Mapper)",
+        "eps": "Radius",
+        "epsHint": "Empty: chosen for a cover of a legible size (at most {nodes} nodes). In the units of the reduced space."
+      },
+      "metrics": {
+        "title": "NeuroMetrics",
+        "entropy": "Entropy",
+        "recurrence": "Recurrence",
+        "diameter": "Diameter",
+        "stretching": "Stretching",
+        "modularity": "Modularity"
+      },
+      "caps": "A run reads at most {windows} windows ({perPerson} per person) and stops after {minutes} minutes.",
+      "start": "Run the experiment",
+      "starting": "Starting…",
+      "problems": {
+        "title": "Give the experiment a title.",
+        "label": "An A/B question needs a label source.",
+        "contextItem": "Choose the questionnaire item.",
+        "values": "Choose A and B.",
+        "sameValues": "A and B must differ.",
+        "dates": "The start date is after the end date.",
+        "eps": "The radius is a positive number.",
+        "perplexity": "Perplexity is between 5 and 100.",
+        "maxRecordings": "Between 1 and {max} recordings.",
+        "metrics": "Choose at least one metric."
+      },
+      "status": {
+        "queued": "Queued",
+        "running": "Running",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "list": {
+        "emptyTitle": "No runs on {env} yet",
+        "emptyText": "The experiments run on this environment land here.",
+        "line": "{when} by {who}",
+        "someone": "someone",
+        "rerun": "rerun"
+      },
+      "run": {
+        "back": "All runs",
+        "rerun": "Run again",
+        "copy": "Edit a copy",
+        "config": "Configuration {hash}",
+        "queued": "Waiting for the worker. This page reads the run again every 3 seconds.",
+        "running": "Running. This page reads the run again every 3 seconds.",
+        "detail": "Detail: {message}",
+        "envMismatch": "This run read another environment. Switch back to it to open the run.",
+        "took": "Took {seconds} s.",
+        "errors": {
+          "lab_unavailable": "The lab could not read this environment: its bucket key or salt is missing.",
+          "no_recordings": "No recording matches these filters.",
+          "no_windows": "The chosen recordings have no windows to read.",
+          "too_few_windows": "Too few windows for a map. Widen the filters.",
+          "eps_too_small": "This radius makes too many balls. Choose a larger one, or leave it empty.",
+          "time_limit": "The run took longer than its time limit. Narrow the data.",
+          "interrupted": "bt-ops restarted while the run was running. Run it again.",
+          "failed": "The run failed. The service's log has the details."
+        }
+      },
+      "summary": {
+        "title": "Data",
+        "recordings": "Recordings",
+        "people": "People",
+        "windows": "Windows",
+        "embedder": "Embedder",
+        "dims": "Dimensions",
+        "dimsValue": "{dim} → {reduced}",
+        "dates": "Recorded",
+        "fingerprint": "Data fingerprint",
+        "skipped": "Left out",
+        "skip": {
+          "other_embedder": "another embedder",
+          "no_windows": "no windows",
+          "no_labelled_windows": "no windows with A or B",
+          "window_cap": "over the window cap",
+          "person_cap": "over the per-person cap",
+          "unreadable": "unreadable embeddings"
+        },
+        "skipLine": "{reason}: {n}",
+        "labels": "Labels",
+        "labelLine": "{windows} windows, {people, plural, one {# person} other {# people}}"
+      },
+      "classifier": {
+        "title": "A against B",
+        "auc": "AUC",
+        "onEmbeddings": "On the embeddings",
+        "onView": "On the 2-D view",
+        "transductive": "Transductive: the map was drawn with every window, test people included.",
+        "folds": "{n} folds by person",
+        "people": "{n, plural, one {# person} other {# people}} ({a} with A, {b} with B), {windows} windows.",
+        "fewPeople": "Fewer than 10 people: read this score as a hint, not a result.",
+        "too_few_people": "Too few people to cross-validate by person (at least 3 are needed).",
+        "one_class": "Only one of A and B is in the data.",
+        "unscorable": "No fold could be scored: each test fold held only one of A and B.",
+        "sampleOnePerson": "No score: the sample of windows kept one person, so no fold could leave someone out."
+      },
+      "map": {
+        "title": "Map ({method})",
+        "sample": "{shown} of {total} windows drawn.",
+        "aria": "Windows on the 2-D map, coloured by label",
+        "noLabel": "no label",
+        "oneColour": "One colour: the question names no label."
+      },
+      "graphView": {
+        "title": "Graph",
+        "line": "Radius {eps} ({how}) · {nodes} nodes · {edges} edges · {components} components · betti-1 {betti}",
+        "auto": "chosen",
+        "manual": "set",
+        "aria": "The Ball Mapper graph, each ball coloured by its most frequent label"
+      },
+      "table": {
+        "title": "Per person",
+        "person": "Person",
+        "label": "Label",
+        "all": "all",
+        "windows": "Windows",
+        "regions": "Regions",
+        "empty": "No person had enough windows to measure."
+      },
+      "byLabel": {
+        "title": "By label",
+        "meanSd": "{mean} ± {sd}",
+        "people": "People"
       }
     }
   },

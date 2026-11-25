@@ -2,10 +2,13 @@ import { describe, expect, test } from "vitest";
 import {
   type BrainLandscape,
   axes,
+  PLATEAU_BAND,
   framedTrail,
+  groundOf,
   heightAt,
   hoverMatrix,
   landscapeProblem,
+  wellsColorscale,
 } from "./brainLandscape";
 
 const landscape = {
@@ -70,6 +73,45 @@ describe("heightAt", () => {
   test("is zero off the map", () => {
     expect(heightAt(landscape, -1, 0)).toBe(0);
     expect(heightAt(landscape, 1, 3)).toBe(0);
+  });
+});
+
+describe("groundOf", () => {
+  test("the hills are the map as it came", () => {
+    const ground = groundOf(landscape, "hills");
+    expect(ground.landscape).toBe(landscape);
+    expect(ground.colour).toBeNull();
+  });
+
+  test("the wells turn the peak into the deepest point and lift everything on them", () => {
+    const { landscape: wells, colour } = groundOf(landscape, "wells");
+    expect(wells.grid.z[0][2]).toBeCloseTo(0);
+    expect(wells.grid.z[0][0]).toBe(1);
+    // a trail lifted on the returned map rides the drawn surface
+    expect(heightAt(wells, 2, 0)).toBeCloseTo(0);
+    expect(heightAt(wells, 0, 1)).toBe(1);
+    expect(heightAt(wells, 1, 0)).toBeGreaterThan(0);
+    expect(heightAt(wells, 1, 0)).toBeLessThan(1);
+    // the plateau is coloured below the band, the deepest well at the top of the ramp
+    expect(colour![1]).toEqual([0, 0, 0]);
+    expect(colour![0][2]).toBeCloseTo(1);
+    expect(colour![0][1]).toBeGreaterThan(PLATEAU_BAND);
+    // the map's other fields are untouched
+    expect(wells.bounds).toBe(landscape.bounds);
+    expect(landscape.grid.z[0][2]).toBe(1);
+  });
+
+  test("the wells' colour scale keeps the faded plateau under the band", () => {
+    const scale = wellsColorscale(
+      [
+        [0, "#000"],
+        [1, "#fff"],
+      ],
+      "#888"
+    );
+    expect(scale[0]).toEqual([0, "#888"]);
+    expect(scale[2]).toEqual([PLATEAU_BAND, "#000"]);
+    expect(scale.at(-1)).toEqual([1, "#fff"]);
   });
 });
 

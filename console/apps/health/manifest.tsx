@@ -7,6 +7,7 @@ export const manifest: AppManifest = {
   slug: "health",
   version: "0.1.0",
   dataApi: "ops/v1",
+  followsEnv: true,
   Page: HealthApp,
   widgets: {
     failed_jobs: (payload) => <FailedJobsWidget payload={payload} />,

@@ -14,7 +14,10 @@ import {
   type WidgetItem,
   OpsRequestError,
   ops,
+  opsIn,
 } from "@console/lib/client";
+import { type EnvId, cacheEnv } from "@console/lib/env";
+import { useOps, useOpsEnv } from "@console/components/env";
 
 /**
  * The shell's reads and writes, as react-query hooks. Every read runs once when its
@@ -86,26 +89,81 @@ export function useSetLayout() {
   });
 }
 
-/** Run one panel now and store its snapshot: a person's click, the only refresh there is. */
+/** A panel's parameters as one stable string: keys sorted, as the backend hashes them. */
+export function paramsKey(params: Record<string, unknown> = {}): string {
+  const sorted = Object.fromEntries(
+    Object.entries(params)
+      .filter(([, v]) => v !== null && v !== undefined && v !== "")
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+  return JSON.stringify(sorted);
+}
+
+/**
+ * What a refresh names: a panel as `<app>.<panel>`, its parameters when it takes any,
+ * and the environment when it is not the surrounding page's (the strip names each
+ * widget's own). Full keys (`<env>/...`) are never sent: their slash would not pass the
+ * BFF, and the environment travels in `X-Ops-Env` instead.
+ */
+export type RefreshTarget =
+  | string
+  | { key: string; params?: Record<string, unknown>; env?: EnvId | null };
+
+function target(t: RefreshTarget): {
+  key: string;
+  params: string;
+  env: EnvId | null | undefined;
+} {
+  return typeof t === "string"
+    ? { key: t, params: paramsKey(), env: undefined }
+    : { key: t.key, params: paramsKey(t.params), env: t.env };
+}
+
+/**
+ * Run one panel now and store its snapshot: a person's click, the only refresh there is.
+ * Inside an app that follows the environment switch it runs on that environment.
+ */
 export function useRefresh() {
   const client = useQueryClient();
+  const api = useOps();
+  const { cacheKey, home } = useOpsEnv();
   return useMutation({
-    mutationFn: (key: string) =>
-      ops.post<Snapshot>(`snapshots/${encodeURIComponent(key)}/refresh`, {}),
-    onSuccess: (snapshot) => {
-      client.setQueryData(["snapshot", snapshot.key], snapshot);
+    mutationFn: (t: RefreshTarget) => {
+      const { key, params, env } = target(t);
+      const via = env === undefined ? api : opsIn(env);
+      return via.post<Snapshot>(
+        `snapshots/${encodeURIComponent(key)}/refresh`,
+        {
+          params: JSON.parse(params),
+        }
+      );
+    },
+    onSuccess: (snapshot, t) => {
+      const { key, params, env } = target(t);
+      const slot = env === undefined ? cacheKey : cacheEnv(env, home);
+      client.setQueryData(["snapshot", slot, key, params], snapshot);
       void client.invalidateQueries({ queryKey: ["strip"] });
     },
   });
 }
 
-/** The newest snapshot of a panel; `null` when it was never taken. */
-export const useSnapshot = (key: string) =>
-  useQuery({
-    queryKey: ["snapshot", key],
+/**
+ * The newest snapshot of a panel for these parameters, in this part of the page's
+ * environment; `null` when never taken. The environment is part of the cache key, so
+ * switching never shows one environment's numbers under another's header.
+ */
+export const useSnapshot = (key: string, params?: Record<string, unknown>) => {
+  const p = paramsKey(params);
+  const api = useOps();
+  const { cacheKey } = useOpsEnv();
+  return useQuery({
+    queryKey: ["snapshot", cacheKey, key, p],
     queryFn: async () => {
       try {
-        return await ops.get<Snapshot>(`snapshots/${encodeURIComponent(key)}`);
+        const q = p === "{}" ? "" : `?params=${encodeURIComponent(p)}`;
+        return await api.get<Snapshot>(
+          `snapshots/${encodeURIComponent(key)}${q}`
+        );
       } catch (e) {
         if (e instanceof OpsRequestError && e.code === "no_snapshot")
           return null;
@@ -113,3 +171,4 @@ export const useSnapshot = (key: string) =>
       }
     },
   });
+};

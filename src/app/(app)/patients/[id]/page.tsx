@@ -21,6 +21,7 @@ import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { useErrorMessage } from "@/lib/errorMessage";
 import { useFeature } from "@/lib/features";
+import { PatientTimeline } from "@/components/therapy/PatientTimeline";
 import { formatDate } from "@/lib/format";
 import { type ProtocolCard, isPlayable } from "@/lib/protocol/catalog";
 import type { StimulusSession } from "@/lib/protocol/session";
@@ -31,6 +32,7 @@ import {
   type Subject,
   isLate,
   subjectLabel,
+  subjectQueryKey,
   subjectWords,
 } from "@/lib/subjects";
 import { editionOf, managesMembers, useWorkspaces } from "@/lib/workspace";
@@ -52,6 +54,7 @@ import {
   SectionTitle,
   Select,
   Skeleton,
+  buttonClass,
 } from "@/components/ui";
 
 type Member = components["schemas"]["MemberOut"];
@@ -67,7 +70,7 @@ export default function SubjectPage({
   const errorMessage = useErrorMessage();
   const locale = useFormatLocale();
   const subject = useQuery({
-    queryKey: ["subjects", "one", id],
+    queryKey: subjectQueryKey(id),
     queryFn: () => api.get<Subject>(`subjects/${id}`),
     retry: false,
   });
@@ -77,6 +80,8 @@ export default function SubjectPage({
   );
   const words = subjectWords(editionOf(workspace?.kind));
   const assignmentsOn = useFeature("assignments");
+  // the therapy edition's reading of a patient (T6): a practice's, behind `therapy`
+  const therapyOn = useFeature("therapy");
 
   if (subject.isLoading)
     return (
@@ -126,13 +131,37 @@ export default function SubjectPage({
         {workspace?.kind !== "lab" && (
           <CareTeam subject={s} manager={manager} />
         )}
+        {s.readable && therapyOn && workspace?.kind === "practice" && (
+          <PatientTimeline
+            subjectId={s.id}
+            share={s.share_results}
+            canShare={s.archived_at == null}
+            hasAccount={s.has_account ?? false}
+          />
+        )}
         {s.readable && assignmentsOn && <Assignments subject={s} />}
-        {s.readable && assignmentsOn && <Invite subject={s} />}
+        {s.readable && s.reconsent_required && (
+          <Notice
+            title={t("page.reconsentTitle")}
+            text={t("page.reconsentText")}
+          />
+        )}
+        {s.readable && assignmentsOn && !s.minor && <Invite subject={s} />}
+        {s.readable && assignmentsOn && s.minor && !s.has_account && (
+          <Notice title={t("invite.minorTitle")} text={t("invite.minorText")} />
+        )}
         {s.readable && <Sessions subject={s} />}
         {s.readable && <ArchiveButton subject={s} />}
       </div>
     </main>
   );
+}
+
+/** The remote console's two flags (T5): the room and the service it runs on. */
+function useRemoteConsole(): boolean {
+  const remote = useFeature("console_remote");
+  const live = useFeature("live");
+  return remote && live;
 }
 
 function Notice({ title, text }: { title: string; text: string }) {
@@ -178,10 +207,14 @@ function Details({ subject: s, lab }: { subject: Subject; lab: boolean }) {
       language: (s.language as "en" | "it") ?? "en",
       consent: false,
       consentVersion: "",
+      guardianRelationship: "",
+      assent: false,
+      researchConsent: s.research_consent_at != null,
     });
     setEditing(true);
   };
   const facts = [
+    s.minor ? t("page.minor") : null,
     s.birth_year ? `${tForm("birthYear")}: ${s.birth_year}` : null,
     s.sex_at_birth
       ? `${tForm("sex")}: ${tForm(`sexes.${s.sex_at_birth as "female"}`)}`
@@ -215,6 +248,25 @@ function Details({ subject: s, lab }: { subject: Subject; lab: boolean }) {
             <span className="text-danger">{t("page.consentMissing")}</span>
           )}
         </p>
+        {s.consent_at && s.consent_by === "guardian" && s.assent_at && (
+          <p className="mt-1 text-[14px] text-ink-2">
+            {t("page.consentByGuardian", {
+              who: tForm(
+                `guardianRelationships.${s.guardian_relationship as "parent"}`
+              ),
+              date: formatDate(s.assent_at, locale),
+            })}
+          </p>
+        )}
+        {s.minor && !lab && (
+          <p className="mt-1 text-[14px] text-ink-2">
+            {s.research_consent_at
+              ? t("page.researchOn", {
+                  date: formatDate(s.research_consent_at, locale),
+                })
+              : t("page.researchOff")}
+          </p>
+        )}
       </Card>
       {editing && form && (
         <Sheet title={t("page.edit")} onClose={() => setEditing(false)}>
@@ -237,7 +289,8 @@ function Details({ subject: s, lab }: { subject: Subject; lab: boolean }) {
               form={form}
               onChange={setForm}
               lab={lab}
-              consentGiven={s.consent_at != null}
+              consentGiven={s.consent_at != null && !s.reconsent_required}
+              reconsent={s.reconsent_required}
             />
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" onClick={() => setEditing(false)}>
@@ -355,6 +408,8 @@ function CareTeam({
 
 function Assignments({ subject: s }: { subject: Subject }) {
   const t = useTranslations("assignments");
+  const tLive = useTranslations("live");
+  const remote = useRemoteConsole();
   const locale = useFormatLocale();
   const errorMessage = useErrorMessage();
   const official = useOfficialTexts();
@@ -419,6 +474,14 @@ function Assignments({ subject: s }: { subject: Subject }) {
                   </span>
                 )}
               </span>
+              {a.open && remote && (
+                <Link
+                  href={`/live/wait/${a.id}`}
+                  className={buttonClass("secondary", "sm")}
+                >
+                  {tLive("remoteSession")}
+                </Link>
+              )}
               {a.open && (
                 <Button
                   variant="ghost"
@@ -517,6 +580,8 @@ function Invite({ subject: s }: { subject: Subject }) {
 
 function Sessions({ subject: s }: { subject: Subject }) {
   const t = useTranslations("subjects.sessionsCard");
+  const tLive = useTranslations("live");
+  const remote = useRemoteConsole();
   const tPage = useTranslations("subjects.page");
   const locale = useFormatLocale();
   const [choosing, setChoosing] = useState(false);
@@ -529,7 +594,8 @@ function Sessions({ subject: s }: { subject: Subject }) {
       <SectionTitle
         action={
           s.archived_at == null &&
-          s.consent_at != null && (
+          s.consent_at != null &&
+          !s.reconsent_required && (
             <Button
               size="sm"
               variant="secondary"
@@ -549,7 +615,12 @@ function Sessions({ subject: s }: { subject: Subject }) {
         {(sessions.data ?? []).map((x) => (
           <Link
             key={x.id}
-            href={`/recordings/${x.recording_id}`}
+            // a run going on now opens its live room (T5), a finished one its recording
+            href={
+              remote && x.status === "running"
+                ? `/live/${x.id}`
+                : `/recordings/${x.recording_id}`
+            }
             className="pressable flex items-center gap-4 border-b border-hairline px-5 py-3.5 last:border-b-0 hover:bg-surface-2"
           >
             <span className="min-w-0 flex-1">
@@ -559,6 +630,7 @@ function Sessions({ subject: s }: { subject: Subject }) {
                   formatDate(x.started_at, locale),
                   t(`status.${x.status as "done"}`),
                   x.assignment_id ? t("assigned") : null,
+                  remote && x.status === "running" ? tLive("watch") : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}

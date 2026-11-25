@@ -29,6 +29,9 @@ describe("middleware", () => {
       "/my",
       "/my/:path*",
       "/organisations/:path*",
+      // a teacher's school and a held student's waiting page (backend V4-0012)
+      "/school",
+      "/waiting",
       "/account",
       "/library",
       "/library/:path*",
@@ -42,6 +45,8 @@ describe("middleware", () => {
       "/admin/:path*",
       // the operator console and the participant's window (V3-0007)
       "/console/:path*",
+      // the remote console and its waiting room (T5)
+      "/live/:path*",
       "/run/:path*",
     ]);
   });

@@ -118,11 +118,17 @@ export const basicsSchema = z
     birth_year: birthYear("birthYear"),
     sex_at_birth: sexAtBirth,
     handedness: handedness("choose"),
+    // A school's class code (backend V4-0012, flag `schools`): the only way in under 18.
+    // The form shows the field only with the flag on, so without it this stays empty and
+    // the age floor reads as it always did.
+    school_code: z.string().max(20).optional().or(z.literal("")),
   })
-  .refine((v) => new Date().getFullYear() - v.birth_year >= MIN_AGE_YEARS, {
-    path: ["birth_year"],
-    message: key("minAge"),
-  });
+  .refine(
+    (v) =>
+      new Date().getFullYear() - v.birth_year >= MIN_AGE_YEARS ||
+      (v.school_code ?? "").replace(/[^A-Za-z0-9]/g, "").length > 0,
+    { path: ["birth_year"], message: key("minAge") }
+  );
 
 export type ProfileForm = z.output<typeof profileSchema>;
 export type ProfileFormInput = z.input<typeof profileSchema>;
@@ -147,8 +153,17 @@ export function toRegisterPayload(
   consent: { core: boolean; research: boolean; newsletter: boolean },
   basics: BasicsForm,
   wantsDeviceTest = false,
-  locale?: string
+  locale?: string,
+  school?: {
+    code: string;
+    guardian_name?: string | null;
+    guardian_relationship?: "parent" | "legal_guardian" | null;
+    guardian_consent?: boolean;
+  }
 ) {
+  // The class code is the registration's, not the profile's.
+  const { school_code: _code, ...profile } = basics;
+  void _code;
   return {
     email: account.email,
     password: account.password,
@@ -160,13 +175,15 @@ export function toRegisterPayload(
     newsletter: consent.newsletter,
     // "" is the select's "prefer not to answer"; the API spells an unanswered field null,
     // and null there means nobody asked - which is not the same as declining to say.
-    profile: { ...basics, sex_at_birth: clean(basics.sex_at_birth) },
+    profile: { ...profile, sex_at_birth: clean(basics.sex_at_birth) },
     // The fair's own question, asked only while a stand is open (V3-0013). The API
     // ignores it when it is not, so a stale tab cannot enqueue anyone.
     wants_device_test: wantsDeviceTest,
     wants_beta: false,
     // The language of this form: the account starts in it, and so does its first email.
     ...(locale ? { locale } : {}),
+    // A student's class code and, under 18, the guardian who accepts (V4-0012).
+    ...(school ? { school } : {}),
   };
 }
 

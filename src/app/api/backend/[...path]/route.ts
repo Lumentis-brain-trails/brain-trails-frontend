@@ -19,6 +19,8 @@ const ALLOWED_PREFIXES = [
   "annotations",
   "config",
   "taxonomies",
+  // the questionnaire before every run, personal per account (context variables)
+  "context-variables",
   // public: whether the stand is open, asked by the registration form (backend V3-0013)
   "fair",
   "workspaces",
@@ -33,6 +35,14 @@ const ALLOWED_PREFIXES = [
   "assignments/",
   // the client shell's own reads: what was assigned, what was run (V4-0006)
   "me/",
+  // schools (backend V4-0012): a class code's school (public), the teacher's list, a
+  // student's own enrolment and their consent at 18
+  "schools/",
+  // an admin's own recordings between environments: peers, links, imports (backend
+  // app.transfers); the manifest is fetched server to server, never through here
+  "transfers/peers",
+  "transfers/exports",
+  "transfers/imports",
 ];
 /** Request headers the backend reads besides auth and content type. */
 const FORWARDED_REQUEST_HEADERS = ["if-match"];

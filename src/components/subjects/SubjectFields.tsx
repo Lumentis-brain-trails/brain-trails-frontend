@@ -7,9 +7,14 @@
  * refuses one). Consent is a tick the operator attests, with the version of the signed
  * form; the date and the operator are stored by the backend. Unticked on an edit means
  * "no change": withdrawing consent is not a field (legal track).
+ *
+ * Minors (V4-0011), told by the year of birth: in a clinic the tick becomes a parent's or
+ * legal guardian's signature, with who signed and the child's own assent, and an optional
+ * guardian's consent to the averages; a laboratory is told it admits nobody under 18. A
+ * year of birth is needed to attest at all.
  */
 import { useTranslations } from "next-intl";
-import type { SubjectIn } from "@/lib/subjects";
+import { isMinor, type SubjectIn } from "@/lib/subjects";
 import { Field, Input, Select } from "@/components/ui";
 
 export interface SubjectForm {
@@ -21,6 +26,9 @@ export interface SubjectForm {
   language: "en" | "it";
   consent: boolean;
   consentVersion: string;
+  guardianRelationship: "" | "parent" | "legal_guardian";
+  assent: boolean;
+  researchConsent: boolean;
 }
 
 export const emptyForm: SubjectForm = {
@@ -32,28 +40,43 @@ export const emptyForm: SubjectForm = {
   language: "en",
   consent: false,
   consentVersion: "",
+  guardianRelationship: "",
+  assent: false,
+  researchConsent: false,
 };
 
 const SEXES = ["female", "male", "intersex", "prefer_not_to_say"] as const;
 const HANDS = ["right", "left", "ambidextrous"] as const;
+const GUARDIANS = ["parent", "legal_guardian"] as const;
+
+function yearOf(form: SubjectForm): number | null {
+  const year = Number(form.birthYear);
+  return form.birthYear && Number.isInteger(year) ? year : null;
+}
 
 /** The API body of a form: blanks are left out, a lab sends no name. */
 export function toBody(
   form: SubjectForm,
   { lab }: { lab: boolean }
 ): SubjectIn {
-  const year = Number(form.birthYear);
+  const year = yearOf(form);
+  const minor = isMinor(year);
   return {
     ...(form.code.trim() ? { code: form.code.trim() } : {}),
     ...(!lab && form.displayName.trim()
       ? { display_name: form.displayName.trim() }
       : {}),
-    birth_year: form.birthYear && Number.isInteger(year) ? year : null,
+    birth_year: year,
     sex_at_birth: (form.sex || null) as SubjectIn["sex_at_birth"],
     handedness: (form.handedness || null) as SubjectIn["handedness"],
     language: form.language,
     consent_attested: form.consent,
     consent_version: form.consent ? form.consentVersion.trim() || null : null,
+    consent_by: form.consent ? (minor ? "guardian" : "self") : null,
+    guardian_relationship:
+      form.consent && minor ? form.guardianRelationship || null : null,
+    assent: form.consent && minor && form.assent,
+    ...(minor && !lab ? { research_consent: form.researchConsent } : {}),
   };
 }
 
@@ -63,6 +86,7 @@ export function SubjectFields({
   lab,
   creating = false,
   consentGiven = false,
+  reconsent = false,
 }: {
   form: SubjectForm;
   onChange: (form: SubjectForm) => void;
@@ -71,9 +95,12 @@ export function SubjectFields({
   creating?: boolean;
   /** Editing a file whose consent is already attested: no tick to offer again. */
   consentGiven?: boolean;
+  /** A guardian's consent for someone now 18: their own is asked (V4-0011). */
+  reconsent?: boolean;
 }) {
   const t = useTranslations("subjects.form");
   const set = (patch: Partial<SubjectForm>) => onChange({ ...form, ...patch });
+  const minor = isMinor(yearOf(form));
   return (
     <>
       <Field label={t("code")} hint={creating ? t("codeHint") : undefined}>
@@ -101,6 +128,7 @@ export function SubjectFields({
             min={1900}
             max={2100}
             value={form.birthYear}
+            required={form.consent}
             onChange={(e) => set({ birthYear: e.target.value })}
           />
         </Field>
@@ -140,8 +168,16 @@ export function SubjectFields({
           <option value="it">{t("languages.it")}</option>
         </Select>
       </Field>
-      {!consentGiven && (
+      {lab && minor && (
+        <p role="alert" className="text-[14px] text-danger">
+          {t("labMinor")}
+        </p>
+      )}
+      {!consentGiven && !(lab && minor) && (
         <div className="space-y-3 rounded-xl bg-surface-2 p-4">
+          {reconsent && (
+            <p className="text-[14px] text-ink-2">{t("reconsent")}</p>
+          )}
           <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"
@@ -150,12 +186,17 @@ export function SubjectFields({
               className="mt-0.5 h-5 w-5 rounded-md accent-(--accent)"
             />
             <span>
-              <span className="block">{t("consent")}</span>
+              <span className="block">
+                {minor ? t("consentGuardian") : t("consent")}
+              </span>
               <span className="block text-[13px] text-ink-3">
-                {t("consentHint")}
+                {minor ? t("consentGuardianHint") : t("consentHint")}
               </span>
             </span>
           </label>
+          {form.consent && !form.birthYear && (
+            <p className="text-[13px] text-ink-3">{t("birthYearForConsent")}</p>
+          )}
           {form.consent && (
             <Field label={t("consentVersion")}>
               <Input
@@ -166,7 +207,56 @@ export function SubjectFields({
               />
             </Field>
           )}
+          {form.consent && minor && (
+            <>
+              <Field label={t("guardianRelationship")}>
+                <Select
+                  value={form.guardianRelationship}
+                  required
+                  onChange={(e) =>
+                    set({
+                      guardianRelationship: e.target
+                        .value as SubjectForm["guardianRelationship"],
+                    })
+                  }
+                >
+                  <option value="">{t("none")}</option>
+                  {GUARDIANS.map((g) => (
+                    <option key={g} value={g}>
+                      {t(`guardianRelationships.${g}`)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={form.assent}
+                  required
+                  onChange={(e) => set({ assent: e.target.checked })}
+                  className="mt-0.5 h-5 w-5 rounded-md accent-(--accent)"
+                />
+                <span>{t("assent")}</span>
+              </label>
+            </>
+          )}
         </div>
+      )}
+      {minor && !lab && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-surface-2 p-4">
+          <input
+            type="checkbox"
+            checked={form.researchConsent}
+            onChange={(e) => set({ researchConsent: e.target.checked })}
+            className="mt-0.5 h-5 w-5 rounded-md accent-(--accent)"
+          />
+          <span>
+            <span className="block">{t("researchConsent")}</span>
+            <span className="block text-[13px] text-ink-3">
+              {t("researchConsentHint")}
+            </span>
+          </span>
+        </label>
       )}
     </>
   );

@@ -5,6 +5,8 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const jar = new Map<string, string>();
 vi.mock("next/headers", () => ({
@@ -99,6 +101,42 @@ describe("the bt-ops proxy", () => {
     expect(init.headers["X-Client-IP"]).toBeUndefined();
   });
 
+  test("reaches Statistics' definitions", async () => {
+    jar.set("bto_session", "ops-token");
+    const res = await opsProxy.GET(
+      new NextRequest("http://c/api/ops/stats/definitions"),
+      ctx(["stats", "definitions"])
+    );
+    expect(res.status).toBe(200);
+    expect(call(0).url).toBe("http://localhost:8100/ops/v1/stats/definitions");
+  });
+
+  test("reaches the Pipeline lab's runs with the environment, and posts reruns", async () => {
+    jar.set("bto_session", "ops-token");
+    const id = "0b6c1f0e-8a52-4bb2-9d0b-3c4c8f9f1a11";
+    const res = await opsProxy.GET(
+      new NextRequest(`http://c/api/ops/lab/runs/${id}`, {
+        headers: { "x-ops-env": "beta" },
+      }),
+      ctx(["lab", "runs", id])
+    );
+    expect(res.status).toBe(200);
+    expect(call(0).url).toBe(`http://localhost:8100/ops/v1/lab/runs/${id}`);
+    expect(call(0).init.headers["X-Ops-Env"]).toBe("beta");
+    const again = await opsProxy.POST(
+      new NextRequest(`http://c/api/ops/lab/runs/${id}/rerun`, {
+        method: "POST",
+        headers: { "x-ops-env": "beta" },
+      }),
+      ctx(["lab", "runs", id, "rerun"])
+    );
+    expect(again.status).toBe(200);
+    expect(call(1).url).toBe(
+      `http://localhost:8100/ops/v1/lab/runs/${id}/rerun`
+    );
+    expect(call(1).init.method).toBe("POST");
+  });
+
   test("reaches Health's log route with its query", async () => {
     jar.set("bto_session", "ops-token");
     const res = await opsProxy.GET(
@@ -169,6 +207,118 @@ describe("the bt-ops proxy", () => {
     );
     expect(login.status).toBe(503);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("environments (OPS-0005)", () => {
+  test("X-Ops-Env goes to bt-ops when it names dev, beta or prod", async () => {
+    jar.set("bto_session", "ops-token");
+    for (const env of ["dev", "beta", "prod"]) {
+      await opsProxy.GET(
+        new NextRequest("http://c/api/ops/snapshots/statistics.signups", {
+          headers: { "x-ops-env": env },
+        }),
+        ctx(["snapshots", "statistics.signups"])
+      );
+    }
+    expect(
+      fetchSpy.mock.calls.map((_, i) => call(i).init.headers["X-Ops-Env"])
+    ).toEqual(["dev", "beta", "prod"]);
+  });
+
+  test("any other value is dropped, and bt-ops reads home", async () => {
+    jar.set("bto_session", "ops-token");
+    for (const env of ["PROD", "prod,dev", "staging", "prod2", ""]) {
+      await opsProxy.GET(
+        new NextRequest("http://c/api/ops/stats/cohorts", {
+          headers: { "x-ops-env": env },
+        }),
+        ctx(["stats", "cohorts"])
+      );
+    }
+    await opsProxy.GET(new NextRequest("http://c/x"), ctx(["envs"]));
+    for (let i = 0; i < fetchSpy.mock.calls.length; i++)
+      expect(call(i).init.headers["X-Ops-Env"]).toBeUndefined();
+    expect(call(5).url).toBe("http://localhost:8100/ops/v1/envs");
+  });
+
+  test("the product proxy never passes it on", async () => {
+    jar.set("bto_product", "p");
+    await productProxy.GET(
+      new NextRequest("http://c/x", { headers: { "x-ops-env": "prod" } }),
+      ctx(["admin", "users"])
+    );
+    expect(call(0).init.headers["X-Ops-Env"]).toBeUndefined();
+  });
+});
+
+describe("access tokens (OPS-0005)", () => {
+  const TOKEN = "btc_" + "A1b2_C3d4-E5f6G7h8I9j0";
+  const withBearer = (
+    url: string,
+    init: { method?: string; body?: string } = {}
+  ) =>
+    new NextRequest(url, {
+      ...init,
+      headers: { authorization: `Bearer ${TOKEN}` },
+    });
+
+  test("without a cookie, a btc_ token reaches documents, reads and writes", async () => {
+    await opsProxy.GET(
+      withBearer("http://c/api/ops/documents?kind=report"),
+      ctx(["documents"])
+    );
+    await opsProxy.PUT(
+      withBearer("http://c/api/ops/documents/roadmap-report", {
+        method: "PUT",
+        body: "{}",
+      }),
+      ctx(["documents", "roadmap-report"])
+    );
+    expect(call(0).url).toBe(
+      "http://localhost:8100/ops/v1/documents?kind=report"
+    );
+    expect(call(0).init.headers.Authorization).toBe(`Bearer ${TOKEN}`);
+    expect(call(0).init.headers["X-Ops-Key"]).toBe("local-ops-bff-key");
+    expect(call(1).init.method).toBe("PUT");
+    expect(call(1).init.headers.Authorization).toBe(`Bearer ${TOKEN}`);
+  });
+
+  test("on any other path it is not forwarded: bt-ops sees a signed-out call", async () => {
+    for (const path of [["me"], ["tokens"], ["snapshots", "x"], ["envs"]]) {
+      await opsProxy.GET(withBearer("http://c/x"), ctx(path));
+    }
+    for (let i = 0; i < 4; i++)
+      expect(call(i).init.headers.Authorization).toBeUndefined();
+  });
+
+  test("only the btc_ shape is forwarded", async () => {
+    for (const auth of [
+      "Bearer ops-session-token",
+      "Bearer btc_short",
+      `bearer ${TOKEN}`,
+      `Bearer ${TOKEN} extra`,
+      `Basic ${TOKEN}`,
+      `Bearer btc_${"a".repeat(20)}!`,
+    ]) {
+      await opsProxy.GET(
+        new NextRequest("http://c/x", { headers: { authorization: auth } }),
+        ctx(["documents"])
+      );
+    }
+    for (let i = 0; i < fetchSpy.mock.calls.length; i++)
+      expect(call(i).init.headers.Authorization).toBeUndefined();
+  });
+
+  test("with a session cookie, the cookie is the caller and the header is ignored", async () => {
+    jar.set("bto_session", "ops-token");
+    await opsProxy.GET(withBearer("http://c/x"), ctx(["documents"]));
+    expect(call(0).init.headers.Authorization).toBe("Bearer ops-token");
+  });
+
+  test("a token never reaches the product API", async () => {
+    await productProxy.GET(withBearer("http://c/x"), ctx(["admin", "users"]));
+    expect(call(0).init.headers.Authorization).toBeUndefined();
   });
 });
 
@@ -398,4 +548,23 @@ describe("the visitor's address", () => {
     await opsProxy.GET(new NextRequest("http://c/api/ops/me"), ctx(["me"]));
     expect(call(3).init.headers["X-Client-IP"]).toBeUndefined();
   });
+});
+
+test("every bt-ops route the apps read is on the proxy's allow-list", () => {
+  // A new app's route left off the list fails in the browser before reaching bt-ops,
+  // with nothing in its logs; the contract names every route, so check against it.
+  const types = readFileSync(
+    path.resolve(__dirname, "../../lib/ops-types.ts"),
+    "utf8"
+  );
+  const first = new Set(
+    [...types.matchAll(/"\/ops\/v1\/([a-z_-]+)/g)].map((m) => m[1])
+  );
+  first.delete("session"); // sign-in has its own routes
+  expect(first.size).toBeGreaterThan(5);
+  expect(
+    [...first].filter(
+      (s) => !(opsProxy.OPS_ALLOWED as readonly string[]).includes(s)
+    )
+  ).toEqual([]);
 });

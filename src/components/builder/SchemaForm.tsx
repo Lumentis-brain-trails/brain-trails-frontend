@@ -84,7 +84,7 @@ export function SchemaForm({
   const [open, setOpen] = useState(false);
   const described = describeFields(schema, value);
   const fields: PresentedField[] = kind
-    ? present(kind, described, words)
+    ? present(kind, described, words, [], value)
     : described.map((field) => ({ ...field, advanced: false }));
   const set: SetAt = (path, next) =>
     onChange(path.length === 0 ? next : setAtPath(value ?? {}, path, next));

@@ -21,6 +21,20 @@ const KNOWN = [
   "cluster_forbidden",
   "no_pod",
   "invalid_pod",
+  "stale_roadmap",
+  "duplicate_id",
+  "depended_on",
+  "invalid_roadmap",
+  "id_mismatch",
+  "no_item",
+  "validation_error",
+  "unknown_env",
+  "stale_document",
+  "env_mismatch",
+  "token_not_allowed",
+  "lab_unavailable",
+  "lab_busy",
+  "no_run",
 ] as const;
 
 type Known = (typeof KNOWN)[number];

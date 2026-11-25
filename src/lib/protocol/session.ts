@@ -11,10 +11,10 @@
  * sending an unlisted label would fail at the database rather than at the API.
  */
 
-import { api } from "@/lib/api";
+import { api, ApiRequestError } from "@/lib/api";
 import type { CaptureFiles } from "@/lib/muse/captureFiles";
 import { uploadToStorage } from "@/lib/upload";
-import type { WireEvent } from "./marker";
+import { MAX_EVENTS_PER_BATCH, type WireEvent } from "./marker";
 import type { components } from "@/lib/api-types";
 import type { ProtocolDefinition } from "./types";
 
@@ -39,6 +39,8 @@ export interface StartSessionOptions {
    * with visual blocks without `photosensitivity` and records it in the timeline (H4).
    */
   acknowledged?: "photosensitivity"[];
+  /** The operator console on this machine drives the run (T1): labels it for the stats. */
+  console?: "local";
 }
 
 /**
@@ -63,6 +65,7 @@ export function startSession(
     ...(options.acknowledged?.length
       ? { acknowledged: options.acknowledged }
       : {}),
+    ...(options.console ? { console: options.console } : {}),
   });
 }
 
@@ -117,25 +120,75 @@ export interface FinishOptions {
   aborted: boolean;
   /** The uploaded capture; omitted only for an aborted run that captured nothing. */
   capture?: CaptureKeys;
-  /** The whole timeline, re-sent; the backend drops what it already has. */
+  /**
+   * Events the batches may not have delivered; the backend drops what it already has.
+   * Posted through the events endpoint in batches before the finish itself, so no
+   * request grows with the length of the run (the BFF caps a body at 4.5 MB).
+   */
   events?: WireEvent[];
 }
 
 /**
- * Close a session: store its capture, merge its timeline, start the analysis.
- *
- * Idempotent on the backend, so a failed call can simply be retried.
+ * What a save got through, kept by the caller across retries so that a retry repeats
+ * only what is left.
  */
-export function finishSession(
+export interface FinishProgress {
+  /**
+   * Set once every owed event was delivered and finish was sent. From then on a retry
+   * sends finish alone: the events are in, and if the first finish closed the session
+   * (its answer lost), the events endpoint would only answer 409 `session_closed`.
+   */
+  finishSent?: boolean;
+}
+
+/**
+ * The backend's answer to anything posted to a session that has already ended. For a
+ * save it means the first finish went through and only its answer was lost.
+ */
+export function isSessionClosed(error: unknown): boolean {
+  return (
+    error instanceof ApiRequestError &&
+    error.status === 409 &&
+    error.error.code === "session_closed"
+  );
+}
+
+/**
+ * Close a session: send the events still owed, store the capture, merge the timeline,
+ * start the analysis.
+ *
+ * Idempotent on the backend (events are de-duplicated on `(t, type, seq)` at finish, a
+ * finish on a closed session returns it unchanged), so a failed call can simply be
+ * retried with the same `progress`. A 409 `session_closed` from the events endpoint
+ * means an earlier finish already closed the run: the remaining batches are dropped and
+ * finish is asked for the closed session. Should finish itself answer `session_closed`,
+ * the run is saved too and the result is `null`. Anything else throws.
+ */
+export async function finishSession(
   sessionId: string,
-  options: FinishOptions
-): Promise<StimulusSession> {
-  return api.post<StimulusSession>(`sessions/${sessionId}/finish`, {
-    summary: options.summary,
-    aborted: options.aborted,
-    ...(options.capture ? { capture: options.capture } : {}),
-    ...(options.events ? { events: options.events } : {}),
-  });
+  options: FinishOptions,
+  progress: FinishProgress = {}
+): Promise<StimulusSession | null> {
+  const events = progress.finishSent ? [] : (options.events ?? []);
+  try {
+    for (let i = 0; i < events.length; i += MAX_EVENTS_PER_BATCH)
+      await api.post(`sessions/${sessionId}/events`, {
+        events: events.slice(i, i + MAX_EVENTS_PER_BATCH),
+      });
+  } catch (e) {
+    if (!isSessionClosed(e)) throw e;
+  }
+  progress.finishSent = true;
+  try {
+    return await api.post<StimulusSession>(`sessions/${sessionId}/finish`, {
+      summary: options.summary,
+      aborted: options.aborted,
+      ...(options.capture ? { capture: options.capture } : {}),
+    });
+  } catch (e) {
+    if (isSessionClosed(e)) return null;
+    throw e;
+  }
 }
 
 export type ResolvedProtocol =

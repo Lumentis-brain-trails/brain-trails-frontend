@@ -14,6 +14,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { MIN_AGE_YEARS } from "@/lib/schemas";
 import type { Edition } from "@/lib/workspace";
 
 export type Subject = components["schemas"]["SubjectOut"];
@@ -24,6 +25,19 @@ export type Assignment = components["schemas"]["AssignmentOut"];
 export type AssignmentIn = components["schemas"]["AssignmentIn"];
 export type MyAssignment = components["schemas"]["MyAssignment"];
 export type MySession = components["schemas"]["MySession"];
+
+/**
+ * Whether someone born in `year` is under 18 this calendar year (V4-0011), the backend's
+ * `app.subjects.is_minor`: only a year is known, so the test is coarse at the boundary.
+ * An unknown year is not a minor; the backend asks for one before consent is attested.
+ */
+export function isMinor(
+  year: number | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (year == null || !Number.isInteger(year)) return false;
+  return now.getFullYear() - year < MIN_AGE_YEARS;
+}
 
 /** The message namespace of an edition's words for the people it records. */
 export type SubjectWords = "patients" | "participants";
@@ -88,6 +102,15 @@ export function dueAtFromDate(value: string): string | null {
 }
 
 export const SUBJECTS_QUERY_KEY = "subjects";
+
+/**
+ * The query key of one subject's page (`GET /subjects/{id}`). Under
+ * `SUBJECTS_QUERY_KEY`, so invalidating the roster refreshes it too; whoever changes one
+ * subject alone (its sharing, T6) invalidates this.
+ */
+export function subjectQueryKey(subjectId: string) {
+  return [SUBJECTS_QUERY_KEY, "one", subjectId] as const;
+}
 
 /** The subjects of an organisation the caller may know of (`view=mine`: their own). */
 export function useSubjects(

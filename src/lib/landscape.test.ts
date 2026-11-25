@@ -1,8 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
+  DEFAULT_EPSILON,
   densityField,
-  energyField,
+  potential,
+  potentialCeiling,
   sampleField,
+  wellsOf,
   type LandscapeNode,
 } from "@/lib/landscape";
 
@@ -57,34 +60,61 @@ describe("densityField", () => {
   });
 });
 
-describe("energyField", () => {
-  test("puts the deepest basin at zero and the empty ground above it", () => {
-    const energy = energyField(densityField(TWO_NODES, 1, 64));
-    const flat = energy.z.flat();
-    expect(Math.min(...flat)).toBeCloseTo(0);
-    expect(Math.max(...flat)).toBeGreaterThan(0);
+describe("potential", () => {
+  test("is -log(p + epsilon), capped at the cutoff", () => {
+    expect(potential(1, 0.01)).toBeCloseTo(-Math.log(1.01));
+    expect(potential(0, 0.01)).toBeCloseTo(-Math.log(0.01));
+    expect(potential(0, 0.01, 2)).toBe(2);
+    // a negative share is empty ground, and a bad epsilon falls back to the default
+    expect(potential(-1, 0.01)).toBeCloseTo(-Math.log(0.01));
+    expect(potential(0, 0)).toBeCloseTo(-Math.log(DEFAULT_EPSILON));
   });
 
-  test("a well sits below a lighter one", () => {
-    const density = densityField(TWO_NODES, 1, 64);
-    const energy = energyField(density);
-    const heavy = Math.min(...energy.z.map((row) => row[column(energy.xs, 0)]));
-    const light = Math.min(
-      ...energy.z.map((row) => row[column(energy.xs, 10)])
+  test("its ceiling is the cutoff, or empty ground's", () => {
+    expect(potentialCeiling(0.01, 3)).toBe(3);
+    expect(potentialCeiling(0.01)).toBeCloseTo(-Math.log(0.01));
+    expect(potentialCeiling(-1)).toBeCloseTo(-Math.log(DEFAULT_EPSILON));
+  });
+});
+
+describe("wellsOf", () => {
+  const grid = [
+    [1, 0.5, 0.1],
+    [0.02, 0.01, 0],
+  ];
+
+  test("the peak is the deepest well, at zero, and less time is higher ground", () => {
+    const { z } = wellsOf(grid);
+    expect(z[0][0]).toBeCloseTo(0);
+    expect(z[0][1]).toBeGreaterThan(z[0][0]);
+    expect(z[0][2]).toBeGreaterThan(z[0][1]);
+    expect(Math.max(...z.flat())).toBeCloseTo(1);
+  });
+
+  test("ground below the explored share is one flat plateau, marked unexplored", () => {
+    const { z, depth, explored } = wellsOf(grid);
+    expect(z[1][1]).toBe(1);
+    expect(z[1][2]).toBe(1);
+    expect(explored[1]).toEqual([true, false, false]);
+    expect(depth[1].slice(1)).toEqual([0, 0]);
+    expect(depth[0][0]).toBeCloseTo(1);
+  });
+
+  test("agrees with the energy layers' potential, rescaled to [0, 1]", () => {
+    const { z } = wellsOf(grid, 0.01, 0.02);
+    const bottom = potential(1, 0.01);
+    const top = potential(0.02, 0.01);
+    expect(z[0][1]).toBeCloseTo(
+      (potential(0.5, 0.01) - bottom) / (top - bottom)
     );
-    expect(heavy).toBeLessThan(light);
   });
 
-  test("stays finite far from every node, where the density underflows", () => {
-    const energy = energyField(
-      densityField([{ x: 0, y: 0, mass: 5 }], 0.2, 64, 20)
-    );
-    expect(energy.z.flat().every((v) => Number.isFinite(v))).toBe(true);
-  });
-
-  test("passes an empty field straight through", () => {
-    const empty = { xs: [], ys: [], z: [] };
-    expect(energyField(empty)).toEqual(empty);
+  test("reads a grid by its own peak, and an empty one as all plateau", () => {
+    const half = wellsOf([[0.5, 0.25]]);
+    const full = wellsOf([[1, 0.5]]);
+    expect(half.z).toEqual(full.z);
+    expect(wellsOf([[0, 0]]).z).toEqual([[1, 1]]);
+    expect(wellsOf([]).z).toEqual([]);
   });
 });
 

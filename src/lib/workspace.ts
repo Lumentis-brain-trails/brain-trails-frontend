@@ -49,10 +49,13 @@ export function useWorkspaces() {
 
 /**
  * Whether the caller can work in it: their personal workspace always; an organisation
- * once it is active and they hold a seat there (a request has no seat yet).
+ * once it is active and they hold a seat there (a request has no seat yet). A school is
+ * never worked in (backend V4-0012): it holds no library anyone builds and nobody's
+ * data, and its teacher reaches it from `/school`, not from the switcher.
  */
 export function isUsable(workspace: Workspace): boolean {
   if (workspace.kind === "personal") return true;
+  if (workspace.kind === "school") return false;
   return workspace.status === "active" && workspace.relations.length > 0;
 }
 
