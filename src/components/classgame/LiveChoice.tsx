@@ -4,12 +4,14 @@
  * A live question as both screens draw it: the prompt, its figures, and the options
  * with a letter each. On the teacher's projector every option carries a bar of its
  * votes; on a student's phone the options are big buttons. Once the answer is revealed
- * the right option is marked on both, and the count is shown to everyone.
+ * the right option is marked on both, and the count is shown to everyone. Options come
+ * in `QuestionCard`'s seeded order, so letters match on every screen.
  */
 import { useTranslations } from "next-intl";
 import { Icon, cn } from "@/components/ui";
 import { LearningFigure } from "@/components/learning/LearningFigure";
 import { useWords } from "@/components/learning/QuestionCard";
+import { shuffled } from "@/lib/learning/questions";
 import {
   type Phase,
   type ShownChoice,
@@ -44,7 +46,9 @@ export function LiveChoice({
 }) {
   const t = useTranslations("classGame");
   const words = useWords();
-  const ids = question.options.map((o) => o.id);
+  // the order the Learning page shows (seeded by the question), the same on every screen
+  const options = shuffled(question.options, question.id);
+  const ids = options.map((o) => o.id);
   const pct = shares(tally, ids);
   const top = leaders(tally, ids);
   const revealed = phase === "revealed";
@@ -82,7 +86,7 @@ export function LiveChoice({
           big && !pictures && "md:grid-cols-2"
         )}
       >
-        {question.options.map((o, i) => {
+        {options.map((o, i) => {
           const right = revealed && answer === o.id;
           const picked = mine === o.id;
           const body = (
