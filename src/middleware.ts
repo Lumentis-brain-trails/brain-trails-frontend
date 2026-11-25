@@ -22,6 +22,8 @@ export const config = {
     "/organisations/:path*",
     "/school",
     "/waiting",
+    "/learning",
+    "/learning/:path*",
     "/account",
     "/library",
     "/library/:path*",
