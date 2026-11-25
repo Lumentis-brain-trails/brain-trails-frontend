@@ -4225,6 +4225,88 @@
       }
     }
   },
+  "classGame": {
+    "options": "Answers",
+    "option": "Answer {letter}",
+    "votes": "{n, plural, =1 {# vote} other {# votes}}",
+    "host": {
+      "open": "Start a class game",
+      "off": "Class games are not available here.",
+      "title": "Class game",
+      "intro": "Put a Learning question on the projector and let the class vote from their phones. Your students see a note inviting them in as soon as you start.",
+      "privacy": "You see how many voted for each answer, never who voted what.",
+      "ended": "The game is over. Every student's screen has been told.",
+      "start": "Start the game",
+      "again": "Start a new game",
+      "unavailable": "The live service is not available in this environment.",
+      "questions": "Questions",
+      "from": "{module}, step {step}",
+      "players": "{n, plural, =0 {No students connected yet} =1 {1 student connected} other {# students connected}}",
+      "connecting": "Connecting...",
+      "voted": "{n, plural, =1 {1 vote} other {# votes}} so far",
+      "end": "End the game",
+      "pick": "Pick a question",
+      "pickHint": "Choose one from the list, or start from the first.",
+      "first": "Ask the first question",
+      "close": "Stop the vote",
+      "reopen": "Open the vote again",
+      "reveal": "Show the answer",
+      "next": "Next question",
+      "hideCount": "Hide the count",
+      "showCount": "Show the count",
+      "games": "Class games",
+      "braid": "The braided path",
+      "braidFrom": "Brain plasticity",
+      "lesson": "Teach a module live",
+      "lessonFrom": "Learning"
+    },
+    "player": {
+      "off": "Class games are not available here.",
+      "none": "No class game right now",
+      "noneHint": "When your teacher starts one, it shows up here by itself.",
+      "joining": "Joining your class...",
+      "over": "The game is over",
+      "score": "{right} of {asked} right",
+      "in": "You're in!",
+      "wait": "Wait for your teacher's first question.",
+      "vote": "Tap your answer.",
+      "voted": "Your vote is in. You can change it until the vote stops.",
+      "closed": "The vote has stopped.",
+      "closedVoted": "The vote has stopped. Your answer is in.",
+      "right": "Right!",
+      "wrong": "Not this time. Read why below.",
+      "missed": "You didn't vote on this one.",
+      "poll": "Here is how the class voted.",
+      "reconnecting": "Connection lost, reconnecting...",
+      "moved": "The class has chosen. Watch the board."
+    },
+    "call": {
+      "title": "Your class has a live game",
+      "join": "Join"
+    },
+    "braid": {
+      "title": "The braided path",
+      "round": "Round {round} of {rounds}, choice {steps}",
+      "history": "Choices per round: {steps}",
+      "start": "Start the first round",
+      "next": "Next round",
+      "arrived": "The class reached the end in {steps} choices.",
+      "over": "Every round played. Did the path get shorter and thicker?",
+      "again": "Play again"
+    },
+    "lesson": {
+      "module": "Module",
+      "where": "Step {step} of {steps}, {shown} of {questions} questions out",
+      "back": "Back",
+      "nextQuestion": "Show the next question",
+      "nextStep": "Next step",
+      "right": "Right",
+      "wrong": "Wrong",
+      "shown": "Asked for the answer",
+      "waiting": "Not answered yet",
+      "labHint": "Counts the students who reached the goal of this step's exercise."
+    }
+  },
   "neurofeedback": {
     "title": "Neurofeedback",
     "intro": "Train toward a place of your own brain landscape. The headband's signal is placed on your map every second, and what you watch follows how close you are.",
@@ -4374,6 +4456,19 @@
       "refuseTitle": "Refuse {name}",
       "reason": "Reason (optional)",
       "reasonHint": "The student reads it when they sign in. It is not emailed."
+    },
+    "speakers": {
+      "title": "Teachers and speakers",
+      "intro": "Anyone here can run this class: the class code, the students and the class game. Invite a speaker who will present a lesson; they get a link by email.",
+      "teacher": "Teacher",
+      "speaker": "Speaker",
+      "member": "Member",
+      "you": "you",
+      "invited": "Invited",
+      "revoke": "Cancel",
+      "email": "Speaker's email",
+      "invite": "Invite as speaker",
+      "link": "Send this link yourself:"
     }
   },
   "learning": {

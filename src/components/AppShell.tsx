@@ -14,6 +14,7 @@ import {
 } from "@/lib/landscapeStatus";
 import { useFeature } from "@/lib/features";
 import { heldRedirect, taughtSchools } from "@/lib/schools";
+import { ClassGameCall } from "@/components/classgame/ClassGameCall";
 import { useSignOut } from "@/lib/signOut";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
@@ -207,6 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-main flex min-h-screen flex-col pt-14 md:pt-0 md:pl-16">
         {children}
       </div>
+      <ClassGameCall />
     </>
   );
 }
