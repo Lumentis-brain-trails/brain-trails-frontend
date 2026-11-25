@@ -8,9 +8,11 @@
  */
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { LessonFollow } from "@/components/classgame/LessonFollow";
 import { LiveButtons } from "@/components/classgame/LiveButtons";
 import { LiveChoice } from "@/components/classgame/LiveChoice";
 import { Card, EmptyState, Spinner } from "@/components/ui";
+import { asLesson } from "@/lib/classgame/lesson";
 import { useMyGame, usePlayerGame } from "@/lib/classgame/useClassGame";
 import { useFeature } from "@/lib/features";
 
@@ -53,6 +55,7 @@ function PlayerStage() {
   const t = useTranslations("classGame.player");
   const game = usePlayerGame(true);
   const { view } = game;
+  const lesson = asLesson(view.question);
   const [score, setScore] = useState({ right: 0, asked: 0 });
   const counted = useRef(new Set<string>());
 
@@ -114,6 +117,13 @@ function PlayerStage() {
         <Card>
           <EmptyState title={t("in")} text={t("wait")} />
         </Card>
+      ) : lesson ? (
+        <LessonFollow
+          round={lesson}
+          onVerdict={(question, verdict) => {
+            if (question === lesson.counts) game.vote(verdict);
+          }}
+        />
       ) : !view.question.choice ? (
         <Card className="space-y-4">
           <LiveButtons

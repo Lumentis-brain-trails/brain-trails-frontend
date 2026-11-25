@@ -4256,7 +4256,9 @@
       "showCount": "Mostra il conteggio",
       "games": "Giochi di classe",
       "braid": "Il sentiero intrecciato",
-      "braidFrom": "Plasticità cerebrale"
+      "braidFrom": "Plasticità cerebrale",
+      "lesson": "Insegna un modulo dal vivo",
+      "lessonFrom": "Learning"
     },
     "player": {
       "off": "I giochi di classe non sono disponibili qui.",
@@ -4291,6 +4293,18 @@
       "arrived": "La classe è arrivata in fondo in {steps} scelte.",
       "over": "Tutti i giri giocati. Il sentiero è diventato più corto e più spesso?",
       "again": "Gioca di nuovo"
+    },
+    "lesson": {
+      "module": "Modulo",
+      "where": "Passo {step} di {steps}, {shown} domande su {questions}",
+      "back": "Indietro",
+      "nextQuestion": "Mostra la domanda successiva",
+      "nextStep": "Passo successivo",
+      "right": "Giuste",
+      "wrong": "Sbagliate",
+      "shown": "Hanno chiesto la risposta",
+      "waiting": "Non hanno ancora risposto",
+      "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo."
     }
   },
   "neurofeedback": {

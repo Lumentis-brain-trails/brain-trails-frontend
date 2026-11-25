@@ -4256,7 +4256,9 @@
       "showCount": "Show the count",
       "games": "Class games",
       "braid": "The braided path",
-      "braidFrom": "Brain plasticity"
+      "braidFrom": "Brain plasticity",
+      "lesson": "Teach a module live",
+      "lessonFrom": "Learning"
     },
     "player": {
       "off": "Class games are not available here.",
@@ -4291,6 +4293,18 @@
       "arrived": "The class reached the end in {steps} choices.",
       "over": "Every round played. Did the path get shorter and thicker?",
       "again": "Play again"
+    },
+    "lesson": {
+      "module": "Module",
+      "where": "Step {step} of {steps}, {shown} of {questions} questions out",
+      "back": "Back",
+      "nextQuestion": "Show the next question",
+      "nextStep": "Next step",
+      "right": "Right",
+      "wrong": "Wrong",
+      "shown": "Asked for the answer",
+      "waiting": "Not answered yet",
+      "labHint": "Counts the students who reached the goal of this step's exercise."
     }
   },
   "neurofeedback": {
