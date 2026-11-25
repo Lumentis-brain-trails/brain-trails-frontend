@@ -4225,6 +4225,60 @@
       }
     }
   },
+  "classGame": {
+    "options": "Answers",
+    "option": "Answer {letter}",
+    "votes": "{n, plural, =1 {# vote} other {# votes}}",
+    "host": {
+      "open": "Start a class game",
+      "off": "Class games are not available here.",
+      "title": "Class game",
+      "intro": "Put a Learning question on the projector and let the class vote from their phones. Your students see a note inviting them in as soon as you start.",
+      "privacy": "You see how many voted for each answer, never who voted what.",
+      "ended": "The game is over. Every student's screen has been told.",
+      "start": "Start the game",
+      "again": "Start a new game",
+      "unavailable": "The live service is not available in this environment.",
+      "questions": "Questions",
+      "from": "{module}, step {step}",
+      "players": "{n, plural, =0 {No students connected yet} =1 {1 student connected} other {# students connected}}",
+      "connecting": "Connecting...",
+      "voted": "{n, plural, =1 {1 vote} other {# votes}} so far",
+      "end": "End the game",
+      "pick": "Pick a question",
+      "pickHint": "Choose one from the list, or start from the first.",
+      "first": "Ask the first question",
+      "close": "Stop the vote",
+      "reopen": "Open the vote again",
+      "reveal": "Show the answer",
+      "next": "Next question",
+      "hideCount": "Hide the count",
+      "showCount": "Show the count"
+    },
+    "player": {
+      "off": "Class games are not available here.",
+      "none": "No class game right now",
+      "noneHint": "When your teacher starts one, it shows up here by itself.",
+      "joining": "Joining your class...",
+      "over": "The game is over",
+      "score": "{right} of {asked} right",
+      "in": "You're in!",
+      "wait": "Wait for your teacher's first question.",
+      "vote": "Tap your answer.",
+      "voted": "Your vote is in. You can change it until the vote stops.",
+      "closed": "The vote has stopped.",
+      "closedVoted": "The vote has stopped. Your answer is in.",
+      "right": "Right!",
+      "wrong": "Not this time. Read why below.",
+      "missed": "You didn't vote on this one.",
+      "poll": "Here is how the class voted.",
+      "reconnecting": "Connection lost, reconnecting..."
+    },
+    "call": {
+      "title": "Your class has a live game",
+      "join": "Join"
+    }
+  },
   "neurofeedback": {
     "title": "Neurofeedback",
     "intro": "Train toward a place of your own brain landscape. The headband's signal is placed on your map every second, and what you watch follows how close you are.",

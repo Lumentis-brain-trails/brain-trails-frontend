@@ -4225,6 +4225,60 @@
       }
     }
   },
+  "classGame": {
+    "options": "Risposte",
+    "option": "Risposta {letter}",
+    "votes": "{n, plural, =1 {# voto} other {# voti}}",
+    "host": {
+      "open": "Avvia un gioco di classe",
+      "off": "I giochi di classe non sono disponibili qui.",
+      "title": "Gioco di classe",
+      "intro": "Proietta una domanda di Learning e fai votare la classe dal telefono. I tuoi studenti vedono un invito a entrare appena inizi.",
+      "privacy": "Vedi quanti hanno votato ogni risposta, mai chi ha votato cosa.",
+      "ended": "Il gioco è finito. Lo schermo di ogni studente è stato avvisato.",
+      "start": "Inizia il gioco",
+      "again": "Inizia un nuovo gioco",
+      "unavailable": "Il servizio live non è disponibile in questo ambiente.",
+      "questions": "Domande",
+      "from": "{module}, passo {step}",
+      "players": "{n, plural, =0 {Ancora nessuno studente collegato} =1 {1 studente collegato} other {# studenti collegati}}",
+      "connecting": "Connessione in corso...",
+      "voted": "{n, plural, =1 {1 voto} other {# voti}} finora",
+      "end": "Termina il gioco",
+      "pick": "Scegli una domanda",
+      "pickHint": "Scegline una dall'elenco, o parti dalla prima.",
+      "first": "Fai la prima domanda",
+      "close": "Chiudi il voto",
+      "reopen": "Riapri il voto",
+      "reveal": "Mostra la risposta",
+      "next": "Domanda successiva",
+      "hideCount": "Nascondi il conteggio",
+      "showCount": "Mostra il conteggio"
+    },
+    "player": {
+      "off": "I giochi di classe non sono disponibili qui.",
+      "none": "Nessun gioco di classe in corso",
+      "noneHint": "Quando il tuo insegnante ne avvia uno, compare qui da solo.",
+      "joining": "Stai entrando nella tua classe...",
+      "over": "Il gioco è finito",
+      "score": "{right} giuste su {asked}",
+      "in": "Sei dentro!",
+      "wait": "Aspetta la prima domanda del tuo insegnante.",
+      "vote": "Tocca la tua risposta.",
+      "voted": "Il tuo voto è arrivato. Puoi cambiarlo finché il voto è aperto.",
+      "closed": "Il voto è chiuso.",
+      "closedVoted": "Il voto è chiuso. La tua risposta è arrivata.",
+      "right": "Giusto!",
+      "wrong": "Non questa volta. Leggi il perché qui sotto.",
+      "missed": "Non hai votato questa domanda.",
+      "poll": "Ecco come ha votato la classe.",
+      "reconnecting": "Connessione persa, riconnessione..."
+    },
+    "call": {
+      "title": "La tua classe ha un gioco in corso",
+      "join": "Entra"
+    }
+  },
   "neurofeedback": {
     "title": "Neurofeedback",
     "intro": "Allenati verso un luogo del tuo brain landscape. Il segnale della fascia viene posto sulla tua mappa ogni secondo, e ciò che guardi segue quanto sei vicino.",

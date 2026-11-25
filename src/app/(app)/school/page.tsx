@@ -12,6 +12,7 @@
  * waiting page.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useFormatLocale } from "@/i18n/formatLocale";
@@ -24,6 +25,7 @@ import { useWorkspaces } from "@/lib/workspace";
 import { Sheet } from "@/components/Sheet";
 import {
   Button,
+  buttonClass,
   Card,
   EmptyState,
   ErrorBanner,
@@ -61,6 +63,8 @@ export default function SchoolPage() {
 
 function SchoolSection({ id }: { id: string }) {
   const t = useTranslations("schools.page");
+  const tg = useTranslations("classGame.host");
+  const games = useFeature("class_games");
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("pending");
@@ -98,6 +102,14 @@ function SchoolSection({ id }: { id: string }) {
           </p>
         )}
         <p className="mt-2 text-pretty text-ink-3">{t("intro")}</p>
+        {games && (
+          <Link
+            href={`/school/game/${id}`}
+            className={buttonClass("primary", "sm", "mt-4")}
+          >
+            {tg("open")}
+          </Link>
+        )}
       </header>
       {school.isError && <ErrorBanner message={errorMessage(school.error)} />}
 
