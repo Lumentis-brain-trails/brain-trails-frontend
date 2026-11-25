@@ -102,6 +102,27 @@ test("the baseline sets the threshold from the person's own closeness, then the 
   expect(ups.at(-1)!.distance).toBeCloseTo(0);
 });
 
+test("carry starts on the run's threshold with no baseline, or runs one without (V4-0013)", () => {
+  const c = config({ threshold: { mode: "carry", target_fraction: 0.6 } });
+  const carried = new LandscapeEngine(c, 0.55);
+  expect(carried.isCarried).toBe(true);
+  const first = carried.push(at(0, 0));
+  expect(first[0]).toMatchObject({
+    type: "threshold",
+    cause: "carried",
+    threshold: 0.55,
+  });
+  expect(updates(first)[0].phase).toBe("training");
+
+  const fresh = new LandscapeEngine(c);
+  expect(fresh.isCarried).toBe(false);
+  const out: LandscapeOutput[] = [];
+  for (let i = 0; i < 10; i++) out.push(...fresh.push(at(i, 1 + (i % 2))));
+  expect(out.find((o) => o.type === "threshold")).toMatchObject({
+    cause: "baseline",
+  });
+});
+
 test("the position is the mean of the last four windows, as the live dot is", () => {
   const engine = new LandscapeEngine(
     config({ baseline_s: 0, threshold: { mode: "fixed", value: 0.5 } })

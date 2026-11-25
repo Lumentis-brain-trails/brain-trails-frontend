@@ -27,6 +27,18 @@ export interface NfPanel {
   nudges: number;
   /** The block's last word when it ended early or lost the headband. */
   alert: "baseline_failed" | "baseline_extended" | "signal_lost" | null;
+  /** A game block's hands (V4-0013): its level, the scored forks, the head. */
+  game: NfGamePanel | null;
+}
+
+export interface NfGamePanel {
+  level: number | null;
+  /** The level the next round starts at, once this one ended. */
+  next: number | null;
+  correct: number;
+  /** Scored forks answered or missed. */
+  total: number;
+  moving: boolean;
 }
 
 export const EMPTY_PANEL: NfPanel = {
@@ -44,6 +56,15 @@ export const EMPTY_PANEL: NfPanel = {
   gatedCount: 0,
   nudges: 0,
   alert: null,
+  game: null,
+};
+
+const NEW_GAME: NfGamePanel = {
+  level: null,
+  next: null,
+  correct: 0,
+  total: 0,
+  moving: false,
 };
 
 const num = (v: unknown): number | null =>
@@ -77,8 +98,37 @@ export function foldPanel(panel: NfPanel, marker: Marker): NfPanel {
         inTargetCount: base.inTargetCount + (training && inTarget ? 1 : 0),
         gatedCount: base.gatedCount + (training && gated ? 1 : 0),
         alert: base.alert === "signal_lost" ? null : base.alert,
+        game:
+          base.game && typeof meta.moving === "boolean"
+            ? { ...base.game, moving: meta.moving }
+            : base.game,
       };
     }
+    case "nf_start":
+      return num(meta.game_level) === null
+        ? base
+        : { ...base, game: { ...NEW_GAME, level: num(meta.game_level) } };
+    case "nf_game": {
+      const game = base.game ?? NEW_GAME;
+      if (meta.scored !== true) return { ...base, game };
+      if (meta.event === "response")
+        return {
+          ...base,
+          game: {
+            ...game,
+            correct: game.correct + (meta.correct === true ? 1 : 0),
+            total: game.total + 1,
+          },
+        };
+      if (meta.event === "miss")
+        return { ...base, game: { ...game, total: game.total + 1 } };
+      return { ...base, game };
+    }
+    case "nf_round_end":
+      return {
+        ...base,
+        game: { ...(base.game ?? NEW_GAME), next: num(meta.next_level) },
+      };
     case "nf_threshold":
       return {
         ...base,

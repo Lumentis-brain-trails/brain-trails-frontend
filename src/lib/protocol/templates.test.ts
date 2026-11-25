@@ -48,6 +48,7 @@ describe("templates", () => {
       "flanker-control.json",
       "free-recording.json",
       "interoceptive-focus.json",
+      "lantern-rounds.json",
       "processing-speed.json",
       "resting-baseline.json",
       "signal-navigator.json",

@@ -23,7 +23,12 @@ import {
 import { parseProtocol } from "@/lib/protocol/schema";
 import { toWireEvent } from "@/lib/protocol/marker";
 import { createMemorySink } from "@/lib/protocol/sink";
-import type { EegFeed, ProtocolDefinition } from "@/lib/protocol/types";
+import type {
+  EegFeed,
+  MotionFeed,
+  ProtocolDefinition,
+} from "@/lib/protocol/types";
+import type { MotionSample } from "@/lib/neurofeedback/stillness";
 
 const render = (ui: ReactElement) => rtlRender(ui, { wrapper: IntlEn });
 
@@ -70,7 +75,10 @@ const frames = () =>
   });
 
 describe("the neurofeedback block in the runner", () => {
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   test("without a headband it says so and moves on", () => {
     const sink = createMemorySink();
@@ -184,6 +192,127 @@ describe("the neurofeedback block in the runner", () => {
       channels: ["TP9", "TP10"],
       nudges: 1,
     });
+  });
+
+  test("two Lantern rounds: the second carries the threshold and the level, each ends on its card", async () => {
+    const game = (id: string) => ({
+      id,
+      kind: "neurofeedback",
+      label: "Lantern",
+      config: {
+        feedback: "lantern",
+        baseline_s: 4,
+        duration_s: 30,
+        threshold: { mode: "carry", target_fraction: 0.5 },
+      },
+      block: { block_id: "lantern", node_path: id, iteration: null },
+    });
+    const plan = parseProtocol({
+      id: "rounds",
+      version: 1,
+      title: "Lantern rounds",
+      steps: [
+        game("g1"),
+        {
+          id: "map",
+          kind: "baseline",
+          label: "Eyes on the screen",
+          config: { eyes: "open", duration_s: 1, end_tone: false },
+        },
+        game("g2"),
+      ],
+    });
+    // the card stands five seconds and the map one: on a clock the test moves
+    vi.useFakeTimers({
+      toFake: [
+        "setTimeout",
+        "clearTimeout",
+        "setInterval",
+        "clearInterval",
+        "performance",
+      ],
+    });
+    const tick = (ms: number) =>
+      act(async () => {
+        await vi.advanceTimersByTimeAsync(ms);
+      });
+    const sink = createMemorySink();
+    const hand = handFeed();
+    const heads = new Set<(s: MotionSample) => void>();
+    const motion: MotionFeed = {
+      subscribe(listener) {
+        heads.add(listener);
+        return () => void heads.delete(listener);
+      },
+    };
+    const onFinish = vi.fn();
+    render(
+      <ProtocolRunner
+        protocol={plan}
+        seed={1}
+        sink={sink}
+        signal={hand.feed}
+        motion={motion}
+        onFinish={onFinish}
+        onExit={vi.fn()}
+      />
+    );
+    const packets = packetsOf(
+      makeRecording({ seconds: 36, alphaOn: [[10, 20]] })
+    );
+    const head = (from: number) =>
+      act(() => {
+        for (let i = 0; i < 50; i++)
+          for (const l of [...heads]) l({ dps: 3, hostMs: from + i * 20 });
+      });
+    // the baseline with a still head, then the whole training
+    await head(0);
+    await hand.push(packets.slice(0, 4 * 10 * 4));
+    await head(1000);
+    await hand.push(packets.slice(4 * 10 * 4));
+    await tick(50);
+
+    const first = sink.all().find((m) => m.label === "nf_threshold");
+    expect(first?.meta).toMatchObject({ cause: "baseline" });
+    const updates = sink.all().filter((m) => m.label === "nf_update");
+    expect(updates.at(-1)?.meta).toMatchObject({ moving: false });
+    expect(typeof updates.at(-1)?.meta?.motion_dps).toBe("number");
+    // jsdom draws no frames, so the forks never come (their rules: lantern's tests)
+    const end = sink.all().find((m) => m.label === "nf_round_end");
+    expect(end?.meta).toMatchObject({ game: "lantern", level: 1 });
+    expect(
+      screen.getByText(messages.kinds.neurofeedback.lantern.card.title)
+    ).toBeInTheDocument();
+    const lastThreshold = sink
+      .all()
+      .filter((m) => m.label === "nf_update")
+      .at(-1)?.meta?.threshold;
+
+    // the card stands, then the map, then the second round
+    await tick(5200);
+    await tick(1200);
+    await tick(50);
+    const starts = sink.all().filter((m) => m.label === "nf_start");
+    expect(starts).toHaveLength(2);
+    expect(starts[1].meta).toMatchObject({
+      threshold_carried: true,
+      baseline_s: 0,
+      game_level: end?.meta?.next_level,
+    });
+    await hand.push(packets.slice(0, 40));
+    const carried = sink
+      .all()
+      .filter((m) => m.label === "nf_threshold")
+      .at(-1);
+    expect(carried?.meta).toMatchObject({ cause: "carried", previous: null });
+    expect(Number(carried?.meta?.threshold)).toBeCloseTo(
+      Number(lastThreshold),
+      6
+    );
+    expect(
+      sink.all().filter((m) => m.label === "nf_baseline_start")
+    ).toHaveLength(1);
+    vi.useRealTimers();
   });
 
   test("a nudge for another kind of block is logged and ignored", () => {

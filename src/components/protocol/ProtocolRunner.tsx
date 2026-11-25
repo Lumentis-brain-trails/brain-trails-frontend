@@ -52,6 +52,7 @@ import {
   UI_UNCERTAINTY_MS,
   timingMeta,
 } from "@/lib/protocol/marker";
+import { memoryCarry, type RunCarry } from "@/lib/neurofeedback/rounds";
 import { useOfficialTexts } from "@/lib/protocol/official";
 import { getTaskKind } from "@/lib/protocol/registry";
 import { hash32 } from "@/lib/protocol/rng";
@@ -63,6 +64,7 @@ import {
   type Adjustment,
   type AdjustmentPort,
   type EegFeed,
+  type MotionFeed,
   type PositionFeed,
   type ProtocolDefinition,
   type ProtocolStep,
@@ -143,6 +145,8 @@ export interface ProtocolRunnerProps {
   signal?: EegFeed;
   /** Where the person is on their landscape, for the same block (V4-0010). */
   position?: PositionFeed;
+  /** The headband's gyroscope, for a game's stillness (V4-0013); same block only. */
+  motion?: MotionFeed;
   /** Told the runner's state after every change, for a console to show. */
   onState?: (state: RunnerState) => void;
   /**
@@ -175,6 +179,7 @@ export function ProtocolRunner({
   commands,
   signal,
   position,
+  motion,
   onState,
   resume,
   observed = false,
@@ -498,6 +503,10 @@ export function ProtocolRunner({
     }),
     []
   );
+  // What one neurofeedback block of the run leaves the next (V4-0013): a carried
+  // threshold, the stillness limit, a game's level. One per run; a reloaded
+  // participant window starts it empty, so its next block runs its own baseline.
+  const carry = useMemo<RunCarry>(() => memoryCarry(), []);
   // The step already completed: a kind's own timer may fire in the tick between an
   // operator ending its block and the block unmounting, and must not advance twice.
   const doneStepRef = useRef<number | null>(null);
@@ -912,7 +921,9 @@ export function ProtocolRunner({
           emit={emitForStep}
           onComplete={onComplete}
           reducedMotion={reducedMotion}
-          {...(isNeurofeedback(step) ? { signal, position, adjustments } : {})}
+          {...(isNeurofeedback(step)
+            ? { signal, position, motion, adjustments, carry }
+            : {})}
         />
       )}
       {message && (

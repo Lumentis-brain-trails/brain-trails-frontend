@@ -64,6 +64,27 @@ export function NeurofeedbackPanel({
         <dd>{share === null ? "-" : `${Math.round(share * 100)}%`}</dd>
         <dt className="text-ink-3">{t("latency")}</dt>
         <dd>{panel.ageMs === null ? "-" : `${panel.ageMs} ms`}</dd>
+        {panel.game && (
+          <>
+            <dt className="text-ink-3">{t("game.level")}</dt>
+            <dd data-testid="nf-level">
+              {panel.game.level === null
+                ? "-"
+                : panel.game.next === null
+                  ? panel.game.level
+                  : `${panel.game.level} → ${panel.game.next}`}
+            </dd>
+            <dt className="text-ink-3">{t("game.forks")}</dt>
+            <dd data-testid="nf-forks">
+              {t("game.forksValue", {
+                correct: panel.game.correct,
+                total: panel.game.total,
+              })}
+            </dd>
+            <dt className="text-ink-3">{t("game.head")}</dt>
+            <dd>{panel.game.moving ? t("game.moving") : t("game.still")}</dd>
+          </>
+        )}
       </dl>
       {panel.alert && (
         <p className="type-caption mt-3 text-ink-2">

@@ -53,6 +53,7 @@ import type { EegChannel } from "@/lib/muse/protocol";
 import {
   BASELINE_MIN_CLEAN,
   BASELINE_MIN_UPDATES,
+  carriedThreshold,
   type EegPacket,
   type GateReason,
   NUDGE_FACTOR,
@@ -346,7 +347,17 @@ export class LandscapeEngine {
   private finished = false;
   private announced = false;
 
-  constructor(private readonly config: NeurofeedbackConfig) {
+  /** A carried threshold (V4-0013): the block starts training at it, no baseline. */
+  private readonly carried: number | null;
+
+  /**
+   * `carried` is the threshold the run's previous block on these targets ended on, for
+   * a block whose threshold mode is `carry`; ignored otherwise.
+   */
+  constructor(
+    private readonly config: NeurofeedbackConfig,
+    carried?: number | null
+  ) {
     if (!config.targets) throw new Error("a landscape block needs targets");
     // a config that skipped the schema (an old record, a hand-made test) has no
     // reward: the original one
@@ -356,8 +367,14 @@ export class LandscapeEngine {
     };
     this.picture = new Picture(config.min_level, config.ramp_s, config.effect);
     this.gate = new EegGate(config.artefact);
-    this.baselineEnd = config.baseline_s / STEP_S;
-    this.phase = config.baseline_s > 0 ? "baseline" : "training";
+    this.carried = carriedThreshold(config, carried);
+    this.baselineEnd = this.carried === null ? config.baseline_s / STEP_S : 0;
+    this.phase = this.baselineEnd > 0 ? "baseline" : "training";
+  }
+
+  /** Whether the block took its threshold from the run's previous block (V4-0013). */
+  get isCarried(): boolean {
+    return this.carried !== null;
   }
 
   get currentThreshold(): number | null {
@@ -391,6 +408,14 @@ export class LandscapeEngine {
           threshold: this.threshold,
           previous: null,
           cause: "fixed",
+        });
+      } else if (this.carried !== null) {
+        this.threshold = this.carried;
+        out.push({
+          type: "threshold",
+          threshold: this.threshold,
+          previous: null,
+          cause: "carried",
         });
       }
     }
@@ -515,7 +540,7 @@ export class LandscapeEngine {
     const usable =
       clean >= BASELINE_MIN_UPDATES &&
       clean >= BASELINE_MIN_CLEAN * (updates - this.baselineUnread);
-    if (!usable && this.config.threshold.mode === "baseline") {
+    if (!usable && this.config.threshold.mode !== "fixed") {
       if (!this.extended) {
         this.extended = true;
         this.baselineEnd += this.config.baseline_s;
@@ -532,7 +557,7 @@ export class LandscapeEngine {
     const out: LandscapeOutput[] = [
       { type: "baseline_end", updates, clean, extended: this.extended },
     ];
-    if (this.config.threshold.mode === "baseline") {
+    if (this.config.threshold.mode !== "fixed") {
       const previous = this.threshold;
       const q = quantile(
         this.baselineValues,

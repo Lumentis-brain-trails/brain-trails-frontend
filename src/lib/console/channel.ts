@@ -25,10 +25,12 @@ import {
   operatorCommandSchema,
 } from "@/lib/protocol/commands";
 import type { EegPacket } from "@/lib/neurofeedback/engine";
+import type { MotionSample } from "@/lib/neurofeedback/stillness";
 import type { Marker } from "@/lib/protocol/marker";
 import type { MarkerSink } from "@/lib/protocol/sink";
 import type {
   EegFeed,
+  MotionFeed,
   ProtocolDefinition,
   TaskResult,
 } from "@/lib/protocol/types";
@@ -67,6 +69,11 @@ export type ConsoleMessage =
    * screen (`RunnerState.nudgeable`): ~85 small messages a second, ~4 KB/s.
    */
   | { type: "eeg"; packet: EegPacket }
+  /**
+   * One gyroscope reading, `hostMs` in the console's frame: a game's stillness (V4-0013).
+   * Sent with the EEG, only while a neurofeedback block is on screen (~52 a second).
+   */
+  | { type: "motion"; sample: MotionSample }
   /** To a second window opened while the first still runs: it cannot take over. */
   | { type: "detached" };
 
@@ -173,6 +180,27 @@ export function eegFeedFrom(
         if (message.type !== "eeg") return;
         const { packet } = message;
         listener({ ...packet, hostMs: packet.hostMs + (origin - here) });
+      }),
+  };
+}
+
+/** The gyroscope readings arriving on `channel`, moved into this window's clock. */
+export function motionFeedFrom(
+  channel: ConsoleChannel,
+  origin: number,
+  here: number = performance.timeOrigin
+): MotionFeed {
+  return {
+    subscribe: (listener) =>
+      channel.subscribe((message) => {
+        if (message.type !== "motion") return;
+        const { sample } = message;
+        if (
+          typeof sample?.dps !== "number" ||
+          typeof sample.hostMs !== "number"
+        )
+          return;
+        listener({ dps: sample.dps, hostMs: sample.hostMs + (origin - here) });
       }),
   };
 }

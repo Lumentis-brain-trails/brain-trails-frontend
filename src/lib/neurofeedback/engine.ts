@@ -56,6 +56,28 @@ export type GateReason = "amplitude" | "muscle" | "flat" | "gap";
 
 export type Phase = "baseline" | "training";
 
+/**
+ * Where a threshold came from: the baseline, the author's fixed value, the operator's
+ * nudge, or (V4-0013, mode `carry`) the run's previous block on the same signal.
+ */
+export type ThresholdCause = "baseline" | "fixed" | "operator" | "carried";
+
+/**
+ * The threshold a `carry` block starts from: the previous block's, or null when the run
+ * has none yet (the block then runs its baseline). Any other mode ignores it.
+ */
+export function carriedThreshold(
+  config: NeurofeedbackConfig,
+  carried: number | null | undefined
+): number | null {
+  return config.threshold.mode === "carry" &&
+    typeof carried === "number" &&
+    Number.isFinite(carried) &&
+    carried > 0
+    ? carried
+    : null;
+}
+
 /** One Muse packet of one electrode, as `useMuse` hands it on. */
 export interface EegPacket {
   channel: EegChannel;
@@ -95,7 +117,7 @@ export type NfOutput =
       type: "threshold";
       threshold: number;
       previous: number | null;
-      cause: "baseline" | "fixed" | "operator";
+      cause: ThresholdCause;
     }
   | { type: "baseline_end"; updates: number; clean: number; extended: boolean }
   | { type: "baseline_extended"; updates: number; clean: number }
@@ -254,13 +276,26 @@ export class NeurofeedbackEngine {
   private trainingLeft: number;
   private finished = false;
   private readonly dt = HOP_SAMPLES / SFREQ;
+  /** A carried threshold (V4-0013): the block starts training at it, no baseline. */
+  private readonly carried: number | null;
 
-  constructor(private readonly config: NeurofeedbackConfig) {
+  /**
+   * `carried` is the threshold the run's previous block on this signal ended on, for a
+   * block whose threshold mode is `carry`; ignored otherwise.
+   */
+  constructor(
+    private readonly config: NeurofeedbackConfig,
+    carried?: number | null
+  ) {
     this.direction = nfDirection(config);
     this.channels = nfChannels(config);
     this.n = config.window_s * SFREQ;
     for (const c of this.channels) this.buffers.set(c, new ChannelBuffer());
-    this.baselineTarget = Math.round((config.baseline_s * SFREQ) / HOP_SAMPLES);
+    this.carried = carriedThreshold(config, carried);
+    this.baselineTarget =
+      this.carried === null
+        ? Math.round((config.baseline_s * SFREQ) / HOP_SAMPLES)
+        : 0;
     this.trainingLeft = Math.round((config.duration_s * SFREQ) / HOP_SAMPLES);
     this.phase = this.baselineTarget > 0 ? "baseline" : "training";
     this.picture = new Picture(config.min_level, config.ramp_s, config.effect);
@@ -272,6 +307,11 @@ export class NeurofeedbackEngine {
 
   get currentPhase(): Phase {
     return this.phase;
+  }
+
+  /** Whether the block took its threshold from the run's previous block (V4-0013). */
+  get isCarried(): boolean {
+    return this.carried !== null;
   }
 
   get done(): boolean {
@@ -307,6 +347,14 @@ export class NeurofeedbackEngine {
           threshold: this.threshold,
           previous: null,
           cause: "fixed",
+        });
+      } else if (this.carried !== null) {
+        this.threshold = this.carried;
+        out.push({
+          type: "threshold",
+          threshold: this.threshold,
+          previous: null,
+          cause: "carried",
         });
       }
     }
@@ -418,7 +466,7 @@ export class NeurofeedbackEngine {
     const clean = this.baselineValues.length;
     const usable =
       clean >= BASELINE_MIN_UPDATES && clean >= BASELINE_MIN_CLEAN * updates;
-    if (!usable && this.config.threshold.mode === "baseline") {
+    if (!usable && this.config.threshold.mode !== "fixed") {
       if (!this.extended) {
         this.extended = true;
         this.baselineTarget += Math.round(
@@ -436,7 +484,8 @@ export class NeurofeedbackEngine {
     const out: NfOutput[] = [
       { type: "baseline_end", updates, clean, extended: this.extended },
     ];
-    if (this.config.threshold.mode === "baseline") {
+    if (this.config.threshold.mode !== "fixed") {
+      // `baseline`, or `carry` with nothing to carry: the run's first such block
       const share = this.config.threshold.target_fraction;
       const previous = this.threshold;
       this.threshold = quantile(

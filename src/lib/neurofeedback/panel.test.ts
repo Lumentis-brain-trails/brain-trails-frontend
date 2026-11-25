@@ -84,6 +84,33 @@ describe("foldPanel", () => {
     expect(timeInTarget(EMPTY_PANEL)).toBeNull();
   });
 
+  test("a game's level, scored forks and head (V4-0013)", () => {
+    let panel = EMPTY_PANEL;
+    for (const m of [
+      marker("nf_start", { game_level: 3 }),
+      // the baseline's forks are practice
+      marker("nf_game", { event: "response", correct: true, scored: false }),
+      marker("nf_game", { event: "prompt", scored: true }),
+      marker("nf_game", { event: "response", correct: true, scored: true }),
+      marker("nf_game", { event: "response", correct: false, scored: true }),
+      marker("nf_game", { event: "miss", scored: true }),
+      marker("nf_game", { event: "stray" }),
+      marker("nf_update", { nf_phase: "training", moving: true }),
+    ])
+      panel = foldPanel(panel, m);
+    expect(panel.game).toEqual({
+      level: 3,
+      next: null,
+      correct: 1,
+      total: 3,
+      moving: true,
+    });
+    panel = foldPanel(panel, marker("nf_round_end", { next_level: 2 }));
+    expect(panel.game?.next).toBe(2);
+    // a watched block has no game
+    expect(foldPanel(EMPTY_PANEL, marker("nf_start", {})).game).toBeNull();
+  });
+
   test("the ticker leaves the updates out", () => {
     expect(isTickerMarker(marker("nf_update"))).toBe(false);
     expect(isTickerMarker(marker("nf_threshold"))).toBe(true);
