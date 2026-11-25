@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MODULES } from "@/lib/learning/modules";
 import { toWire } from "./game";
 import {
+  LABS_WITH_GOAL,
   asLesson,
   countedAt,
   lessonRound,
@@ -35,7 +36,9 @@ describe("a teacher-paced lesson", () => {
   it("counts the newest question out, or the step's lab before any", () => {
     mod.steps.forEach((step, i) => {
       const content = countedAt(mod, { module: mod.slug, step: i, upTo: -1 });
-      expect(content).toBe(step.lab ? `lab:${step.id}` : null);
+      expect(content).toBe(
+        step.lab && LABS_WITH_GOAL.has(step.lab) ? `lab:${step.id}` : null
+      );
       step.questions.forEach((q, j) =>
         expect(countedAt(mod, { module: mod.slug, step: i, upTo: j })).toBe(
           q.id

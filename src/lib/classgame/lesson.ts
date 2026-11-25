@@ -29,6 +29,12 @@ export interface LessonRound extends WireQuestion, LessonPlace {
 }
 
 /**
+ * The labs that report a goal reached (`NeuronLab`'s `onGoal`, as `lab:<step id>`);
+ * a step whose lab has none counts nothing before its first question.
+ */
+export const LABS_WITH_GOAL = new Set(["gatesLearn"]);
+
+/**
  * What this place counts: the newest question out, or, before any, the step's lab
  * when it has a goal (`lab:<stepId>`, reported once the goal is reached).
  */
@@ -39,7 +45,7 @@ export function countedAt(
   const step = module.steps[place.step];
   if (!step) return null;
   if (place.upTo >= 0) return step.questions[place.upTo]?.id ?? null;
-  return step.lab ? `lab:${step.id}` : null;
+  return step.lab && LABS_WITH_GOAL.has(step.lab) ? `lab:${step.id}` : null;
 }
 
 /** The round for `place`; its id changes with every move, so each move opens a vote. */

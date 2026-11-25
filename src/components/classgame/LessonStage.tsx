@@ -7,7 +7,7 @@
  * answer, and how many have not answered yet. Counts only, never names (V4-0012).
  */
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleView } from "@/components/learning/ModuleView";
 import { Button, Card, Segmented, cn } from "@/components/ui";
 import type { useHostGame } from "@/lib/classgame/useClassGame";
@@ -49,12 +49,13 @@ export function LessonStage({ game }: { game: Host }) {
   );
 
   // the first time the room is open with no lesson in it, put the class on our place
-  const [started, setStarted] = useState(false);
+  const started = useRef(false);
   useEffect(() => {
-    if (!live || started) return;
-    setStarted(true);
-    if (!held && mod) go({ ...place, module: mod.slug });
-  }, [live, started, held, mod, place, go]);
+    if (!live || started.current) return;
+    started.current = true;
+    if (!held && mod)
+      askRound(lessonRound(mod, { ...place, module: mod.slug }));
+  }, [live, held, mod, place, askRound]);
 
   if (!mod) return null;
   const step = mod.steps[place.step];
