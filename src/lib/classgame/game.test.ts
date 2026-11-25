@@ -63,7 +63,7 @@ describe("the wire", () => {
     const wire = toWire(QUESTION);
     expect(wire.id).toBe("q1");
     expect(wire.options).toEqual(["a", "b", "c"]);
-    expect("answer" in wire.choice).toBe(false);
+    expect(wire.choice && "answer" in wire.choice).toBe(false);
     expect(JSON.stringify(wire)).not.toContain('"answer"');
   });
 
@@ -158,5 +158,22 @@ describe("the count", () => {
       leaders({ ...tally, counts: { a: 2, b: 2, c: 0 } }, ["a", "b", "c"])
     ).toEqual(["a", "b"]);
     expect(leaders({ ...tally, votes: 0 }, ["a"])).toEqual([]);
+  });
+});
+
+describe("a round that is not a multiple choice", () => {
+  const options = ["x", "y", "z"];
+
+  it("carries a question that is not a multiple choice", () => {
+    const view = applyGameFrame(
+      { ...emptyGame, role: "player" },
+      {
+        type: "question",
+        question: { id: "s1", options, kind: "step", node: "n3" },
+      }
+    );
+    expect(view.question?.options).toEqual(options);
+    expect(view.question?.node).toBe("n3");
+    expect(view.question?.choice).toBeUndefined();
   });
 });

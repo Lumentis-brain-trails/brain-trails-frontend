@@ -4272,7 +4272,8 @@
       "wrong": "Not this time. Read why below.",
       "missed": "You didn't vote on this one.",
       "poll": "Here is how the class voted.",
-      "reconnecting": "Connection lost, reconnecting..."
+      "reconnecting": "Connection lost, reconnecting...",
+      "moved": "The class has chosen. Watch the board."
     },
     "call": {
       "title": "Your class has a live game",

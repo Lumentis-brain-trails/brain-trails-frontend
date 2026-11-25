@@ -24,6 +24,7 @@ import { MODULES } from "@/lib/learning/modules";
 import {
   type ChoiceQuestion,
   type GameView,
+  type WireQuestion,
   applyGameFrame,
   emptyGame,
   liveQuestions,
@@ -108,22 +109,38 @@ export function useHostGame(schoolId: string, enabled: boolean) {
     },
     [send]
   );
+  /**
+   * Put any round in front of the class: a `WireQuestion` the caller built (a step on
+   * the braided path: `kind: "braid"`, the edges as `options` and `buttons`). Voting
+   * opens at once; the caller decides when it ends (`close`, then `reveal(winner)`).
+   */
+  const askRound = useCallback(
+    (round: WireQuestion) => send({ type: "question", question: round }),
+    [send]
+  );
   const close = useCallback(() => send({ type: "close" }), [send]);
   const reopen = useCallback(() => send({ type: "reopen" }), [send]);
-  /** Show the right answer and the count to everyone. */
-  const reveal = useCallback(() => {
-    const id = game.view.question?.id;
-    // a question asked before this page was reloaded is found again in the modules
-    const answer = id
-      ? (answers.current.get(id) ??
-        liveQuestions(MODULES).find((e) => e.question.id === id)?.question
-          .answer)
-      : undefined;
-    return send({ type: "reveal", answer: answer ?? null });
-  }, [send, game.view.question?.id]);
+  /**
+   * Show the answer and the count to everyone: `answer` when given (the option a
+   * round resolved to), else the asked Learning question's own.
+   */
+  const reveal = useCallback(
+    (given?: string | null) => {
+      if (given !== undefined) return send({ type: "reveal", answer: given });
+      const id = game.view.question?.id;
+      // a question asked before this page was reloaded is found again in the modules
+      const answer = id
+        ? (answers.current.get(id) ??
+          liveQuestions(MODULES).find((e) => e.question.id === id)?.question
+            .answer)
+        : undefined;
+      return send({ type: "reveal", answer: answer ?? null });
+    },
+    [send, game.view.question?.id]
+  );
   const end = useCallback(() => send({ type: "end" }), [send]);
 
-  return { ...game, ask, close, reopen, reveal, end };
+  return { ...game, ask, askRound, close, reopen, reveal, end };
 }
 
 /**

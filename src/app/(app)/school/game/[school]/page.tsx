@@ -147,7 +147,7 @@ function HostStage({
           </Button>
         </header>
 
-        {!view.question ? (
+        {!view.question?.choice ? (
           <Card>
             <EmptyState
               title={t("pick")}

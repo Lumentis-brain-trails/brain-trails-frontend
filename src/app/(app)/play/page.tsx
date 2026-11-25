@@ -8,6 +8,7 @@
  */
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { LiveButtons } from "@/components/classgame/LiveButtons";
 import { LiveChoice } from "@/components/classgame/LiveChoice";
 import { Card, EmptyState, Spinner } from "@/components/ui";
 import { useMyGame, usePlayerGame } from "@/lib/classgame/useClassGame";
@@ -58,12 +59,25 @@ function PlayerStage() {
   // a question counts once, when its answer is revealed
   useEffect(() => {
     const id = view.question?.id;
-    if (view.phase !== "revealed" || !id || !view.answer) return;
+    // only a Learning choice has a right answer; a braid step is where the class went
+    if (
+      view.phase !== "revealed" ||
+      !id ||
+      !view.answer ||
+      !view.question?.choice
+    )
+      return;
     if (counted.current.has(id)) return;
     counted.current.add(id);
     const right = view.mine === view.answer;
     setScore((s) => ({ right: s.right + (right ? 1 : 0), asked: s.asked + 1 }));
-  }, [view.phase, view.question?.id, view.answer, view.mine]);
+  }, [
+    view.phase,
+    view.question?.id,
+    view.question?.choice,
+    view.answer,
+    view.mine,
+  ]);
 
   if (view.ended)
     return (
@@ -99,6 +113,23 @@ function PlayerStage() {
       {!view.question ? (
         <Card>
           <EmptyState title={t("in")} text={t("wait")} />
+        </Card>
+      ) : !view.question.choice ? (
+        <Card className="space-y-4">
+          <LiveButtons
+            round={view.question}
+            phase={view.phase}
+            answer={view.answer}
+            mine={view.mine}
+            onPick={(option) => game.vote(option)}
+          />
+          <p className="text-center text-ink-2" aria-live="polite">
+            {view.phase === "revealed"
+              ? t("moved")
+              : view.mine
+                ? t("voted")
+                : t("vote")}
+          </p>
         </Card>
       ) : (
         <Card className="space-y-4">

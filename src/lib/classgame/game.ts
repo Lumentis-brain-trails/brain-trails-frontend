@@ -10,7 +10,7 @@
  * are in `useClassGame.ts`, the screens in `src/components/classgame/`.
  */
 import type { LearningModule } from "@/lib/learning/modules";
-import type { Question } from "@/lib/learning/questions";
+import type { Question, Words } from "@/lib/learning/questions";
 
 /** A question that can be played live: one of its options is the answer. */
 export type ChoiceQuestion = Extract<Question, { kind: "choice" }>;
@@ -18,11 +18,29 @@ export type ChoiceQuestion = Extract<Question, { kind: "choice" }>;
 /** What a student's screen receives: the question with no answer in it. */
 export type ShownChoice = Omit<ChoiceQuestion, "answer">;
 
-/** A question as the game socket carries it: `id` and `options` are what it counts. */
+/**
+ * A question as the game socket carries it: `id` and `options` are what the server
+ * counts. `choice` is a Learning multiple-choice question (drawn by `LiveChoice`);
+ * another kind of round (a step on a network, ...) leaves it out and carries its own
+ * fields, which the server relays untouched and that kind's screens read.
+ */
 export interface WireQuestion {
   id: string;
   options: string[];
-  choice: ShownChoice;
+  /** Which screens draw it: absent for a Learning choice, e.g. `"braid"` otherwise. */
+  kind?: string;
+  choice?: ShownChoice;
+  /** How a phone draws each option when there is no `choice`: words and a colour. */
+  buttons?: WireButton[];
+  [field: string]: unknown;
+}
+
+/** One option of a round that is not a Learning choice, as a phone shows it. */
+export interface WireButton {
+  id: string;
+  words?: Words;
+  /** A CSS colour: the edge's colour on the teacher's board. */
+  colour?: string;
 }
 
 /** The server's limits on a question (`app/classgame.py`). */
@@ -134,8 +152,7 @@ function asTally(raw: unknown): Tally | null {
 function asQuestion(raw: unknown): WireQuestion | null {
   if (!raw || typeof raw !== "object") return null;
   const q = raw as Partial<WireQuestion>;
-  if (typeof q.id !== "string" || !Array.isArray(q.options) || !q.choice)
-    return null;
+  if (typeof q.id !== "string" || !Array.isArray(q.options)) return null;
   return q as WireQuestion;
 }
 

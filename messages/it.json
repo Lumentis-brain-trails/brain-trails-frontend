@@ -4272,7 +4272,8 @@
       "wrong": "Non questa volta. Leggi il perché qui sotto.",
       "missed": "Non hai votato questa domanda.",
       "poll": "Ecco come ha votato la classe.",
-      "reconnecting": "Connessione persa, riconnessione..."
+      "reconnecting": "Connessione persa, riconnessione...",
+      "moved": "La classe ha scelto. Guarda la lavagna."
     },
     "call": {
       "title": "La tua classe ha un gioco in corso",
