@@ -62,7 +62,8 @@ export interface Playground {
 export type Lab =
   | "ecg"
   | "gates"
-  | "line"
+  | "gatesLearn"
+  | "classify"
   | "lineXor"
   | "xor"
   | "learn"

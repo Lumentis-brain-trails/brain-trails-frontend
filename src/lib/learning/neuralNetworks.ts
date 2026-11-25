@@ -2,7 +2,9 @@
  * The Neural Networks module, the course's first: from one artificial neuron to a small
  * network that learns to read handwritten digits.
  *
- * One neuron is a switch with weights (AND, OR); it is a line across dots; a line cannot
+ * One neuron is a switch with weights (it computes AND: which table does it match?); the
+ * brain's neuron it is a cartoon of; classification is a line between two groups of dots,
+ * and the neuron's numbers are that line, so moving them teaches it OR; a line cannot
  * split XOR, a hidden layer can; a network finds its weights itself by sending its error
  * back (backpropagation) over a dataset; and a network trained on digits keeps a short
  * description of each picture in its hidden layer. That last point is where Encoding
@@ -44,13 +46,6 @@ export const NEURAL_NETWORKS: Step[] = [
     lab: "gates",
     questions: [
       {
-        kind: "count",
-        id: "nnNeuronCount",
-        prompt: w("q.nnNeuronCount.prompt"),
-        answer: 3,
-        explain: w("q.nnNeuronCount.explain"),
-      },
-      {
         kind: "choice",
         id: "nnWhichGate",
         prompt: w("q.nnWhichGate.prompt"),
@@ -58,22 +53,35 @@ export const NEURAL_NETWORKS: Step[] = [
         answer: "and",
         explain: w("q.nnWhichGate.explain"),
       },
+      {
+        kind: "count",
+        id: "nnNeuronCount",
+        prompt: w("q.nnNeuronCount.prompt"),
+        answer: 3,
+        explain: w("q.nnNeuronCount.explain"),
+      },
     ],
   },
   {
     id: "biology",
-    figure: { kind: "neuron" },
+    figure: { kind: "bioNeuron" },
     questions: [
       {
         kind: "match",
         id: "nnBiology",
         prompt: w("q.nnBiology.prompt"),
-        items: [
-          { id: "dendrites", words: w("q.nnBiology.items.dendrites") },
-          { id: "synapse", words: w("q.nnBiology.items.synapse") },
-          { id: "body", words: w("q.nnBiology.items.body") },
-          { id: "spike", words: w("q.nnBiology.items.spike") },
-        ],
+        items: (
+          [
+            ["dendrites", "dendrites"],
+            ["synapse", "synapse"],
+            ["body", "body"],
+            ["spike", "axon"],
+          ] as const
+        ).map(([id, part]) => ({
+          id,
+          words: w(`q.nnBiology.items.${id}`),
+          figure: { kind: "bioNeuron" as const, highlight: part },
+        })),
         slots: [
           { id: "weights", words: w("q.nnBiology.slots.weights") },
           { id: "fires", words: w("q.nnBiology.slots.fires") },
@@ -92,16 +100,8 @@ export const NEURAL_NETWORKS: Step[] = [
   },
   {
     id: "line",
-    lab: "line",
+    lab: "classify",
     questions: [
-      {
-        kind: "choice",
-        id: "nnBias",
-        prompt: w("q.nnBias.prompt"),
-        options: options("nnBias", ["slides", "turns", "colours"]),
-        answer: "slides",
-        explain: w("q.nnBias.explain"),
-      },
       {
         kind: "choice",
         id: "nnWhichLine",
@@ -134,6 +134,20 @@ export const NEURAL_NETWORKS: Step[] = [
         ],
         answer: "b",
         explain: w("q.nnWhichLine.explain"),
+      },
+    ],
+  },
+  {
+    id: "teach",
+    lab: "gatesLearn",
+    questions: [
+      {
+        kind: "choice",
+        id: "nnBias",
+        prompt: w("q.nnBias.prompt"),
+        options: options("nnBias", ["slides", "turns", "colours"]),
+        answer: "slides",
+        explain: w("q.nnBias.explain"),
       },
     ],
   },

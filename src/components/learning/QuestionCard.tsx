@@ -49,12 +49,19 @@ export function useWords() {
 
 type Verdict = "right" | "wrong" | "shown" | null;
 
+/**
+ * `onVerdict` hears every verdict after Check or Show answer (a wrong answer checked
+ * again and now right reports "right"): the module uses it to show the next question,
+ * and a teacher-paced lesson to count the class's answers without names.
+ */
 export function QuestionCard({
   question,
   index,
+  onVerdict,
 }: {
   question: Question;
   index: number;
+  onVerdict?: (verdict: "right" | "wrong" | "shown") => void;
 }) {
   const t = useTranslations("learning.question");
   const words = useWords();
@@ -66,12 +73,16 @@ export function QuestionCard({
     setAnswer(a);
     if (verdict === "wrong") setVerdict(null);
   };
-  const check = () =>
-    setVerdict(isCorrect(question, answer) ? "right" : "wrong");
+  const check = () => {
+    const v = isCorrect(question, answer) ? "right" : "wrong";
+    setVerdict(v);
+    onVerdict?.(v);
+  };
   const show = () => {
     setAnswer(solution(question));
     setVersion((v) => v + 1);
     setVerdict("shown");
+    onVerdict?.("shown");
   };
   const reset = () => {
     setAnswer(initial(question));
@@ -124,6 +135,11 @@ export function QuestionCard({
         {!done && (
           <Button size="sm" variant="ghost" onClick={show}>
             {t("show")}
+          </Button>
+        )}
+        {!done && (question.kind === "order" || question.kind === "match") && (
+          <Button size="sm" variant="ghost" onClick={reset}>
+            {t("reset")}
           </Button>
         )}
         {done && (

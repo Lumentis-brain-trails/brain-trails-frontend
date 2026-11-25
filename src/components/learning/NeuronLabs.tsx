@@ -3,10 +3,10 @@
 /**
  * The Neural Networks module's labs: small machines the class plays with.
  *
- * - `gates`: one neuron with two switches as inputs; its weights and bias on sliders;
- *   find the numbers that make it AND, then OR.
- * - `line` / `lineXor`: the same neuron as a line across dots; split two groups, then
- *   try (and fail) on XOR.
+ * - `gates`: one neuron fixed at AND, its answers next to the AND, OR and XOR tables.
+ * - `classify`: dots in two groups and the line that splits them (no learning yet).
+ * - `gatesLearn`: the same neuron with sliders and its line: teach it OR.
+ * - `lineXor`: the neuron as a line across XOR's dots: try (and fail) to split them.
  * - `xor`: the hand-wired network with one hidden layer that does compute XOR.
  * - `learn`: the neuron finds its own line, a gradient step at a time.
  * - `digits`: a small network learns to read 5x7 digits, then reads the class's own.
@@ -53,25 +53,38 @@ import { round } from "@/lib/learning/questions";
 /** The labs this file draws. */
 export type NeuronLabName = Extract<
   Lab,
-  "gates" | "line" | "lineXor" | "xor" | "learn" | "digits"
+  "gates" | "gatesLearn" | "classify" | "lineXor" | "xor" | "learn" | "digits"
 >;
 export const NEURON_LABS = new Set<Lab>([
   "gates",
-  "line",
+  "gatesLearn",
+  "classify",
   "lineXor",
   "xor",
   "learn",
   "digits",
 ]);
 
-export function NeuronLab({ lab }: { lab: NeuronLabName }) {
+/**
+ * `onGoal` is called once when a lab with a goal reaches it (today: the neuron taught
+ * OR), so a teacher-paced lesson can count it like an answered question.
+ */
+export function NeuronLab({
+  lab,
+  onGoal,
+}: {
+  lab: NeuronLabName;
+  onGoal?: () => void;
+}) {
   switch (lab) {
     case "gates":
-      return <GatesLab />;
-    case "line":
-      return <LineLab gate={null} />;
+      return <GatesLab learnable={false} />;
+    case "gatesLearn":
+      return <GatesLab learnable onGoal={onGoal} />;
+    case "classify":
+      return <ClassifyLab />;
     case "lineXor":
-      return <LineLab gate="xor" />;
+      return <LineLab />;
     case "xor":
       return <XorLab />;
     case "learn":
@@ -134,20 +147,49 @@ function Lamp({ on, label }: { on: boolean; label?: string }) {
   );
 }
 
-function GatesLab() {
+/** The neuron the first step starts from: it computes AND. */
+const AND_NEURON: Neuron2 = { w1: 1, w2: 1, b: -1.5 };
+
+/**
+ * One neuron and what it computes. In the first step (`learnable` false) its numbers are
+ * fixed at AND: the class reads its four answers next to the AND, OR and XOR tables and
+ * finds which one it matches ("what does it learn?"). After classification, the same
+ * neuron comes back `learnable`: sliders, its line across the four input corners, and the
+ * task to make it compute OR. XOR stays out of reach on purpose; the module comes back to it.
+ */
+function GatesLab({
+  learnable,
+  onGoal,
+}: {
+  learnable: boolean;
+  onGoal?: () => void;
+}) {
   const t = useTranslations("learning.labs");
-  const [neuron, setNeuron] = useState<Neuron2>({ w1: 0.5, w2: -0.5, b: 0 });
-  const [gate, setGate] = useState<Exclude<Gate, "xor">>("and");
-  const [x, setX] = useState<[number, number]>([1, 0]);
+  const [neuron, setNeuronState] = useState<Neuron2>(AND_NEURON);
+  const [reached, setReached] = useState(false);
+  const setNeuron = (n: Neuron2) => {
+    setNeuronState(n);
+    if (!reached && computes(n, "or")) {
+      setReached(true);
+      onGoal?.();
+    }
+  };
+  const [x, setX] = useState<[number, number]>([1, 1]);
   const table = truthTable(neuron);
   const sum = neuron.w1 * x[0] + neuron.w2 * x[1] + neuron.b;
-  const done = computes(neuron, gate);
+  const gates: Gate[] = ["and", "or", "xor"];
+  const matched = gates.find((g) => computes(neuron, g)) ?? null;
   return (
     <Card className="space-y-5">
       <div>
-        <h3 className="type-subhead">{t("gates.title")}</h3>
-        <p className="mt-1 text-ink-2">{t("gates.text")}</p>
+        <h3 className="type-subhead">
+          {t(learnable ? "gates.learnTitle" : "gates.title")}
+        </h3>
+        <p className="mt-1 text-ink-2">
+          {t(learnable ? "gates.learnText" : "gates.text")}
+        </p>
       </div>
+      <NeuronDiagram neuron={neuron} x={x} />
       <div className="flex flex-wrap items-center gap-3 rounded-xl bg-surface-2 p-4">
         {[0, 1].map((i) => (
           <button
@@ -174,64 +216,268 @@ function GatesLab() {
           <Lamp on={fires(neuron, x[0], x[1]) === 1} />
         </span>
       </div>
-      <NeuronSliders neuron={neuron} onChange={setNeuron} />
-      <div className="flex flex-wrap items-center gap-3">
-        <Segmented
-          label={t("gates.goal")}
-          value={gate}
-          onChange={setGate}
-          options={[
-            { value: "and", label: t("gates.and") },
-            { value: "or", label: t("gates.or") },
-          ]}
-        />
-        {done && (
-          <span className="inline-flex items-center gap-1.5 font-medium text-ok">
-            <Icon name="check" /> {t("gates.done")}
-          </span>
-        )}
-      </div>
-      <table className="w-full max-w-sm text-center font-mono tabular-nums">
-        <thead className="text-ink-3">
-          <tr>
-            <th className="font-normal">{"x₁"}</th>
-            <th className="font-normal">{"x₂"}</th>
-            <th className="font-normal">{t("gates.wanted")}</th>
-            <th className="font-normal">{t("gates.neuron")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {PAIRS.map(([a, b], i) => (
-            <tr key={i} className="border-t border-hairline">
-              <td className="py-1.5">{a}</td>
-              <td>{b}</td>
-              <td>{GATES[gate][i]}</td>
-              <td
-                className={
-                  table[i] === GATES[gate][i] ? "text-ok" : "text-warn"
-                }
-              >
-                {table[i]}
-              </td>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[360px] text-center font-mono tabular-nums">
+          <thead>
+            <tr className="text-ink-3">
+              <th className="py-1 font-normal">{"x₁"}</th>
+              <th className="font-normal">{"x₂"}</th>
+              <th className="font-semibold text-ink">{t("gates.neuron")}</th>
+              {gates.map((g) => (
+                <th
+                  key={g}
+                  className={cn(
+                    "rounded-t-lg font-normal",
+                    matched === g && "bg-ok-soft font-semibold text-ok"
+                  )}
+                >
+                  {t(`gates.${g}`)}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {PAIRS.map(([a, b], i) => (
+              <tr key={i} className="border-t border-hairline">
+                <td className="py-1.5">{a}</td>
+                <td>{b}</td>
+                <td className="font-semibold">{table[i]}</td>
+                {gates.map((g) => (
+                  <td
+                    key={g}
+                    className={cn(
+                      matched === g && "bg-ok-soft",
+                      GATES[g][i] === table[i] ? "text-ink" : "text-ink-3"
+                    )}
+                  >
+                    {GATES[g][i]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className={cn("font-medium", matched ? "text-ok" : "text-ink-2")}>
+        {matched
+          ? t("gates.matches", { gate: t(`gates.${matched}`) })
+          : t("gates.none")}
+      </p>
+
+      {learnable && (
+        <div className="space-y-3 border-t border-hairline pt-4">
+          <p className="type-subhead">{t("gates.task")}</p>
+          <Legend />
+          <DotsFigure
+            dots={OR_CORNERS}
+            line={neuron}
+            className="mx-auto max-w-[300px]"
+          />
+          <NeuronSliders neuron={neuron} onChange={setNeuron} />
+          <div className="flex flex-wrap items-center gap-3">
+            {computes(neuron, "or") && (
+              <span className="inline-flex items-center gap-1.5 font-medium text-ok">
+                <Icon name="check" /> {t("gates.done")}
+              </span>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setNeuronState(AND_NEURON)}
+            >
+              {t("gates.backToAnd")}
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
 
-function LineLab({ gate }: { gate: Gate | null }) {
+/**
+ * The neuron of the lab, drawn: the two inputs lit when on, the wires as thick as their
+ * weights (dashed when negative), the body with its bias, and the output lit when the
+ * neuron fires.
+ */
+function NeuronDiagram({
+  neuron,
+  x,
+}: {
+  neuron: Neuron2;
+  x: [number, number];
+}) {
+  const t = useTranslations("learning.figure");
+  const out = fires(neuron, x[0], x[1]);
+  const wire = (w: number) => ({
+    strokeWidth: 0.8 + Math.min(Math.abs(w), 2) * 2,
+    strokeDasharray: w < 0 ? "5 4" : undefined,
+  });
+  return (
+    <svg
+      viewBox="0 0 360 150"
+      className="mx-auto w-full max-w-[480px] text-ink"
+      role="img"
+      aria-label={t("neuronAria")}
+    >
+      <g fill="none" stroke="currentColor">
+        <line x1={52} y1={40} x2={162} y2={70} {...wire(neuron.w1)} />
+        <line x1={52} y1={110} x2={162} y2={80} {...wire(neuron.w2)} />
+        <line x1={218} y1={75} x2={300} y2={75} strokeWidth={2} />
+      </g>
+      {[40, 110].map((cy, i) => (
+        <g key={cy}>
+          <circle
+            cx={38}
+            cy={cy}
+            r={14}
+            fill={x[i] ? GROUP_COLOURS[1] : "var(--surface-2)"}
+            stroke="currentColor"
+          />
+          <text
+            x={38}
+            y={cy + 4}
+            fontSize={12}
+            textAnchor="middle"
+            fill="currentColor"
+          >
+            {x[i]}
+          </text>
+          <text
+            x={105}
+            y={i ? 112 : 42}
+            fontSize={11}
+            textAnchor="middle"
+            fill="currentColor"
+          >
+            {`${i ? "w₂" : "w₁"} = ${round(i ? neuron.w2 : neuron.w1)}`}
+          </text>
+        </g>
+      ))}
+      <circle
+        cx={190}
+        cy={75}
+        r={28}
+        fill="var(--surface)"
+        stroke="currentColor"
+        strokeWidth={1.6}
+      />
+      <text
+        x={190}
+        y={72}
+        fontSize={16}
+        textAnchor="middle"
+        fill="currentColor"
+      >
+        {"Σ"}
+      </text>
+      <text
+        x={190}
+        y={90}
+        fontSize={10}
+        textAnchor="middle"
+        fill="currentColor"
+        opacity={0.7}
+      >
+        {`b = ${round(neuron.b)}`}
+      </text>
+      <circle
+        cx={318}
+        cy={75}
+        r={16}
+        fill={out ? GROUP_COLOURS[1] : "var(--surface-2)"}
+        stroke="currentColor"
+      />
+      <text
+        x={318}
+        y={79}
+        fontSize={12}
+        textAnchor="middle"
+        fill="currentColor"
+      >
+        {out}
+      </text>
+      <text
+        x={318}
+        y={112}
+        fontSize={10}
+        textAnchor="middle"
+        fill="currentColor"
+        opacity={0.7}
+      >
+        {t("fires")}
+      </text>
+    </svg>
+  );
+}
+
+/** The four inputs of a gate as the corners of a square, coloured by what OR wants. */
+const OR_CORNERS = gateDots("or", 1, 5).map((d, i) => ({
+  ...d,
+  x: PAIRS[i][0],
+  y: PAIRS[i][1],
+}));
+const AND_CORNERS = OR_CORNERS.map((d, i) => ({
+  ...d,
+  label: GATES.and[i] as 0 | 1,
+}));
+/** A line that splits `twoGroups()`. */
+const GROUPS_LINE: Neuron2 = { w1: 1, w2: 1, b: -1 };
+
+/**
+ * Classification before any learning: dots are examples, colours are their groups, and a
+ * line splits them. First the four inputs of the AND neuron (it fires only at (1, 1), the
+ * corner its line cuts off), then a cloud of examples. The line is shown on request, so
+ * the class can guess where it goes before seeing it. Nothing moves: moving it is the
+ * next step's job.
+ */
+function ClassifyLab() {
   const t = useTranslations("learning.labs");
-  const dots = useMemo(() => (gate ? gateDots(gate) : twoGroups()), [gate]);
+  const [which, setWhich] = useState<"and" | "groups">("and");
+  const [shown, setShown] = useState(false);
+  const groups = useMemo(() => twoGroups(), []);
+  const dots = which === "and" ? AND_CORNERS : groups;
+  return (
+    <Card className="space-y-4">
+      <div>
+        <h3 className="type-subhead">{t("classify.title")}</h3>
+        <p className="mt-1 text-ink-2">{t("classify.text")}</p>
+      </div>
+      <Segmented
+        label={t("classify.which")}
+        value={which}
+        onChange={(v) => {
+          setWhich(v);
+          setShown(false);
+        }}
+        options={[
+          { value: "and", label: t("classify.and") },
+          { value: "groups", label: t("classify.groups") },
+        ]}
+      />
+      <Legend />
+      <DotsFigure
+        dots={dots}
+        line={shown ? (which === "and" ? AND_NEURON : GROUPS_LINE) : undefined}
+        className="mx-auto max-w-[360px]"
+      />
+      <Button size="sm" variant="secondary" onClick={() => setShown((s) => !s)}>
+        {t(shown ? "classify.hide" : "classify.show")}
+      </Button>
+    </Card>
+  );
+}
+
+/** XOR's dots and a line to try: the one split a single neuron cannot make. */
+function LineLab() {
+  const t = useTranslations("learning.labs");
+  const dots = useMemo(() => gateDots("xor"), []);
   const [neuron, setNeuron] = useState<Neuron2>({ w1: 1, w2: 0, b: -0.2 });
   const right = correctCount(neuron, dots);
   return (
     <Card className="space-y-4">
       <div>
-        <h3 className="type-subhead">
-          {t(gate ? "line.xorTitle" : "line.title")}
-        </h3>
+        <h3 className="type-subhead">{t("line.xorTitle")}</h3>
         <p className="mt-1 text-ink-2">{t("line.text")}</p>
       </div>
       <Legend />

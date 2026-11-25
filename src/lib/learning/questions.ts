@@ -67,6 +67,11 @@ export function round(v: number): string {
   return String(Math.round(v * 1000) / 1000);
 }
 
+/** The parts of an artificial neuron a figure can highlight. */
+export type ArtificialPart = "inputs" | "weights" | "sum" | "fires";
+/** The parts of a biological neuron a figure can highlight. */
+export type BioPart = "dendrites" | "body" | "axon" | "synapse";
+
 /** What a figure draws. */
 export type FigureSpec =
   /** One point on a number line from `range[0]` to `range[1]`, ticks every unit. */
@@ -101,7 +106,9 @@ export type FigureSpec =
   /** A small picture of pixels (`width` per row, 1 for ink), such as a 5x7 digit. */
   | { kind: "pixels"; pixels: number[]; width: number }
   /** One artificial neuron with its parts named: inputs, weights, sum, firing. */
-  | { kind: "neuron" }
+  | { kind: "neuron"; highlight?: ArtificialPart }
+  /** A biological neuron, sketched, with its parts named or one of them highlighted. */
+  | { kind: "bioNeuron"; highlight?: BioPart }
   /** Plasticity over a lifetime: synapse count and ease of change, birth to 90. */
   | { kind: "lifespan" };
 

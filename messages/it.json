@@ -4518,7 +4518,8 @@
       "dropHere": "Trascina qui un'immagine",
       "numbers": "{n, plural, one {# numero} other {# numeri}}",
       "true": "Vero",
-      "false": "Falso"
+      "false": "Falso",
+      "reset": "Ricomincia"
     },
     "gallery": {
       "hint": "Nove immagini della stessa famiglia. Indovina i numeri che ci sono dietro, poi tocca un'immagine per vederne il codice.",
@@ -4548,7 +4549,13 @@
       "fires": "si attiva?",
       "age": "età (anni)",
       "synapses": "numero di sinapsi",
-      "ease": "quanto facilmente cambiano i collegamenti"
+      "ease": "quanto facilmente cambiano i collegamenti",
+      "neuronAria": "Un neurone artificiale: due ingressi, i loro pesi, la somma con il bias e l’uscita",
+      "bioAria": "Un neurone biologico: dendriti, corpo cellulare, assone e sinapsi",
+      "dendrites": "dendriti",
+      "cellBody": "corpo cellulare",
+      "axon": "assone",
+      "synapse": "sinapsi"
     },
     "encoding": {
       "steps": {
@@ -4774,19 +4781,32 @@
     },
     "labs": {
       "gates": {
-        "title": "Sii il neurone",
-        "text": "Tocca i due ingressi per accenderli e spegnerli. Il neurone moltiplica ognuno per il suo peso, aggiunge il bias e si attiva se la somma è sopra lo zero. Trova i pesi che gli fanno calcolare AND, poi OR.",
+        "title": "Che cosa ha imparato?",
+        "text": "Ecco un neurone con i numeri già scelti: w₁ = 1, w₂ = 1, b = -1.5. Tocca i due ingressi per accenderli e spegnerli e guarda quando si attiva. Le sue quattro risposte sono nella tabella, accanto a tre regole famose: AND, OR e XOR. Quale ha imparato?",
+        "learnTitle": "Insegnagli OR",
+        "learnText": "Lo stesso neurone del primo passo, che calcola ancora AND. La sua retta è disegnata sui quattro angoli del quadrato, uno per ogni coppia di ingressi. Ora l’insegnante sei tu.",
         "sum": "somma = {s}",
         "output": "uscita",
-        "goal": "Obiettivo",
         "and": "AND (entrambi accesi)",
         "or": "OR (almeno uno acceso)",
-        "done": "Il tuo neurone lo calcola!",
-        "wanted": "atteso",
+        "xor": "XOR (esattamente uno acceso)",
+        "matches": "Questo neurone calcola {gate}.",
+        "none": "Questo neurone non corrisponde ancora a nessuna delle tre regole.",
+        "task": "Muovi i suoi numeri finché non calcola OR: solo l’angolo (0, 0) resta dal lato spento.",
+        "done": "Il tuo neurone calcola OR!",
+        "backToAnd": "Torna ad AND",
         "neuron": "neurone"
       },
+      "classify": {
+        "title": "Due gruppi, una retta",
+        "text": "Ogni punto è un esempio descritto da due numeri, le sue coordinate; il colore è il suo gruppo. Dove disegneresti una retta per tenere separati i due colori? Prova a indovinare, poi mostra la retta.",
+        "which": "Punti",
+        "and": "I quattro ingressi di AND",
+        "groups": "Due gruppi di esempi",
+        "show": "Mostra la retta",
+        "hide": "Nascondi la retta"
+      },
       "line": {
-        "title": "Dividi i punti con una retta",
         "xorTitle": "Ora prova con XOR",
         "text": "Il neurone si attiva sul lato colorato della sua retta. Muovi i pesi e il bias finché ogni punto blu non è sul lato colorato e nessun punto arancione lo è.",
         "fire": "deve attivarsi (1)",
@@ -4881,15 +4901,19 @@
       "steps": {
         "neuron": {
           "title": "Un neurone, una decisione",
-          "body": "<p>Un <b>neurone artificiale</b> è una macchina molto semplice. Riceve alcuni numeri (i suoi <b>ingressi</b>), moltiplica ognuno per il proprio <b>peso</b>, li somma insieme a un <b>bias</b>, e poi decide: se la somma è sopra lo zero si <b>attiva</b> (1), altrimenti resta spento (0).</p><p>I pesi dicono quanto conta ogni ingresso; il bias dice quanto facilmente il neurone si attiva. Con i numeri giusti, un solo neurone sa già prendere decisioni semplici, come le porte logiche AND e OR.</p>"
+          "body": "<p>Un <b>neurone artificiale</b> è una macchina molto semplice. Riceve alcuni numeri (i suoi <b>ingressi</b>), moltiplica ognuno per il proprio <b>peso</b>, li somma insieme a un <b>bias</b>, e poi decide: se la somma è sopra lo zero si <b>attiva</b> (1), altrimenti resta spento (0).</p><p>I pesi dicono quanto conta ogni ingresso; il bias dice quanto facilmente il neurone si attiva. Allora la domanda è: con questi numeri, <b>che cosa ha imparato</b>? Prova ogni coppia di ingressi e confronta le sue risposte con le tabelle.</p>"
         },
         "biology": {
           "title": "Il neurone nella tua testa",
           "body": "<p>L’idea viene dal cervello. Un neurone biologico raccoglie segnali da altri neuroni attraverso i <b>dendriti</b>. Ogni collegamento, una <b>sinapsi</b>, può essere forte o debole. Il <b>corpo cellulare</b> somma ciò che arriva, e quando il totale supera una soglia il neurone manda un <b>impulso</b> lungo l’assone ai neuroni successivi.</p><p>Il neurone artificiale ne è una caricatura: molto più semplice, ma con le stesse parti.</p>"
         },
         "line": {
-          "title": "Un neurone disegna una retta",
-          "body": "<p>Dai al neurone come ingressi le due coordinate di un punto. Dov’è esattamente il confine tra attivarsi e non attivarsi? Dove w₁·x + w₂·y + b = 0: è l’equazione di una <b>retta</b>.</p><p>Quindi un neurone divide il piano in due: da una parte si attiva, dall’altra no. Scegliere i suoi tre numeri vuol dire scegliere una retta. Prova a separare i punti blu da quelli arancioni.</p>"
+          "title": "Classificare: due gruppi, una retta",
+          "body": "<p>Tanti problemi sono di <b>classificazione</b>: dato un esempio, dire a quale gruppo appartiene. Questa email è spam? È un gatto o un cane? Qui ogni esempio è un punto con due numeri, le sue coordinate, e il colore è la risposta giusta (l’<b>etichetta</b>).</p><p>Quando i gruppi sono ben separati, basta una <b>retta</b> per dividerli: tutto ciò che sta da una parte è blu, tutto ciò che sta dall’altra è arancione. Guarda di nuovo il neurone AND: i suoi quattro ingressi sono gli angoli di un quadrato, e si attiva solo in (1, 1). Anche questa è una retta, che taglia via un angolo.</p>"
+        },
+        "teach": {
+          "title": "Un neurone è una retta che si può muovere",
+          "body": "<p>Ecco perché. Dai al neurone come ingressi le due coordinate di un punto. Si trova esattamente sul confine tra attivarsi e non attivarsi dove w₁·x + w₂·y + b = 0: è l’equazione di una <b>retta</b>. Da una parte si attiva, dall’altra no.</p><p>Quindi scegliere i tre numeri del neurone vuol dire scegliere una retta, e cambiarli la sposta. <b>Imparare</b> è questo: cambiare i numeri finché la retta non divide gli esempi come vogliamo.</p>"
         },
         "xor": {
           "title": "Il problema che una retta non risolve",
