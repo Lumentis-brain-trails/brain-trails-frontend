@@ -16,6 +16,13 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { EcgExplorer } from "@/components/learning/EcgExplorer";
 import { Gallery } from "@/components/learning/Gallery";
+import {
+  NEURON_LABS,
+  NeuronLab,
+  type NeuronLabName,
+} from "@/components/learning/NeuronLabs";
+import { BraidLab } from "@/components/learning/BraidBoard";
+import { BallLab, CityLab } from "@/components/learning/PlasticityLabs";
 import { LearningFigure } from "@/components/learning/LearningFigure";
 import { Playground } from "@/components/learning/Playground";
 import { QuestionCard, useWords } from "@/components/learning/QuestionCard";
@@ -98,16 +105,20 @@ export function ModuleView({ module }: { module: LearningModule }) {
         ))}
       </nav>
 
-      <div className="mb-6 grid grid-cols-3 gap-2">
-        {(["count", "values", "decode"] as const).map((q) => (
-          <div
-            key={q}
-            className="rounded-xl border border-hairline px-3 py-2 text-center"
-          >
-            <span className="type-caption text-ink-2">{t(`refrain.${q}`)}</span>
-          </div>
-        ))}
-      </div>
+      {module.refrain && (
+        <div className="mb-6 grid grid-cols-3 gap-2">
+          {(["count", "values", "decode"] as const).map((q) => (
+            <div
+              key={q}
+              className="rounded-xl border border-hairline px-3 py-2 text-center"
+            >
+              <span className="type-caption text-ink-2">
+                {t(`refrain.${q}`)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <article className="space-y-6">
         <div>
@@ -122,9 +133,31 @@ export function ModuleView({ module }: { module: LearningModule }) {
             <LearningFigure spec={step.figure} className="mx-auto max-w-3xl" />
           </Card>
         )}
-        {step.explorer === "ecg" && <EcgExplorer />}
+        {step.lab === "ecg" && <EcgExplorer />}
+        {step.lab === "braid" && <BraidLab />}
+        {step.lab === "city" && <CityLab />}
+        {step.lab === "ballHard" && <BallLab worlds={["rocking", "stuck"]} />}
+        {step.lab === "ballRestless" && <BallLab worlds={["restless"]} />}
+        {step.lab === "ballSoft" && <BallLab worlds={["soft"]} />}
+        {step.lab === "ballWind" && <BallLab worlds={["wind"]} />}
+        {step.lab && NEURON_LABS.has(step.lab) && (
+          <NeuronLab lab={step.lab as NeuronLabName} />
+        )}
         {step.gallery && <Gallery examples={step.gallery} />}
         {step.playground && <Playground spec={step.playground} />}
+        {step.links && (
+          <div className="flex flex-wrap gap-2">
+            {step.links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={buttonClass("primary")}
+              >
+                {words.text(l.words)}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {step.questions.map((q, i) => (
           <QuestionCard key={`${step.id}-${q.id}`} question={q} index={i} />
