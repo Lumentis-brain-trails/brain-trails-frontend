@@ -49,12 +49,19 @@ export function useWords() {
 
 type Verdict = "right" | "wrong" | "shown" | null;
 
+/**
+ * `onVerdict` hears every verdict after Check or Show answer (a wrong answer checked
+ * again and now right reports "right"): the module uses it to show the next question,
+ * and a teacher-paced lesson to count the class's answers without names.
+ */
 export function QuestionCard({
   question,
   index,
+  onVerdict,
 }: {
   question: Question;
   index: number;
+  onVerdict?: (verdict: "right" | "wrong" | "shown") => void;
 }) {
   const t = useTranslations("learning.question");
   const words = useWords();
@@ -66,12 +73,16 @@ export function QuestionCard({
     setAnswer(a);
     if (verdict === "wrong") setVerdict(null);
   };
-  const check = () =>
-    setVerdict(isCorrect(question, answer) ? "right" : "wrong");
+  const check = () => {
+    const v = isCorrect(question, answer) ? "right" : "wrong";
+    setVerdict(v);
+    onVerdict?.(v);
+  };
   const show = () => {
     setAnswer(solution(question));
     setVersion((v) => v + 1);
     setVerdict("shown");
+    onVerdict?.("shown");
   };
   const reset = () => {
     setAnswer(initial(question));
@@ -81,7 +92,12 @@ export function QuestionCard({
   const done = verdict === "right" || verdict === "shown";
 
   return (
-    <Card className="space-y-4">
+    <Card
+      className={cn(
+        "space-y-4 transition-shadow duration-500",
+        verdict === "right" && "learning-right ring-2 ring-ok"
+      )}
+    >
       <div className="flex items-start gap-3">
         <span className="type-eyebrow mt-1 shrink-0 text-ink-3">
           {t("number", { n: index + 1 })}
@@ -113,6 +129,7 @@ export function QuestionCard({
         answer={answer}
         onChange={change}
         locked={done}
+        right={verdict === "right"}
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -124,6 +141,11 @@ export function QuestionCard({
         {!done && (
           <Button size="sm" variant="ghost" onClick={show}>
             {t("show")}
+          </Button>
+        )}
+        {!done && (question.kind === "order" || question.kind === "match") && (
+          <Button size="sm" variant="ghost" onClick={reset}>
+            {t("reset")}
           </Button>
         )}
         {done && (
@@ -187,11 +209,13 @@ function Body({
   answer,
   onChange,
   locked,
+  right,
 }: {
   question: Question;
   answer: Answer;
   onChange: (a: Answer) => void;
   locked: boolean;
+  right: boolean;
 }) {
   if (question.kind === "count" && answer.kind === "count")
     return (
@@ -230,9 +254,16 @@ function Body({
   if (question.kind === "choice" && answer.kind === "choice")
     return (
       <Choices
-        options={question.options}
+        // the same order on every screen (seeded by the question), so a class sees
+        // the same list; true/false stays in its natural order
+        options={
+          question.options.every((o) => o.id === "true" || o.id === "false")
+            ? question.options
+            : shuffled(question.options, question.id)
+        }
         selected={answer.id}
         locked={locked}
+        right={right}
         onPick={(id) => onChange({ kind: "choice", id })}
       />
     );
@@ -242,6 +273,7 @@ function Body({
         items={question.items}
         ids={answer.ids}
         locked={locked}
+        right={right}
         onChange={(ids) => onChange({ kind: "order", ids })}
       />
     );
@@ -251,6 +283,7 @@ function Body({
         question={question}
         placed={answer.placed}
         locked={locked}
+        right={right}
         onChange={(placed) => onChange({ kind: "match", placed })}
       />
     );
@@ -324,11 +357,13 @@ function Choices({
   options,
   selected,
   locked,
+  right,
   onPick,
 }: {
   options: Item[];
   selected: string;
   locked: boolean;
+  right: boolean;
   onPick: (id: string) => void;
 }) {
   const pictures = options.some((o) => o.figure);
@@ -337,7 +372,11 @@ function Choices({
       role="radiogroup"
       className={cn(
         "grid gap-2",
-        pictures ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1"
+        !pictures
+          ? "grid-cols-1"
+          : options.length === 4
+            ? "grid-cols-2 lg:grid-cols-4"
+            : "grid-cols-1 sm:grid-cols-3"
       )}
     >
       {options.map((o) => (
@@ -350,9 +389,11 @@ function Choices({
           onClick={() => onPick(o.id)}
           className={cn(
             "pressable rounded-xl border p-3 text-left transition-colors",
-            selected === o.id
-              ? "border-accent bg-accent-soft"
-              : "border-hairline hover:bg-surface-2"
+            selected === o.id && right
+              ? "border-ok bg-ok-soft"
+              : selected === o.id
+                ? "border-accent bg-accent-soft"
+                : "border-hairline hover:bg-surface-2"
           )}
         >
           <ItemFace item={o} />
@@ -370,11 +411,13 @@ function OrderList({
   items,
   ids,
   locked,
+  right,
   onChange,
 }: {
   items: Item[];
   ids: string[];
   locked: boolean;
+  right: boolean;
   onChange: (ids: string[]) => void;
 }) {
   const t = useTranslations("learning.question");
@@ -427,7 +470,11 @@ function OrderList({
                 "flex items-center gap-3 rounded-xl border bg-surface p-3 select-none",
                 pictures && "flex-col items-stretch",
                 !locked && "cursor-grab",
-                held === id ? "border-accent bg-accent-soft" : "border-hairline"
+                right
+                  ? "border-ok bg-ok-soft"
+                  : held === id
+                    ? "border-accent bg-accent-soft"
+                    : "border-hairline"
               )}
             >
               <span className="type-figure w-6 shrink-0 text-[18px] text-ink-3">
@@ -481,11 +528,13 @@ function MatchBoard({
   question,
   placed,
   locked,
+  right,
   onChange,
 }: {
   question: Extract<Question, { kind: "match" }>;
   placed: Record<string, string>;
   locked: boolean;
+  right: boolean;
   onChange: (placed: Record<string, string>) => void;
 }) {
   const t = useTranslations("learning.question");
@@ -555,9 +604,11 @@ function MatchBoard({
               }}
               className={cn(
                 "flex min-h-28 flex-col gap-2 rounded-xl border border-dashed p-2",
-                held && !locked
-                  ? "cursor-pointer border-accent"
-                  : "border-hairline-strong"
+                right
+                  ? "border-solid border-ok bg-ok-soft"
+                  : held && !locked
+                    ? "cursor-pointer border-accent"
+                    : "border-hairline-strong"
               )}
             >
               <span className="text-center font-mono text-[14px] tabular-nums">

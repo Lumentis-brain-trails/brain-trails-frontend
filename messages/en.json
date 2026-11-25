@@ -4423,7 +4423,8 @@
       "dropHere": "Drop a picture here",
       "numbers": "{n, plural, one {# number} other {# numbers}}",
       "true": "True",
-      "false": "False"
+      "false": "False",
+      "reset": "Start over"
     },
     "gallery": {
       "hint": "Nine pictures of one family. Guess the numbers behind them, then tap a picture to see its code.",
@@ -4453,7 +4454,13 @@
       "fires": "fires?",
       "age": "age (years)",
       "synapses": "number of synapses",
-      "ease": "how easily connections change"
+      "ease": "how easily connections change",
+      "neuronAria": "An artificial neuron: two inputs, their weights, the sum with the bias, and the output",
+      "bioAria": "A biological neuron: dendrites, cell body, axon and synapses",
+      "dendrites": "dendrites",
+      "cellBody": "cell body",
+      "axon": "axon",
+      "synapse": "synapse"
     },
     "encoding": {
       "steps": {
@@ -4679,19 +4686,33 @@
     },
     "labs": {
       "gates": {
-        "title": "Be the neuron",
-        "text": "Tap the two inputs to switch them on and off. The neuron multiplies each by its weight, adds the bias, and fires if the sum is above zero. Find weights that make it compute AND, then OR.",
+        "title": "What does it learn?",
+        "text": "Here is one neuron with its numbers already set: w₁ = 1, w₂ = 1, b = -1.5. Tap the two inputs to switch them on and off and watch when it fires. Its four answers are in the table, next to three famous rules: AND, OR and XOR. Which one has it learned?",
+        "learnTitle": "Teach it OR",
+        "learnText": "The same neuron as in the first step, still computing AND. Its line is drawn across the four corners of the square, one per pair of inputs. Now you are the teacher.",
         "sum": "sum = {s}",
         "output": "output",
-        "goal": "Goal",
         "and": "AND (both on)",
         "or": "OR (at least one on)",
-        "done": "Your neuron computes it!",
-        "wanted": "wanted",
+        "xor": "XOR (exactly one on)",
+        "matches": "This neuron computes {gate}.",
+        "none": "This neuron does not match any of the three rules yet.",
+        "task": "Move its numbers until it computes OR: only the (0, 0) corner stays on the quiet side.",
+        "done": "Your neuron computes OR!",
+        "backToAnd": "Back to AND",
         "neuron": "neuron"
       },
+      "classify": {
+        "title": "Two groups, one line",
+        "text": "Each dot is an example described by two numbers, its coordinates; its colour is its group. Where would you draw a straight line to keep the two colours apart? Guess, then show the line.",
+        "which": "Dots",
+        "and": "The four inputs of AND",
+        "groups": "Two groups of examples",
+        "show": "Show the line",
+        "hide": "Hide the line",
+        "split": "Every dot is on its own side of the line."
+      },
       "line": {
-        "title": "Split the dots with one line",
         "xorTitle": "Now try XOR",
         "text": "The neuron fires on the shaded side of its line. Move the weights and the bias until every blue dot is on the shaded side and every amber dot is not.",
         "fire": "should fire (1)",
@@ -4786,15 +4807,19 @@
       "steps": {
         "neuron": {
           "title": "One neuron, one decision",
-          "body": "<p>An <b>artificial neuron</b> is a very simple machine. It receives a few numbers (its <b>inputs</b>), multiplies each by its own <b>weight</b>, adds them up together with a <b>bias</b>, and then decides: if the sum is above zero it <b>fires</b> (1), otherwise it stays quiet (0).</p><p>The weights say how much each input matters; the bias says how easily the neuron fires. With the right numbers, one neuron can already make simple decisions, like the logic gates AND and OR.</p>"
+          "body": "<p>An <b>artificial neuron</b> is a very simple machine. It receives a few numbers (its <b>inputs</b>), multiplies each by its own <b>weight</b>, adds them up together with a <b>bias</b>, and then decides: if the sum is above zero it <b>fires</b> (1), otherwise it stays quiet (0).</p><p>The weights say how much each input matters; the bias says how easily the neuron fires. So the question is: with these numbers, <b>what does it learn</b>? Try every pair of inputs and compare its answers with the tables.</p>"
         },
         "biology": {
           "title": "The neuron in your head",
           "body": "<p>The idea comes from the brain. A biological neuron collects signals from other neurons through its <b>dendrites</b>. Each connection, a <b>synapse</b>, can be strong or weak. The <b>cell body</b> adds up what arrives, and when the total passes a threshold the neuron sends a <b>spike</b> down its axon to the next neurons.</p><p>The artificial neuron is a cartoon of this: much simpler, but with the same parts.</p>"
         },
         "line": {
-          "title": "A neuron draws a line",
-          "body": "<p>Give the neuron the two coordinates of a dot as its inputs. Where is it exactly on the edge between firing and not firing? Where w₁·x + w₂·y + b = 0: that is the equation of a <b>line</b>.</p><p>So a neuron splits the plane in two: on one side it fires, on the other it does not. Choosing its three numbers means choosing a line. Try to split the blue dots from the amber ones.</p>"
+          "title": "Classification: two groups, one line",
+          "body": "<p>Many problems are <b>classification</b>: given an example, say which group it belongs to. Is this email spam? Is this a cat or a dog? Here each example is a dot with two numbers, its coordinates, and its colour is the right answer (the <b>label</b>).</p><p>When the groups are well apart, a single straight <b>line</b> can split them: everything on one side is blue, everything on the other is amber. Look at the AND neuron again: its four inputs are the corners of a square, and it fires only at (1, 1). That is a line too, cutting off one corner.</p>"
+        },
+        "teach": {
+          "title": "A neuron is a line you can move",
+          "body": "<p>Here is why. Give the neuron the two coordinates of a dot as its inputs. It is exactly on the edge between firing and not firing where w₁·x + w₂·y + b = 0: that is the equation of a <b>line</b>. On one side it fires, on the other it does not.</p><p>So choosing the neuron's three numbers means choosing a line, and changing them moves it. <b>Learning</b> is this: changing the numbers until the line splits the examples the way we want.</p>"
         },
         "xor": {
           "title": "The problem a line cannot solve",
@@ -4827,7 +4852,8 @@
           "options": {
             "and": "AND: it fires only when both inputs are on",
             "or": "OR: it fires when at least one input is on",
-            "neither": "Neither"
+            "neither": "Neither",
+            "xor": "XOR: it fires when exactly one input is on"
           },
           "explain": "<p>With one input on the sum is 1 - 1.5 = -0.5: quiet. With both on it is 2 - 1.5 = 0.5: it fires. That is <b>AND</b>. With b = -0.5 it would be OR.</p>"
         },
@@ -4852,20 +4878,22 @@
           "options": {
             "slides": "It slides the line without turning it",
             "turns": "It turns the line around a point",
-            "colours": "It changes which dots are blue"
+            "colours": "It changes which dots are blue",
+            "nothing": "Nothing: only the weights move the line"
           },
           "explain": "<p>The bias <b>slides</b> the line parallel to itself; the weights set its direction. The dots' colours are the labels: they belong to the data, not to the neuron.</p>"
         },
         "nnWhichLine": {
           "prompt": "Which neuron gets every dot right?",
-          "explain": "<p>The middle one: blue on the shaded side, amber on the other. The last one draws the same line but fires on the wrong side: the sign of the weights decides which side fires.</p>"
+          "explain": "<p>The diagonal one with every blue dot on the shaded side and every amber dot on the other. Another draws the same line but fires on the wrong side: the sign of the weights decides which side fires. The straight ones cut through a group.</p>"
         },
         "nnXorBest": {
           "prompt": "With one line, at best how many of the four XOR corners can you get right?",
           "options": {
             "two": "Two",
             "three": "Three",
-            "four": "All four"
+            "four": "All four",
+            "one": "One"
           },
           "explain": "<p><b>Three</b>. Any line that keeps both blue corners together leaves at least one amber corner with them.</p>"
         },
@@ -4878,7 +4906,8 @@
           "options": {
             "or": "OR",
             "and": "AND",
-            "xor": "XOR"
+            "xor": "XOR",
+            "nand": "NAND (not both)"
           },
           "explain": "<p><b>OR</b>: it fires when at least one input is on. The second one is \"not both\", and the output is the AND of the two.</p>"
         },
@@ -4887,7 +4916,8 @@
           "options": {
             "up": "Up",
             "down": "Down",
-            "same": "It should not move"
+            "same": "It should not move",
+            "zero": "It should be set to 0"
           },
           "explain": "<p><b>Down</b>. The answer was too high, and w₁ multiplied an input of 1, so it pushed the answer up: lowering it brings the answer towards 0.</p>"
         },
@@ -4896,7 +4926,8 @@
           "options": {
             "up": "Up",
             "down": "Down",
-            "same": "It should not move"
+            "same": "It should not move",
+            "zero": "It should be set to 0"
           },
           "explain": "<p>It <b>should not move</b>: an input of 0 times any weight is 0, so w₁ did not contribute to this mistake. Backpropagation gives each weight a share of the error in proportion to what it did. (The bias b still moves.)</p>"
         },
@@ -4920,7 +4951,8 @@
           "options": {
             "shape": "So it learns what all 3s have in common, and recognises 3s it has never seen",
             "memory": "So it can remember every picture by heart",
-            "faster": "Because training is faster with more pictures"
+            "faster": "Because training is faster with more pictures",
+            "pixels": "So it learns how many pixels each digit has"
           },
           "explain": "<p>The goal is to <b>generalise</b>: to recognise new drawings. A network that only memorises its examples fails on the first new one. That is why we test it on digits it has never seen.</p>"
         },
@@ -4929,20 +4961,30 @@
           "options": {
             "summary": "A short description of the picture that the network invented to do its job",
             "copy": "A copy of 12 of the pixels",
-            "answer": "The probability of each digit"
+            "answer": "The probability of each digit",
+            "random": "Random numbers, different every time"
           },
           "explain": "<p>A <b>short description</b>: 35 pixels became 12 numbers that keep what matters to tell digits apart. Nobody told the network what to put there. How to describe something with a few numbers is the subject of the next module, Encoding.</p>"
         },
-        "nnRecap": {
-          "prompt": "Put the ideas of this module in the order we met them.",
-          "steps": {
-            "neuron": "A neuron weighs its inputs and fires above a threshold",
-            "line": "One neuron splits the plane with a line",
-            "hidden": "A hidden layer solves what one line cannot (XOR)",
-            "data": "A dataset gives many examples with the right answer",
-            "learn": "Backpropagation nudges every weight to make the error smaller"
-          },
-          "explain": "<p>Neuron, line, hidden layer, dataset, backpropagation: the whole story of neural networks in five steps.</p>"
+        "nnTfThreshold": {
+          "prompt": "A neuron adds up its weighted inputs and the bias, and fires when the sum is above zero.",
+          "explain": "<p><b>True.</b> That is the whole machine: weigh, add, decide.</p>"
+        },
+        "nnTfXorOne": {
+          "prompt": "With the right weights, one neuron alone can compute XOR.",
+          "explain": "<p><b>False.</b> One neuron draws one line, and no line splits XOR's corners: at best three out of four. It takes a hidden layer.</p>"
+        },
+        "nnTfHidden": {
+          "prompt": "A hidden layer lets a network solve problems a single line cannot.",
+          "explain": "<p><b>True.</b> Each hidden neuron draws its own line, and the next layer combines them: that is how XOR is solved.</p>"
+        },
+        "nnTfByHand": {
+          "prompt": "In a real network, people choose the weights by hand.",
+          "explain": "<p><b>False.</b> There are far too many. The network learns them from a dataset of labelled examples.</p>"
+        },
+        "nnTfBackprop": {
+          "prompt": "Backpropagation nudges each weight in the direction that makes the error smaller.",
+          "explain": "<p><b>True.</b> The error is sent back through the layers, and each weight moves a little, in proportion to its share of the mistake.</p>"
         }
       }
     },

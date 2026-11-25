@@ -4423,7 +4423,8 @@
       "dropHere": "Trascina qui un'immagine",
       "numbers": "{n, plural, one {# numero} other {# numeri}}",
       "true": "Vero",
-      "false": "Falso"
+      "false": "Falso",
+      "reset": "Ricomincia"
     },
     "gallery": {
       "hint": "Nove immagini della stessa famiglia. Indovina i numeri che ci sono dietro, poi tocca un'immagine per vederne il codice.",
@@ -4453,7 +4454,13 @@
       "fires": "si attiva?",
       "age": "età (anni)",
       "synapses": "numero di sinapsi",
-      "ease": "quanto facilmente cambiano i collegamenti"
+      "ease": "quanto facilmente cambiano i collegamenti",
+      "neuronAria": "Un neurone artificiale: due ingressi, i loro pesi, la somma con il bias e l’uscita",
+      "bioAria": "Un neurone biologico: dendriti, corpo cellulare, assone e sinapsi",
+      "dendrites": "dendriti",
+      "cellBody": "corpo cellulare",
+      "axon": "assone",
+      "synapse": "sinapsi"
     },
     "encoding": {
       "steps": {
@@ -4679,19 +4686,33 @@
     },
     "labs": {
       "gates": {
-        "title": "Sii il neurone",
-        "text": "Tocca i due ingressi per accenderli e spegnerli. Il neurone moltiplica ognuno per il suo peso, aggiunge il bias e si attiva se la somma è sopra lo zero. Trova i pesi che gli fanno calcolare AND, poi OR.",
+        "title": "Che cosa ha imparato?",
+        "text": "Ecco un neurone con i numeri già scelti: w₁ = 1, w₂ = 1, b = -1.5. Tocca i due ingressi per accenderli e spegnerli e guarda quando si attiva. Le sue quattro risposte sono nella tabella, accanto a tre regole famose: AND, OR e XOR. Quale ha imparato?",
+        "learnTitle": "Insegnagli OR",
+        "learnText": "Lo stesso neurone del primo passo, che calcola ancora AND. La sua retta è disegnata sui quattro angoli del quadrato, uno per ogni coppia di ingressi. Ora l’insegnante sei tu.",
         "sum": "somma = {s}",
         "output": "uscita",
-        "goal": "Obiettivo",
         "and": "AND (entrambi accesi)",
         "or": "OR (almeno uno acceso)",
-        "done": "Il tuo neurone lo calcola!",
-        "wanted": "atteso",
+        "xor": "XOR (esattamente uno acceso)",
+        "matches": "Questo neurone calcola {gate}.",
+        "none": "Questo neurone non corrisponde ancora a nessuna delle tre regole.",
+        "task": "Muovi i suoi numeri finché non calcola OR: solo l’angolo (0, 0) resta dal lato spento.",
+        "done": "Il tuo neurone calcola OR!",
+        "backToAnd": "Torna ad AND",
         "neuron": "neurone"
       },
+      "classify": {
+        "title": "Due gruppi, una retta",
+        "text": "Ogni punto è un esempio descritto da due numeri, le sue coordinate; il colore è il suo gruppo. Dove disegneresti una retta per tenere separati i due colori? Prova a indovinare, poi mostra la retta.",
+        "which": "Punti",
+        "and": "I quattro ingressi di AND",
+        "groups": "Due gruppi di esempi",
+        "show": "Mostra la retta",
+        "hide": "Nascondi la retta",
+        "split": "Ogni punto è dal suo lato della retta."
+      },
       "line": {
-        "title": "Dividi i punti con una retta",
         "xorTitle": "Ora prova con XOR",
         "text": "Il neurone si attiva sul lato colorato della sua retta. Muovi i pesi e il bias finché ogni punto blu non è sul lato colorato e nessun punto arancione lo è.",
         "fire": "deve attivarsi (1)",
@@ -4786,15 +4807,19 @@
       "steps": {
         "neuron": {
           "title": "Un neurone, una decisione",
-          "body": "<p>Un <b>neurone artificiale</b> è una macchina molto semplice. Riceve alcuni numeri (i suoi <b>ingressi</b>), moltiplica ognuno per il proprio <b>peso</b>, li somma insieme a un <b>bias</b>, e poi decide: se la somma è sopra lo zero si <b>attiva</b> (1), altrimenti resta spento (0).</p><p>I pesi dicono quanto conta ogni ingresso; il bias dice quanto facilmente il neurone si attiva. Con i numeri giusti, un solo neurone sa già prendere decisioni semplici, come le porte logiche AND e OR.</p>"
+          "body": "<p>Un <b>neurone artificiale</b> è una macchina molto semplice. Riceve alcuni numeri (i suoi <b>ingressi</b>), moltiplica ognuno per il proprio <b>peso</b>, li somma insieme a un <b>bias</b>, e poi decide: se la somma è sopra lo zero si <b>attiva</b> (1), altrimenti resta spento (0).</p><p>I pesi dicono quanto conta ogni ingresso; il bias dice quanto facilmente il neurone si attiva. Allora la domanda è: con questi numeri, <b>che cosa ha imparato</b>? Prova ogni coppia di ingressi e confronta le sue risposte con le tabelle.</p>"
         },
         "biology": {
           "title": "Il neurone nella tua testa",
           "body": "<p>L’idea viene dal cervello. Un neurone biologico raccoglie segnali da altri neuroni attraverso i <b>dendriti</b>. Ogni collegamento, una <b>sinapsi</b>, può essere forte o debole. Il <b>corpo cellulare</b> somma ciò che arriva, e quando il totale supera una soglia il neurone manda un <b>impulso</b> lungo l’assone ai neuroni successivi.</p><p>Il neurone artificiale ne è una caricatura: molto più semplice, ma con le stesse parti.</p>"
         },
         "line": {
-          "title": "Un neurone disegna una retta",
-          "body": "<p>Dai al neurone come ingressi le due coordinate di un punto. Dov’è esattamente il confine tra attivarsi e non attivarsi? Dove w₁·x + w₂·y + b = 0: è l’equazione di una <b>retta</b>.</p><p>Quindi un neurone divide il piano in due: da una parte si attiva, dall’altra no. Scegliere i suoi tre numeri vuol dire scegliere una retta. Prova a separare i punti blu da quelli arancioni.</p>"
+          "title": "Classificare: due gruppi, una retta",
+          "body": "<p>Tanti problemi sono di <b>classificazione</b>: dato un esempio, dire a quale gruppo appartiene. Questa email è spam? È un gatto o un cane? Qui ogni esempio è un punto con due numeri, le sue coordinate, e il colore è la risposta giusta (l’<b>etichetta</b>).</p><p>Quando i gruppi sono ben separati, basta una <b>retta</b> per dividerli: tutto ciò che sta da una parte è blu, tutto ciò che sta dall’altra è arancione. Guarda di nuovo il neurone AND: i suoi quattro ingressi sono gli angoli di un quadrato, e si attiva solo in (1, 1). Anche questa è una retta, che taglia via un angolo.</p>"
+        },
+        "teach": {
+          "title": "Un neurone è una retta che si può muovere",
+          "body": "<p>Ecco perché. Dai al neurone come ingressi le due coordinate di un punto. Si trova esattamente sul confine tra attivarsi e non attivarsi dove w₁·x + w₂·y + b = 0: è l’equazione di una <b>retta</b>. Da una parte si attiva, dall’altra no.</p><p>Quindi scegliere i tre numeri del neurone vuol dire scegliere una retta, e cambiarli la sposta. <b>Imparare</b> è questo: cambiare i numeri finché la retta non divide gli esempi come vogliamo.</p>"
         },
         "xor": {
           "title": "Il problema che una retta non risolve",
@@ -4827,7 +4852,8 @@
           "options": {
             "and": "AND: si attiva solo quando entrambi gli ingressi sono accesi",
             "or": "OR: si attiva quando almeno un ingresso è acceso",
-            "neither": "Nessuno dei due"
+            "neither": "Nessuno dei due",
+            "xor": "XOR: si attiva quando esattamente un ingresso è acceso"
           },
           "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>. Con b = -0.5 sarebbe OR.</p>"
         },
@@ -4852,20 +4878,22 @@
           "options": {
             "slides": "La fa scorrere senza ruotarla",
             "turns": "La fa ruotare attorno a un punto",
-            "colours": "Cambia quali punti sono blu"
+            "colours": "Cambia quali punti sono blu",
+            "nothing": "Niente: solo i pesi muovono la retta"
           },
           "explain": "<p>Il bias fa <b>scorrere</b> la retta parallela a sé stessa; i pesi ne fissano la direzione. I colori dei punti sono le etichette: appartengono ai dati, non al neurone.</p>"
         },
         "nnWhichLine": {
           "prompt": "Quale neurone mette giusti tutti i punti?",
-          "explain": "<p>Quello in mezzo: blu sul lato colorato, arancioni sull’altro. L’ultimo disegna la stessa retta ma si attiva dal lato sbagliato: il segno dei pesi decide quale lato si attiva.</p>"
+          "explain": "<p>Quella in diagonale con tutti i punti blu sul lato colorato e tutti gli arancioni sull’altro. Un’altra disegna la stessa retta ma si attiva dal lato sbagliato: il segno dei pesi decide quale lato si attiva. Quelle dritte tagliano un gruppo.</p>"
         },
         "nnXorBest": {
           "prompt": "Con una retta, al massimo quanti dei quattro angoli di XOR puoi mettere giusti?",
           "options": {
             "two": "Due",
             "three": "Tre",
-            "four": "Tutti e quattro"
+            "four": "Tutti e quattro",
+            "one": "Uno"
           },
           "explain": "<p><b>Tre</b>. Qualunque retta che tiene insieme i due angoli blu lascia con loro almeno un angolo arancione.</p>"
         },
@@ -4878,7 +4906,8 @@
           "options": {
             "or": "OR",
             "and": "AND",
-            "xor": "XOR"
+            "xor": "XOR",
+            "nand": "NAND (non entrambi)"
           },
           "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso. Il secondo è \"non entrambi\", e l’uscita è l’AND dei due.</p>"
         },
@@ -4887,7 +4916,8 @@
           "options": {
             "up": "Su",
             "down": "Giù",
-            "same": "Non deve muoversi"
+            "same": "Non deve muoversi",
+            "zero": "Va messo a 0"
           },
           "explain": "<p><b>Giù</b>. La risposta era troppo alta, e w₁ moltiplicava un ingresso di 1, quindi spingeva la risposta in su: abbassarlo avvicina la risposta a 0.</p>"
         },
@@ -4896,7 +4926,8 @@
           "options": {
             "up": "Su",
             "down": "Giù",
-            "same": "Non deve muoversi"
+            "same": "Non deve muoversi",
+            "zero": "Va messo a 0"
           },
           "explain": "<p><b>Non deve muoversi</b>: un ingresso di 0 per qualsiasi peso fa 0, quindi w₁ non ha contribuito a questo errore. La retropropagazione dà a ogni peso una parte dell’errore in proporzione a ciò che ha fatto. (Il bias b invece si muove.)</p>"
         },
@@ -4920,7 +4951,8 @@
           "options": {
             "shape": "Perché impari cosa hanno in comune tutti i 3, e riconosca 3 che non ha mai visto",
             "memory": "Perché possa ricordare ogni immagine a memoria",
-            "faster": "Perché con più immagini l’allenamento è più veloce"
+            "faster": "Perché con più immagini l’allenamento è più veloce",
+            "pixels": "Così impara quanti pixel ha ogni cifra"
           },
           "explain": "<p>L’obiettivo è <b>generalizzare</b>: riconoscere disegni nuovi. Una rete che si limita a memorizzare i suoi esempi sbaglia al primo nuovo. Per questo la mettiamo alla prova su cifre che non ha mai visto.</p>"
         },
@@ -4929,20 +4961,30 @@
           "options": {
             "summary": "Una descrizione breve dell’immagine che la rete si è inventata per fare il suo lavoro",
             "copy": "Una copia di 12 dei pixel",
-            "answer": "La probabilità di ogni cifra"
+            "answer": "La probabilità di ogni cifra",
+            "random": "Numeri a caso, diversi ogni volta"
           },
           "explain": "<p>Una <b>descrizione breve</b>: 35 pixel sono diventati 12 numeri che tengono ciò che serve per distinguere le cifre. Nessuno ha detto alla rete cosa metterci. Come descrivere qualcosa con pochi numeri è l’argomento del prossimo modulo, Codifica.</p>"
         },
-        "nnRecap": {
-          "prompt": "Metti in ordine le idee di questo modulo, come le abbiamo incontrate.",
-          "steps": {
-            "neuron": "Un neurone pesa i suoi ingressi e si attiva sopra una soglia",
-            "line": "Un neurone divide il piano con una retta",
-            "hidden": "Uno strato nascosto risolve ciò che una retta non può (XOR)",
-            "data": "Un dataset dà tanti esempi con la risposta giusta",
-            "learn": "La retropropagazione sposta ogni peso per rendere l’errore più piccolo"
-          },
-          "explain": "<p>Neurone, retta, strato nascosto, dataset, retropropagazione: tutta la storia delle reti neurali in cinque passi.</p>"
+        "nnTfThreshold": {
+          "prompt": "Un neurone somma i suoi ingressi pesati e il bias, e si attiva quando la somma è sopra lo zero.",
+          "explain": "<p><b>Vero.</b> È tutta la macchina: pesare, sommare, decidere.</p>"
+        },
+        "nnTfXorOne": {
+          "prompt": "Con i pesi giusti, un neurone da solo può calcolare XOR.",
+          "explain": "<p><b>Falso.</b> Un neurone disegna una retta, e nessuna retta separa gli angoli di XOR: al massimo tre su quattro. Serve uno strato nascosto.</p>"
+        },
+        "nnTfHidden": {
+          "prompt": "Uno strato nascosto permette a una rete di risolvere problemi che una sola retta non risolve.",
+          "explain": "<p><b>Vero.</b> Ogni neurone nascosto disegna la sua retta, e lo strato dopo le combina: è così che si risolve XOR.</p>"
+        },
+        "nnTfByHand": {
+          "prompt": "In una rete vera, i pesi li sceglie una persona a mano.",
+          "explain": "<p><b>Falso.</b> Sono troppi. La rete li impara da un dataset di esempi con l’etichetta.</p>"
+        },
+        "nnTfBackprop": {
+          "prompt": "La backpropagation sposta ogni peso nella direzione che rende l’errore più piccolo.",
+          "explain": "<p><b>Vero.</b> L’errore viene mandato indietro attraverso gli strati, e ogni peso si sposta un poco, in proporzione alla sua parte nell’errore.</p>"
         }
       }
     },
