@@ -50,7 +50,21 @@ import {
 } from "@/lib/learning/neurons";
 import { round } from "@/lib/learning/questions";
 
-export function NeuronLab({ lab }: { lab: Exclude<Lab, "ecg"> }) {
+/** The labs this file draws. */
+export type NeuronLabName = Extract<
+  Lab,
+  "gates" | "line" | "lineXor" | "xor" | "learn" | "digits"
+>;
+export const NEURON_LABS = new Set<Lab>([
+  "gates",
+  "line",
+  "lineXor",
+  "xor",
+  "learn",
+  "digits",
+]);
+
+export function NeuronLab({ lab }: { lab: NeuronLabName }) {
   switch (lab) {
     case "gates":
       return <GatesLab />;

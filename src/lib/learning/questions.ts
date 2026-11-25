@@ -101,7 +101,9 @@ export type FigureSpec =
   /** A small picture of pixels (`width` per row, 1 for ink), such as a 5x7 digit. */
   | { kind: "pixels"; pixels: number[]; width: number }
   /** One artificial neuron with its parts named: inputs, weights, sum, firing. */
-  | { kind: "neuron" };
+  | { kind: "neuron" }
+  /** Plasticity over a lifetime: synapse count and ease of change, birth to 90. */
+  | { kind: "lifespan" };
 
 /** A picture with its code: what the gallery shows and the matching game drags. */
 export interface Example {

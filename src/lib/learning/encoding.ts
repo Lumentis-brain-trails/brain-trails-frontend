@@ -56,10 +56,23 @@ export interface Playground {
  * The interactive pieces a step can hold: the heartbeat taken apart (`ecg`), and the
  * Neural Networks module's labs - a neuron as a logic gate (`gates`), a line that splits
  * dots (`line`, `lineXor`), the hand-wired XOR network (`xor`), a neuron learning
- * (`learn`), a network learning digits (`digits`).
+ * (`learn`), a network learning digits (`digits`); Brain Plasticity's braided path
+ * (`braid`), city at night (`city`) and ball on a landscape (`ball*`).
  */
 export type Lab =
-  "ecg" | "gates" | "line" | "lineXor" | "xor" | "learn" | "digits";
+  | "ecg"
+  | "gates"
+  | "line"
+  | "lineXor"
+  | "xor"
+  | "learn"
+  | "digits"
+  | "braid"
+  | "city"
+  | "ballHard"
+  | "ballRestless"
+  | "ballSoft"
+  | "ballWind";
 
 /** One screen of a module; its words are under `learning.<module key>.steps.<id>`. */
 export interface Step {
@@ -69,6 +82,8 @@ export interface Step {
   /** One larger picture. */
   figure?: FigureSpec;
   lab?: Lab;
+  /** Pages of the product to open from this step (the demo), with their labels. */
+  links?: { href: string; words: Words }[];
   playground?: Playground;
   questions: Question[];
 }

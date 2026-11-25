@@ -4421,7 +4421,9 @@
       "down": "Move down",
       "matchHint": "Drag each picture onto its numbers, or tap a picture and then its box.",
       "dropHere": "Drop a picture here",
-      "numbers": "{n, plural, one {# number} other {# numbers}}"
+      "numbers": "{n, plural, one {# number} other {# numbers}}",
+      "true": "True",
+      "false": "False"
     },
     "gallery": {
       "hint": "Nine pictures of one family. Guess the numbers behind them, then tap a picture to see its code.",
@@ -4448,7 +4450,10 @@
       "inputs": "inputs",
       "weights": "weights",
       "sum": "sum",
-      "fires": "fires?"
+      "fires": "fires?",
+      "age": "age (years)",
+      "synapses": "number of synapses",
+      "ease": "how easily connections change"
     },
     "encoding": {
       "steps": {
@@ -4721,6 +4726,60 @@
         "guess": "What the network thinks it is",
         "verdict": "It reads a {d} ({p}% sure)",
         "hidden": "Its {n} hidden neurons for your drawing"
+      },
+      "braid": {
+        "title": "The braided path",
+        "text": "You are a signal travelling through a tangle of connections, from the start (left) to the end (green). Pick the next edge by clicking one of the coloured ones. Every edge you cross gets thicker. Play a few rounds and watch what happens to your route.",
+        "next": "Next round",
+        "habit": "Let the habit choose",
+        "fog": "Fog on",
+        "liftFog": "Lift the fog",
+        "reset": "Start over",
+        "status": "Round {round} · {n, plural, one {# step} other {# steps}}",
+        "arrived": "Arrived in {n} steps!",
+        "history": "Steps per round: {steps}"
+      },
+      "ball": {
+        "version": "Version",
+        "aria": "A ball rolling on a landscape of valleys",
+        "target": "target",
+        "valley": "valley {n}: {p}%",
+        "pause": "Pause",
+        "play": "Play",
+        "reset": "Drop it again",
+        "hint": "Click the landscape to drop the ball somewhere else.",
+        "rocking": {
+          "short": "Little friction",
+          "title": "A ball with little friction",
+          "text": "The ball keeps its speed for a long time: it rolls back and forth across the shallow valleys before it settles."
+        },
+        "stuck": {
+          "short": "Much friction",
+          "title": "A ball with much friction",
+          "text": "The ball loses its speed quickly: it stops in the first valley it meets and stays there."
+        },
+        "restless": {
+          "short": "A restless ball",
+          "title": "A restless ball",
+          "text": "Now the ball is shaken at random all the time, like the brain's own restless activity. It still spends most of its time in valleys, but now and then a shake carries it over a hill into another one."
+        },
+        "soft": {
+          "short": "A soft landscape",
+          "title": "A soft landscape",
+          "text": "Now the ground is soft: wherever the ball goes, it digs. The dashed line is the original ground. Watch the valley the ball likes get deeper, and the ball get more and more stuck in it."
+        },
+        "wind": {
+          "short": "Neurofeedback: a gentle wind",
+          "title": "Neurofeedback: a gentle wind",
+          "text": "Same soft, restless landscape, but now a gentle wind always blows towards the target valley. It does not carry the ball there: it only makes the moves in that direction a little easier. Over time, the target valley is the one that gets dug."
+        }
+      },
+      "city": {
+        "title": "A city at night",
+        "text": "Seen from above, a city at night is a pattern of lights that keeps changing: neighbourhoods light up together, then fade, while others come on. Brain activity looks a lot like this.",
+        "aria": "Lights of a city at night, changing in patterns",
+        "pause": "Pause",
+        "play": "Play"
       }
     },
     "neuralNetworks": {
@@ -4884,6 +4943,166 @@
             "learn": "Backpropagation nudges every weight to make the error smaller"
           },
           "explain": "<p>Neuron, line, hidden layer, dataset, backpropagation: the whole story of neural networks in five steps.</p>"
+        }
+      }
+    },
+    "demo": {
+      "landscape": "Open your Brain Landscape",
+      "neurofeedback": "Open Neurofeedback"
+    },
+    "plasticity": {
+      "steps": {
+        "braid": {
+          "title": "Be the signal",
+          "body": "<p>Let's start with a game. The network below is a tangle of connections. A signal enters on the left and has to reach the end on the right. At every crossing you choose where it goes next.</p><p>There is one rule, and it is the rule of the brain: <b>every time a connection is used, it gets stronger</b>. Here, stronger means thicker, and in the class game a vote on a thick edge counts more. Play several rounds and see what happens.</p>"
+        },
+        "hebb": {
+          "title": "Neurons that fire together, wire together",
+          "body": "<p>In 1949 the psychologist Donald Hebb proposed that when one neuron repeatedly helps another to fire, the connection between them, the <b>synapse</b>, gets stronger. Decades later this was measured in the lab: it is called <b>long-term potentiation</b>. The opposite happens too: connections that are rarely used get weaker, and some are removed.</p><p>This is <b>plasticity</b>: the brain changes its own wiring with use. It is what you just did in the game, and it is how we learn, remember, and form habits. A memory is not stored in one place like a file: it is a pattern of stronger connections.</p>"
+        },
+        "lifespan": {
+          "title": "Plasticity across a lifetime",
+          "body": "<p>A newborn's brain grows connections at an amazing speed: by the age of two or three a child has many more synapses than an adult. Then, through childhood and adolescence, the brain <b>prunes</b> the connections it does not use and strengthens the ones it does. Some abilities have <b>critical periods</b>, windows when they are learnt most easily: seeing in depth, the sounds of a first language.</p><p>The front of the brain, which plans and controls, finishes maturing around the mid-twenties. That is probably where the idea that \"the brain stops changing at 25\" comes from, but it is wrong: plasticity goes on <b>all life long</b>. Adults who learn to juggle or London taxi drivers who learn the city show measurable changes in their brains. It becomes slower and needs more practice, but it never stops.</p><p>The brain even adjusts <i>how</i> plastic it is, depending on its recent activity. This is called <b>metaplasticity</b>, the plasticity of plasticity: a leading idea, still being studied.</p>"
+        },
+        "habits": {
+          "title": "What it means for us: learning and habits",
+          "body": "<p>If use strengthens connections, then what we do again and again shapes our brain. Practice makes a skill automatic; a habit is a route so well dug that we take it without thinking.</p><p>How long does that take? In a well-known study (Lally and colleagues, 2010), 96 people picked a new daily habit, such as a glass of water at lunch or a walk after dinner. On average it took about <b>66 days</b> for the habit to become automatic, but with huge differences: from 18 to 254 days, depending on the person and the habit. The popular \"21 days\" comes from a 1960 self-help book and is not backed by data. The good news from the same study: missing a single day did not undo the progress.</p>"
+        },
+        "city": {
+          "title": "The brain at scale",
+          "body": "<p>Zoom out from single connections to the whole brain. Billions of neurons are active at every moment, and their activity forms <b>patterns</b> that keep moving, like the lights of a city seen from a plane at night.</p><p>We can call each pattern a <b>brain state</b>: focused, relaxed, sleepy, anxious, daydreaming. The brain is a dynamical system: at each moment it is in a state, and it moves to the next one. It is like our game, but the nodes are now states and the edges are the transitions between them. How does the brain pick where to go next?</p>"
+        },
+        "landscape": {
+          "title": "The energy landscape",
+          "body": "<p>A useful picture comes from physics: the <b>energy landscape</b>. Imagine the brain's state as a ball on a landscape of hills and valleys. The ball rolls down the slopes and tends to settle in the valleys. The valleys are the states the brain likes to be in: stable, easy to reach, hard to leave.</p><p>Where the ball ends up depends on the shape of the landscape and on where it starts. With little friction it rocks back and forth between a few valleys; with much friction it stays stuck in the first valley it falls into. Try both.</p>"
+        },
+        "restless": {
+          "title": "A restless brain",
+          "body": "<p>A real brain is never still: its activity is noisy, always moving a little at random. So our ball is not a calm ball rolling down: it is a <b>restless</b> ball, shaken all the time.</p><p>Most shakes are small and the ball stays in its valley. But sometimes a bigger one carries it over a hill into another valley. Noise is not just a nuisance: it is what lets the brain explore and change state.</p>"
+        },
+        "soft": {
+          "title": "Plasticity digs the valleys",
+          "body": "<p>Now put plasticity into the picture. The landscape is not fixed: it is <b>soft</b>. Every time the ball passes somewhere, the ground there gets a little deeper, like a river that digs its own bed and so carries more and more water along it.</p><p>This is how we learn, but it is also how we can get <b>stuck</b>. A state visited again and again (worry, for example) becomes a deep valley that is hard to leave. One leading theory of the brain, <b>predictive coding</b>, says that the brain constantly predicts what will happen and learns from its mistakes; strong predictions can keep us in the same patterns, because we tend to see what we expect. To leave a deep valley, the brain often needs something from <i>outside</i>: a new experience, practice, a push.</p>"
+        },
+        "wind": {
+          "title": "Neurofeedback: a wind towards a valley",
+          "body": "<p>The brain learns from <b>rewards</b>: when something good follows what we did, the chemical dopamine helps strengthen what led to it. For the reward to work, it has to come <b>right away</b>, while the state that earned it is still there.</p><p><b>Neurofeedback</b> uses exactly this. A headband reads your brain activity, and when it moves towards a target state you get an immediate reward: a sound, an image, a video that becomes clearer. It does not force the brain anywhere. It is like a gentle wind that always blows towards one valley: each step in that direction becomes a little easier, and over time that is the valley that gets dug. Exercises and training work in a similar way; research on <b>cognitive reserve</b> suggests that a brain kept active copes better with ageing.</p><p>An honest note: the evidence for neurofeedback is promising but mixed, and well-controlled studies are still under way. That is part of why we measure.</p>"
+        },
+        "demo": {
+          "title": "Your own landscape",
+          "body": "<p>Everything in this module comes together in Brain Trails. When you record your EEG with the headband, every few seconds of it are turned into a list of numbers (remember Encoding), and all your recordings are drawn on one map: your <b>Brain Landscape</b>. Its valleys are the states your brain visits most; your <b>trail</b> is the path the ball took.</p><p>Neurofeedback in Brain Trails picks a target on your own landscape and rewards every step towards it: the wind of the previous step, blowing on your own map. Let's look at it.</p>"
+        }
+      },
+      "q": {
+        "plBraidWhy": {
+          "prompt": "Why did the route get faster and more obvious, round after round?",
+          "options": {
+            "thick": "The edges we used got thicker, so they count more and attract the next choices",
+            "memory": "We memorised the map",
+            "luck": "Pure luck"
+          },
+          "explain": "<p>The edges we used got <b>thicker</b>, so the route we took became easier to take again: use strengthens connections, and strong connections get used. In the brain this is how habits form, the good and the bad ones.</p>"
+        },
+        "plTfContinuous": {
+          "prompt": "True or false: the brain rewires itself all the time.",
+          "explain": "<p><b>True</b>. Connections are strengthened, weakened, created and removed every day, by everything we do and learn.</p>"
+        },
+        "plTfUnused": {
+          "prompt": "True or false: connections that are never used tend to weaken.",
+          "explain": "<p><b>True</b>. \"Use it or lose it\": unused synapses weaken and some are pruned, like the edges that thinned in the game.</p>"
+        },
+        "plTf25": {
+          "prompt": "True or false: the brain stops rewiring at about 25 years old.",
+          "explain": "<p><b>False</b>. Around 25 the front of the brain finishes maturing, but plasticity goes on for the whole of life. It gets slower, not absent.</p>"
+        },
+        "plTfToddler": {
+          "prompt": "True or false: a two-year-old has more synapses than an adult.",
+          "explain": "<p><b>True</b>. The brain first grows far more connections than it needs, then prunes the unused ones through childhood and adolescence.</p>"
+        },
+        "plMeta": {
+          "prompt": "What is metaplasticity?",
+          "options": {
+            "meta": "The brain adjusting how easily its connections change, depending on its recent activity",
+            "age": "Plasticity disappearing in old age",
+            "fixed": "Some connections that never change"
+          },
+          "explain": "<p>Metaplasticity is the <b>plasticity of plasticity</b>: how ready a synapse is to change depends on what it has done recently. It is an active area of research.</p>"
+        },
+        "plHabitDays": {
+          "prompt": "On average, how long did it take for a new daily habit to become automatic in the study?",
+          "options": {
+            "seven": "A week",
+            "twentyOne": "21 days",
+            "sixtySix": "About 66 days, with big differences between people",
+            "year": "A year"
+          },
+          "explain": "<p>About <b>66 days</b> on average, from 18 to 254 depending on the person and the habit. \"21 days\" is a myth.</p>"
+        },
+        "plTfMissDay": {
+          "prompt": "True or false: missing a single day ruins a new habit.",
+          "explain": "<p><b>False</b>. In the study, missing one occasion did not really affect how the habit formed. What counts is repeating it most of the time.</p>"
+        },
+        "plTfRepeat": {
+          "prompt": "True or false: a habit becomes automatic by repeating it in the same situation.",
+          "explain": "<p><b>True</b>. Doing the same thing in the same context (after breakfast, on the way home) is what makes the route dig in.</p>"
+        },
+        "plState": {
+          "prompt": "What do we mean by a brain state?",
+          "options": {
+            "pattern": "The pattern of activity of the whole brain at one moment",
+            "region": "One region of the brain that switches on",
+            "thought": "A single thought"
+          },
+          "explain": "<p>A <b>pattern</b> over the whole brain, like the lights of the whole city at one moment, not one neighbourhood.</p>"
+        },
+        "plValley": {
+          "prompt": "In the energy landscape, what is a valley?",
+          "options": {
+            "state": "A state the brain tends to go to and stay in",
+            "region": "A region of the brain",
+            "mistake": "A mistake of the brain"
+          },
+          "explain": "<p>A valley is a <b>state</b> that attracts the brain and holds it for a while: stable, easy to reach, hard to leave.</p>"
+        },
+        "plTfNoise": {
+          "prompt": "True or false: thanks to its restless noise, the brain can leave a shallow valley by itself.",
+          "explain": "<p><b>True</b>. A bigger shake can carry the ball over a low hill. A deep valley is another story.</p>"
+        },
+        "plStuck": {
+          "prompt": "The ball is stuck at the bottom of a deep valley. What helps it out?",
+          "options": {
+            "outside": "Something from outside: a push, new experiences, practice",
+            "wait": "Waiting: it will leave by itself",
+            "nothing": "Nothing: it is stuck for ever"
+          },
+          "explain": "<p>A <b>push from outside</b>. On a soft landscape, waiting only digs the valley deeper. But the landscape is soft for everyone: the same plasticity that dug the valley can dig a new one.</p>"
+        },
+        "plTfPredict": {
+          "prompt": "True or false: according to predictive coding, the brain is always predicting what will happen next.",
+          "explain": "<p><b>True</b>, according to this leading theory: the brain compares its predictions with what really happens and learns from the difference.</p>"
+        },
+        "plTfForce": {
+          "prompt": "True or false: neurofeedback pushes the brain into a state by force.",
+          "explain": "<p><b>False</b>. It only rewards the brain when it moves in the right direction. The brain does the moving, and the learning.</p>"
+        },
+        "plReward": {
+          "prompt": "When should the reward come, for the brain to link it to the right state?",
+          "options": {
+            "now": "Right away, while the state is still there",
+            "later": "At the end of the session",
+            "never": "It does not matter"
+          },
+          "explain": "<p><b>Right away</b>. A reward that comes late cannot tell the brain which state earned it. This is why neurofeedback gives feedback within a fraction of a second.</p>"
+        },
+        "plRecap": {
+          "prompt": "Put the story of this module in order.",
+          "steps": {
+            "use": "Use strengthens connections, and what is not used weakens",
+            "valleys": "Brain states are like valleys of a landscape",
+            "stuck": "Plasticity digs the valleys we visit, so we can get stuck",
+            "nudge": "Practice and immediate rewards can gently push us towards new valleys"
+          },
+          "explain": "<p>Use, valleys, digging, nudging: plasticity is why we get stuck, and also why we can get out.</p>"
         }
       }
     }

@@ -74,6 +74,8 @@ export function LearningFigure({
       );
     case "neuron":
       return <NeuronFigure className={className} />;
+    case "lifespan":
+      return <LifespanFigure className={className} />;
   }
 }
 
@@ -685,6 +687,92 @@ function NeuronFigure({ className }: { className?: string }) {
         </text>
         <text x={320} y={70}>
           {t("fires")}
+        </text>
+      </g>
+    </svg>
+  );
+}
+
+/** Ages on the lifespan figure's axis: stretched early, where most happens. */
+const AGES = [0, 2, 6, 12, 20, 40, 60, 90];
+const ageX = (age: number) => 30 + Math.sqrt(age / 90) * 260;
+
+/**
+ * Plasticity over a lifetime, schematic: the number of synapses (rising fast to a peak
+ * around two years, then pruned through childhood and adolescence, then slowly falling;
+ * after Huttenlocher's counts in the frontal cortex), and how easily connections change
+ * (highest at birth, falling, but never zero).
+ */
+function LifespanFigure({ className }: { className?: string }) {
+  const t = useTranslations("learning.figure");
+  const synapses = (a: number) =>
+    a < 2
+      ? 0.35 + 0.65 * Math.sin((a / 2) * (Math.PI / 2))
+      : 0.62 + 0.38 * Math.exp(-(a - 2) / 6) - a * 0.0015;
+  const ease = (a: number) => 0.25 + 0.7 * Math.exp(-a / 7) - a * 0.0008;
+  const path = (f: (a: number) => number) =>
+    Array.from({ length: 181 }, (_, i) => {
+      const a = (i / 180) * 90;
+      return `${i ? "L" : "M"}${ageX(a).toFixed(1)},${(150 - f(a) * 120).toFixed(1)}`;
+    }).join("");
+  return (
+    <svg
+      viewBox="0 0 310 185"
+      className={cn("mx-auto w-full max-w-[640px] text-ink", className)}
+      role="img"
+    >
+      <line
+        x1={30}
+        x2={295}
+        y1={150}
+        y2={150}
+        stroke="currentColor"
+        opacity={0.4}
+      />
+      {AGES.map((a) => (
+        <g key={a} fill="currentColor" opacity={0.6}>
+          <line
+            x1={ageX(a)}
+            x2={ageX(a)}
+            y1={150}
+            y2={154}
+            stroke="currentColor"
+          />
+          <text x={ageX(a)} y={164} fontSize={8} textAnchor="middle">
+            {a}
+          </text>
+        </g>
+      ))}
+      <text
+        x={162}
+        y={180}
+        fontSize={8}
+        textAnchor="middle"
+        fill="currentColor"
+        opacity={0.6}
+      >
+        {t("age")}
+      </text>
+      <path
+        d={path(synapses)}
+        fill="none"
+        stroke={PART_COLOURS[0]}
+        strokeWidth={2}
+      />
+      <path
+        d={path(ease)}
+        fill="none"
+        stroke={PART_COLOURS[1]}
+        strokeWidth={2}
+      />
+      <g fontSize={9}>
+        <circle cx={150} cy={14} r={3} fill={PART_COLOURS[0]} />
+        <text x={156} y={17} fill="currentColor">
+          {t("synapses")}
+        </text>
+        <circle cx={150} cy={28} r={3} fill={PART_COLOURS[1]} />
+        <text x={156} y={31} fill="currentColor">
+          {t("ease")}
         </text>
       </g>
     </svg>

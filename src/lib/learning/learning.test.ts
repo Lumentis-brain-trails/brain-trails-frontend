@@ -9,6 +9,32 @@ import {
 } from "@/lib/learning/encoding";
 import { MODULES, moduleOf, stepIndex } from "@/lib/learning/modules";
 import { NEURAL_NETWORKS } from "@/lib/learning/neuralNetworks";
+import { PLASTICITY } from "@/lib/learning/plasticity";
+import {
+  CAP,
+  arrived,
+  byThickness,
+  choicesAt,
+  decide,
+  endRound,
+  makeBraid,
+  move,
+  startState,
+  tally,
+  visibleNodes,
+} from "@/lib/learning/braid";
+import {
+  DIG_CAP,
+  WELLS,
+  WORLDS,
+  dropBall,
+  favouriteValley,
+  gaussian,
+  heightAt,
+  slopeAt,
+  stepBall,
+  valleyOf,
+} from "@/lib/learning/ball";
 import {
   type Dot,
   GATES,
@@ -319,7 +345,7 @@ describe("the Encoding module", () => {
 });
 
 describe("modules", () => {
-  test("Encoding is the second module; plasticity is still to come", () => {
+  test("the course: Neural networks, Encoding, Brain plasticity", () => {
     expect(MODULES.map((m) => m.slug)).toEqual([
       "neural-networks",
       "encoding",
@@ -328,6 +354,7 @@ describe("modules", () => {
     expect(MODULES.filter((m) => m.steps.length).map((m) => m.key)).toEqual([
       "neuralNetworks",
       "encoding",
+      "plasticity",
     ]);
     for (const m of MODULES) {
       expect(message(`modules.${m.key}.name`)).toBeTypeOf("string");
@@ -442,5 +469,179 @@ describe("neurons", () => {
     expect(hidden).toHaveLength(12);
     expect(probs.reduce((a, b) => a + b, 0)).toBeCloseTo(1);
     expect(accuracy(net, [])).toBe(0);
+  });
+});
+
+describe("the Brain Plasticity module", () => {
+  test("every step, question and link has its words", () => {
+    for (const step of PLASTICITY) {
+      expect(message(`plasticity.steps.${step.id}.title`)).toBeTypeOf("string");
+      expect(message(`plasticity.steps.${step.id}.body`)).toBeTypeOf("string");
+      for (const l of step.links ?? [])
+        expect(message(l.words.key), l.words.key).toBeTypeOf("string");
+    }
+    for (const q of PLASTICITY.flatMap((s) => s.questions))
+      for (const w of wordsOf(q))
+        expect(message(w.key), w.key).toBeTypeOf("string");
+  });
+
+  test("true/false questions have exactly the two options", () => {
+    for (const q of PLASTICITY.flatMap((s) => s.questions))
+      if (q.kind === "choice" && q.id.startsWith("plTf"))
+        expect(q.options.map((o) => o.id)).toEqual(["true", "false"]);
+  });
+});
+
+describe("the braided path", () => {
+  const braid = makeBraid(4);
+
+  test("is the same for the same seed and every node is reachable", () => {
+    expect(makeBraid(4)).toEqual(braid);
+    expect(braid.nodes[braid.start].kind).toBe("start");
+    for (const n of braid.nodes)
+      if (n.kind !== "start")
+        expect(
+          braid.edges.some((e) => e.to === n.id),
+          String(n.id)
+        ).toBe(true);
+  });
+
+  test("a walk reaches the end in about ten choices", () => {
+    let s = startState(braid);
+    const rand = seeded(1);
+    while (!arrived(braid, s) && s.steps < 100) {
+      const forward = choicesAt(braid, s).filter(
+        (e) => braid.nodes[e.to].kind !== "dead"
+      );
+      s = move(braid, s, forward[Math.floor(rand() * forward.length)].id);
+    }
+    expect(arrived(braid, s)).toBe(true);
+    expect(s.steps).toBe(9);
+  });
+
+  test("votes count with thickness and two thirds moves at once", () => {
+    let s = startState(braid);
+    const [a, b] = choicesAt(braid, s).map((e) => e.id);
+    expect(tally(braid, s, { [a]: 3, [b]: 1, nope: 9 })).toMatchObject({
+      [a]: 3,
+      [b]: 1,
+    });
+    expect(decide(braid, s, { [a]: 6 }, 10)).toBeNull();
+    expect(decide(braid, s, { [a]: 7 }, 10)).toBe(a);
+    s = { ...s, weights: { ...s.weights, [a]: 3 } };
+    expect(decide(braid, s, { [a]: 3 }, 10)).toBe(a);
+    expect(decide(braid, s, { [a]: 1, [b]: 4 }, 10, { timedOut: true })).toBe(
+      b
+    );
+    expect(
+      decide(braid, s, { [a]: 1, [b]: 4 }, 10, { timedOut: false })
+    ).toBeNull();
+  });
+
+  test("a tie at the deadline goes by thickness", () => {
+    const s = startState(braid);
+    const ids = choicesAt(braid, s).map((e) => e.id);
+    const heavy = { ...s, weights: { ...s.weights, [ids[0]]: 4 } };
+    expect(
+      decide(braid, heavy, {}, 10, { timedOut: true, rand: () => 0.01 })
+    ).toBe(ids[0]);
+    expect(byThickness(["x", "y"], { x: 1, y: 3 }, () => 0.9)).toBe("y");
+    expect(byThickness(["x", "y"], { x: 1, y: 3 }, () => 0.2)).toBe("x");
+    expect(byThickness(["x"], {}, () => 2)).toBe("x");
+  });
+
+  test("crossing thickens up to the cap, dead ends bounce back, unused edges thin", () => {
+    let s = startState(braid);
+    const id = choicesAt(braid, s)[0].id;
+    for (let i = 0; i < 10; i++) s = move(braid, { ...s, at: braid.start }, id);
+    expect(s.weights[id]).toBe(CAP);
+    expect(move(braid, s, "nope")).toBe(s);
+    const deadEdge = braid.edges.find((e) => braid.nodes[e.to].kind === "dead");
+    if (!deadEdge) throw new Error("no dead end");
+    const at = { ...startState(braid), at: deadEdge.from };
+    const bounced = move(braid, at, deadEdge.id);
+    expect(bounced.at).toBe(deadEdge.from);
+    expect(bounced.weights[deadEdge.id]).toBeCloseTo(1.25);
+    const other = braid.edges.find((e) => e.id !== id)!.id;
+    const thick = { ...s, weights: { ...s.weights, [other]: 3 } };
+    const next = endRound(thick);
+    expect(next.weights[id]).toBe(CAP);
+    expect(next.weights[other]).toBeLessThan(3);
+    expect(next.round).toBe(2);
+    expect(next.at).toBe(braid.start);
+    const thin = endRound({ ...s, weights: { [other]: 0.5 }, used: [] });
+    expect(thin.weights[other]).toBe(0.5);
+  });
+
+  test("the fog shows two hops around the pointer, and always the end", () => {
+    const s = startState(braid);
+    const near = visibleNodes(braid, s);
+    expect(near.has(braid.start)).toBe(true);
+    expect(near.has(braid.end)).toBe(true);
+    expect(near.size).toBeLessThan(braid.nodes.length);
+    expect(visibleNodes(braid, s, 99).size).toBe(braid.nodes.length);
+  });
+});
+
+describe("the ball on the landscape", () => {
+  const run = (name: keyof typeof WORLDS, x: number, steps = 6000) => {
+    const world = WORLDS[name];
+    let b = dropBall(world, x);
+    const r = seeded(3);
+    for (let i = 0; i < steps; i++) b = stepBall(world, b, 0.01, r);
+    return b;
+  };
+
+  test("with much friction it settles in the nearest valley", () => {
+    const b = run("stuck", 3.4);
+    expect(b.x).toBeCloseTo(WELLS[0].c, 1);
+    expect(favouriteValley(b)).toBe(0);
+    expect(favouriteValley(dropBall(WORLDS.stuck, 1))).toBe(-1);
+  });
+
+  test("with little friction it visits several valleys", () => {
+    const b = run("rocking", 0.4);
+    expect(b.time.filter((t) => t > 1).length).toBeGreaterThan(1);
+  });
+
+  test("the restless ball changes valley, the soft one digs, never past the cap", () => {
+    expect(
+      run("restless", 2.2).time.filter((t) => t > 1).length
+    ).toBeGreaterThan(1);
+    const soft = run("soft", 2.2);
+    expect(Math.max(...soft.dug)).toBeGreaterThan(0.5);
+    expect(Math.max(...soft.dug)).toBeLessThanOrEqual(DIG_CAP);
+    expect(heightAt(WORLDS.soft, soft, soft.x)).toBeLessThan(
+      heightAt(WORLDS.soft, null, soft.x)
+    );
+  });
+
+  test("the wind makes the target valley the favourite", () => {
+    expect(favouriteValley(run("wind", 6))).toBe(1);
+  });
+
+  test("helpers", () => {
+    expect(valleyOf({ ...WORLDS.stuck, wells: [] }, 3)).toBe(-1);
+    expect(
+      slopeAt(WORLDS.stuck, dropBall(WORLDS.stuck, 0), WELLS[2].c)
+    ).toBeCloseTo(0, 1);
+    const g = Array.from(
+      { length: 2000 },
+      (
+        (r) => () =>
+          gaussian(r)
+      )(seeded(2))
+    );
+    const mean = g.reduce((a, b) => a + b, 0) / g.length;
+    expect(Math.abs(mean)).toBeLessThan(0.1);
+    // bounces off both ends
+    const fast = { ...dropBall(WORLDS.stuck, 0.1), v: -50 };
+    expect(
+      stepBall(WORLDS.stuck, fast, 0.01, seeded(1)).x
+    ).toBeGreaterThanOrEqual(0);
+    const right = { ...dropBall(WORLDS.stuck, 9.9), v: 50 };
+    expect(
+      stepBall(WORLDS.stuck, right, 0.01, seeded(1)).x
+    ).toBeLessThanOrEqual(10);
   });
 });

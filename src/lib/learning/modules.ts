@@ -7,6 +7,7 @@
  */
 import { ENCODING, type Step } from "@/lib/learning/encoding";
 import { NEURAL_NETWORKS } from "@/lib/learning/neuralNetworks";
+import { PLASTICITY } from "@/lib/learning/plasticity";
 
 /** A module's key in `learning.modules`. */
 export type ModuleKey = "neuralNetworks" | "encoding" | "plasticity";
@@ -23,7 +24,7 @@ export interface LearningModule {
 export const MODULES: LearningModule[] = [
   { slug: "neural-networks", key: "neuralNetworks", steps: NEURAL_NETWORKS },
   { slug: "encoding", key: "encoding", steps: ENCODING, refrain: true },
-  { slug: "brain-plasticity", key: "plasticity", steps: [] },
+  { slug: "brain-plasticity", key: "plasticity", steps: PLASTICITY },
 ];
 
 /** The module at `slug`, or null. */

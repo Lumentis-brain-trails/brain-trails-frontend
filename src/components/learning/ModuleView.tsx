@@ -16,7 +16,13 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { EcgExplorer } from "@/components/learning/EcgExplorer";
 import { Gallery } from "@/components/learning/Gallery";
-import { NeuronLab } from "@/components/learning/NeuronLabs";
+import {
+  NEURON_LABS,
+  NeuronLab,
+  type NeuronLabName,
+} from "@/components/learning/NeuronLabs";
+import { BraidLab } from "@/components/learning/BraidBoard";
+import { BallLab, CityLab } from "@/components/learning/PlasticityLabs";
 import { LearningFigure } from "@/components/learning/LearningFigure";
 import { Playground } from "@/components/learning/Playground";
 import { QuestionCard, useWords } from "@/components/learning/QuestionCard";
@@ -128,9 +134,30 @@ export function ModuleView({ module }: { module: LearningModule }) {
           </Card>
         )}
         {step.lab === "ecg" && <EcgExplorer />}
-        {step.lab && step.lab !== "ecg" && <NeuronLab lab={step.lab} />}
+        {step.lab === "braid" && <BraidLab />}
+        {step.lab === "city" && <CityLab />}
+        {step.lab === "ballHard" && <BallLab worlds={["rocking", "stuck"]} />}
+        {step.lab === "ballRestless" && <BallLab worlds={["restless"]} />}
+        {step.lab === "ballSoft" && <BallLab worlds={["soft"]} />}
+        {step.lab === "ballWind" && <BallLab worlds={["wind"]} />}
+        {step.lab && NEURON_LABS.has(step.lab) && (
+          <NeuronLab lab={step.lab as NeuronLabName} />
+        )}
         {step.gallery && <Gallery examples={step.gallery} />}
         {step.playground && <Playground spec={step.playground} />}
+        {step.links && (
+          <div className="flex flex-wrap gap-2">
+            {step.links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={buttonClass("primary")}
+              >
+                {words.text(l.words)}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {step.questions.map((q, i) => (
           <QuestionCard key={`${step.id}-${q.id}`} question={q} index={i} />
