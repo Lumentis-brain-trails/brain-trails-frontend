@@ -4524,7 +4524,8 @@
       "send": "Invia",
       "sent": "Inviata. Puoi cambiarla finché non viene mostrata la risposta.",
       "wrongSent": "Non proprio: la risposta che hai inviato era diversa.",
-      "notSent": "Non hai inviato una risposta: eccola."
+      "notSent": "Non hai inviato una risposta: eccola.",
+      "code": "{code}"
     },
     "gallery": {
       "hint": "Nove figure di una famiglia. Indovina i numeri dietro: i codici si aprono quando hai risposto alle domande qui sotto.",
@@ -4643,7 +4644,7 @@
           "explain": "<p><b>Uno</b>: la posizione x del punto lungo la retta. Tutto il resto (la retta, le tacche) è uguale in ogni immagine, quindi fa parte della ricetta, non del codice.</p>"
         },
         "lineValue": {
-          "prompt": "Codifica questa figura: muovi il cursore finché il tuo punto non è sull’obiettivo. Quanto vale x?",
+          "prompt": "Codifica questa immagine: muovi il cursore finché il tuo punto è sull’obiettivo, poi scegli il suo codice.",
           "explain": "<p>Il punto è a metà tra 6 e 7, quindi <b>x = 6.5</b>. Leggere il valore di un'immagine è il passo di <b>codifica</b>.</p>"
         },
         "lineDecode": {
@@ -4702,7 +4703,7 @@
           "explain": "<p><b>Due</b>: la frequenza f e l'ampiezza A. Tutte queste onde partono da zero salendo, quindi la fase non ci serve.</p>"
         },
         "wavesValue": {
-          "prompt": "Codifica quest’onda: muovi i cursori finché la tua onda non si sovrappone a quella tratteggiata. Quanto valgono f e A? (L’asse è in secondi.)",
+          "prompt": "Codifica quest’onda: muovi i cursori finché la tua onda è sopra quella tratteggiata, poi scegli il suo codice. (L’asse è in secondi.)",
           "explain": "<p>In un secondo ci sono due onde intere, quindi <b>f = 2</b>; la cima arriva a 1.5, quindi <b>A = 1.5</b>.</p>"
         },
         "wavesMatch": {
@@ -4785,27 +4786,27 @@
           "explain": "<p>Un punto su una retta 1, su un piano 2, una campana 3, un battito con due campane 6, un battito del cuore 25. Le immagini si fanno più ricche, i codici restano corti.</p>"
         },
         "planeValue": {
-          "prompt": "Codifica questo punto: muovi i due cursori finché il tuo punto non è sull’obiettivo. Quanto valgono x e y?",
+          "prompt": "Codifica questo punto: muovi i due cursori finché il tuo punto è sull’obiettivo, poi scegli il suo codice.",
           "explain": "<p>L’obiettivo è 3 a destra e 7 in su: <b>x = 3, y = 7</b>. Due numeri, uno per direzione, e ogni cursore muove il punto lungo una sola delle due.</p>"
         },
         "bellPositionValue": {
-          "prompt": "Muovi il cursore finché la tua campana non si sovrappone a quella tratteggiata. Dov’è il suo centro μ?",
+          "prompt": "Muovi il cursore finché la tua campana è sopra quella tratteggiata, poi scegli il suo codice.",
           "explain": "<p><b>μ = 6.5</b>. Altezza e larghezza sono le stesse per tutte le campane di questa famiglia, quindi basta un cursore per raggiungerle tutte.</p>"
         },
         "bellHeightValue": {
-          "prompt": "Ora due cursori: trova il centro μ e l’altezza A della campana tratteggiata.",
+          "prompt": "Ora due cursori: trova il centro μ e l’altezza A della campana tratteggiata, poi scegli il suo codice.",
           "explain": "<p><b>μ = 3.5, A = 1.5</b>. Nota che ogni cursore fa un solo lavoro: μ sposta la campana di lato, A la allunga in su.</p>"
         },
         "bellWidthValue": {
-          "prompt": "Tre cursori: trova μ, A e la larghezza σ della campana tratteggiata.",
+          "prompt": "Tre cursori: trova μ, A e la larghezza σ della campana tratteggiata, poi scegli il suo codice.",
           "explain": "<p><b>μ = 6, A = 1, σ = 0.5</b>. Una σ piccola fa una campana stretta e appuntita; una grande una campana larga e dolce.</p>"
         },
         "trainValue": {
-          "prompt": "Ricostruisci questa fila di campane: trova la frequenza f, l’altezza A e la larghezza σ.",
+          "prompt": "Ricostruisci questa fila di campane con i cursori (frequenza f, altezza A, larghezza σ), poi scegli il suo codice.",
           "explain": "<p><b>f = 2, A = 1.5, σ = 0.1</b>: due campane al secondo, alte 1.5 e strette. Tre numeri ricostruiscono tutta la fila, per quanto sia lunga.</p>"
         },
         "twoBellsValue": {
-          "prompt": "Sei cursori per sei numeri: ricostruisci questo battito, una campana in su e una in giù.",
+          "prompt": "Sei cursori per sei numeri: ricostruisci questo battito, una campana in su e una in giù, poi scegli il suo codice.",
           "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Sei cursori, sei numeri: uno per ogni cosa che può cambiare nel battito.</p>"
         },
         "enTfChanges": {

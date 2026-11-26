@@ -18,6 +18,7 @@ import type {
   ParamName,
   Question,
 } from "@/lib/learning/questions";
+import { formatCode } from "@/lib/learning/questions";
 import { ECG_WAVES, type Part, ecg } from "@/lib/learning/signals";
 
 /** A step's words live under `learning.encoding.steps.<id>` (title, body). */
@@ -413,6 +414,32 @@ function options(question: string, ids: string[]) {
   return ids.map((id) => ({ id, words: w(`q.${question}.options.${id}`) }));
 }
 
+/**
+ * A value question turned into a pick (Andrea, 2026-11-26): the person finds the numbers
+ * on its sliders, then chooses the code from the right one and three close, believable
+ * ones (`distractors`, in the same order as the labels). The pick is what is checked,
+ * and what a live lesson counts.
+ */
+function pickCode(
+  spec: Extract<Question, { kind: "value" }>,
+  distractors: number[][]
+): Question {
+  const code = (values: number[]) =>
+    formatCode(spec.labels.map((name, i) => ({ name, value: values[i] })));
+  return {
+    kind: "choice",
+    id: spec.id,
+    prompt: spec.prompt,
+    options: [spec.answer, ...distractors].map((values, i) => ({
+      id: "abcd"[i],
+      words: { key: "question.code", values: { code: code(values) } },
+    })),
+    answer: "a",
+    explore: spec,
+    explain: spec.explain,
+  };
+}
+
 /** The module, in order. */
 export const ENCODING: (Step & { id: EncodingStepId })[] = [
   {
@@ -441,18 +468,21 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 1,
         explain: w("q.lineCount.explain"),
       },
-      {
-        kind: "value",
-        id: "lineValue",
-        prompt: w("q.lineValue.prompt"),
-        figures: [{ kind: "line", x: 6.5 }],
-        labels: ["x"],
-        answer: [6.5],
-        tolerance: 0.25,
-        sliders: [{ min: 0, max: 10, step: 0.5 }],
-        model: "line",
-        explain: w("q.lineValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "lineValue",
+          prompt: w("q.lineValue.prompt"),
+          figures: [{ kind: "line", x: 6.5 }],
+          labels: ["x"],
+          answer: [6.5],
+          tolerance: 0.25,
+          sliders: [{ min: 0, max: 10, step: 0.5 }],
+          model: "line",
+          explain: w("q.lineValue.explain"),
+        },
+        [[6], [7], [7.5]]
+      ),
       {
         kind: "order",
         id: "lineDecode",
@@ -475,21 +505,28 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 2,
         explain: w("q.planeCount.explain"),
       },
-      {
-        kind: "value",
-        id: "planeValue",
-        prompt: w("q.planeValue.prompt"),
-        figures: [{ kind: "plane", x: 3, y: 7 }],
-        labels: ["x", "y"],
-        answer: [3, 7],
-        tolerance: 0.25,
-        sliders: [
-          { min: 0, max: 10, step: 0.5 },
-          { min: 0, max: 10, step: 0.5 },
-        ],
-        model: "plane",
-        explain: w("q.planeValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "planeValue",
+          prompt: w("q.planeValue.prompt"),
+          figures: [{ kind: "plane", x: 3, y: 7 }],
+          labels: ["x", "y"],
+          answer: [3, 7],
+          tolerance: 0.25,
+          sliders: [
+            { min: 0, max: 10, step: 0.5 },
+            { min: 0, max: 10, step: 0.5 },
+          ],
+          model: "plane",
+          explain: w("q.planeValue.explain"),
+        },
+        [
+          [7, 3],
+          [3.5, 7],
+          [3, 6.5],
+        ]
+      ),
       {
         kind: "match",
         id: "planeMatch",
@@ -521,19 +558,22 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 1,
         explain: w("q.bellPositionCount.explain"),
       },
-      {
-        kind: "value",
-        id: "bellPositionValue",
-        prompt: w("q.bellPositionValue.prompt"),
-        figures: [bellFigure(6.5, 1.5, 0.8)],
-        labels: ["mu"],
-        answer: [6.5],
-        tolerance: 0.25,
-        sliders: [{ min: 0, max: 10, step: 0.5 }],
-        model: "bell",
-        fixed: { a: 1.5, sigma: 0.8 },
-        explain: w("q.bellPositionValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "bellPositionValue",
+          prompt: w("q.bellPositionValue.prompt"),
+          figures: [bellFigure(6.5, 1.5, 0.8)],
+          labels: ["mu"],
+          answer: [6.5],
+          tolerance: 0.25,
+          sliders: [{ min: 0, max: 10, step: 0.5 }],
+          model: "bell",
+          fixed: { a: 1.5, sigma: 0.8 },
+          explain: w("q.bellPositionValue.explain"),
+        },
+        [[5.5], [6], [7]]
+      ),
       {
         kind: "order",
         id: "bellPositionSort",
@@ -561,22 +601,29 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 2,
         explain: w("q.bellHeightCount.explain"),
       },
-      {
-        kind: "value",
-        id: "bellHeightValue",
-        prompt: w("q.bellHeightValue.prompt"),
-        figures: [bellFigure(3.5, 1.5, 0.8)],
-        labels: ["mu", "a"],
-        answer: [3.5, 1.5],
-        tolerance: [0.25, 0.05],
-        sliders: [
-          { min: 0, max: 10, step: 0.5 },
-          { min: 0, max: 2, step: 0.1 },
-        ],
-        model: "bell",
-        fixed: { sigma: 0.8 },
-        explain: w("q.bellHeightValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "bellHeightValue",
+          prompt: w("q.bellHeightValue.prompt"),
+          figures: [bellFigure(3.5, 1.5, 0.8)],
+          labels: ["mu", "a"],
+          answer: [3.5, 1.5],
+          tolerance: [0.25, 0.05],
+          sliders: [
+            { min: 0, max: 10, step: 0.5 },
+            { min: 0, max: 2, step: 0.1 },
+          ],
+          model: "bell",
+          fixed: { sigma: 0.8 },
+          explain: w("q.bellHeightValue.explain"),
+        },
+        [
+          [3.5, 1],
+          [4, 1.5],
+          [3, 1.2],
+        ]
+      ),
       {
         kind: "match",
         id: "bellHeightMatch",
@@ -620,22 +667,29 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 3,
         explain: w("q.bellWidthCount.explain"),
       },
-      {
-        kind: "value",
-        id: "bellWidthValue",
-        prompt: w("q.bellWidthValue.prompt"),
-        figures: [bellFigure(6, 1, 0.5)],
-        labels: ["mu", "a", "sigma"],
-        answer: [6, 1, 0.5],
-        tolerance: [0.25, 0.05, 0.05],
-        sliders: [
-          { min: 0, max: 10, step: 0.5 },
-          { min: 0, max: 2, step: 0.1 },
-          { min: 0.1, max: 3, step: 0.1 },
-        ],
-        model: "bell",
-        explain: w("q.bellWidthValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "bellWidthValue",
+          prompt: w("q.bellWidthValue.prompt"),
+          figures: [bellFigure(6, 1, 0.5)],
+          labels: ["mu", "a", "sigma"],
+          answer: [6, 1, 0.5],
+          tolerance: [0.25, 0.05, 0.05],
+          sliders: [
+            { min: 0, max: 10, step: 0.5 },
+            { min: 0, max: 2, step: 0.1 },
+            { min: 0.1, max: 3, step: 0.1 },
+          ],
+          model: "bell",
+          explain: w("q.bellWidthValue.explain"),
+        },
+        [
+          [6, 0.5, 1],
+          [6, 1, 0.8],
+          [5.5, 1, 0.5],
+        ]
+      ),
       {
         kind: "order",
         id: "bellWidthSort",
@@ -682,21 +736,28 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 2,
         explain: w("q.wavesCount.explain"),
       },
-      {
-        kind: "value",
-        id: "wavesValue",
-        prompt: w("q.wavesValue.prompt"),
-        figures: [{ ...waveFigure(2, 1.5), ticks: true }],
-        labels: ["f", "a"],
-        answer: [2, 1.5],
-        tolerance: [0.1, 0.05],
-        sliders: [
-          { min: 0.5, max: 4, step: 0.5 },
-          { min: 0, max: 2, step: 0.1 },
-        ],
-        model: "wave",
-        explain: w("q.wavesValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "wavesValue",
+          prompt: w("q.wavesValue.prompt"),
+          figures: [{ ...waveFigure(2, 1.5), ticks: true }],
+          labels: ["f", "a"],
+          answer: [2, 1.5],
+          tolerance: [0.1, 0.05],
+          sliders: [
+            { min: 0.5, max: 4, step: 0.5 },
+            { min: 0, max: 2, step: 0.1 },
+          ],
+          model: "wave",
+          explain: w("q.wavesValue.explain"),
+        },
+        [
+          [1.5, 2],
+          [2, 1],
+          [3, 1.5],
+        ]
+      ),
       {
         kind: "match",
         id: "wavesMatch",
@@ -740,22 +801,29 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 3,
         explain: w("q.trainCount.explain"),
       },
-      {
-        kind: "value",
-        id: "trainValue",
-        prompt: w("q.trainValue.prompt"),
-        figures: [trainFigure(2, 1.5, 0.1)],
-        labels: ["rate", "a", "sigma"],
-        answer: [2, 1.5, 0.1],
-        tolerance: [0.1, 0.05, 0.01],
-        sliders: [
-          { min: 0.5, max: 4, step: 0.5 },
-          { min: 0, max: 2, step: 0.1 },
-          { min: 0.02, max: 0.4, step: 0.02 },
-        ],
-        model: "train",
-        explain: w("q.trainValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "trainValue",
+          prompt: w("q.trainValue.prompt"),
+          figures: [trainFigure(2, 1.5, 0.1)],
+          labels: ["rate", "a", "sigma"],
+          answer: [2, 1.5, 0.1],
+          tolerance: [0.1, 0.05, 0.01],
+          sliders: [
+            { min: 0.5, max: 4, step: 0.5 },
+            { min: 0, max: 2, step: 0.1 },
+            { min: 0.02, max: 0.4, step: 0.02 },
+          ],
+          model: "train",
+          explain: w("q.trainValue.explain"),
+        },
+        [
+          [2, 1.5, 0.2],
+          [1.5, 2, 0.1],
+          [3, 1.5, 0.1],
+        ]
+      ),
       {
         kind: "choice",
         id: "trainRate",
@@ -783,25 +851,32 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: 6,
         explain: w("q.twoBellsCount.explain"),
       },
-      {
-        kind: "value",
-        id: "twoBellsValue",
-        prompt: w("q.twoBellsValue.prompt"),
-        figures: [twoBellsFigure(1, 1, 0.08, -0.6, 0.08, 0.3)],
-        labels: ["rate", "a1", "sigma1", "a2", "sigma2", "d"],
-        answer: [1, 1, 0.08, -0.6, 0.08, 0.3],
-        tolerance: [0.1, 0.05, 0.01, 0.05, 0.01, 0.025],
-        sliders: [
-          { min: 0.5, max: 3, step: 0.5 },
-          { min: 0, max: 1.5, step: 0.1 },
-          { min: 0.02, max: 0.3, step: 0.02 },
-          { min: -1.5, max: 1.5, step: 0.1 },
-          { min: 0.02, max: 0.3, step: 0.02 },
-          { min: 0.05, max: 0.6, step: 0.05 },
-        ],
-        model: "twoBells",
-        explain: w("q.twoBellsValue.explain"),
-      },
+      pickCode(
+        {
+          kind: "value",
+          id: "twoBellsValue",
+          prompt: w("q.twoBellsValue.prompt"),
+          figures: [twoBellsFigure(1, 1, 0.08, -0.6, 0.08, 0.3)],
+          labels: ["rate", "a1", "sigma1", "a2", "sigma2", "d"],
+          answer: [1, 1, 0.08, -0.6, 0.08, 0.3],
+          tolerance: [0.1, 0.05, 0.01, 0.05, 0.01, 0.025],
+          sliders: [
+            { min: 0.5, max: 3, step: 0.5 },
+            { min: 0, max: 1.5, step: 0.1 },
+            { min: 0.02, max: 0.3, step: 0.02 },
+            { min: -1.5, max: 1.5, step: 0.1 },
+            { min: 0.02, max: 0.3, step: 0.02 },
+            { min: 0.05, max: 0.6, step: 0.05 },
+          ],
+          model: "twoBells",
+          explain: w("q.twoBellsValue.explain"),
+        },
+        [
+          [1, 1, 0.08, 0.6, 0.08, 0.3],
+          [1, 0.6, 0.08, -1, 0.08, 0.3],
+          [1, 1, 0.08, -0.6, 0.16, 0.5],
+        ]
+      ),
       {
         kind: "choice",
         id: "twoBellsSign",

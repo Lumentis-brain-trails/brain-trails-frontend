@@ -320,19 +320,22 @@ function Body({
     );
   if (question.kind === "choice" && answer.kind === "choice")
     return (
-      <Choices
-        // the same order on every screen (seeded by the question), so a class sees
-        // the same list; true/false stays in its natural order
-        options={
-          question.options.every((o) => o.id === "true" || o.id === "false")
-            ? question.options
-            : shuffled(question.options, question.id)
-        }
-        selected={answer.id}
-        locked={locked}
-        right={right}
-        onPick={(id) => onChange({ kind: "choice", id })}
-      />
+      <>
+        {question.explore && <Explorer spec={question.explore} judge={judge} />}
+        <Choices
+          // the same order on every screen (seeded by the question), so a class sees
+          // the same list; true/false stays in its natural order
+          options={
+            question.options.every((o) => o.id === "true" || o.id === "false")
+              ? question.options
+              : shuffled(question.options, question.id)
+          }
+          selected={answer.id}
+          locked={locked}
+          right={right}
+          onPick={(id) => onChange({ kind: "choice", id })}
+        />
+      </>
     );
   if (question.kind === "order" && answer.kind === "order")
     return (
@@ -420,6 +423,30 @@ function ValueSliders({
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * The sliders of a pick-the-code question: free to move at any time, before and after
+ * the pick, since they only help find the numbers; green once on target, unless a lesson
+ * holds that back (`judge`).
+ */
+function Explorer({
+  spec,
+  judge,
+}: {
+  spec: Extract<Question, { kind: "value" }>;
+  judge: boolean;
+}) {
+  const [values, setValues] = useState(() => sliderStart(spec));
+  return (
+    <ValueSliders
+      question={spec}
+      values={values}
+      locked={false}
+      judge={judge}
+      onChange={setValues}
+    />
   );
 }
 
