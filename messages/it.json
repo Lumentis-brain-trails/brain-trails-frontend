@@ -5137,8 +5137,7 @@
       }
     },
     "demo": {
-      "landscape": "Apri il tuo Brain Landscape",
-      "neurofeedback": "Apri Neurofeedback"
+      "protocols": "Apri i protocolli"
     },
     "plasticity": {
       "steps": {
@@ -5189,7 +5188,7 @@
         },
         "demo": {
           "title": "Il tuo paesaggio",
-          "body": "<p>Tutto quello che c’è in questo modulo si ritrova in Brain Trails. Quando registri il tuo EEG con la fascia, ogni pochi secondi vengono trasformati in una lista di numeri (ricordi la Codifica?), e tutte le tue registrazioni sono disegnate su un’unica mappa: il tuo <b>Brain Landscape</b>. Le sue valli sono gli stati che il tuo cervello visita di più; il tuo <b>sentiero</b> è la strada fatta dalla pallina.</p><p>Il neurofeedback in Brain Trails sceglie un obiettivo sul tuo paesaggio e premia ogni passo verso di esso: il vento del passo precedente, che soffia sulla tua mappa. Diamo un’occhiata.</p>"
+          "body": "<p>Tutto quello che c’è in questo modulo si ritrova in Brain Trails. Quando registri il tuo EEG con la fascia, ogni pochi secondi vengono trasformati in una lista di numeri (ricordi la Codifica?), e tutte le tue registrazioni sono disegnate su un’unica mappa: il tuo <b>Brain Landscape</b>. Le sue valli sono gli stati che il tuo cervello visita di più; il tuo <b>sentiero</b> è la strada fatta dalla pallina.</p><p>Il neurofeedback in Brain Trails sceglie un obiettivo sul tuo paesaggio e premia ogni passo verso di esso: il vento del passo precedente, che soffia sulla tua mappa. Una mappa ha bisogno prima di registrazioni, quindi si comincia da un protocollo: una breve sessione con la fascia in testa.</p>"
         }
       },
       "q": {

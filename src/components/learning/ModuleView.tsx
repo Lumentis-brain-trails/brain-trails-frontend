@@ -221,19 +221,6 @@ export function ModuleView({
           <NeuronLab lab={step.lab as NeuronLabName} onGoal={labGoal} />
         )}
         {step.gallery && <Gallery examples={step.gallery} locked={!answered} />}
-        {step.links && (
-          <div className="flex flex-wrap gap-2">
-            {step.links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={buttonClass("primary")}
-              >
-                {words.text(l.words)}
-              </Link>
-            ))}
-          </div>
-        )}
 
         {step.questions.slice(0, out).map((q, i) => (
           <QuestionCard
@@ -266,6 +253,20 @@ export function ModuleView({
           </Card>
         )}
         {answered && step.playground && <Playground spec={step.playground} />}
+        {/* the way on into the product closes the module, after everything else */}
+        {step.links && (
+          <div className="flex flex-wrap gap-2">
+            {step.links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={buttonClass("primary")}
+              >
+                {words.text(l.words)}
+              </Link>
+            ))}
+          </div>
+        )}
       </article>
 
       {!control && (

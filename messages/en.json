@@ -5137,8 +5137,7 @@
       }
     },
     "demo": {
-      "landscape": "Open your Brain Landscape",
-      "neurofeedback": "Open Neurofeedback"
+      "protocols": "Open the protocols"
     },
     "plasticity": {
       "steps": {
@@ -5189,7 +5188,7 @@
         },
         "demo": {
           "title": "Your own landscape",
-          "body": "<p>Everything in this module comes together in Brain Trails. When you record your EEG with the headband, every few seconds of it are turned into a list of numbers (remember Encoding), and all your recordings are drawn on one map: your <b>Brain Landscape</b>. Its valleys are the states your brain visits most; your <b>trail</b> is the path the ball took.</p><p>Neurofeedback in Brain Trails picks a target on your own landscape and rewards every step towards it: the wind of the previous step, blowing on your own map. Let's look at it.</p>"
+          "body": "<p>Everything in this module comes together in Brain Trails. When you record your EEG with the headband, every few seconds of it are turned into a list of numbers (remember Encoding), and all your recordings are drawn on one map: your <b>Brain Landscape</b>. Its valleys are the states your brain visits most; your <b>trail</b> is the path the ball took.</p><p>Neurofeedback in Brain Trails picks a target on your own landscape and rewards every step towards it: the wind of the previous step, blowing on your own map. A map needs recordings first, so the way in is a protocol: a short session with the headband on.</p>"
         }
       },
       "q": {

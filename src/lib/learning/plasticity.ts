@@ -175,10 +175,8 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "demo",
-    links: [
-      { href: "/landscape", words: { key: "demo.landscape" } },
-      { href: "/neurofeedback", words: { key: "demo.neurofeedback" } },
-    ],
+    // nobody in class has recorded yet: the way in is a protocol, not their map
+    links: [{ href: "/protocols", words: { key: "demo.protocols" } }],
     questions: [
       trueFalse("plTfUseIt", false),
       trueFalse("plTfDig", true),
