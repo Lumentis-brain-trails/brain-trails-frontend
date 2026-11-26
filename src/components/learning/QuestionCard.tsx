@@ -63,11 +63,14 @@ export type Feedback = "now" | "held" | "revealed";
  */
 export function QuestionCard({
   feedback = "now",
+  presenter = false,
   question,
   index,
   onVerdict,
 }: {
   feedback?: Feedback;
+  /** The teacher's screen of a lesson: the question read-only, the solution once revealed. */
+  presenter?: boolean;
   question: Question;
   index: number;
   /** The answer given rides along, so a live lesson can count which option was chosen. */
@@ -153,32 +156,39 @@ export function QuestionCard({
         question={question}
         answer={answer}
         onChange={change}
-        locked={done}
+        locked={done || presenter}
         right={verdict === "right"}
         judge={!held}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {!done && (
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-2",
+          presenter && "hidden"
+        )}
+      >
+        {!done && !presenter && (
           <Button size="sm" onClick={check} disabled={held && sentNow}>
             {t(held ? "send" : "check")}
           </Button>
         )}
-        {!done && !held && (
+        {!done && !held && !presenter && (
           <Button size="sm" variant="ghost" onClick={show}>
             {t("show")}
           </Button>
         )}
-        {held && sentNow && (
+        {held && sentNow && !presenter && (
           <span className="inline-flex items-center gap-1.5 text-ink-2">
             <Icon name="check" /> {t("sent")}
           </span>
         )}
-        {!done && (question.kind === "order" || question.kind === "match") && (
-          <Button size="sm" variant="ghost" onClick={reset}>
-            {t("reset")}
-          </Button>
-        )}
+        {!done &&
+          !presenter &&
+          (question.kind === "order" || question.kind === "match") && (
+            <Button size="sm" variant="ghost" onClick={reset}>
+              {t("reset")}
+            </Button>
+          )}
         {done && !revealed && (
           <Button size="sm" variant="secondary" onClick={reset}>
             {t("again")}
@@ -199,7 +209,7 @@ export function QuestionCard({
             {t(revealed ? "wrongSent" : "wrong")}
           </span>
         )}
-        {revealed && !sent && (
+        {revealed && !sent && !presenter && (
           <span className="text-ink-2">{t("notSent")}</span>
         )}
       </div>

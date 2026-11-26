@@ -50,6 +50,11 @@ export interface ModuleControl {
    * until it is revealed (Andrea, 2026-11-26: the class sees it at the reveal).
    */
   revealedUpTo?: number;
+  /**
+   * The teacher's own screen: questions are shown, never answered (no Send, no Check),
+   * and a revealed one shows its solution. Labs stay live for a demonstration.
+   */
+  presenter?: boolean;
   /** The step on screen, counted from zero. */
   step: number;
   /** The last question out (from zero); -1 shows the step without questions. */
@@ -232,6 +237,7 @@ export function ModuleView({
         {step.questions.slice(0, out).map((q, i) => (
           <QuestionCard
             key={`${step.id}-${q.id}`}
+            presenter={control?.presenter === true}
             feedback={
               !control
                 ? "now"
