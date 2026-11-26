@@ -4520,7 +4520,11 @@
       "true": "Vero",
       "false": "Falso",
       "reset": "Ricomincia",
-      "sliderHint": "La tua figura è piena; quella tratteggiata è l’obiettivo."
+      "sliderHint": "La tua figura è piena; quella tratteggiata è l’obiettivo.",
+      "send": "Invia",
+      "sent": "Inviata. Puoi cambiarla finché non viene mostrata la risposta.",
+      "wrongSent": "Non proprio: la risposta che hai inviato era diversa.",
+      "notSent": "Non hai inviato una risposta: eccola."
     },
     "gallery": {
       "hint": "Nove figure di una famiglia. Indovina i numeri dietro: i codici si aprono quando hai risposto alle domande qui sotto.",

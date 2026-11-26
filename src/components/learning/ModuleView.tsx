@@ -13,7 +13,8 @@
  * A step's questions come one at a time: the next shows once the one before is right or
  * its answer shown. In a teacher-paced lesson (`control`) the teacher's screen decides
  * instead: the step and how many of its questions are out, with no way to wander off,
- * and every verdict (and a lab's reached goal, as `lab:<step id>`) goes back to the room.
+ * and every verdict (and a lab's reached goal, as `lab:<step id>`) goes back to the room,
+ * while the student sees no right or wrong until the teacher reveals the question.
  */
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -42,6 +43,12 @@ export interface ModuleControl {
    * answers: the teacher shows it to the whole class at once.
    */
   reveal?: boolean;
+  /**
+   * The step's questions whose answers the teacher has revealed: `0..revealedUpTo`
+   * (undefined: none). A later question only takes the answer, with no right or wrong,
+   * until it is revealed (Andrea, 2026-11-26: the class sees it at the reveal).
+   */
+  revealedUpTo?: number;
   /** The step on screen, counted from zero. */
   step: number;
   /** The last question out (from zero); -1 shows the step without questions. */
@@ -223,6 +230,13 @@ export function ModuleView({
             question={q}
             index={i}
             onVerdict={(v) => heard(q.id, v)}
+            feedback={
+              !control
+                ? "now"
+                : i <= (control.revealedUpTo ?? -1)
+                  ? "revealed"
+                  : "held"
+            }
           />
         ))}
 

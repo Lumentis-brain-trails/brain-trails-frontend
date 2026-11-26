@@ -4520,7 +4520,11 @@
       "true": "True",
       "false": "False",
       "reset": "Start over",
-      "sliderHint": "Your picture is solid; the dashed one is the target."
+      "sliderHint": "Your picture is solid; the dashed one is the target.",
+      "send": "Send",
+      "sent": "Sent. You can change it until the answer is shown.",
+      "wrongSent": "Not quite: the answer you sent was different.",
+      "notSent": "You didn't send an answer: here it is."
     },
     "gallery": {
       "hint": "Nine pictures of one family. Guess the numbers behind them: the codes open once you have answered the questions below.",
