@@ -4,68 +4,95 @@
  * A Learning module taught live: the teacher's screen shows the step the class is on,
  * the controls that move everyone (next question, next step, back), and how the class
  * is doing on the question that is out - how many got it right, wrong, or asked for the
- * answer, and how many have not answered yet. Counts only, never names (V4-0012).
+ * answer, and how many have not answered yet. On a multiple-choice question "Show the
+ * answers" puts how many chose each option on the projector, with the right one marked.
+ * Counts only, never names (V4-0012). The module is chosen when the game starts and
+ * stays (Andrea, 2026-11-25).
  */
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleView } from "@/components/learning/ModuleView";
-import { Button, Card, Segmented, cn } from "@/components/ui";
+import { LiveChoice } from "@/components/classgame/LiveChoice";
+import { toWire } from "@/lib/classgame/game";
+import { Button, Card, cn } from "@/components/ui";
 import type { useHostGame } from "@/lib/classgame/useClassGame";
 import {
   type LessonPlace,
   VERDICTS,
   asLesson,
   countedAt,
+  countedQuestion,
   lessonRound,
   nextPlace,
   previousPlace,
   startPlace,
+  verdictCounts,
 } from "@/lib/classgame/lesson";
-import { MODULES, moduleOf } from "@/lib/learning/modules";
+import { type LearningModule } from "@/lib/learning/modules";
 
 type Host = ReturnType<typeof useHostGame>;
 
-const READY = MODULES.filter((m) => m.steps.length > 0);
-
-export function LessonStage({ game }: { game: Host }) {
-  const t = useTranslations("classGame.lesson");
-  const tm = useTranslations("learning.modules");
+/**
+ * Where the class is in `mod`, and the move that takes everyone elsewhere. Until the
+ * teacher moves, the place is the room's (coming back to the page resumes the lesson),
+ * else the module's start, which is put to the class once the room has said hello.
+ */
+export function useLesson(game: Host, mod: LearningModule) {
   const { view, askRound } = game;
-  const live = game.socketState === "open";
-  // the place the room holds wins (a reload, a second screen), else the first module
-  const held = asLesson(view.question);
-  const [place, setPlace] = useState<LessonPlace>(
-    () =>
-      held ??
-      (READY[0] ? startPlace(READY[0]) : { module: "", step: 0, upTo: -1 })
-  );
-  const mod = moduleOf(place.module) ?? READY[0];
+  const roomHeld = asLesson(view.question);
+  const held = roomHeld?.module === mod.slug ? roomHeld : null;
+  const [moved, setMoved] = useState<LessonPlace | null>(null);
+  const place: LessonPlace = moved ?? held ?? startPlace(mod);
 
   const go = useCallback(
     (next: LessonPlace) => {
-      const target = moduleOf(next.module);
-      if (!target) return;
-      setPlace(next);
-      askRound(lessonRound(target, next));
+      setMoved(next);
+      askRound(lessonRound(mod, next));
     },
-    [askRound]
+    [askRound, mod]
   );
 
-  // the first time the room is open with no lesson in it, put the class on our place
   const started = useRef(false);
+  const greeted = view.role === "host";
   useEffect(() => {
-    if (!live || started.current) return;
+    if (!greeted || started.current) return;
     started.current = true;
-    if (!held && mod)
-      askRound(lessonRound(mod, { ...place, module: mod.slug }));
-  }, [live, held, mod, place, askRound]);
+    if (!held) askRound(lessonRound(mod, startPlace(mod)));
+  }, [greeted, held, mod, askRound]);
 
-  if (!mod) return null;
+  return { place, go };
+}
+
+export function LessonStage({
+  game,
+  module: mod,
+  lesson,
+}: {
+  game: Host;
+  module: LearningModule;
+  lesson: ReturnType<typeof useLesson>;
+}) {
+  const t = useTranslations("classGame.lesson");
+  const { view } = game;
+  const live = game.socketState === "open";
+  const { place, go: move } = lesson;
+  // "Show the answers" is per question: a move closes it
+  const [answersAt, setAnswersAt] = useState<string | null>(null);
+  const go = (next: LessonPlace) => {
+    setAnswersAt(null);
+    move(next);
+  };
+
   const step = mod.steps[place.step];
   const counted = countedAt(mod, place);
+  const round = lessonRound(mod, place);
+  const answers = answersAt === round.id;
   const tally =
-    held && view.tally && view.tally.question === held.id ? view.tally : null;
+    view.tally && view.tally.question === round.id ? view.tally : null;
   const answered = tally?.votes ?? 0;
+  const question = countedQuestion(mod, place);
+  const choice = question?.kind === "choice" ? question : null;
+  const counts = verdictCounts(round, tally?.counts ?? {}, choice?.answer);
   const next = nextPlace(mod, place);
   const previous = previousPlace(mod, place);
   const moreQuestions = step && place.upTo + 1 < step.questions.length;
@@ -75,18 +102,6 @@ export function LessonStage({ game }: { game: Host }) {
       {/* the class's answers stay in view while the teacher scrolls the step */}
       <Card className="sticky top-4 z-20 space-y-5 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Segmented
-            label={t("module")}
-            value={mod.slug}
-            onChange={(slug) => {
-              const target = moduleOf(slug);
-              if (target) go(startPlace(target));
-            }}
-            options={READY.map((m) => ({
-              value: m.slug,
-              label: tm(`${m.key}.name`),
-            }))}
-          />
           <p className="text-ink-2">
             {t("where", {
               step: place.step + 1,
@@ -108,6 +123,14 @@ export function LessonStage({ game }: { game: Host }) {
           <Button disabled={!live || !next} onClick={() => next && go(next)}>
             {moreQuestions ? t("nextQuestion") : t("nextStep")}
           </Button>
+          {choice && (
+            <Button
+              variant="ghost"
+              onClick={() => setAnswersAt(answers ? null : round.id)}
+            >
+              {t(answers ? "hideAnswers" : "showAnswers")}
+            </Button>
+          )}
         </div>
 
         {counted && (
@@ -127,10 +150,10 @@ export function LessonStage({ game }: { game: Host }) {
                 <p className="type-subhead text-ink-2">{t(v)}</p>
                 {/* re-mounted on every change, so each vote pops in live */}
                 <p
-                  key={tally?.counts[v] ?? 0}
+                  key={counts[v]}
                   className="type-display enter-pop tabular-nums"
                 >
-                  {tally?.counts[v] ?? 0}
+                  {counts[v]}
                 </p>
               </div>
             ))}
@@ -150,10 +173,37 @@ export function LessonStage({ game }: { game: Host }) {
         )}
       </Card>
 
+      {choice && answers && (
+        <Card className="enter-up">
+          <LiveChoice
+            question={toWire(choice).choice!}
+            phase="revealed"
+            answer={choice.answer}
+            tally={pickTally(round.picks ?? [], tally)}
+            showCount
+            big
+          />
+        </Card>
+      )}
+
       <ModuleView
         module={mod}
         control={{ step: place.step, upTo: place.upTo, onVerdict: () => {} }}
       />
     </div>
   );
+}
+
+/** The count over the options only (asking for the answer is not a choice). */
+function pickTally(
+  picks: string[],
+  tally: { question: string | null; counts: Record<string, number> } | null
+) {
+  const counts: Record<string, number> = {};
+  let votes = 0;
+  for (const id of picks) {
+    counts[id] = tally?.counts[id] ?? 0;
+    votes += counts[id];
+  }
+  return { question: tally?.question ?? null, counts, votes };
 }

@@ -33,6 +33,7 @@ import { Playground } from "@/components/learning/Playground";
 import { QuestionCard, useWords } from "@/components/learning/QuestionCard";
 import { Card, EmptyState, Icon, buttonClass, cn } from "@/components/ui";
 import { type LearningModule, stepIndex } from "@/lib/learning/modules";
+import type { Answer } from "@/lib/learning/questions";
 
 /** What a teacher-paced lesson hands the module: see `ModuleView`. */
 export interface ModuleControl {
@@ -40,7 +41,11 @@ export interface ModuleControl {
   step: number;
   /** The last question out (from zero); -1 shows the step without questions. */
   upTo: number;
-  onVerdict: (questionId: string, verdict: "right" | "wrong" | "shown") => void;
+  onVerdict: (
+    questionId: string,
+    verdict: "right" | "wrong" | "shown",
+    answer?: Answer
+  ) => void;
 }
 
 type Verdict = "right" | "wrong" | "shown";
@@ -65,12 +70,12 @@ export function ModuleView({
     of: Record<string, Verdict>;
   }>({ step: at, of: {} });
   const seen = verdicts.step === at ? verdicts.of : {};
-  const heard = (id: string, v: Verdict) => {
+  const heard = (id: string, v: Verdict, answer?: Answer) => {
     setVerdicts((prev) => ({
       step: at,
       of: { ...(prev.step === at ? prev.of : {}), [id]: v },
     }));
-    control?.onVerdict(id, v);
+    control?.onVerdict(id, v, answer);
   };
   const step = module.steps[at];
   const href = (i: number) => `/learning/${module.slug}?step=${i + 1}`;
@@ -214,7 +219,7 @@ export function ModuleView({
             key={`${step.id}-${q.id}`}
             question={q}
             index={i}
-            onVerdict={(v) => heard(q.id, v)}
+            onVerdict={(v, a) => heard(q.id, v, a)}
           />
         ))}
       </article>

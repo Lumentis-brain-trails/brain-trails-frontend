@@ -12,7 +12,7 @@ import { LessonFollow } from "@/components/classgame/LessonFollow";
 import { LiveButtons } from "@/components/classgame/LiveButtons";
 import { LiveChoice } from "@/components/classgame/LiveChoice";
 import { Card, EmptyState, Spinner } from "@/components/ui";
-import { asLesson } from "@/lib/classgame/lesson";
+import { asLesson, lessonVote } from "@/lib/classgame/lesson";
 import { useMyGame, usePlayerGame } from "@/lib/classgame/useClassGame";
 import { useFeature } from "@/lib/features";
 
@@ -120,8 +120,9 @@ function PlayerStage() {
       ) : lesson ? (
         <LessonFollow
           round={lesson}
-          onVerdict={(question, verdict) => {
-            if (question === lesson.counts) game.vote(verdict);
+          onVerdict={(question, verdict, answer) => {
+            if (question === lesson.counts)
+              game.vote(lessonVote(lesson, verdict, answer));
           }}
         />
       ) : !view.question.choice ? (

@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useFormatLocale } from "@/i18n/formatLocale";
 import { api } from "@/lib/api";
 import { useErrorMessage } from "@/lib/errorMessage";
+import { useGameState } from "@/lib/classgame/useClassGame";
 import { useFeature } from "@/lib/features";
 import { formatDate } from "@/lib/format";
 import { type SchoolOut, type StudentRow, taughtSchools } from "@/lib/schools";
@@ -66,6 +67,8 @@ function SchoolSection({ id }: { id: string }) {
   const t = useTranslations("schools.page");
   const tg = useTranslations("classGame.host");
   const games = useFeature("class_games");
+  // a game left running while the teacher went elsewhere: the button resumes it
+  const gameState = useGameState(id, games);
   const multi = useFeature("workspaces_multi");
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
@@ -109,7 +112,7 @@ function SchoolSection({ id }: { id: string }) {
             href={`/school/game/${id}`}
             className={buttonClass("primary", "sm", "mt-4")}
           >
-            {tg("open")}
+            {gameState.data?.open ? tg("resume") : tg("open")}
           </Link>
         )}
       </header>

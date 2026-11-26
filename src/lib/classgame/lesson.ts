@@ -5,10 +5,14 @@
  * options are the three verdicts a question can end in, so a student's verdict is
  * their vote: the teacher reads how many got it right, wrong, or asked for the answer,
  * never who. A student who retries and gets it right changes their vote to `right`.
+ * On a multiple-choice question the options are the question's own (and `shown`), so
+ * the teacher can also show how many chose each one at the end; right and wrong are
+ * then read from the answer (`verdictCounts`).
  *
  * Pure: the screens are `LessonStage` (teacher) and the `/play` page (students).
  */
 import type { LearningModule } from "@/lib/learning/modules";
+import type { Answer, Question } from "@/lib/learning/questions";
 import type { WireQuestion } from "./game";
 
 export const VERDICTS = ["right", "wrong", "shown"] as const;
@@ -26,6 +30,18 @@ export interface LessonRound extends WireQuestion, LessonPlace {
   kind: "lesson";
   /** The question (or `lab:<stepId>`) whose verdicts this round counts; null: none. */
   counts: string | null;
+  /** The counted question's option ids when it is multiple choice: a vote is one of
+   * them (or `shown`) instead of a verdict. */
+  picks?: string[] | null;
+}
+
+/** The question this place counts, when it is one (not a lab). */
+export function countedQuestion(
+  module: LearningModule,
+  place: LessonPlace
+): Question | null {
+  if (place.upTo < 0) return null;
+  return module.steps[place.step]?.questions[place.upTo] ?? null;
 }
 
 /**
@@ -53,15 +69,51 @@ export function lessonRound(
   module: LearningModule,
   place: LessonPlace
 ): LessonRound {
+  const q = countedQuestion(module, place);
+  const picks = q?.kind === "choice" ? q.options.map((o) => o.id) : null;
   return {
     id: `lesson:${place.module}:${place.step}:${place.upTo}`,
     kind: "lesson",
-    options: [...VERDICTS],
+    options: picks ? [...picks, "shown"] : [...VERDICTS],
     module: place.module,
     step: place.step,
     upTo: place.upTo,
     counts: countedAt(module, place),
+    picks,
   };
+}
+
+/** A student's vote for a verdict on this round: their option on a choice round. */
+export function lessonVote(
+  round: LessonRound,
+  verdict: Verdict,
+  answer?: Answer
+): string {
+  if (!round.picks || verdict === "shown") return verdict;
+  return answer?.kind === "choice" ? answer.id : verdict;
+}
+
+/**
+ * Right, wrong and shown from a round's counts: as they are on a verdict round; on a
+ * choice round, the right option's votes against every other option's.
+ */
+export function verdictCounts(
+  round: Pick<LessonRound, "picks">,
+  counts: Record<string, number>,
+  right?: string
+): Record<Verdict, number> {
+  if (!round.picks)
+    return {
+      right: counts.right ?? 0,
+      wrong: counts.wrong ?? 0,
+      shown: counts.shown ?? 0,
+    };
+  let yes = 0;
+  let no = 0;
+  for (const id of round.picks)
+    if (id === right) yes += counts[id] ?? 0;
+    else no += counts[id] ?? 0;
+  return { right: yes, wrong: no, shown: counts.shown ?? 0 };
 }
 
 /** A round from the room as a lesson place, or null for any other kind of round. */

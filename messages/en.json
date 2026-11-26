@@ -4245,11 +4245,9 @@
       "open": "Start a class game",
       "off": "Class games are not available here.",
       "title": "Class game",
-      "intro": "Put a Learning question on the projector and let the class vote from their phones. Your students see a note inviting them in as soon as you start.",
+      "intro": "Choose what the class does. Your students see a note inviting them in as soon as you start; you can leave this page and resume the game later.",
       "privacy": "You see how many voted for each answer, never who voted what.",
       "ended": "The game is over. Every student's screen has been told.",
-      "start": "Start the game",
-      "again": "Start a new game",
       "unavailable": "The live service is not available in this environment.",
       "questions": "Questions",
       "from": "{module}, step {step}",
@@ -4266,13 +4264,16 @@
       "next": "Next question",
       "hideCount": "Hide the count",
       "showCount": "Show the count",
-      "games": "Class games",
       "braid": "The braided path",
       "braidFrom": "Brain plasticity",
-      "lesson": "Teach a module live",
       "lessonFrom": "Learning",
       "playersBig": "<b>{n}</b> connected",
-      "index": "Games and questions"
+      "choose": "What will the class do?",
+      "teach": "Teach {module} live",
+      "questionsGame": "Single questions",
+      "questionsFrom": "Quiz",
+      "running": "A game is running",
+      "resume": "Resume the game"
     },
     "player": {
       "off": "Class games are not available here.",
@@ -4310,7 +4311,6 @@
       "again": "Play again"
     },
     "lesson": {
-      "module": "Module",
       "where": "Step {step} of {steps}, {shown} of {questions} questions out",
       "back": "Back",
       "nextQuestion": "Show the next question",
@@ -4319,7 +4319,10 @@
       "wrong": "Wrong",
       "shown": "Asked for the answer",
       "waiting": "Not answered yet",
-      "labHint": "Counts the students who reached the goal of this step's exercise."
+      "labHint": "Counts the students who reached the goal of this step's exercise.",
+      "showAnswers": "Show the answers",
+      "hideAnswers": "Hide the answers",
+      "steps": "Steps"
     }
   },
   "neurofeedback": {

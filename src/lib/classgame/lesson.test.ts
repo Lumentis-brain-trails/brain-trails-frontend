@@ -7,9 +7,11 @@ import {
   countedAt,
   firstUpTo,
   lessonRound,
+  lessonVote,
   nextPlace,
   previousPlace,
   startPlace,
+  verdictCounts,
 } from "./lesson";
 
 const mod = MODULES.find((m) => m.steps.length > 1)!;
@@ -67,5 +69,36 @@ describe("a teacher-paced lesson", () => {
       .find((q) => q.kind === "choice");
     if (choice?.kind === "choice") expect(asLesson(toWire(choice))).toBeNull();
     expect(asLesson(null)).toBeNull();
+  });
+
+  it("a choice question is voted by option, and read back as verdicts", () => {
+    const step = mod.steps.findIndex((s) =>
+      s.questions.some((q) => q.kind === "choice")
+    );
+    const upTo = mod.steps[step].questions.findIndex(
+      (q) => q.kind === "choice"
+    );
+    const q = mod.steps[step].questions[upTo];
+    if (q.kind !== "choice") throw new Error("no choice question");
+    const round = lessonRound(mod, { module: mod.slug, step, upTo });
+    expect(round.picks).toEqual(q.options.map((o) => o.id));
+    expect(round.options).toEqual([...round.picks!, "shown"]);
+    const wrong = q.options.find((o) => o.id !== q.answer)!.id;
+    expect(lessonVote(round, "wrong", { kind: "choice", id: wrong })).toBe(
+      wrong
+    );
+    expect(lessonVote(round, "shown", { kind: "choice", id: q.answer })).toBe(
+      "shown"
+    );
+    expect(
+      verdictCounts(round, { [q.answer]: 2, [wrong]: 3, shown: 1 }, q.answer)
+    ).toEqual({ right: 2, wrong: 3, shown: 1 });
+    const plain = { picks: null };
+    expect(lessonVote({ ...round, ...plain }, "right")).toBe("right");
+    expect(verdictCounts(plain, { right: 1 })).toEqual({
+      right: 1,
+      wrong: 0,
+      shown: 0,
+    });
   });
 });

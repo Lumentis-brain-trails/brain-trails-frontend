@@ -7,6 +7,7 @@
  */
 import { ModuleView } from "@/components/learning/ModuleView";
 import type { LessonRound, Verdict } from "@/lib/classgame/lesson";
+import type { Answer } from "@/lib/learning/questions";
 import { moduleOf } from "@/lib/learning/modules";
 
 export function LessonFollow({
@@ -14,7 +15,7 @@ export function LessonFollow({
   onVerdict,
 }: {
   round: LessonRound;
-  onVerdict: (question: string, verdict: Verdict) => void;
+  onVerdict: (question: string, verdict: Verdict, answer?: Answer) => void;
 }) {
   const mod = moduleOf(round.module);
   if (!mod) return null;

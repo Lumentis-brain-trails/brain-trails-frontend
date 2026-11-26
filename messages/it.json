@@ -4245,11 +4245,9 @@
       "open": "Avvia un gioco di classe",
       "off": "I giochi di classe non sono disponibili qui.",
       "title": "Gioco di classe",
-      "intro": "Proietta una domanda di Learning e fai votare la classe dal telefono. I tuoi studenti vedono un invito a entrare appena inizi.",
+      "intro": "Scegli cosa fa la classe. I tuoi studenti vedono un avviso che li invita appena inizi; puoi lasciare questa pagina e riprendere il gioco più tardi.",
       "privacy": "Vedi quanti hanno votato ogni risposta, mai chi ha votato cosa.",
       "ended": "Il gioco è finito. Lo schermo di ogni studente è stato avvisato.",
-      "start": "Inizia il gioco",
-      "again": "Inizia un nuovo gioco",
       "unavailable": "Il servizio live non è disponibile in questo ambiente.",
       "questions": "Domande",
       "from": "{module}, passo {step}",
@@ -4266,13 +4264,16 @@
       "next": "Domanda successiva",
       "hideCount": "Nascondi il conteggio",
       "showCount": "Mostra il conteggio",
-      "games": "Giochi di classe",
       "braid": "Il sentiero intrecciato",
       "braidFrom": "Plasticità cerebrale",
-      "lesson": "Insegna un modulo dal vivo",
       "lessonFrom": "Learning",
       "playersBig": "<b>{n}</b> collegati",
-      "index": "Giochi e domande"
+      "choose": "Cosa farà la classe?",
+      "teach": "Insegna {module} dal vivo",
+      "questionsGame": "Domande singole",
+      "questionsFrom": "Quiz",
+      "running": "C'è un gioco in corso",
+      "resume": "Riprendi il gioco"
     },
     "player": {
       "off": "I giochi di classe non sono disponibili qui.",
@@ -4310,7 +4311,6 @@
       "again": "Gioca di nuovo"
     },
     "lesson": {
-      "module": "Modulo",
       "where": "Passo {step} di {steps}, {shown} domande su {questions}",
       "back": "Indietro",
       "nextQuestion": "Mostra la domanda successiva",
@@ -4319,7 +4319,10 @@
       "wrong": "Sbagliate",
       "shown": "Hanno chiesto la risposta",
       "waiting": "Non hanno ancora risposto",
-      "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo."
+      "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo.",
+      "showAnswers": "Mostra le risposte",
+      "hideAnswers": "Nascondi le risposte",
+      "steps": "Passi"
     }
   },
   "neurofeedback": {
