@@ -12,7 +12,7 @@ import { LessonFollow } from "@/components/classgame/LessonFollow";
 import { LiveButtons } from "@/components/classgame/LiveButtons";
 import { LiveChoice } from "@/components/classgame/LiveChoice";
 import { Card, EmptyState, Spinner } from "@/components/ui";
-import { asLesson } from "@/lib/classgame/lesson";
+import { asLesson, lessonVote } from "@/lib/classgame/lesson";
 import { useMyGame, usePlayerGame } from "@/lib/classgame/useClassGame";
 import { useFeature } from "@/lib/features";
 
@@ -120,12 +120,21 @@ function PlayerStage() {
       ) : lesson ? (
         <LessonFollow
           round={lesson}
-          onVerdict={(question, verdict) => {
-            if (question === lesson.counts) game.vote(verdict);
+          phase={view.phase}
+          onVerdict={(question, verdict, answer) => {
+            if (question === lesson.counts)
+              game.vote(lessonVote(lesson, verdict, answer));
           }}
         />
       ) : !view.question.choice ? (
         <Card className="space-y-4">
+          {typeof view.question.seconds === "number" &&
+            view.phase === "open" && (
+              <Countdown
+                key={view.question.id}
+                seconds={view.question.seconds}
+              />
+            )}
           <LiveButtons
             round={view.question}
             phase={view.phase}
@@ -177,4 +186,27 @@ function status(
   }
   if (phase === "closed") return mine ? t("closedVoted") : t("closed");
   return mine ? t("voted") : t("vote");
+}
+
+/**
+ * The seconds left to vote on a timed round (the braided path: `seconds` on the round),
+ * counted from when this phone received it; the teacher's screen closes the vote.
+ */
+function Countdown({ seconds }: { seconds: number }) {
+  const [from] = useState(() => Date.now());
+  const [now, setNow] = useState(from);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, []);
+  const left = Math.max(0, Math.ceil(seconds - (now - from) / 1000));
+  return (
+    <p
+      key={left}
+      aria-live="off"
+      className="type-display enter-pop text-center tabular-nums"
+    >
+      {left}
+    </p>
+  );
 }

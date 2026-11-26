@@ -58,7 +58,9 @@
     "attestation_required": "Spunta entrambe le dichiarazioni per richiedere una scuola.",
     "confirmation_required": "Spunta di aver controllato il consenso del tutore.",
     "under_age": "Brain Trails è per chi ha almeno 18 anni.",
-    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica."
+    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica.",
+    "already_enrolled": "Questo account è già in una scuola.",
+    "profile_required": "Prima aggiungi nome e anno di nascita nel tuo profilo."
   },
   "application": {
     "step": "Candidatura",
@@ -1949,6 +1951,16 @@
       "confirm": "Elimina tutto",
       "deleting": "Eliminazione…",
       "done": "Il tuo account e i tuoi dati sono stati eliminati."
+    },
+    "invitations": {
+      "title": "Inviti",
+      "accept": "Accetta",
+      "seat": {
+        "speaker": "Relatore: puoi gestire questa classe e i suoi giochi di classe",
+        "owner": "Titolare",
+        "admin": "Amministratore",
+        "member": "Membro"
+      }
     }
   },
   "transfers": {
@@ -4233,11 +4245,9 @@
       "open": "Avvia un gioco di classe",
       "off": "I giochi di classe non sono disponibili qui.",
       "title": "Gioco di classe",
-      "intro": "Proietta una domanda di Learning e fai votare la classe dal telefono. I tuoi studenti vedono un invito a entrare appena inizi.",
+      "intro": "Scegli cosa fa la classe. I tuoi studenti vedono un avviso che li invita appena inizi; puoi lasciare questa pagina e riprendere il gioco più tardi.",
       "privacy": "Vedi quanti hanno votato ogni risposta, mai chi ha votato cosa.",
       "ended": "Il gioco è finito. Lo schermo di ogni studente è stato avvisato.",
-      "start": "Inizia il gioco",
-      "again": "Inizia un nuovo gioco",
       "unavailable": "Il servizio live non è disponibile in questo ambiente.",
       "questions": "Domande",
       "from": "{module}, passo {step}",
@@ -4254,11 +4264,16 @@
       "next": "Domanda successiva",
       "hideCount": "Nascondi il conteggio",
       "showCount": "Mostra il conteggio",
-      "games": "Giochi di classe",
       "braid": "Il sentiero intrecciato",
       "braidFrom": "Plasticità cerebrale",
-      "lesson": "Insegna un modulo dal vivo",
-      "lessonFrom": "Learning"
+      "lessonFrom": "Learning",
+      "playersBig": "<b>{n}</b> collegati",
+      "choose": "Cosa farà la classe?",
+      "teach": "Insegna {module} dal vivo",
+      "questionsGame": "Domande singole",
+      "questionsFrom": "Quiz",
+      "running": "C'è un gioco in corso",
+      "resume": "Riprendi il gioco"
     },
     "player": {
       "off": "I giochi di classe non sono disponibili qui.",
@@ -4282,7 +4297,8 @@
     },
     "call": {
       "title": "La tua classe ha un gioco in corso",
-      "join": "Entra"
+      "join": "Entra",
+      "close": "Chiudi"
     },
     "braid": {
       "title": "Il sentiero intrecciato",
@@ -4295,7 +4311,6 @@
       "dead": "Fine partita: il segnale della classe si è spento in un punto morto dopo {steps} scelte."
     },
     "lesson": {
-      "module": "Modulo",
       "where": "Passo {step} di {steps}, {shown} domande su {questions}",
       "back": "Indietro",
       "nextQuestion": "Mostra la domanda successiva",
@@ -4304,7 +4319,14 @@
       "wrong": "Sbagliate",
       "shown": "Hanno chiesto la risposta",
       "waiting": "Non hanno ancora risposto",
-      "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo."
+      "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo.",
+      "showFound": "Mostra che cosa abbiamo scoperto",
+      "foundShown": "Mostrato alla classe",
+      "steps": "Passi",
+      "answered": "Hanno risposto",
+      "revealAnswer": "Rivela la risposta",
+      "answerRevealed": "Risposta rivelata",
+      "backToQuestions": "Torna alle domande"
     }
   },
   "neurofeedback": {
@@ -4469,6 +4491,13 @@
       "email": "Email del relatore",
       "invite": "Invita come relatore",
       "link": "Invia tu questo link:"
+    },
+    "join": {
+      "title": "Scuola",
+      "intro": "Il tuo insegnante ti ha dato un codice classe dopo che ti sei iscritto? Scrivilo qui per entrare nella tua classe.",
+      "tick": "Sono lo studente: ho letto l'<link>informativa sulla privacy</link> e do il mio consenso.",
+      "submit": "Entra nella scuola",
+      "enrolled": "Sei in {name}."
     }
   },
   "learning": {

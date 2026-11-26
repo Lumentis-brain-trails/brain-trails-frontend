@@ -38,12 +38,28 @@ export const WORKSPACES_QUERY_KEY = ["workspaces"] as const;
 export const SELECTED_WORKSPACE_KEY = "bt-workspace";
 const CHANGE_EVENT = "bt-workspace-change";
 
-/** The caller's workspaces, personal first; cached for the session. */
+/** How often a pending request is asked about again while the app is open. */
+export const PENDING_POLL_MS = 60_000;
+
+/** Whether any of the caller's organisations still waits for an admin's decision. */
+export function anyPending(workspaces: Workspace[] | undefined): boolean {
+  return (
+    Array.isArray(workspaces) && workspaces.some((w) => w.status === "pending")
+  );
+}
+
+/**
+ * The caller's workspaces, personal first; cached for five minutes. While a request
+ * is pending the list is never fresh and is asked again every minute, so an approval
+ * (made in the console or another tab) reaches the sidebar without a reload.
+ */
 export function useWorkspaces() {
   return useQuery({
     queryKey: WORKSPACES_QUERY_KEY,
     queryFn: () => api.get<Workspace[]>("workspaces"),
-    staleTime: 5 * 60_000,
+    staleTime: (query) => (anyPending(query.state.data) ? 0 : 5 * 60_000),
+    refetchInterval: (query) =>
+      anyPending(query.state.data) ? PENDING_POLL_MS : false,
   });
 }
 
