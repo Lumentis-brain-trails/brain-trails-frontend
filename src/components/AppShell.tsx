@@ -14,6 +14,7 @@ import {
 } from "@/lib/landscapeStatus";
 import { useFeature } from "@/lib/features";
 import { heldRedirect, taughtSchools } from "@/lib/schools";
+import { ClassGameCall } from "@/components/classgame/ClassGameCall";
 import { useSignOut } from "@/lib/signOut";
 import { setTheme, useTheme } from "@/lib/theme";
 import type { UserInfo } from "@/lib/types";
@@ -42,6 +43,7 @@ type SectionKey =
   | "people"
   | "my"
   | "school"
+  | "learning"
   | "account"
   | "admin";
 
@@ -206,6 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-main flex min-h-screen flex-col pt-14 md:pt-0 md:pl-16">
         {children}
       </div>
+      <ClassGameCall />
     </>
   );
 }
@@ -266,6 +269,8 @@ function Sidebar({ pathname, open }: { pathname: string; open: boolean }) {
     ...(teaches
       ? [{ href: "/school", key: "school", icon: "people" } as const]
       : []),
+    // short interactive lessons for a class (Encoding first)
+    { href: "/learning", key: "learning", icon: "learn" },
     { href: "/account", key: "account", icon: "person" },
     ...(me.data?.role === "admin"
       ? [{ href: "/admin", key: "admin", icon: "shield" } as const]

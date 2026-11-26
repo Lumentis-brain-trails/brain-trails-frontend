@@ -58,7 +58,9 @@
     "attestation_required": "Spunta entrambe le dichiarazioni per richiedere una scuola.",
     "confirmation_required": "Spunta di aver controllato il consenso del tutore.",
     "under_age": "Brain Trails è per chi ha almeno 18 anni.",
-    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica."
+    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica.",
+    "already_enrolled": "Questo account è già in una scuola.",
+    "profile_required": "Prima aggiungi nome e anno di nascita nel tuo profilo."
   },
   "application": {
     "step": "Candidatura",
@@ -1949,6 +1951,16 @@
       "confirm": "Elimina tutto",
       "deleting": "Eliminazione…",
       "done": "Il tuo account e i tuoi dati sono stati eliminati."
+    },
+    "invitations": {
+      "title": "Inviti",
+      "accept": "Accetta",
+      "seat": {
+        "speaker": "Relatore: puoi gestire questa classe e i suoi giochi di classe",
+        "owner": "Titolare",
+        "admin": "Amministratore",
+        "member": "Membro"
+      }
     }
   },
   "transfers": {
@@ -2482,7 +2494,8 @@
       "participants": "Partecipanti",
       "my": "Le mie sessioni",
       "neurofeedback": "Neurofeedback",
-      "school": "Scuola"
+      "school": "Scuola",
+      "learning": "Impara"
     },
     "sections": "Sezioni",
     "you": "Tu",
@@ -4224,6 +4237,98 @@
       }
     }
   },
+  "classGame": {
+    "options": "Risposte",
+    "option": "Risposta {letter}",
+    "votes": "{n, plural, =1 {# voto} other {# voti}}",
+    "host": {
+      "open": "Avvia un gioco di classe",
+      "off": "I giochi di classe non sono disponibili qui.",
+      "title": "Gioco di classe",
+      "intro": "Scegli cosa fa la classe. I tuoi studenti vedono un avviso che li invita appena inizi; puoi lasciare questa pagina e riprendere il gioco più tardi.",
+      "privacy": "Vedi quanti hanno votato ogni risposta, mai chi ha votato cosa.",
+      "ended": "Il gioco è finito. Lo schermo di ogni studente è stato avvisato.",
+      "unavailable": "Il servizio live non è disponibile in questo ambiente.",
+      "questions": "Domande",
+      "from": "{module}, passo {step}",
+      "players": "{n, plural, =0 {Ancora nessuno studente collegato} =1 {1 studente collegato} other {# studenti collegati}}",
+      "connecting": "Connessione in corso...",
+      "voted": "{n, plural, =1 {1 voto} other {# voti}} finora",
+      "end": "Termina il gioco",
+      "pick": "Scegli una domanda",
+      "pickHint": "Scegline una dall'elenco, o parti dalla prima.",
+      "first": "Fai la prima domanda",
+      "close": "Chiudi il voto",
+      "reopen": "Riapri il voto",
+      "reveal": "Mostra la risposta",
+      "next": "Domanda successiva",
+      "hideCount": "Nascondi il conteggio",
+      "showCount": "Mostra il conteggio",
+      "braid": "Il sentiero intrecciato",
+      "braidFrom": "Plasticità cerebrale",
+      "lessonFrom": "Learning",
+      "playersBig": "<b>{n}</b> collegati",
+      "choose": "Cosa farà la classe?",
+      "teach": "Insegna {module} dal vivo",
+      "questionsGame": "Domande singole",
+      "questionsFrom": "Quiz",
+      "running": "C'è un gioco in corso",
+      "resume": "Riprendi il gioco"
+    },
+    "player": {
+      "off": "I giochi di classe non sono disponibili qui.",
+      "none": "Nessun gioco di classe in corso",
+      "noneHint": "Quando il tuo insegnante ne avvia uno, compare qui da solo.",
+      "joining": "Stai entrando nella tua classe...",
+      "over": "Il gioco è finito",
+      "score": "{right} giuste su {asked}",
+      "in": "Sei dentro!",
+      "wait": "Aspetta la prima domanda del tuo insegnante.",
+      "vote": "Tocca la tua risposta.",
+      "voted": "Il tuo voto è arrivato. Puoi cambiarlo finché il voto è aperto.",
+      "closed": "Il voto è chiuso.",
+      "closedVoted": "Il voto è chiuso. La tua risposta è arrivata.",
+      "right": "Giusto!",
+      "wrong": "Non questa volta. Leggi il perché qui sotto.",
+      "missed": "Non hai votato questa domanda.",
+      "poll": "Ecco come ha votato la classe.",
+      "reconnecting": "Connessione persa, riconnessione...",
+      "moved": "La classe ha scelto. Guarda la lavagna."
+    },
+    "call": {
+      "title": "La tua classe ha un gioco in corso",
+      "join": "Entra",
+      "close": "Chiudi"
+    },
+    "braid": {
+      "title": "Il sentiero intrecciato",
+      "round": "Giro {round}, scelta {steps}",
+      "history": "Giri finora: {rounds}",
+      "start": "Inizia il primo giro",
+      "next": "Giro successivo",
+      "arrived": "La classe è arrivata in fondo in {steps} scelte.",
+      "over": "Il sentiero è diventato più corto e più spesso? Gioca altri giri per vederlo assestarsi.",
+      "dead": "Fine partita: il segnale della classe si è spento in un punto morto dopo {steps} scelte."
+    },
+    "lesson": {
+      "where": "Passo {step} di {steps}, {shown} domande su {questions}",
+      "back": "Indietro",
+      "nextQuestion": "Mostra la domanda successiva",
+      "nextStep": "Passo successivo",
+      "right": "Giuste",
+      "wrong": "Sbagliate",
+      "shown": "Hanno chiesto la risposta",
+      "waiting": "Non hanno ancora risposto",
+      "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo.",
+      "showFound": "Mostra che cosa abbiamo scoperto",
+      "foundShown": "Mostrato alla classe",
+      "steps": "Passi",
+      "answered": "Hanno risposto",
+      "revealAnswer": "Rivela la risposta",
+      "answerRevealed": "Risposta rivelata",
+      "backToQuestions": "Torna alle domande"
+    }
+  },
   "neurofeedback": {
     "title": "Neurofeedback",
     "intro": "Allenati verso un luogo del tuo brain landscape. Il segnale della fascia viene posto sulla tua mappa ogni secondo, e ciò che guardi segue quanto sei vicino.",
@@ -4373,6 +4478,885 @@
       "refuseTitle": "Rifiuta {name}",
       "reason": "Motivo (facoltativo)",
       "reasonHint": "Lo studente lo legge quando accede. Non viene inviato per email."
+    },
+    "speakers": {
+      "title": "Insegnanti e relatori",
+      "intro": "Chiunque qui può gestire questa classe: il codice, gli studenti e il gioco di classe. Invita un relatore che presenterà una lezione; riceve un link via email.",
+      "teacher": "Insegnante",
+      "speaker": "Relatore",
+      "member": "Membro",
+      "you": "tu",
+      "invited": "Invitato",
+      "revoke": "Annulla",
+      "email": "Email del relatore",
+      "invite": "Invita come relatore",
+      "link": "Invia tu questo link:"
+    },
+    "join": {
+      "title": "Scuola",
+      "intro": "Il tuo insegnante ti ha dato un codice classe dopo che ti sei iscritto? Scrivilo qui per entrare nella tua classe.",
+      "tick": "Sono lo studente: ho letto l'<link>informativa sulla privacy</link> e do il mio consenso.",
+      "submit": "Entra nella scuola",
+      "enrolled": "Sei in {name}."
     }
+  },
+  "learning": {
+    "title": "Impara",
+    "intro": "Brevi lezioni interattive su come un cervello e un computer trasformano il mondo in numeri. Scegli un modulo; il tuo insegnante può dirti quale passo aprire.",
+    "moduleNumber": "Modulo {n}",
+    "stepsCount": "{n} passi",
+    "soon": "In arrivo",
+    "steps": "Passi",
+    "previous": "Indietro",
+    "next": "Avanti",
+    "finish": "Torna ai moduli",
+    "stepOf": "Passo {n} di {total}",
+    "refrain": {
+      "count": "Quanti numeri?",
+      "values": "Quali valori?",
+      "decode": "Come lo ricostruiamo?"
+    },
+    "modules": {
+      "neuralNetworks": {
+        "name": "Reti neurali",
+        "blurb": "Tante unità semplici, collegate tra loro, che imparano dagli esempi."
+      },
+      "encoding": {
+        "name": "Codifica",
+        "blurb": "Da un punto a un battito del cuore alle onde cerebrali: come descrivere un'immagine con pochi numeri, e ricostruirla da quei numeri."
+      },
+      "plasticity": {
+        "name": "Plasticità cerebrale",
+        "blurb": "Come il cervello cambia i propri collegamenti mentre impara."
+      }
+    },
+    "question": {
+      "number": "D{n}",
+      "check": "Verifica",
+      "show": "Mostra la risposta",
+      "again": "Riprova",
+      "right": "Giusto!",
+      "wrong": "Non proprio. Cambia la risposta e verifica di nuovo.",
+      "less": "Uno in meno",
+      "more": "Uno in più",
+      "howMany": "Quanti",
+      "orderHint": "Trascina per riordinare, oppure tocca una scheda e poi il posto dove deve andare.",
+      "up": "Sposta su",
+      "down": "Sposta giù",
+      "matchHint": "Trascina ogni immagine sui suoi numeri, oppure tocca un'immagine e poi la sua casella.",
+      "dropHere": "Trascina qui un'immagine",
+      "numbers": "{n, plural, one {# numero} other {# numeri}}",
+      "true": "Vero",
+      "false": "Falso",
+      "reset": "Ricomincia",
+      "sliderHint": "La tua figura è piena; quella tratteggiata è l’obiettivo.",
+      "send": "Invia",
+      "sent": "Inviata. Puoi cambiarla finché non viene mostrata la risposta.",
+      "wrongSent": "Non proprio: la risposta che hai inviato era diversa.",
+      "notSent": "Non hai inviato una risposta: eccola."
+    },
+    "gallery": {
+      "hint": "Nove figure di una famiglia. Indovina i numeri dietro: i codici si aprono quando hai risposto alle domande qui sotto.",
+      "show": "Mostra tutti i codici",
+      "hide": "Nascondi i codici",
+      "hidden": "?",
+      "locked": "Prima rispondi alle domande"
+    },
+    "playground": {
+      "title": "Decodifica tu",
+      "text": "I cursori sono i numeri. Muovili finché la tua curva (continua) non si posa su quella originale tratteggiata.",
+      "distance": "Distanza dall'originale: {d}",
+      "matched": "Ricostruita!",
+      "reset": "Ricomincia"
+    },
+    "ecg": {
+      "showParts": "Disegna ogni campana da sola"
+    },
+    "figure": {
+      "encoder": "encoder",
+      "decoder": "decoder",
+      "latent": "il codice",
+      "input": "EEG",
+      "output": "ricostruito",
+      "inputs": "ingressi",
+      "weights": "pesi",
+      "sum": "somma",
+      "fires": "si attiva?",
+      "age": "età (anni)",
+      "synapses": "numero di sinapsi",
+      "ease": "quanto facilmente cambiano i collegamenti",
+      "neuronAria": "Un neurone artificiale: due ingressi, i loro pesi, la somma con il bias e l’uscita",
+      "bioAria": "Un neurone biologico: dendriti, corpo cellulare, assone e sinapsi",
+      "dendrites": "dendriti",
+      "cellBody": "corpo cellulare",
+      "axon": "assone",
+      "synapse": "sinapsi"
+    },
+    "encoding": {
+      "steps": {
+        "intro": {
+          "title": "Codifica: un'immagine in pochi numeri",
+          "body": "<p>Questo è un battito del cuore, come lo disegna un elettrocardiogramma (ECG). Su uno schermo sono centinaia di punti. Eppure un medico lo descrive in poche parole, e un computer in pochi <b>numeri</b>.</p><p><b>Codificare</b> vuol dire scegliere una ricetta che trasforma qualcosa in una breve lista di numeri (il suo <b>codice</b>). <b>Decodificare</b> vuol dire usare la stessa ricetta al contrario, per ricostruire la cosa dal suo codice.</p><p>A ogni passo ci faremo le stesse tre domande: quanti numeri servono, quali sono i loro valori, e come si ricostruisce l'immagine a partire da quei numeri?</p>"
+        },
+        "line": {
+          "title": "Un punto su una retta",
+          "body": "<p>Partiamo dalla figura più semplice che ci sia: un punto su un righello. Guarda le nove figure qui sotto. Che cosa cambia dall’una all’altra? Quanti numeri ti servirebbero per distinguerle?</p>",
+          "reveal": "<p>Cambia solo la posizione del punto. Quindi basta <b>un numero</b>: quanto è lontano il punto lungo il righello. Lo chiamiamo <b>x</b>.</p>"
+        },
+        "plane": {
+          "title": "Un punto su un piano",
+          "body": "<p>Ora il punto può muoversi a destra e a sinistra <i>e</i> in su e in giù. Basta ancora un numero? Due punti possono essere alla stessa distanza dal bordo sinistro ed essere comunque in posti diversi.</p>",
+          "reveal": "<p>Servono <b>due numeri</b>, <b>x</b> e <b>y</b>, le coordinate che conosci dalla matematica. Ogni numero risponde a una domanda: quanto a destra, quanto in su.</p>"
+        },
+        "bellPosition": {
+          "title": "Una campana che si sposta",
+          "body": "<p>Ora le figure sono curve: una <b>campana gaussiana</b>, la forma di tante cose in natura (le altezze in una classe, gli errori di una misura).</p><p>Una curva si disegna con centinaia di punti. Vuol dire che servono centinaia di numeri? Guarda che cosa cambia da una figura all’altra.</p>",
+          "reveal": "<p>Le campane sono tutte uguali, solo spostate. Quindi basta <b>un numero</b>: dov’è la cima della campana. Lo chiamiamo <b>μ</b> (mu, il centro).</p><p>È la grande idea della codifica: quanti numeri servono dipende da <i>che cosa cambia</i>, non da quanto è complicata la figura.</p>"
+        },
+        "bellHeight": {
+          "title": "Una campana che si sposta e cresce",
+          "body": "<p>Di nuovo campane. Guarda bene le nove figure: che cosa cambia questa volta?</p>",
+          "reveal": "<p>Le campane si spostano <i>e</i> cambiano altezza, quindi serve un secondo numero: l’altezza della cima, <b>A</b> (per ampiezza). Il codice ora è <b>μ</b> e <b>A</b>: tanti numeri quanti un punto su un piano. Infatti ogni campana qui <i>è</i> un punto su un piano con assi μ e A.</p>"
+        },
+        "bellWidth": {
+          "title": "Una campana che si sposta, cresce e si allarga",
+          "body": "<p>Ancora campane, e cambia qualcosa di nuovo. Una punta sottile e una collina larga possono avere lo stesso centro e la stessa cima: che cosa le distingue?</p>",
+          "reveal": "<p>La larghezza, che si chiama <b>σ</b> (sigma, la dispersione). Tre numeri, <b>μ</b>, <b>A</b> e <b>σ</b>, descrivono qualsiasi campana. La ricetta per decodificarli è la formula <b>A · e^(−(x − μ)² / 2σ²)</b>: per ogni x la calcoli e disegni il punto.</p>"
+        },
+        "waves": {
+          "title": "Onde",
+          "body": "<p>Una nuova famiglia: le <b>onde sinusoidali</b>, la forma del suono, della luce e di molti ritmi del cervello. Che cosa cambia da un’onda all’altra?</p>",
+          "reveal": "<p>Cambiano due numeri. La <b>frequenza f</b>: quante onde complete stanno in un secondo. L’<b>ampiezza A</b>: quanto sale l’onda. Un coseno è la stessa onda spostata un poco: per permettere quello spostamento aggiungeremmo un terzo numero, la fase.</p>"
+        },
+        "train": {
+          "title": "Campane in fila",
+          "body": "<p>Ora mettiamo le campane una dopo l’altra, a distanza regolare, come i colpi di un tamburo. Ci serve la posizione di ogni singola campana?</p>",
+          "reveal": "<p>No. Bastano tre numeri: l’<b>altezza A</b> delle campane, la loro <b>larghezza σ</b> e la <b>frequenza f</b>, quante campane al secondo. La frequenza le mette a posto tutte insieme. Una buona ricetta fa dire molto a pochi numeri.</p>"
+        },
+        "twoBells": {
+          "title": "Una campana su, una campana giù",
+          "body": "<p>In ogni battito ora aggiungiamo una seconda campana che <b>punta in giù</b>. Il battito prende la forma di una piccola onda che sale e poi scende. Di che cosa ha bisogno ora il codice?</p>",
+          "reveal": "<p>Il codice sale a sei numeri: la frequenza <b>f</b>, altezza e larghezza della prima campana (<b>A₁</b>, <b>σ₁</b>), altezza e larghezza della seconda (<b>A₂</b>, negativa, e <b>σ₂</b>), e quanto dopo la prima arriva la seconda (<b>d</b>).</p>"
+        },
+        "ecg": {
+          "title": "Un battito del cuore",
+          "body": "<p>Abbiamo tutto quello che serve per un segnale vero. Un battito sull'ECG è fatto di onde con un nome: <b>P</b> (le camere superiori del cuore si contraggono), <b>Q, R, S</b> (si contraggono le camere grandi: il picco appuntito), <b>T</b> (si rilassano), e una piccola <b>U</b>.</p><p>Ognuna di queste onde è descritta bene da una campana, alcune in su e alcune in giù, alcune sottili e alcune larghe. Con <b>otto campane</b> il battito è quasi perfetto. Accendile e spegnile qui sotto per vedere quale gobba disegna ciascuna.</p>"
+        },
+        "eeg": {
+          "title": "E ora... il cervello",
+          "body": "<p>Questo è un EEG: l'attività elettrica del cervello, come la registra la fascia dalla pelle della testa.</p><p>Guardalo per un momento. Dove sono le campane? Dove sono le onde? Non c'è un battito che si ripete, non c'è una forma a cui dare un nome. Non conosciamo la ricetta. Allora come possiamo scegliere quanti numeri usare, e come ricostruire il segnale da quei numeri?</p>"
+        },
+        "vae": {
+          "title": "Lasciamo che una macchina trovi la ricetta",
+          "body": "<p>Quando non conosciamo la ricetta, possiamo lasciare che un computer la <b>impari da tanti esempi</b>. Un <b>autoencoder variazionale</b> (VAE) è fatto di due reti neurali: un <b>encoder</b>, che trasforma un pezzo di EEG in pochi numeri, e un <b>decoder</b>, che ricostruisce l'EEG da quei numeri.</p><p>È esattamente quello che abbiamo fatto finora: scegliamo <b>quanti numeri</b>, l'encoder trova <b>i loro valori</b>, il decoder <b>ricostruisce</b>. La differenza è che nessuno scrive la ricetta: le due reti vengono allenate insieme, su migliaia di esempi, finché quello che esce non somiglia a quello che è entrato.</p><p>E tornano le campane: in un VAE ogni numero non è un valore solo ma una piccola <b>campana</b> (un centro μ e una dispersione σ), così codici vicini ricostruiscono segnali simili. Brain Trails usa una rete di questa famiglia per trasformare ogni pochi secondi del tuo EEG in una lista di numeri: il tuo sentiero è disegnato da quelli.</p>"
+        },
+        "recap": {
+          "title": "Riepilogo",
+          "body": "<p>È il momento di mettere tutto insieme: abbina ogni figura alla lunghezza del suo codice, poi decidi quali affermazioni sono vere.</p>",
+          "reveal": "<p>Codificare richiede sempre le stesse tre decisioni: una <b>ricetta</b> (un punto, una campana, un'onda, una fila di campane, una rete), <b>quanti numeri</b> le servono, e come <b>decodificarli</b>. Un buon codice è corto e ricostruisce comunque bene l'immagine.</p>"
+        }
+      },
+      "q": {
+        "introWhy": {
+          "prompt": "Qual è il modo più utile per mandare questo battito al computer di un medico?",
+          "options": {
+            "pixels": "Il colore di ogni punto dello schermo",
+            "numbers": "Pochi numeri che ne descrivono la forma",
+            "words": "Una frase come \"sembra normale\"",
+            "photo": "Una foto dello schermo, scattata con il telefono"
+          },
+          "explain": "<p>Pochi numeri. I punti occupano molto spazio e non dicono niente della forma; con una frase non si può ridisegnare il battito. Un codice corto che si può <b>decodificare</b> di nuovo nell'immagine prende il meglio di entrambi.</p>"
+        },
+        "lineCount": {
+          "prompt": "Quanti numeri ti servono per descrivere una di queste immagini?",
+          "explain": "<p><b>Uno</b>: la posizione x del punto lungo la retta. Tutto il resto (la retta, le tacche) è uguale in ogni immagine, quindi fa parte della ricetta, non del codice.</p>"
+        },
+        "lineValue": {
+          "prompt": "Codifica questa figura: muovi il cursore finché il tuo punto non è sull’obiettivo. Quanto vale x?",
+          "explain": "<p>Il punto è a metà tra 6 e 7, quindi <b>x = 6.5</b>. Leggere il valore di un'immagine è il passo di <b>codifica</b>.</p>"
+        },
+        "lineDecode": {
+          "prompt": "Qualcuno ti manda il codice x = 3. Metti in ordine i passi per ricostruire l'immagine.",
+          "steps": {
+            "axis": "Disegna la retta con le tacche da 0 a 10",
+            "measure": "Conta 3 tacche a partire da 0",
+            "dot": "Disegna lì il punto"
+          },
+          "explain": "<p>Prima le parti che non cambiano mai (la ricetta), poi il codice ti dice dove va l'unica cosa che cambia. Questo è <b>decodificare</b>.</p>"
+        },
+        "planeCount": {
+          "prompt": "Quanti numeri ti servono per descrivere una di queste figure?",
+          "explain": "<p><b>Due</b>: x (quanto a destra) e y (quanto in alto). Con uno solo non potresti distinguere due punti uno sopra l'altro.</p>"
+        },
+        "planeMatch": {
+          "prompt": "Codifica: trascina ogni immagine sul suo codice.",
+          "explain": "<p>Leggi x sull'asse orizzontale e y su quello verticale. Ogni coppia di numeri è un posto, e uno solo, del piano.</p>"
+        },
+        "bellPositionCount": {
+          "prompt": "Queste curve sono fatte di centinaia di punti. Quanti numeri ti servono per descriverne una?",
+          "explain": "<p>Solo <b>uno</b>, il centro μ: le campane sono tutte identiche tranne che per dove si trovano. Conta quante cose <i>cambiano</i>.</p>"
+        },
+        "bellPositionSort": {
+          "prompt": "Ordina queste campane dalla μ più piccola alla più grande.",
+          "explain": "<p>μ è dove sta la cima: più è a destra, più μ è grande. Ordinare immagini secondo un numero è un modo di leggerne il codice.</p>"
+        },
+        "bellHeightCount": {
+          "prompt": "Quanti numeri ti servono per una di queste campane?",
+          "explain": "<p><b>Due</b>: il centro μ e l'altezza A.</p>"
+        },
+        "bellHeightMatch": {
+          "prompt": "Trascina ogni campana sul suo codice.",
+          "explain": "<p>μ è dove sta la cima, A quanto è alta. Due campane nello stesso posto ma con altezze diverse hanno codici diversi.</p>"
+        },
+        "bellWidthCount": {
+          "prompt": "E ora, quanti numeri per una di queste campane?",
+          "explain": "<p><b>Tre</b>: μ, A e σ. Ogni campana possibile è un punto in uno spazio con tre assi.</p>"
+        },
+        "bellWidthSort": {
+          "prompt": "Stesso centro, stessa altezza. Ordinale dalla σ più piccola alla più grande.",
+          "explain": "<p>σ è la dispersione: la campana più sottile ha la σ più piccola, la collina più larga la più grande.</p>"
+        },
+        "bellDecode": {
+          "prompt": "Ricevi il codice μ = 6, A = 1.5, σ = 0.7. Metti in ordine i passi per ricostruire la campana.",
+          "steps": {
+            "read": "Leggi i tre numeri del codice",
+            "centre": "Metti la cima della campana a x = 6",
+            "height": "Fai la cima alta 1.5",
+            "spread": "Apri i fianchi in modo che la campana sia larga 0.7 da ogni lato del centro"
+          },
+          "explain": "<p>Decodificare una campana: centro, altezza, dispersione. Un computer fa tutte e tre le cose insieme con la formula A · e^(−(x − μ)² / 2σ²).</p>"
+        },
+        "wavesCount": {
+          "prompt": "Quanti numeri servono per ognuna di queste onde?",
+          "explain": "<p><b>Due</b>: la frequenza f e l'ampiezza A. Tutte queste onde partono da zero salendo, quindi la fase non ci serve.</p>"
+        },
+        "wavesValue": {
+          "prompt": "Codifica quest’onda: muovi i cursori finché la tua onda non si sovrappone a quella tratteggiata. Quanto valgono f e A? (L’asse è in secondi.)",
+          "explain": "<p>In un secondo ci sono due onde intere, quindi <b>f = 2</b>; la cima arriva a 1.5, quindi <b>A = 1.5</b>.</p>"
+        },
+        "wavesMatch": {
+          "prompt": "Trascina ogni onda sul suo codice.",
+          "explain": "<p>Conta le onde in un secondo per f, guarda quanto salgono per A.</p>"
+        },
+        "trainCount": {
+          "prompt": "Quanti numeri ti servono per una di queste file di campane?",
+          "explain": "<p><b>Tre</b>: altezza A, larghezza σ e frequenza f. La frequenza mette a posto tutte le campane insieme, per quante siano.</p>"
+        },
+        "trainRate": {
+          "prompt": "Quale fila ha la frequenza f più alta?",
+          "explain": "<p>Quella con tre campane al secondo: f = 3. L'altezza e la larghezza non cambiano la frequenza.</p>"
+        },
+        "twoBellsCount": {
+          "prompt": "Quanti numeri ti servono per uno di questi battiti?",
+          "explain": "<p><b>Sei</b>: la frequenza f, altezza e larghezza della prima campana (A₁, σ₁), altezza e larghezza della seconda (A₂, σ₂), e il ritardo d tra le due.</p>"
+        },
+        "twoBellsSign": {
+          "prompt": "Come fa il codice a dire che la seconda campana punta in giù?",
+          "options": {
+            "negative": "La sua altezza A₂ è un numero negativo",
+            "flip": "Aggiungiamo un numero che dice \"capovolta\"",
+            "subtract": "Il decoder disegna sempre la seconda campana verso il basso",
+            "second": "Una seconda frequenza per la campana che punta in giù"
+          },
+          "explain": "<p>Basta un’<b>altezza negativa</b>, senza numeri in più: la stessa formula, con A sotto zero, disegna una campana che punta in giù. (Funzionerebbe anche un decoder che disegna sempre in giù la seconda campana, ma così non si potrebbe mai codificare una seconda campana in su.)</p>"
+        },
+        "ecgCount": {
+          "prompt": "Un battito è fatto di otto campane. Ogni campana ha bisogno di posizione, larghezza e altezza, e il cuore batte a una certa frequenza. Quanti numeri in tutto?",
+          "explain": "<p>8 campane × 3 numeri = 24, più la frequenza del cuore: <b>25 numeri</b>. Pochi secondi di ECG sono migliaia di punti; con questa ricetta, 25 numeri li ricostruiscono.</p>"
+        },
+        "ecgTallest": {
+          "prompt": "Quale campana ha l'altezza A più grande?",
+          "options": {
+            "P1": "P1",
+            "R": "R",
+            "T1": "T1",
+            "S": "S"
+          },
+          "explain": "<p><b>R</b>: il picco appuntito, quando le camere grandi del cuore si contraggono. Anche S è grande, ma negativa: punta in giù.</p>"
+        },
+        "ecgDecode": {
+          "prompt": "Metti in ordine i passi per ricostruire un ECG dai suoi 25 numeri.",
+          "steps": {
+            "read": "Leggi la frequenza del cuore e i tre numeri di ogni campana",
+            "bells": "Disegna ognuna delle otto campane nella sua posizione, con la sua altezza e larghezza",
+            "sum": "Somma le otto campane, punto per punto: questo è un battito",
+            "repeat": "Ripeti il battito tante volte al secondo quante dice la frequenza del cuore"
+          },
+          "explain": "<p>È lo stesso decoder di una campana, usato otto volte e poi sommato, e lo stesso trucco della fila di campane per ripeterlo.</p>"
+        },
+        "eegHow": {
+          "prompt": "Come potremmo codificare questo EEG?",
+          "options": {
+            "bells": "Con qualche campana, come abbiamo fatto per l’ECG",
+            "waves": "Con qualche onda sinusoidale, una per ogni ritmo del cervello",
+            "learn": "Lasciando che un computer impari la ricetta da tanti EEG",
+            "pixels": "Non si può: dobbiamo tenere ogni singolo punto"
+          },
+          "explain": "<p>Campane e onde possono aiutare (il cervello ha i suoi ritmi, per esempio le onde alfa), ma nessuna ricetta fissa di poche forme ricostruisce bene un EEG. Tenere ogni punto funziona ma non è un codice. La risposta moderna è <b>imparare la ricetta</b> da tanti esempi: è il prossimo passo.</p>"
+        },
+        "vaeCount": {
+          "prompt": "In questo autoencoder, quanti numeri tiene l'encoder di un pezzo di EEG?",
+          "explain": "<p><b>Otto</b>, la colonna in mezzo. Quanti, lo scegliamo noi, come per le campane: meno numeri fanno un codice più corto ma una ricostruzione più grossolana.</p>"
+        },
+        "vaeSteps": {
+          "prompt": "Metti in ordine i passi di un autoencoder variazionale.",
+          "steps": {
+            "encode": "L'encoder legge qualche secondo di EEG",
+            "bells": "Per ognuno degli otto numeri dà un centro μ e una dispersione σ: una piccola campana",
+            "draw": "Da ogni campana si sceglie un valore",
+            "decode": "Il decoder ricostruisce l'EEG da quegli otto valori",
+            "compare": "L'EEG ricostruito si confronta con l'originale, e le due reti si correggono per fare meglio la volta dopo"
+          },
+          "explain": "<p>Codifica, scegli, decodifica, confronta. Ripetuto su migliaia di esempi, il confronto è ciò che insegna alle due reti la ricetta che nessuno sapeva scrivere.</p>"
+        },
+        "recapMatch": {
+          "prompt": "Trascina ogni immagine su quanti numeri servono al suo codice.",
+          "explain": "<p>Un punto su una retta 1, su un piano 2, una campana 3, un battito con due campane 6, un battito del cuore 25. Le immagini si fanno più ricche, i codici restano corti.</p>"
+        },
+        "planeValue": {
+          "prompt": "Codifica questo punto: muovi i due cursori finché il tuo punto non è sull’obiettivo. Quanto valgono x e y?",
+          "explain": "<p>L’obiettivo è 3 a destra e 7 in su: <b>x = 3, y = 7</b>. Due numeri, uno per direzione, e ogni cursore muove il punto lungo una sola delle due.</p>"
+        },
+        "bellPositionValue": {
+          "prompt": "Muovi il cursore finché la tua campana non si sovrappone a quella tratteggiata. Dov’è il suo centro μ?",
+          "explain": "<p><b>μ = 6.5</b>. Altezza e larghezza sono le stesse per tutte le campane di questa famiglia, quindi basta un cursore per raggiungerle tutte.</p>"
+        },
+        "bellHeightValue": {
+          "prompt": "Ora due cursori: trova il centro μ e l’altezza A della campana tratteggiata.",
+          "explain": "<p><b>μ = 3.5, A = 1.5</b>. Nota che ogni cursore fa un solo lavoro: μ sposta la campana di lato, A la allunga in su.</p>"
+        },
+        "bellWidthValue": {
+          "prompt": "Tre cursori: trova μ, A e la larghezza σ della campana tratteggiata.",
+          "explain": "<p><b>μ = 6, A = 1, σ = 0.5</b>. Una σ piccola fa una campana stretta e appuntita; una grande una campana larga e dolce.</p>"
+        },
+        "trainValue": {
+          "prompt": "Ricostruisci questa fila di campane: trova la frequenza f, l’altezza A e la larghezza σ.",
+          "explain": "<p><b>f = 2, A = 1.5, σ = 0.1</b>: due campane al secondo, alte 1.5 e strette. Tre numeri ricostruiscono tutta la fila, per quanto sia lunga.</p>"
+        },
+        "twoBellsValue": {
+          "prompt": "Sei cursori per sei numeri: ricostruisci questo battito, una campana in su e una in giù.",
+          "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Sei cursori, sei numeri: uno per ogni cosa che può cambiare nel battito.</p>"
+        },
+        "enTfChanges": {
+          "prompt": "Due famiglie di immagini disegnate con lo stesso numero di punti hanno sempre bisogno di codici della stessa lunghezza.",
+          "explain": "<p><b>Falso.</b> La lunghezza del codice dipende da che cosa cambia da un’immagine all’altra: un punto su una retta voleva un numero, una campana con tre caratteristiche libere ne voleva tre, con altrettanti punti.</p>"
+        },
+        "enTfDots": {
+          "prompt": "Se di una campana cambia solo la posizione, disegnarla con più punti rende il suo codice più lungo.",
+          "explain": "<p><b>Falso.</b> Il codice resta un numero, la posizione. Più punti rendono il disegno più liscio, non il codice più lungo.</p>"
+        },
+        "enTfDecode": {
+          "prompt": "Con la stessa ricetta, lo stesso codice ricostruisce sempre la stessa immagine.",
+          "explain": "<p><b>Vero.</b> Decodificare segue la ricetta passo per passo: stessi numeri in ingresso, stessa immagine in uscita. È questo che rende utile un codice.</p>"
+        },
+        "enTfEeg": {
+          "prompt": "In un autoencoder variazionale, lo stesso pezzo di EEG può ricevere codici leggermente diversi ogni volta.",
+          "explain": "<p><b>Vero.</b> L’encoder dà una piccola campana per ogni numero, e ogni volta se ne estrae un valore. Codici vicini ricostruiscono segnali simili, quindi non è un danno: aiuta.</p>"
+        }
+      }
+    },
+    "labs": {
+      "gates": {
+        "title": "Che cosa ha imparato?",
+        "text": "I numeri di questo neurone sono già fissati, dall’allenamento: w₁ = 1, w₂ = 1, b = -1.5. Qui non c’è niente da muovere: il tuo compito è scoprire che cosa fa. Tocca gli ingressi (o una riga della tabella) per provare ogni coppia, e la sua risposta compare. Poi confronta le sue quattro risposte con tre regole famose: AND, OR e XOR.",
+        "learnTitle": "Insegnagli OR",
+        "learnText": "Lo stesso neurone del primo passo, che calcola ancora AND. La sua retta è disegnata sui quattro angoli del quadrato, uno per ogni coppia di ingressi. Ora l’insegnante sei tu.",
+        "sum": "somma = {s}",
+        "output": "uscita",
+        "and": "AND (entrambi accesi)",
+        "or": "OR (almeno uno acceso)",
+        "xor": "XOR (esattamente uno acceso)",
+        "matches": "Questo neurone calcola {gate}.",
+        "none": "Questo neurone non corrisponde ancora a nessuna delle tre regole.",
+        "task": "Muovi i suoi numeri finché non calcola OR: solo l’angolo (0, 0) resta dal lato spento.",
+        "done": "Il tuo neurone calcola OR!",
+        "backToAnd": "Torna ad AND",
+        "neuron": "neurone",
+        "tryAll": "Prova tutte e quattro le coppie di ingressi: finora {n} su 4."
+      },
+      "classify": {
+        "title": "Due gruppi, una retta",
+        "text": "Ogni punto è un esempio descritto da due numeri, le sue coordinate; il colore è il suo gruppo. Dove disegneresti una retta per tenere separati i due colori? Prova a indovinare, poi mostra la retta.",
+        "which": "Punti",
+        "and": "I quattro ingressi di AND",
+        "groups": "Due gruppi di esempi",
+        "show": "Mostra la retta",
+        "hide": "Nascondi la retta",
+        "split": "Ogni punto è dal suo lato della retta."
+      },
+      "line": {
+        "xorTitle": "Ora prova con XOR",
+        "text": "Il neurone si attiva sul lato colorato della sua retta. Muovi i pesi e il bias finché ogni punto blu non è sul lato colorato e nessun punto arancione lo è.",
+        "fire": "deve attivarsi (1)",
+        "quiet": "deve restare spento (0)",
+        "score": "{right} punti su {total} dal lato giusto"
+      },
+      "xor": {
+        "title": "Due neuroni, poi un altro",
+        "text": "Scegli un ingresso. I due neuroni nascosti disegnano ognuno la sua retta; il neurone d’uscita si attiva solo quando si attivano entrambi.",
+        "lines": "La retta del primo neurone nascosto (a sinistra) e quella del secondo (a destra): i punti di XOR finiscono tra le due.",
+        "result": "nascosti: {h1} e {h2}, quindi l’uscita è {out}"
+      },
+      "learn": {
+        "title": "Lascia imparare il neurone",
+        "text": "Il neurone parte con pesi sbagliati. Ogni passo di apprendimento guarda tutti i punti, misura l’errore e sposta un po’ ogni peso nella direzione che rende l’errore più piccolo.",
+        "error": "errore = {e}",
+        "one": "Impara un passo",
+        "twenty": "Impara 20 passi",
+        "reset": "Ricomincia",
+        "steps": "{n, plural, one {# passo} other {# passi}} finora"
+      },
+      "digits": {
+        "title": "Insegna a una rete a leggere le cifre",
+        "text": "Ogni immagine è di 5 × 7 = 35 pixel. Una rete con 35 ingressi, 12 neuroni nascosti e 10 uscite (una per cifra) impara da 200 esempi etichettati. Allenala, poi disegna la tua cifra.",
+        "examples": "Alcuni degli esempi da cui impara: ognuno un po’ diverso.",
+        "train": "Allena un giro",
+        "trainTen": "Allena dieci giri",
+        "progress": "{n, plural, one {# giro} other {# giri}} di allenamento · {acc}% giuste su cifre mai viste",
+        "draw": "Disegna una cifra (tocca i quadratini)",
+        "clear": "Cancella",
+        "pixel": "Pixel {n}",
+        "guess": "Cosa pensa la rete che sia",
+        "verdict": "Legge un {d} (sicura al {p}%)",
+        "hidden": "I suoi {n} neuroni nascosti per il tuo disegno"
+      },
+      "braid": {
+        "title": "Il sentiero intrecciato",
+        "text": "Sei un segnale che viaggia in un groviglio di collegamenti, dalla partenza (a sinistra) all’arrivo (verde). Scegli il prossimo collegamento cliccando su uno di quelli colorati. Attenzione: alcune strade portano a un punto morto, dove il segnale si spegne. Gioca un giro dopo l’altro e guarda cosa succede ai collegamenti e al tuo percorso.",
+        "next": "Giro successivo",
+        "habit": "Lascia scegliere l’abitudine",
+        "status": "Giro {round} · {n, plural, one {# passo} other {# passi}}",
+        "arrived": "Arrivato in {n, plural, one {# passo} other {# passi}}!",
+        "history": "Giri finora: {rounds}",
+        "dead": "Fine partita: il segnale si è spento in un punto morto dopo {n, plural, one {# passo} other {# passi}}.",
+        "deadShort": "punto morto",
+        "steps": "{n, plural, one {# passo} other {# passi}}"
+      },
+      "ball": {
+        "version": "Versione",
+        "aria": "Una pallina che rotola su un paesaggio di valli",
+        "target": "obiettivo",
+        "valley": "valle {n}: {p}%",
+        "pause": "Pausa",
+        "play": "Avvia",
+        "reset": "Lasciala di nuovo",
+        "hint": "Clicca sul paesaggio per lasciare la pallina in un altro punto.",
+        "rocking": {
+          "short": "Poco attrito",
+          "title": "Una pallina con poco attrito",
+          "text": "La pallina tiene la sua velocità a lungo: rotola avanti e indietro tra le valli poco profonde prima di fermarsi."
+        },
+        "stuck": {
+          "short": "Molto attrito",
+          "title": "Una pallina con molto attrito",
+          "text": "La pallina perde velocità in fretta: si ferma nella prima valle che incontra e lì resta."
+        },
+        "restless": {
+          "short": "Una pallina irrequieta",
+          "title": "Una pallina irrequieta",
+          "text": "Ora la pallina viene scossa a caso di continuo, come l’attività irrequieta del cervello. Guardala per un po’."
+        },
+        "soft": {
+          "short": "Un paesaggio morbido",
+          "title": "Un paesaggio morbido",
+          "text": "Ora il terreno è morbido: dovunque passi, la pallina scava. La linea tratteggiata è il terreno di partenza. Guarda la valle preferita dalla pallina diventare più profonda, e la pallina restarci sempre più intrappolata."
+        },
+        "wind": {
+          "short": "Neurofeedback: un vento leggero",
+          "title": "Neurofeedback: un vento leggero",
+          "text": "Lo stesso paesaggio morbido e irrequieto, ma ora un vento leggero soffia verso la valle obiettivo. Guarda dove passa il tempo la pallina, e quale valle viene scavata."
+        }
+      },
+      "city": {
+        "title": "Una città di notte",
+        "text": "Vista dall’alto, una città di notte è un disegno di luci che cambia di continuo: interi quartieri si accendono insieme, poi si spengono, mentre altri si accendono. L’attività del cervello somiglia molto a questo.",
+        "aria": "Le luci di una città di notte, che cambiano a disegni",
+        "pause": "Pausa",
+        "play": "Avvia"
+      }
+    },
+    "neuralNetworks": {
+      "steps": {
+        "neuron": {
+          "title": "Un neurone, una decisione",
+          "body": "<p>Un <b>neurone artificiale</b> è una macchina molto semplice. Riceve alcuni numeri (i suoi <b>ingressi</b>), moltiplica ognuno per il proprio <b>peso</b>, li somma insieme a un <b>bias</b>, e poi decide: se la somma è sopra lo zero si <b>attiva</b> (1), altrimenti resta spento (0).</p><p>I pesi dicono quanto conta ogni ingresso; il bias dice quanto facilmente il neurone si attiva. Allora la domanda è: con questi numeri, <b>che cosa ha imparato</b>? Prova ogni coppia di ingressi e confronta le sue risposte con le tabelle.</p>"
+        },
+        "biology": {
+          "title": "Il neurone nella tua testa",
+          "body": "<p>L’idea viene dal cervello. Qui sotto c’è il disegno di un neurone biologico: i <b>dendriti</b>, il <b>corpo cellulare</b>, un <b>assone</b> che finisce nelle <b>sinapsi</b>, dove tocca i neuroni successivi. Ogni sinapsi può essere forte o debole.</p><p>Il neurone artificiale che hai appena conosciuto ne è una caricatura. Quale parte fa quale lavoro?</p>",
+          "reveal": "<p>I dendriti raccolgono i segnali degli altri neuroni: sono gli <b>ingressi</b>. La forza di ogni sinapsi è un <b>peso</b>. Il corpo cellulare somma ciò che arriva (la <b>somma</b>), e quando il totale supera una soglia il neurone manda un <b>impulso</b> lungo l’assone: l’uscita. Molto più semplice, ma con le stesse parti.</p>"
+        },
+        "line": {
+          "title": "Classificare: due gruppi, una retta",
+          "body": "<p>Tanti problemi sono di <b>classificazione</b>: dato un esempio, dire a quale gruppo appartiene. Questa email è spam? È un gatto o un cane? Qui ogni esempio è un punto con due numeri, le sue coordinate, e il colore è la risposta giusta (l’<b>etichetta</b>).</p><p>Quando i gruppi sono ben separati, basta una <b>retta</b> per dividerli: tutto ciò che sta da una parte è blu, tutto ciò che sta dall’altra è arancione. Guarda di nuovo il neurone AND: i suoi quattro ingressi sono gli angoli di un quadrato, e si attiva solo in (1, 1). Anche questa è una retta, che taglia via un angolo.</p>"
+        },
+        "teach": {
+          "title": "Un neurone è una retta che si può muovere",
+          "body": "<p>Ecco perché. Dai al neurone come ingressi le due coordinate di un punto. Si trova esattamente sul confine tra attivarsi e non attivarsi dove w₁·x + w₂·y + b = 0: è l’equazione di una <b>retta</b>. Da una parte si attiva, dall’altra no.</p><p>Quindi scegliere i tre numeri del neurone vuol dire scegliere una retta, e cambiarli la sposta. <b>Imparare</b> è questo: cambiare i numeri finché la retta non divide gli esempi come vogliamo.</p>"
+        },
+        "xor": {
+          "title": "Il problema che una retta non risolve",
+          "body": "<p>XOR (o esclusivo) si attiva quando è acceso <i>esattamente un</i> ingresso: (0, 1) e (1, 0) sì, (0, 0) e (1, 1) no. Disegnati come punti, i due gruppi stanno agli angoli opposti del quadrato.</p><p>Prova quanto vuoi: nessuna retta mette entrambi gli angoli blu da una parte ed entrambi quelli arancioni dall’altra. Un solo neurone non può calcolare XOR. Nel 1969 questo semplice fatto rallentò per anni la ricerca sulle reti neurali.</p>"
+        },
+        "hidden": {
+          "title": "Aggiungi uno strato nascosto",
+          "body": "<p>La soluzione è usare più neuroni, a <b>strati</b>. Due neuroni guardano gli ingressi, e ognuno disegna la sua retta. Si chiamano <b>nascosti</b> perché nessuno vede direttamente la loro uscita. Un terzo neurone guarda i due nascosti e dà la risposta.</p><p>Prova i quattro ingressi qui sotto e guarda quali neuroni nascosti si attivano.</p>",
+          "reveal": "<p>Il primo neurone nascosto calcola OR, il secondo \"non entrambi\" (NAND), e l’uscita si attiva solo quando si attivano tutti e due: insieme calcolano <b>XOR</b>. Ogni strato trasforma il problema in uno più facile per lo strato dopo: è questo che rende così potenti le reti con tanti strati (le reti <b>profonde</b>).</p>"
+        },
+        "learning": {
+          "title": "Imparare dagli esempi",
+          "body": "<p>Finora abbiamo scelto i pesi a mano. Una rete vera ha migliaia o milioni di pesi: nessuno può sceglierli. Le diamo invece un <b>dataset</b>: tanti esempi con la risposta giusta (l’<b>etichetta</b>), e la lasciamo imparare dai suoi errori.</p><p>Guarda il neurone qui sotto trovare da solo la sua retta, un piccolo passo alla volta. Dopo un errore, da che parte deve spostarsi ogni peso?</p>",
+          "reveal": "<p>Finora abbiamo scelto i pesi a mano. Una rete vera ha migliaia o milioni di pesi: nessuno può sceglierli. Le diamo invece un <b>dataset</b>: tanti esempi con la risposta giusta (l’<b>etichetta</b>), e la lasciamo imparare.</p><p>L’apprendimento funziona così. La rete risponde a ogni esempio, e misuriamo quanto ha sbagliato (l’<b>errore</b>). Poi l’errore viene mandato <b>all’indietro</b> attraverso la rete, e ogni peso viene spostato un po’ nella direzione che rende l’errore più piccolo. Un peso il cui ingresso era grande riceve una spinta più grande; un peso il cui ingresso era zero non ha contribuito, quindi non si muove. Questa è la <b>retropropagazione</b> (backpropagation). Ripetuta tante volte, i pesi trovano la loro strada.</p>"
+        },
+        "digits": {
+          "title": "Leggere cifre scritte a mano",
+          "body": "<p>Un classico banco di prova per le reti neurali: riconoscere le cifre scritte a mano. Qui ogni cifra è una figurina di 5 × 7, quindi entrano 35 pixel, uno per neurone d’ingresso. Escono dieci neuroni, uno per cifra: quello che si attiva di più è la risposta della rete. In mezzo c’è uno strato nascosto di 12 neuroni.</p><p>Allenala qui sotto, poi disegna le tue cifre.</p>",
+          "reveal": "<p>Dopo l’allenamento, i 12 numeri dello strato nascosto sono la descrizione breve della figura inventata dalla rete: ha trovato da sola quali caratteristiche contano per distinguere un 3 da un 8. Tienilo a mente: trasformare una figura in pochi numeri significativi è proprio l’argomento del prossimo modulo.</p>"
+        },
+        "recap": {
+          "title": "Riepilogo",
+          "body": "<p>Cinque affermazioni su quello che abbiamo visto. Vero o falso?</p>",
+          "reveal": "<p>Un neurone pesa i suoi ingressi e decide. Un neurone disegna una retta; strati di neuroni disegnano qualsiasi forma. Nessuno sceglie i pesi a mano: la rete li impara da esempi etichettati, mandando l’errore all’indietro attraverso gli strati (retropropagazione). E strada facendo, gli strati nascosti imparano una descrizione compatta di ciò che vedono.</p>"
+        }
+      },
+      "q": {
+        "nnNeuronCount": {
+          "prompt": "Quanti numeri impara questo neurone?",
+          "explain": "<p><b>Tre</b>: i pesi w₁ e w₂ e il bias b. Gli ingressi non si imparano: arrivano da fuori.</p>"
+        },
+        "nnWhichGate": {
+          "prompt": "Guarda le quattro risposte del neurone nella tabella. Quale regola ha imparato?",
+          "options": {
+            "and": "AND: si attiva solo quando entrambi gli ingressi sono accesi",
+            "or": "OR: si attiva quando almeno un ingresso è acceso",
+            "neither": "Nessuna: le sue risposte non seguono nessuna delle tre regole",
+            "xor": "XOR: si attiva quando esattamente un ingresso è acceso"
+          },
+          "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>.</p>"
+        },
+        "nnBiology": {
+          "prompt": "Abbina ogni parte di un neurone biologico alla sua versione artificiale.",
+          "items": {
+            "dendrites": "Dendriti",
+            "synapse": "Forza di una sinapsi",
+            "body": "Corpo cellulare",
+            "spike": "Impulso"
+          },
+          "slots": {
+            "inputs": "Ingressi",
+            "weights": "Pesi",
+            "sum": "Somma pesata",
+            "fires": "Uscita (si attiva o no)"
+          },
+          "explain": "<p>I dendriti portano gli <b>ingressi</b>, la forza di ogni sinapsi è un <b>peso</b>, il corpo cellulare calcola la <b>somma</b>, e l’impulso è l’<b>uscita</b>. Imparare, anche nel cervello, vuol dire soprattutto cambiare la forza delle sinapsi.</p>"
+        },
+        "nnBias": {
+          "prompt": "Cosa fa alla retta cambiare il bias b?",
+          "options": {
+            "slides": "La fa scorrere senza ruotarla",
+            "turns": "La fa ruotare attorno a un punto",
+            "colours": "Cambia quali punti sono blu",
+            "nothing": "Niente: solo i pesi muovono la retta"
+          },
+          "explain": "<p>Il bias fa <b>scorrere</b> la retta parallela a sé stessa; i pesi ne fissano la direzione. I colori dei punti sono le etichette: appartengono ai dati, non al neurone.</p>"
+        },
+        "nnWhichLine": {
+          "prompt": "Quale neurone mette giusti tutti i punti?",
+          "explain": "<p>Quella in diagonale con tutti i punti blu sul lato colorato e tutti gli arancioni sull’altro. Un’altra disegna la stessa retta ma si attiva dal lato sbagliato: il segno dei pesi decide quale lato si attiva. Quelle dritte tagliano un gruppo.</p>"
+        },
+        "nnXorBest": {
+          "prompt": "Con una retta, al massimo quanti dei quattro angoli di XOR puoi mettere giusti?",
+          "options": {
+            "two": "Due",
+            "three": "Tre",
+            "four": "Tutti e quattro",
+            "one": "Uno"
+          },
+          "explain": "<p><b>Tre</b>. Qualunque retta che tiene insieme i due angoli blu lascia con loro almeno un angolo arancione.</p>"
+        },
+        "nnXorParams": {
+          "prompt": "Questa rete ha 2 ingressi, 2 neuroni nascosti e 1 uscita. Quanti numeri impara?",
+          "explain": "<p>Ogni neurone nascosto ha 2 pesi e 1 bias: 6. Il neurone d’uscita ha 2 pesi e 1 bias: 3. In tutto, <b>9</b>.</p>"
+        },
+        "nnHiddenOne": {
+          "prompt": "Nel laboratorio qui sopra, il primo neurone nascosto si attiva per (0, 1), (1, 0) e (1, 1). Che porta è?",
+          "options": {
+            "or": "OR",
+            "and": "AND",
+            "xor": "XOR",
+            "nand": "NAND"
+          },
+          "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso.</p>"
+        },
+        "nnNudgeDown": {
+          "prompt": "Il neurone ha risposto 0.9 per un punto con etichetta 0, e la x di quel punto è 1. In che direzione deve muoversi w₁?",
+          "options": {
+            "up": "Sale un po’",
+            "down": "Scende un po’",
+            "same": "Resta uguale",
+            "zero": "Viene portato a 0"
+          },
+          "explain": "<p><b>Giù</b>. La risposta era troppo alta, e w₁ moltiplicava un ingresso di 1, quindi spingeva la risposta in su: abbassarlo avvicina la risposta a 0.</p>"
+        },
+        "nnNudgeZero": {
+          "prompt": "Stesso errore, ma la x di questo punto è 0. In che direzione deve muoversi w₁?",
+          "options": {
+            "up": "Sale un po’",
+            "down": "Scende un po’",
+            "same": "Resta uguale",
+            "zero": "Viene portato a 0"
+          },
+          "explain": "<p><b>Non deve muoversi</b>: un ingresso di 0 per qualsiasi peso fa 0, quindi w₁ non ha contribuito a questo errore. La retropropagazione dà a ogni peso una parte dell’errore in proporzione a ciò che ha fatto. (Il bias b invece si muove.)</p>"
+        },
+        "nnBackprop": {
+          "prompt": "Metti in ordine i passi dell’apprendimento.",
+          "steps": {
+            "forward": "La rete risponde a un esempio",
+            "compare": "La risposta si confronta con l’etichetta: ne viene l’errore",
+            "back": "L’errore viene mandato all’indietro, strato per strato, a ogni peso",
+            "nudge": "Ogni peso si sposta un po’ nella direzione che rende l’errore più piccolo",
+            "repeat": "Si ripete con l’esempio successivo, tante volte su tutto il dataset"
+          },
+          "explain": "<p>Rispondi, confronta, manda indietro, sposta, ripeti. Ogni passo è minuscolo; migliaia di passi fanno una rete che funziona.</p>"
+        },
+        "nnDigitParams": {
+          "prompt": "35 ingressi, 12 neuroni nascosti, 10 uscite. Quanti numeri impara questa rete?",
+          "explain": "<p>Strato nascosto: 35 × 12 pesi + 12 bias = 432. Strato d’uscita: 12 × 10 pesi + 10 bias = 130. In tutto, <b>562</b>. Le reti che leggono foto vere ne hanno milioni.</p>"
+        },
+        "nnWhyMany": {
+          "prompt": "Perché la alleniamo su tanti 3 un po’ diversi invece che su un solo 3 perfetto?",
+          "options": {
+            "shape": "Per imparare cosa hanno in comune tutti i 3, e riconoscerne di nuovi",
+            "memory": "Per conservare ogni immagine, e riconoscerla più avanti",
+            "faster": "Perché con più immagini ogni singolo passo dell’allenamento è più veloce",
+            "pixels": "Per imparare quanti pixel scuri ha di solito un 3"
+          },
+          "explain": "<p>L’obiettivo è <b>generalizzare</b>: riconoscere disegni nuovi. Una rete che si limita a memorizzare i suoi esempi sbaglia al primo nuovo. Per questo la mettiamo alla prova su cifre che non ha mai visto.</p>"
+        },
+        "nnHiddenCode": {
+          "prompt": "Cosa sono, per un’immagine, i 12 numeri dello strato nascosto?",
+          "options": {
+            "summary": "Una breve descrizione dell’immagine, inventata dalla rete",
+            "copy": "Una copia dei 12 pixel più importanti dell’immagine",
+            "answer": "La probabilità che la rete dà a ciascuna delle dieci cifre",
+            "random": "Numeri a caso, estratti di nuovo per ogni immagine"
+          },
+          "explain": "<p>Una <b>descrizione breve</b>: 35 pixel sono diventati 12 numeri che tengono ciò che serve per distinguere le cifre. Nessuno ha detto alla rete cosa metterci. Come descrivere qualcosa con pochi numeri è l’argomento del prossimo modulo, Codifica.</p>"
+        },
+        "nnTfThreshold": {
+          "prompt": "Un neurone con entrambi i pesi a zero può comunque attivarsi per ogni ingresso.",
+          "explain": "<p><b>Vero.</b> I pesi sono zero, ma il bias no: se b è sopra lo zero, la somma è sopra lo zero qualunque siano gli ingressi, e il neurone si attiva sempre.</p>"
+        },
+        "nnTfXorOne": {
+          "prompt": "Aggiungere un secondo neurone di uscita, sempre senza strato nascosto, permette a una rete di calcolare lo XOR.",
+          "explain": "<p><b>Falso.</b> Ogni neurone di uscita guarda ancora direttamente gli ingressi e traccia una sola retta, e nessuna retta da sola separa gli angoli dello XOR. Serve uno strato nascosto, le cui rette il neurone dopo combina.</p>"
+        },
+        "nnTfHidden": {
+          "prompt": "Una rete con uno strato nascosto di soli due neuroni può separare i punti con un confine che non è una retta.",
+          "explain": "<p><b>Vero.</b> Ogni neurone nascosto traccia la sua retta, e il neurone di uscita le combina: il confine può piegarsi, come per lo XOR.</p>"
+        },
+        "nnTfByHand": {
+          "prompt": "Una rete che risponde giusto a tutti gli esempi dell’allenamento risponderà giusto anche a esempi nuovi.",
+          "explain": "<p><b>Falso.</b> Potrebbe aver imparato gli esempi a memoria invece di ciò che hanno in comune. Per questo una rete si prova sempre su esempi che non ha mai visto.</p>"
+        },
+        "nnTfBackprop": {
+          "prompt": "Dopo un errore, la backpropagation sposta ogni peso della rete della stessa quantità.",
+          "explain": "<p><b>Falso.</b> Ogni peso si sposta in proporzione alla sua parte nell’errore: un peso il cui ingresso era 0 non ha contribuito e non si sposta affatto.</p>"
+        }
+      }
+    },
+    "demo": {
+      "protocols": "Apri i protocolli"
+    },
+    "plasticity": {
+      "steps": {
+        "braid": {
+          "title": "Sii il segnale",
+          "body": "<p>Cominciamo con un gioco. La rete qui sotto è un groviglio di collegamenti. Un segnale entra a sinistra e deve raggiungere l’arrivo a destra. A ogni incrocio scegli dove va.</p><p>La rete segue una sola regola, la regola del cervello. Nessuno ti dirà qual è: gioca più giri, guarda i collegamenti e scopri cosa succede.</p>",
+          "reveal": "<p>La regola: <b>ogni volta che un collegamento viene usato, diventa più forte</b>. Qui, più forte vuol dire più spesso, e nel gioco di classe un voto su un collegamento spesso conta di più. Così la strada che abbiamo usato è diventata sempre più facile da riprendere, giro dopo giro, mentre le altre si assottigliavano.</p>"
+        },
+        "hebb": {
+          "title": "Neuroni che si attivano insieme si collegano insieme",
+          "body": "<p>Nel 1949 lo psicologo Donald Hebb si chiese che cosa succede al collegamento tra due neuroni, la <b>sinapsi</b>, quando uno dei due aiuta l’altro ad attivarsi più e più volte. Pensa al gioco che hai appena fatto: che cosa ti aspetti? E i collegamenti che nessuno usa?</p>",
+          "reveal": "<p>Nel 1949 lo psicologo Donald Hebb propose che quando un neurone aiuta ripetutamente un altro ad attivarsi, il collegamento tra i due, la <b>sinapsi</b>, si rafforza. Decenni dopo lo si è misurato in laboratorio: si chiama <b>potenziamento a lungo termine</b>. Succede anche il contrario: i collegamenti usati di rado si indeboliscono, e alcuni vengono eliminati.</p><p>Questa è la <b>plasticità</b>: il cervello cambia i propri collegamenti con l’uso. È quello che hai appena fatto nel gioco, ed è così che impariamo, ricordiamo e prendiamo abitudini. Un ricordo non è salvato in un punto come un file: è un disegno di collegamenti più forti.</p>"
+        },
+        "lifespan": {
+          "title": "La plasticità lungo la vita",
+          "body": "<p>Come cambia la plasticità dalla nascita alla vecchiaia? Quante sinapsi ha un cervello a due anni, a venti, a ottanta, e con quanta facilità cambiano i suoi collegamenti? Prima fai le tue ipotesi: la figura che risponde arriva dopo le domande.</p>",
+          "reveal": "<p>Il cervello di un neonato crea collegamenti a una velocità incredibile: a due o tre anni un bambino ha molte più sinapsi di un adulto. Poi, durante l’infanzia e l’adolescenza, il cervello <b>pota</b> i collegamenti che non usa e rafforza quelli che usa. Alcune capacità hanno <b>periodi critici</b>, finestre in cui si imparano più facilmente: vedere in profondità, i suoni della prima lingua.</p><p>La parte anteriore del cervello, che pianifica e controlla, finisce di maturare verso i venticinque anni. Probabilmente da qui viene l’idea che \"il cervello smette di cambiare a 25 anni\", ma è sbagliata: la plasticità continua <b>per tutta la vita</b>. Gli adulti che imparano a fare giocoleria o i tassisti di Londra che imparano la città mostrano cambiamenti misurabili nel cervello. Diventa più lenta e richiede più pratica, ma non si ferma mai.</p><p>Il cervello regola perfino <i>quanto</i> essere plastico, in base alla sua attività recente. Si chiama <b>metaplasticità</b>, la plasticità della plasticità: un’idea di primo piano, ancora in studio.</p>"
+        },
+        "habits": {
+          "title": "Cosa vuol dire per noi: imparare e abitudini",
+          "body": "<p>Se l’uso rafforza i collegamenti, allora quello che facciamo e rifacciamo dà forma al nostro cervello. La pratica rende automatica un’abilità; un’abitudine è una strada così scavata che la prendiamo senza pensarci.</p><p>Quanto ci vuole? In uno studio famoso (Lally e colleghi, 2010), 96 persone hanno scelto una nuova abitudine quotidiana, come un bicchiere d’acqua a pranzo o una passeggiata dopo cena, e ogni giorno hanno detto quanto la sentivano automatica. Che cosa pensi che abbiano scoperto?</p>",
+          "reveal": "<p>In media ci sono voluti circa <b>66 giorni</b> perché l’abitudine diventasse automatica, ma con differenze enormi: da 18 a 254 giorni, a seconda della persona e dell’abitudine. I famosi \"21 giorni\" vengono da un libro di auto-aiuto del 1960 e non hanno dati alle spalle. La buona notizia dallo stesso studio: saltare un solo giorno non cancellava i progressi. Conta ripeterla, nella stessa situazione, quasi sempre.</p>"
+        },
+        "city": {
+          "title": "Il cervello in grande",
+          "body": "<p>Allontaniamoci dai singoli collegamenti e guardiamo il cervello intero. Miliardi di neuroni sono attivi in ogni momento, come le luci di una città vista da un aereo di notte. Guarda per un po’ la città qui sotto: che cosa vedi?</p>",
+          "reveal": "<p>Allarghiamo lo sguardo dai singoli collegamenti a tutto il cervello. Miliardi di neuroni sono attivi in ogni momento, e la loro attività forma <b>disegni</b> che si muovono di continuo, come le luci di una città vista da un aereo di notte.</p><p>Possiamo chiamare ogni disegno uno <b>stato cerebrale</b>: concentrato, rilassato, assonnato, in ansia, con la testa tra le nuvole. Il cervello è un sistema dinamico: in ogni momento è in uno stato, e passa al successivo. È come il nostro gioco, ma ora i nodi sono stati e i collegamenti sono i passaggi tra uno stato e l’altro. Come sceglie il cervello dove andare?</p>"
+        },
+        "landscape": {
+          "title": "Il paesaggio energetico",
+          "body": "<p>Un’immagine utile viene dalla fisica: il <b>paesaggio energetico</b>. Immagina lo stato del cervello come una pallina su un paesaggio di colline e valli. La pallina rotola giù per i pendii. Lasciala cadere in posti diversi, con poco attrito e con molto attrito, e guarda dove finisce.</p>",
+          "reveal": "<p>Un’immagine utile viene dalla fisica: il <b>paesaggio energetico</b>. Immagina lo stato del cervello come una pallina su un paesaggio di colline e valli. La pallina rotola giù per i pendii e tende a fermarsi nelle valli. Le valli sono gli stati in cui il cervello ama stare: stabili, facili da raggiungere, difficili da lasciare.</p><p>Dove finisce la pallina dipende dalla forma del paesaggio e da dove parte. Con poco attrito oscilla avanti e indietro tra alcune valli; con molto attrito resta bloccata nella prima valle in cui cade.</p>"
+        },
+        "restless": {
+          "title": "Un cervello irrequieto",
+          "body": "<p>Un cervello vero non sta mai fermo: la sua attività è rumorosa, si muove sempre un po’ a caso. Quindi la nostra pallina non è una pallina tranquilla che rotola giù: è una pallina irrequieta, scossa di continuo. Guardala per un po’: resta sempre dov’è?</p>",
+          "reveal": "<p>Quasi tutte le scosse sono piccole e la pallina resta nella sua valle. Ma ogni tanto una più forte la porta oltre una collina, in un’altra valle. Il rumore non è solo un fastidio: è ciò che permette al cervello di esplorare e cambiare stato.</p>"
+        },
+        "soft": {
+          "title": "La plasticità scava le valli",
+          "body": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, lì il terreno si abbassa un poco, come un fiume che si scava il letto. Guarda cosa succede alla valle che la pallina visita di più.</p>",
+          "reveal": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, il terreno lì diventa un po’ più profondo, come un fiume che scava il proprio letto e così ci porta sempre più acqua.</p><p>È così che impariamo, ma è anche così che possiamo <b>restare bloccati</b>. Uno stato visitato di continuo (la preoccupazione, per esempio) diventa una valle profonda, difficile da lasciare.</p><p>Perché così difficile, per un cervello e non solo per una pallina? Ripensa al sentiero intrecciato: dopo qualche giro hai smesso di guardarti intorno e ti <i>aspettavi</i> semplicemente che il collegamento spesso fosse la strada. Il cervello lo fa di continuo. Non aspetta di vedere cosa succede: indovina cosa verrà dopo da ciò che di solito è successo, e confronta l’ipotesi con ciò che vede. Quando l’ipotesi è sbagliata, è quella sorpresa a farlo imparare. Questa idea si chiama <b>predictive coding</b> (codifica predittiva), una delle teorie principali sul cervello. Il suo rovescio: più la valle è profonda, più l’ipotesi è forte, e siccome tendiamo a vedere ciò che ci aspettiamo, le sorprese che potrebbero smuoverci passano inosservate.</p><p>Per questo, per uscire da una valle profonda, il cervello ha spesso bisogno di qualcosa che viene da <i>fuori</i>: un’esperienza nuova, la pratica, una spinta.</p>"
+        },
+        "wind": {
+          "title": "Neurofeedback: un vento verso una valle",
+          "body": "<p>Il cervello impara dalle <b>ricompense</b>: quando a quello che abbiamo fatto segue qualcosa di buono, una sostanza chimica, la dopamina, aiuta a rafforzare ciò che l’ha prodotto.</p><p>Il <b>neurofeedback</b> usa proprio questo. Una fascia legge la tua attività cerebrale, e quando si muove verso uno stato obiettivo ricevi una ricompensa: un suono, un’immagine, un video che diventa più nitido. Qui sotto la ricompensa è un vento leggero sul paesaggio. Guarda cosa fa alla pallina, e quando.</p>",
+          "reveal": "<p>Il cervello impara dalle <b>ricompense</b>: quando a ciò che abbiamo fatto segue qualcosa di buono, la dopamina aiuta a rafforzare ciò che l’ha prodotto. Perché la ricompensa funzioni, deve arrivare <b>subito</b>, mentre lo stato che l’ha meritata c’è ancora.</p><p>Il <b>neurofeedback</b> usa proprio questo. Una fascia legge l’attività del cervello, e quando si muove verso uno stato obiettivo ricevi subito una ricompensa: un suono, un’immagine, un video che si fa più nitido. Non costringe il cervello ad andare da nessuna parte. È come un vento leggero che soffia sempre verso una valle: ogni passo in quella direzione diventa un po’ più facile, e col tempo è quella la valle che viene scavata. Esercizi e allenamento funzionano in modo simile; la ricerca sulla <b>riserva cognitiva</b> suggerisce che un cervello tenuto attivo affronta meglio l’invecchiamento.</p><p>Una nota onesta: le prove sul neurofeedback sono promettenti ma contrastanti, e gli studi ben controllati sono ancora in corso. Anche per questo misuriamo.</p>"
+        },
+        "demo": {
+          "title": "Il tuo paesaggio",
+          "body": "<p>Tutto quello che c’è in questo modulo si ritrova in Brain Trails. Quando registri il tuo EEG con la fascia, ogni pochi secondi vengono trasformati in una lista di numeri (ricordi la Codifica?), e tutte le tue registrazioni sono disegnate su un’unica mappa: il tuo <b>Brain Landscape</b>. Le sue valli sono gli stati che il tuo cervello visita di più; il tuo <b>sentiero</b> è la strada fatta dalla pallina.</p><p>Il neurofeedback in Brain Trails sceglie un obiettivo sul tuo paesaggio e premia ogni passo verso di esso: il vento del passo precedente, che soffia sulla tua mappa. Una mappa ha bisogno prima di registrazioni, quindi si comincia da un protocollo: una breve sessione con la fascia in testa.</p>"
+        }
+      },
+      "q": {
+        "plBraidWhy": {
+          "prompt": "Perché, giro dopo giro, il percorso è diventato più veloce e più ovvio?",
+          "options": {
+            "thick": "I collegamenti usati si sono ispessiti, quindi i loro voti contavano di più",
+            "memory": "Abbiamo memorizzato la mappa, quindi sapevamo dove andare",
+            "luck": "Fortuna: le estrazioni a caso hanno favorito un percorso",
+            "teacher": "Lo schermo dell’insegnante ci ha guidati di nascosto verso il percorso migliore"
+          },
+          "explain": "<p>I collegamenti usati sono diventati <b>più spessi</b>, quindi il percorso fatto è diventato più facile da rifare: l’uso rafforza i collegamenti, e i collegamenti forti vengono usati. Nel cervello è così che nascono le abitudini, buone e cattive.</p>"
+        },
+        "plTfContinuous": {
+          "prompt": "Vero o falso: nel gioco, un collegamento che nessuno ha scelto per diversi giri è finito più sottile che all’inizio.",
+          "explain": "<p><b>Vero.</b> Dopo ogni giro i collegamenti non usati si assottigliano un po’, anche sotto lo spessore iniziale, come una sinapsi che nessuno usa.</p>"
+        },
+        "plTfUnused": {
+          "prompt": "Vero o falso: nel gioco, i collegamenti più spessi stanno sempre sul percorso più breve verso l’arrivo.",
+          "explain": "<p><b>Falso.</b> I collegamenti si ispessiscono perché vengono usati, non perché sono buoni: un percorso scelto per caso nei primi giri può diventare quello spesso.</p>"
+        },
+        "plTf25": {
+          "prompt": "Vero o falso: il cervello smette di cambiare i suoi collegamenti verso i 25 anni.",
+          "explain": "<p><b>Falso</b>. Verso i 25 anni la parte anteriore del cervello finisce di maturare, ma la plasticità continua per tutta la vita. Rallenta, non scompare.</p>"
+        },
+        "plTfToddler": {
+          "prompt": "Vero o falso: un bambino di due anni ha più sinapsi di un adulto.",
+          "explain": "<p><b>Vero</b>. Il cervello prima crea molti più collegamenti di quanti ne servano, poi pota quelli non usati durante l’infanzia e l’adolescenza.</p>"
+        },
+        "plMeta": {
+          "prompt": "Cos’è la metaplasticità?",
+          "options": {
+            "meta": "Il cervello che cambia quanto facilmente cambiano i suoi collegamenti",
+            "age": "La lenta perdita di plasticità quando il cervello invecchia",
+            "fixed": "I collegamenti che restano uguali per tutta la vita",
+            "young": "La plasticità in più che ha il cervello di un bambino nella prima infanzia"
+          },
+          "explain": "<p>La metaplasticità è la <b>plasticità della plasticità</b>: quanto una sinapsi è pronta a cambiare dipende da ciò che ha fatto di recente. È un campo di ricerca molto attivo.</p>"
+        },
+        "plHabitDays": {
+          "prompt": "Nello studio, quanto ci è voluto in media perché una nuova abitudine quotidiana diventasse automatica?",
+          "options": {
+            "seven": "Circa una settimana, se l’abitudine si ripete ogni singolo giorno",
+            "twentyOne": "Circa 21 giorni, per quasi tutti",
+            "sixtySix": "Circa 66 giorni, con grandi differenze tra le persone",
+            "year": "Circa un anno, per quasi tutti"
+          },
+          "explain": "<p>Circa <b>66 giorni</b> in media, da 18 a 254 a seconda della persona e dell’abitudine. I \"21 giorni\" sono un mito.</p>"
+        },
+        "plTfMissDay": {
+          "prompt": "Vero o falso: saltare un solo giorno riporta una nuova abitudine al punto di partenza.",
+          "explain": "<p><b>Falso</b>. Nello studio, saltare un’occasione non ha cancellato i progressi. Quello che conta è ripeterla quasi sempre.</p>"
+        },
+        "plTfRepeat": {
+          "prompt": "Vero o falso: fare una nuova abitudine ogni giorno in un momento e in un posto diversi la rende automatica altrettanto in fretta.",
+          "explain": "<p><b>Falso</b>. È la stessa situazione (dopo colazione, tornando a casa) che lega l’abitudine a un segnale e fa scavare il percorso.</p>"
+        },
+        "plState": {
+          "prompt": "Cosa intendiamo per stato cerebrale?",
+          "options": {
+            "pattern": "L’attività di tutto il cervello in un dato momento",
+            "region": "L’unica regione del cervello che è più attiva",
+            "thought": "Il singolo pensiero che una persona ha in un dato momento",
+            "neuron": "Se un certo neurone sta scaricando o è a riposo"
+          },
+          "explain": "<p>Un <b>disegno</b> su tutto il cervello, come le luci di tutta la città in un momento, non un solo quartiere.</p>"
+        },
+        "plValley": {
+          "prompt": "Nel paesaggio energetico, cos’è una valle?",
+          "options": {
+            "state": "Uno stato in cui il cervello tende a cadere e restare",
+            "region": "Una regione del cervello dove l’attività è bassa",
+            "mistake": "Un errore che il cervello fa ogni tanto e corregge subito",
+            "sleep": "Un momento in cui il cervello dorme ed è calmo"
+          },
+          "explain": "<p>Una valle è uno <b>stato</b> che attira il cervello e lo trattiene per un po’: stabile, facile da raggiungere, difficile da lasciare.</p>"
+        },
+        "plTfNoiseThird": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, la pallina non resta mai in una delle tre valli più di un terzo del tempo.",
+          "explain": "<p><b>Falso</b>. Il rumore non divide il tempo in parti uguali: la pallina ne passa di più nelle valli più profonde, che sono più difficili da lasciare.</p>"
+        },
+        "plTfNoiseEscape": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, la pallina ha sempre una possibilità di uscire da qualunque valle.",
+          "explain": "<p><b>Vero</b>. Per quanto profonda sia la valle, una scossa abbastanza forte può arrivare. In una valle profonda la possibilità è piccola, quindi può volerci moltissimo tempo.</p>"
+        },
+        "plTfNoiseShallow": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, la pallina esce dalla valle meno profonda più spesso che da quella più profonda.",
+          "explain": "<p><b>Vero</b>. Una collina bassa chiede solo una scossa media, una alta una scossa forte e rara. Per questo la pallina passa meno tempo nella valle di mezzo.</p>"
+        },
+        "plTfNoiseStart": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, il punto di partenza della pallina decide dove passerà la maggior parte del tempo.",
+          "explain": "<p><b>Falso</b>. Con il rumore la pallina finisce per visitare tutte le valli, e a lungo andare quanto resta in ciascuna dipende dalla loro profondità, non da dove è stata lasciata.</p>"
+        },
+        "plStuck": {
+          "prompt": "La pallina è bloccata in fondo a una valle profonda. Cosa la aiuta a uscire?",
+          "options": {
+            "outside": "Una spinta da fuori: nuove esperienze, esercizio",
+            "wait": "Aspettare: prima o poi esce da sola",
+            "nothing": "Niente: quando è così in fondo ci resta per sempre",
+            "harder": "Rotolare sempre più veloce nella stessa valle"
+          },
+          "explain": "<p>Una <b>spinta da fuori</b>. Su un paesaggio morbido, aspettare scava solo di più la valle. Ma il paesaggio è morbido per tutti: la stessa plasticità che ha scavato la valle può scavarne una nuova.</p>"
+        },
+        "plTfPredict": {
+          "prompt": "Vero o falso: sul paesaggio morbido, più a lungo la pallina resta in una valle, più diventa difficile lasciarla.",
+          "explain": "<p><b>Vero</b>. Mentre la pallina resta, il terreno sotto di lei continua a scavarsi: la valle diventa più profonda e le colline intorno più alte.</p>"
+        },
+        "plTfForce": {
+          "prompt": "Vero o falso: con il vento, la valle scavata più a fondo può essere quella che all’inizio era la meno profonda.",
+          "explain": "<p><b>Vero</b>. Il vento soffia verso la valle di mezzo, la meno profonda. La pallina ci passa più tempo, e su un terreno morbido il tempo passato è profondità scavata.</p>"
+        },
+        "plReward": {
+          "prompt": "Quando deve arrivare la ricompensa, perché il cervello la colleghi allo stato giusto?",
+          "options": {
+            "now": "Subito, mentre il cervello è ancora in quello stato",
+            "later": "Alla fine della sessione, quando ci sono i punteggi",
+            "never": "Quando vuoi: il cervello la collega comunque allo stato",
+            "morning": "La mattina dopo, quando il sonno ha messo in ordine i ricordi"
+          },
+          "explain": "<p><b>Subito</b>. Una ricompensa che arriva tardi non può dire al cervello quale stato l’ha meritata. Per questo il neurofeedback risponde in una frazione di secondo.</p>"
+        },
+        "plTfUseIt": {
+          "prompt": "Un collegamento mai usato conserva la sua forza, purché niente lo danneggi.",
+          "explain": "<p><b>Falso.</b> Basta non usarlo: le sinapsi non usate si indeboliscono e alcune vengono eliminate, come i collegamenti che si assottigliavano nel gioco.</p>"
+        },
+        "plTfDig": {
+          "prompt": "La valle che visitiamo di più non è sempre quella migliore per noi.",
+          "explain": "<p><b>Vero.</b> La plasticità scava qualunque cosa ripetiamo, buona o cattiva: anche una preoccupazione visitata di continuo diventa una valle profonda.</p>"
+        },
+        "plTfForever": {
+          "prompt": "Più una valle è profonda, più grande è la spinta da fuori che serve per uscirne.",
+          "explain": "<p><b>Vero.</b> Una valle profonda ha colline alte intorno: il rumore da solo le supera di rado, quindi devono aiutare nuove esperienze, esercizio o una ricompensa al momento giusto.</p>"
+        },
+        "plTfLate": {
+          "prompt": "Una ricompensa che arriva con un’ora di ritardo rafforza lo stato in cui il cervello era un’ora prima.",
+          "explain": "<p><b>Falso.</b> Ormai il cervello è in un altro stato, ed è quello che la ricompensa rafforzerebbe. Deve arrivare subito.</p>"
+        }
+      }
+    },
+    "revealTitle": "Che cosa abbiamo scoperto"
   }
 }

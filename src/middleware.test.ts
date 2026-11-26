@@ -31,7 +31,11 @@ describe("middleware", () => {
       "/organisations/:path*",
       // a teacher's school and a held student's waiting page (backend V4-0012)
       "/school",
+      "/school/:path*",
       "/waiting",
+      // the Learning modules, for a class
+      "/learning",
+      "/learning/:path*",
       "/account",
       "/library",
       "/library/:path*",
@@ -48,6 +52,8 @@ describe("middleware", () => {
       // the remote console and its waiting room (T5)
       "/live/:path*",
       "/run/:path*",
+      // a student's side of the class game
+      "/play",
     ]);
   });
 });

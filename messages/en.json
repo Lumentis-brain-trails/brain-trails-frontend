@@ -58,7 +58,9 @@
     "attestation_required": "Tick both declarations to ask for a school.",
     "confirmation_required": "Tick that you checked the guardian's consent.",
     "under_age": "Brain Trails is for people aged 18 and over.",
-    "school_details_required": "A school needs its city, country, your role and your qualification."
+    "school_details_required": "A school needs its city, country, your role and your qualification.",
+    "already_enrolled": "This account is already in a school.",
+    "profile_required": "Add your name and year of birth in your profile first."
   },
   "application": {
     "step": "Application",
@@ -1949,6 +1951,16 @@
       "confirm": "Delete everything",
       "deleting": "Deleting…",
       "done": "Your account and data were deleted."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "accept": "Accept",
+      "seat": {
+        "speaker": "Speaker: you can run this class and its class games",
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member"
+      }
     }
   },
   "transfers": {
@@ -2482,7 +2494,8 @@
       "participants": "Participants",
       "my": "My sessions",
       "neurofeedback": "Neurofeedback",
-      "school": "School"
+      "school": "School",
+      "learning": "Learning"
     },
     "sections": "Sections",
     "you": "You",
@@ -4224,6 +4237,98 @@
       }
     }
   },
+  "classGame": {
+    "options": "Answers",
+    "option": "Answer {letter}",
+    "votes": "{n, plural, =1 {# vote} other {# votes}}",
+    "host": {
+      "open": "Start a class game",
+      "off": "Class games are not available here.",
+      "title": "Class game",
+      "intro": "Choose what the class does. Your students see a note inviting them in as soon as you start; you can leave this page and resume the game later.",
+      "privacy": "You see how many voted for each answer, never who voted what.",
+      "ended": "The game is over. Every student's screen has been told.",
+      "unavailable": "The live service is not available in this environment.",
+      "questions": "Questions",
+      "from": "{module}, step {step}",
+      "players": "{n, plural, =0 {No students connected yet} =1 {1 student connected} other {# students connected}}",
+      "connecting": "Connecting...",
+      "voted": "{n, plural, =1 {1 vote} other {# votes}} so far",
+      "end": "End the game",
+      "pick": "Pick a question",
+      "pickHint": "Choose one from the list, or start from the first.",
+      "first": "Ask the first question",
+      "close": "Stop the vote",
+      "reopen": "Open the vote again",
+      "reveal": "Show the answer",
+      "next": "Next question",
+      "hideCount": "Hide the count",
+      "showCount": "Show the count",
+      "braid": "The braided path",
+      "braidFrom": "Brain plasticity",
+      "lessonFrom": "Learning",
+      "playersBig": "<b>{n}</b> connected",
+      "choose": "What will the class do?",
+      "teach": "Teach {module} live",
+      "questionsGame": "Single questions",
+      "questionsFrom": "Quiz",
+      "running": "A game is running",
+      "resume": "Resume the game"
+    },
+    "player": {
+      "off": "Class games are not available here.",
+      "none": "No class game right now",
+      "noneHint": "When your teacher starts one, it shows up here by itself.",
+      "joining": "Joining your class...",
+      "over": "The game is over",
+      "score": "{right} of {asked} right",
+      "in": "You're in!",
+      "wait": "Wait for your teacher's first question.",
+      "vote": "Tap your answer.",
+      "voted": "Your vote is in. You can change it until the vote stops.",
+      "closed": "The vote has stopped.",
+      "closedVoted": "The vote has stopped. Your answer is in.",
+      "right": "Right!",
+      "wrong": "Not this time. Read why below.",
+      "missed": "You didn't vote on this one.",
+      "poll": "Here is how the class voted.",
+      "reconnecting": "Connection lost, reconnecting...",
+      "moved": "The class has chosen. Watch the board."
+    },
+    "call": {
+      "title": "Your class has a live game",
+      "join": "Join",
+      "close": "Close"
+    },
+    "braid": {
+      "title": "The braided path",
+      "round": "Round {round}, choice {steps}",
+      "history": "Rounds so far: {rounds}",
+      "start": "Start the first round",
+      "next": "Next round",
+      "arrived": "The class reached the end in {steps} choices.",
+      "over": "Did the path get shorter and thicker? Play more rounds to see it settle.",
+      "dead": "Game over: the class's signal died in a dead spot after {steps} choices."
+    },
+    "lesson": {
+      "where": "Step {step} of {steps}, {shown} of {questions} questions out",
+      "back": "Back",
+      "nextQuestion": "Show the next question",
+      "nextStep": "Next step",
+      "right": "Right",
+      "wrong": "Wrong",
+      "shown": "Asked for the answer",
+      "waiting": "Not answered yet",
+      "labHint": "Counts the students who reached the goal of this step's exercise.",
+      "showFound": "Show what we found",
+      "foundShown": "Shown to the class",
+      "steps": "Steps",
+      "answered": "Answered",
+      "revealAnswer": "Reveal the answer",
+      "answerRevealed": "Answer revealed",
+      "backToQuestions": "Back to the questions"
+    }
+  },
   "neurofeedback": {
     "title": "Neurofeedback",
     "intro": "Train toward a place of your own brain landscape. The headband's signal is placed on your map every second, and what you watch follows how close you are.",
@@ -4373,6 +4478,885 @@
       "refuseTitle": "Refuse {name}",
       "reason": "Reason (optional)",
       "reasonHint": "The student reads it when they sign in. It is not emailed."
+    },
+    "speakers": {
+      "title": "Teachers and speakers",
+      "intro": "Anyone here can run this class: the class code, the students and the class game. Invite a speaker who will present a lesson; they get a link by email.",
+      "teacher": "Teacher",
+      "speaker": "Speaker",
+      "member": "Member",
+      "you": "you",
+      "invited": "Invited",
+      "revoke": "Cancel",
+      "email": "Speaker's email",
+      "invite": "Invite as speaker",
+      "link": "Send this link yourself:"
+    },
+    "join": {
+      "title": "School",
+      "intro": "Did your teacher give you a class code after you signed up? Type it here to join your class.",
+      "tick": "I am the student: I have read the <link>privacy note</link> and I consent.",
+      "submit": "Join the school",
+      "enrolled": "You are in {name}."
     }
+  },
+  "learning": {
+    "title": "Learning",
+    "intro": "Short interactive lessons on how a brain and a computer turn the world into numbers. Pick a module; your teacher may tell you which step to open.",
+    "moduleNumber": "Module {n}",
+    "stepsCount": "{n} steps",
+    "soon": "Coming soon",
+    "steps": "Steps",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Back to the modules",
+    "stepOf": "Step {n} of {total}",
+    "refrain": {
+      "count": "How many numbers?",
+      "values": "Which values?",
+      "decode": "How do we rebuild it?"
+    },
+    "modules": {
+      "neuralNetworks": {
+        "name": "Neural networks",
+        "blurb": "Many simple units, wired together, that learn from examples."
+      },
+      "encoding": {
+        "name": "Encoding",
+        "blurb": "From points to heartbeats to brain waves: how to describe a picture with a few numbers, and rebuild it from them."
+      },
+      "plasticity": {
+        "name": "Brain plasticity",
+        "blurb": "How the brain changes its own wiring as it learns."
+      }
+    },
+    "question": {
+      "number": "Q{n}",
+      "check": "Check",
+      "show": "Show the answer",
+      "again": "Try again",
+      "right": "Right!",
+      "wrong": "Not quite. Change your answer and check again.",
+      "less": "One less",
+      "more": "One more",
+      "howMany": "How many",
+      "orderHint": "Drag to reorder, or tap one card and then the place it should go.",
+      "up": "Move up",
+      "down": "Move down",
+      "matchHint": "Drag each picture onto its numbers, or tap a picture and then its box.",
+      "dropHere": "Drop a picture here",
+      "numbers": "{n, plural, one {# number} other {# numbers}}",
+      "true": "True",
+      "false": "False",
+      "reset": "Start over",
+      "sliderHint": "Your picture is solid; the dashed one is the target.",
+      "send": "Send",
+      "sent": "Sent. You can change it until the answer is shown.",
+      "wrongSent": "Not quite: the answer you sent was different.",
+      "notSent": "You didn't send an answer: here it is."
+    },
+    "gallery": {
+      "hint": "Nine pictures of one family. Guess the numbers behind them: the codes open once you have answered the questions below.",
+      "show": "Show all codes",
+      "hide": "Hide the codes",
+      "hidden": "?",
+      "locked": "Answer the questions first"
+    },
+    "playground": {
+      "title": "Decode it yourself",
+      "text": "The sliders are the numbers. Move them until your curve (solid) sits on the dashed original.",
+      "distance": "Distance from the original: {d}",
+      "matched": "Rebuilt!",
+      "reset": "Start over"
+    },
+    "ecg": {
+      "showParts": "Draw each bell on its own"
+    },
+    "figure": {
+      "encoder": "encoder",
+      "decoder": "decoder",
+      "latent": "the code",
+      "input": "EEG",
+      "output": "rebuilt",
+      "inputs": "inputs",
+      "weights": "weights",
+      "sum": "sum",
+      "fires": "fires?",
+      "age": "age (years)",
+      "synapses": "number of synapses",
+      "ease": "how easily connections change",
+      "neuronAria": "An artificial neuron: two inputs, their weights, the sum with the bias, and the output",
+      "bioAria": "A biological neuron: dendrites, cell body, axon and synapses",
+      "dendrites": "dendrites",
+      "cellBody": "cell body",
+      "axon": "axon",
+      "synapse": "synapse"
+    },
+    "encoding": {
+      "steps": {
+        "intro": {
+          "title": "Encoding: a picture in a few numbers",
+          "body": "<p>This is a heartbeat, as an electrocardiogram (ECG) draws it. On a screen it is hundreds of dots. Yet a doctor can describe it in a few words, and a computer in a few <b>numbers</b>.</p><p><b>Encoding</b> means choosing a recipe that turns something into a short list of numbers (its <b>code</b>). <b>Decoding</b> means using the same recipe backwards, to rebuild the thing from its code.</p><p>At every step we will ask the same three questions: how many numbers do we need, what are their values, and how do we rebuild the picture from them?</p>"
+        },
+        "line": {
+          "title": "A point on a line",
+          "body": "<p>We start with the simplest picture there is: a dot on a ruler. Look at the nine pictures below. What changes from one to the next? How many numbers would you need to tell any of them apart?</p>",
+          "reveal": "<p>Only the position of the dot changes. So <b>one number</b> is enough: how far along the ruler the dot is. We call it <b>x</b>.</p>"
+        },
+        "plane": {
+          "title": "A point on a plane",
+          "body": "<p>Now the dot can move left and right <i>and</i> up and down. Is one number still enough? Two dots can be just as far from the left edge and still be in different places.</p>",
+          "reveal": "<p>We need <b>two numbers</b>, <b>x</b> and <b>y</b>, the coordinates you know from maths. Each number answers one question: how far right, how far up.</p>"
+        },
+        "bellPosition": {
+          "title": "A bell that moves",
+          "body": "<p>Now the pictures are curves: a <b>gaussian bell</b>, the shape of so many things in nature (heights in a class, errors of a measurement).</p><p>A curve is drawn with hundreds of dots. Does that mean we need hundreds of numbers? Look at what changes from one picture to the next.</p>",
+          "reveal": "<p>The bells are all the same, only shifted. So <b>one number</b> is enough: where the top of the bell is. We call it <b>μ</b> (mu, the centre).</p><p>This is the big idea of encoding: the number of numbers depends on <i>what changes</i>, not on how complicated the picture looks.</p>"
+        },
+        "bellHeight": {
+          "title": "A bell that moves and grows",
+          "body": "<p>Bells again. Look closely at the nine pictures: what changes this time?</p>",
+          "reveal": "<p>The bells move <i>and</i> their heights change, so a second number is needed: the height of the top, <b>A</b> (for amplitude). The code is now <b>μ</b> and <b>A</b>: the same count as a point on a plane. In fact, every bell here <i>is</i> a point on a plane whose axes are μ and A.</p>"
+        },
+        "bellWidth": {
+          "title": "A bell that moves, grows and spreads",
+          "body": "<p>Bells once more, and something new changes. A thin spike and a wide hill can have the same centre and the same top: what tells them apart?</p>",
+          "reveal": "<p>The width, called <b>σ</b> (sigma, the spread). Three numbers, <b>μ</b>, <b>A</b> and <b>σ</b>, describe any bell. The recipe to decode them is the formula <b>A · e^(−(x − μ)² / 2σ²)</b>: for every x, compute it, and draw the dot.</p>"
+        },
+        "waves": {
+          "title": "Waves",
+          "body": "<p>A new family: <b>sine waves</b>, the shape of sound, light and of many rhythms of the brain. What changes from one wave to the next?</p>",
+          "reveal": "<p>Two numbers change. The <b>frequency f</b>: how many full waves fit in one second. The <b>amplitude A</b>: how high the wave goes. A cosine is the same wave shifted a little: to allow that shift we would add a third number, the phase.</p>"
+        },
+        "train": {
+          "title": "Bells in a row",
+          "body": "<p>Now we put bells one after the other, at a regular distance, like the beats of a drum. Do we need the position of every single bell?</p>",
+          "reveal": "<p>No. Three numbers are enough: the <b>height A</b> of the bells, their <b>width σ</b> and the <b>frequency f</b>, how many bells per second. The frequency places every bell at once. A good recipe lets a few numbers say a lot.</p>"
+        },
+        "twoBells": {
+          "title": "A bell up, a bell down",
+          "body": "<p>In every beat we now add a second bell that <b>points down</b>. The beat gets the shape of a small wave going up and then down. What does the code need now?</p>",
+          "reveal": "<p>The code grows to six numbers: the frequency <b>f</b>, the first bell's height and width (<b>A₁</b>, <b>σ₁</b>), the second bell's height and width (<b>A₂</b>, negative, and <b>σ₂</b>), and how long after the first the second comes (<b>d</b>).</p>"
+        },
+        "ecg": {
+          "title": "A heartbeat",
+          "body": "<p>We have everything we need for a real signal. One heartbeat on an ECG is made of waves with names: <b>P</b> (the top chambers of the heart squeeze), <b>Q, R, S</b> (the big chambers squeeze: the sharp spike), <b>T</b> (they relax), and a tiny <b>U</b>.</p><p>Each of these waves is well described by a bell, some up and some down, some thin and some wide. With <b>eight bells</b> the beat is almost perfect. Switch them on and off below to see which bump each one draws.</p>"
+        },
+        "eeg": {
+          "title": "And now... the brain",
+          "body": "<p>This is an EEG: the electrical activity of the brain, as the headband records it from the scalp.</p><p>Look at it for a moment. Where are the bells? Where are the waves? There is no beat that repeats, no shape we can name. We do not know the recipe. So how can we choose how many numbers to use, and how to rebuild the signal from them?</p>"
+        },
+        "vae": {
+          "title": "Let a machine find the recipe",
+          "body": "<p>When we do not know the recipe, we can let a computer <b>learn it from many examples</b>. A <b>variational autoencoder</b> (VAE) is made of two neural networks: an <b>encoder</b>, which turns a piece of EEG into a few numbers, and a <b>decoder</b>, which rebuilds the EEG from those numbers.</p><p>It is exactly what we did all along: we choose <b>how many numbers</b>, the encoder finds <b>their values</b>, the decoder <b>rebuilds</b>. The difference is that nobody writes the recipe: the two networks are trained together, on thousands of examples, until what comes out looks like what went in.</p><p>And the bells come back: in a VAE each number is not a single value but a small <b>bell</b> (a centre μ and a spread σ), so that close codes rebuild similar signals. Brain Trails uses a network of this family to turn every few seconds of your EEG into a list of numbers: your trail is drawn from them.</p>"
+        },
+        "recap": {
+          "title": "Recap",
+          "body": "<p>Time to put it all together: match each picture with the size of its code, then decide which statements are true.</p>",
+          "reveal": "<p>Encoding always takes the same three decisions: a <b>recipe</b> (a point, a bell, a wave, a row of bells, a network), <b>how many numbers</b> it needs, and how to <b>decode</b> them back. A good code is short and still rebuilds the picture well.</p>"
+        }
+      },
+      "q": {
+        "introWhy": {
+          "prompt": "What would be the most useful way to send this heartbeat to a doctor's computer?",
+          "options": {
+            "pixels": "The colour of every dot of the screen",
+            "numbers": "A few numbers that describe its shape",
+            "words": "A sentence like \"it looks normal\"",
+            "photo": "A photo of the screen, taken with a phone"
+          },
+          "explain": "<p>A few numbers. The dots take a lot of space and say nothing about the shape; a sentence cannot be used to draw the beat again. A short code that can be <b>decoded</b> back into the picture is the best of both.</p>"
+        },
+        "lineCount": {
+          "prompt": "How many numbers do you need to describe one of these pictures?",
+          "explain": "<p><b>One</b>: the position x of the dot along the line. Everything else (the line, the ticks) is the same in every picture, so it belongs to the recipe, not to the code.</p>"
+        },
+        "lineValue": {
+          "prompt": "Encode this picture: move the slider until your dot sits on the target. What is its x?",
+          "explain": "<p>The dot is halfway between 6 and 7, so <b>x = 6.5</b>. Reading the value of a picture is the <b>encoding</b> step.</p>"
+        },
+        "lineDecode": {
+          "prompt": "Someone sends you the code x = 3. Put the steps to rebuild the picture in order.",
+          "steps": {
+            "axis": "Draw the line with its ticks from 0 to 10",
+            "measure": "Count 3 ticks from 0",
+            "dot": "Draw the dot there"
+          },
+          "explain": "<p>First the parts that never change (the recipe), then the code tells you where the only thing that changes goes. That is <b>decoding</b>.</p>"
+        },
+        "planeCount": {
+          "prompt": "How many numbers do you need to describe one of these pictures?",
+          "explain": "<p><b>Two</b>: x (how far right) and y (how far up). With only one, you could not tell apart two points one above the other.</p>"
+        },
+        "planeMatch": {
+          "prompt": "Encode: drop each picture onto its code.",
+          "explain": "<p>Read x on the horizontal axis and y on the vertical one. Each pair of numbers is one and only one place on the plane.</p>"
+        },
+        "bellPositionCount": {
+          "prompt": "These curves are made of hundreds of dots. How many numbers do you need to describe one of them?",
+          "explain": "<p>Just <b>one</b>, the centre μ: the bells are all identical apart from where they are. What counts is how many things <i>change</i>.</p>"
+        },
+        "bellPositionSort": {
+          "prompt": "Sort these bells from the smallest μ to the largest.",
+          "explain": "<p>μ is where the top is: the further right, the larger μ. Sorting pictures by a number is a way of reading their code.</p>"
+        },
+        "bellHeightCount": {
+          "prompt": "How many numbers do you need for one of these bells?",
+          "explain": "<p><b>Two</b>: the centre μ and the height A.</p>"
+        },
+        "bellHeightMatch": {
+          "prompt": "Drop each bell onto its code.",
+          "explain": "<p>μ is where the top is, A how high it goes. Two bells in the same place but with different heights have different codes.</p>"
+        },
+        "bellWidthCount": {
+          "prompt": "And now, how many numbers for one of these bells?",
+          "explain": "<p><b>Three</b>: μ, A and σ. Every possible bell is one point in a space with three axes.</p>"
+        },
+        "bellWidthSort": {
+          "prompt": "Same centre, same height. Sort them from the smallest σ to the largest.",
+          "explain": "<p>σ is the spread: the thinnest bell has the smallest σ, the widest hill the largest.</p>"
+        },
+        "bellDecode": {
+          "prompt": "You receive the code μ = 6, A = 1.5, σ = 0.7. Put the steps to rebuild the bell in order.",
+          "steps": {
+            "read": "Read the three numbers of the code",
+            "centre": "Put the top of the bell at x = 6",
+            "height": "Make the top 1.5 high",
+            "spread": "Open the sides so that the bell is 0.7 wide on each side of the centre"
+          },
+          "explain": "<p>Decoding a bell: centre, height, spread. A computer does all three at once with the formula A · e^(−(x − μ)² / 2σ²).</p>"
+        },
+        "wavesCount": {
+          "prompt": "How many numbers does each of these waves need?",
+          "explain": "<p><b>Two</b>: the frequency f and the amplitude A. All these waves start at zero going up, so we do not need the phase.</p>"
+        },
+        "wavesValue": {
+          "prompt": "Encode this wave: move the sliders until your wave lies on the dashed one. What are its f and A? (The axis is in seconds.)",
+          "explain": "<p>In one second there are two full waves, so <b>f = 2</b>; the top reaches 1.5, so <b>A = 1.5</b>.</p>"
+        },
+        "wavesMatch": {
+          "prompt": "Drop each wave onto its code.",
+          "explain": "<p>Count the waves in one second for f, look at how high they go for A.</p>"
+        },
+        "trainCount": {
+          "prompt": "How many numbers do you need for one of these rows of bells?",
+          "explain": "<p><b>Three</b>: height A, width σ and frequency f. The frequency places every bell at once, however many there are.</p>"
+        },
+        "trainRate": {
+          "prompt": "Which row has the highest frequency f?",
+          "explain": "<p>The one with three bells every second: f = 3. The height and the width do not change the frequency.</p>"
+        },
+        "twoBellsCount": {
+          "prompt": "How many numbers do you need for one of these beats?",
+          "explain": "<p><b>Six</b>: the frequency f, height and width of the first bell (A₁, σ₁), height and width of the second (A₂, σ₂), and the delay d between them.</p>"
+        },
+        "twoBellsSign": {
+          "prompt": "How does the code say that the second bell points down?",
+          "options": {
+            "negative": "Its height A₂ is a negative number",
+            "flip": "We add a number that says \"upside down\"",
+            "subtract": "The decoder always draws the second bell downwards",
+            "second": "A second frequency for the bell that points down"
+          },
+          "explain": "<p>A <b>negative height</b> does it, with no extra number: the same formula, with A below zero, draws a bell pointing down. (A decoder that always draws the second bell downwards would work too, but then a second bell pointing up could never be encoded.)</p>"
+        },
+        "ecgCount": {
+          "prompt": "One beat is eight bells. Each bell needs its position, width and height, and the heart beats at a certain rate. How many numbers in all?",
+          "explain": "<p>8 bells × 3 numbers = 24, plus the heart rate: <b>25 numbers</b>. A few seconds of ECG are thousands of dots; with this recipe, 25 numbers rebuild them.</p>"
+        },
+        "ecgTallest": {
+          "prompt": "Which bell has the largest height A?",
+          "options": {
+            "P1": "P1",
+            "R": "R",
+            "T1": "T1",
+            "S": "S"
+          },
+          "explain": "<p><b>R</b>: the sharp spike, when the big chambers of the heart squeeze. S is large too, but negative: it points down.</p>"
+        },
+        "ecgDecode": {
+          "prompt": "Put the steps to rebuild an ECG from its 25 numbers in order.",
+          "steps": {
+            "read": "Read the heart rate and the three numbers of each bell",
+            "bells": "Draw each of the eight bells at its position, with its height and width",
+            "sum": "Add the eight bells together, point by point: that is one beat",
+            "repeat": "Repeat the beat as many times per second as the heart rate says"
+          },
+          "explain": "<p>It is the same decoder as for one bell, used eight times and then added up, and the same trick as the row of bells to repeat it.</p>"
+        },
+        "eegHow": {
+          "prompt": "How could we encode this EEG?",
+          "options": {
+            "bells": "With a few bells, as we did for the ECG",
+            "waves": "With a few sine waves, one for each brain rhythm",
+            "learn": "Let a computer learn the recipe from many EEGs",
+            "pixels": "We cannot: we have to keep every single dot"
+          },
+          "explain": "<p>Bells and waves can help (the brain does have rhythms, the alpha waves for example), but no fixed recipe of a few shapes rebuilds an EEG well. Keeping every dot works but it is not a code. The modern answer is to <b>learn the recipe</b> from many examples: that is the next step.</p>"
+        },
+        "vaeCount": {
+          "prompt": "In this autoencoder, how many numbers does the encoder keep from a piece of EEG?",
+          "explain": "<p><b>Eight</b>, the column in the middle. We choose how many, as we did for the bells: fewer numbers is a shorter code but a rougher rebuild.</p>"
+        },
+        "vaeSteps": {
+          "prompt": "Put the steps of a variational autoencoder in order.",
+          "steps": {
+            "encode": "The encoder reads a few seconds of EEG",
+            "bells": "For each of the eight numbers it gives a centre μ and a spread σ: a small bell",
+            "draw": "A value is picked from each bell",
+            "decode": "The decoder rebuilds the EEG from those eight values",
+            "compare": "The rebuilt EEG is compared with the original, and both networks are adjusted to do better next time"
+          },
+          "explain": "<p>Encode, pick, decode, compare. Repeated on thousands of examples, the comparison is what teaches the two networks the recipe that nobody could write down.</p>"
+        },
+        "recapMatch": {
+          "prompt": "Drop each picture onto the number of numbers its code needs.",
+          "explain": "<p>A point on a line 1, on a plane 2, a bell 3, a beat with two bells 6, a heartbeat 25. The pictures get richer, the codes stay short.</p>"
+        },
+        "planeValue": {
+          "prompt": "Encode this point: move the two sliders until your dot sits on the target. What are its x and y?",
+          "explain": "<p>The target is 3 to the right and 7 up: <b>x = 3, y = 7</b>. Two numbers, one per direction, and each slider moves the dot along one of them only.</p>"
+        },
+        "bellPositionValue": {
+          "prompt": "Move the slider until your bell lies on the dashed one. Where is its centre μ?",
+          "explain": "<p><b>μ = 6.5</b>. Height and width are the same for every bell of this family, so one slider is enough to reach any of them.</p>"
+        },
+        "bellHeightValue": {
+          "prompt": "Now two sliders: find the centre μ and the height A of the dashed bell.",
+          "explain": "<p><b>μ = 3.5, A = 1.5</b>. Notice that each slider does one job: μ moves the bell sideways, A stretches it up.</p>"
+        },
+        "bellWidthValue": {
+          "prompt": "Three sliders: find μ, A and the width σ of the dashed bell.",
+          "explain": "<p><b>μ = 6, A = 1, σ = 0.5</b>. A small σ makes a narrow, sharp bell; a large one a wide, gentle bell.</p>"
+        },
+        "trainValue": {
+          "prompt": "Rebuild this row of bells: find its frequency f, the height A and the width σ.",
+          "explain": "<p><b>f = 2, A = 1.5, σ = 0.1</b>: two bells per second, each 1.5 tall and narrow. Three numbers rebuild the whole row, however long it is.</p>"
+        },
+        "twoBellsValue": {
+          "prompt": "Six sliders for six numbers: rebuild this beat, one bell up and one down.",
+          "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Six sliders, six numbers: one for each thing that can change in the beat.</p>"
+        },
+        "enTfChanges": {
+          "prompt": "Two families of pictures drawn with the same number of dots always need codes of the same length.",
+          "explain": "<p><b>False.</b> The length of the code depends on what changes from one picture to the next: a dot on a line needed one number, a bell with three free features needed three, with just as many dots.</p>"
+        },
+        "enTfDots": {
+          "prompt": "If only a bell's position changes, drawing it with more dots makes its code longer.",
+          "explain": "<p><b>False.</b> The code is still one number, the position. More dots make the drawing smoother, not the code longer.</p>"
+        },
+        "enTfDecode": {
+          "prompt": "With the same recipe, the same code always rebuilds the same picture.",
+          "explain": "<p><b>True.</b> Decoding follows the recipe step by step: the same numbers in, the same picture out. That is what makes a code useful.</p>"
+        },
+        "enTfEeg": {
+          "prompt": "In a variational autoencoder, the same piece of EEG can get slightly different codes each time.",
+          "explain": "<p><b>True.</b> The encoder gives a small bell for each number, and a value is picked from it every time. Close codes rebuild similar signals, so this does not hurt: it helps.</p>"
+        }
+      }
+    },
+    "labs": {
+      "gates": {
+        "title": "What has it learned?",
+        "text": "This neuron's numbers are already set, by training: w₁ = 1, w₂ = 1, b = -1.5. Nothing to move here: your job is to find out what it does. Tap the inputs (or a row of the table) to try each pair, and its answer fills in. Then compare its four answers with three famous rules: AND, OR and XOR.",
+        "learnTitle": "Teach it OR",
+        "learnText": "The same neuron as in the first step, still computing AND. Its line is drawn across the four corners of the square, one per pair of inputs. Now you are the teacher.",
+        "sum": "sum = {s}",
+        "output": "output",
+        "and": "AND (both on)",
+        "or": "OR (at least one on)",
+        "xor": "XOR (exactly one on)",
+        "matches": "This neuron computes {gate}.",
+        "none": "This neuron does not match any of the three rules yet.",
+        "task": "Move its numbers until it computes OR: only the (0, 0) corner stays on the quiet side.",
+        "done": "Your neuron computes OR!",
+        "backToAnd": "Back to AND",
+        "neuron": "neuron",
+        "tryAll": "Try all four pairs of inputs: {n} of 4 so far."
+      },
+      "classify": {
+        "title": "Two groups, one line",
+        "text": "Each dot is an example described by two numbers, its coordinates; its colour is its group. Where would you draw a straight line to keep the two colours apart? Guess, then show the line.",
+        "which": "Dots",
+        "and": "The four inputs of AND",
+        "groups": "Two groups of examples",
+        "show": "Show the line",
+        "hide": "Hide the line",
+        "split": "Every dot is on its own side of the line."
+      },
+      "line": {
+        "xorTitle": "Now try XOR",
+        "text": "The neuron fires on the shaded side of its line. Move the weights and the bias until every blue dot is on the shaded side and every amber dot is not.",
+        "fire": "should fire (1)",
+        "quiet": "should stay quiet (0)",
+        "score": "{right} of {total} dots on the right side"
+      },
+      "xor": {
+        "title": "Two neurons, then one more",
+        "text": "Pick an input. The two hidden neurons each draw their own line; the output neuron fires only when both of them fire.",
+        "lines": "The first hidden neuron's line (left) and the second's (right): the XOR dots end up between the two.",
+        "result": "hidden: {h1} and {h2}, so the output is {out}"
+      },
+      "learn": {
+        "title": "Let the neuron learn",
+        "text": "The neuron starts with bad weights. Each learning step looks at every dot, measures the error, and nudges each weight a little in the direction that makes the error smaller.",
+        "error": "error = {e}",
+        "one": "Learn one step",
+        "twenty": "Learn 20 steps",
+        "reset": "Start over",
+        "steps": "{n, plural, one {# step} other {# steps}} so far"
+      },
+      "digits": {
+        "title": "Teach a network to read digits",
+        "text": "Each picture is 5 × 7 = 35 pixels. A network with 35 inputs, 12 hidden neurons and 10 outputs (one per digit) learns from 200 labelled examples. Train it, then draw your own digit.",
+        "examples": "Some of the examples it learns from: every one a little different.",
+        "train": "Train one round",
+        "trainTen": "Train ten rounds",
+        "progress": "{n, plural, one {# round} other {# rounds}} of training · {acc}% right on digits it has never seen",
+        "draw": "Draw a digit (tap the squares)",
+        "clear": "Clear",
+        "pixel": "Pixel {n}",
+        "guess": "What the network thinks it is",
+        "verdict": "It reads a {d} ({p}% sure)",
+        "hidden": "Its {n} hidden neurons for your drawing"
+      },
+      "braid": {
+        "title": "The braided path",
+        "text": "You are a signal travelling through a tangle of connections, from the start (left) to the end (green). Pick the next edge by clicking one of the coloured ones. Careful: some paths lead to a dead spot, where the signal dies. Play round after round and watch what happens to the connections and to your route.",
+        "next": "Next round",
+        "habit": "Let the habit choose",
+        "status": "Round {round} · {n, plural, one {# step} other {# steps}}",
+        "arrived": "Arrived in {n, plural, one {# step} other {# steps}}!",
+        "history": "Rounds so far: {rounds}",
+        "dead": "Game over: the signal died in a dead spot after {n, plural, one {# step} other {# steps}}.",
+        "deadShort": "dead end",
+        "steps": "{n, plural, one {# step} other {# steps}}"
+      },
+      "ball": {
+        "version": "Version",
+        "aria": "A ball rolling on a landscape of valleys",
+        "target": "target",
+        "valley": "valley {n}: {p}%",
+        "pause": "Pause",
+        "play": "Play",
+        "reset": "Drop it again",
+        "hint": "Click the landscape to drop the ball somewhere else.",
+        "rocking": {
+          "short": "Little friction",
+          "title": "A ball with little friction",
+          "text": "The ball keeps its speed for a long time: it rolls back and forth across the shallow valleys before it settles."
+        },
+        "stuck": {
+          "short": "Much friction",
+          "title": "A ball with much friction",
+          "text": "The ball loses its speed quickly: it stops in the first valley it meets and stays there."
+        },
+        "restless": {
+          "short": "A restless ball",
+          "title": "A restless ball",
+          "text": "Now the ball is shaken at random all the time, like the brain's own restless activity. Watch it for a while."
+        },
+        "soft": {
+          "short": "A soft landscape",
+          "title": "A soft landscape",
+          "text": "Now the ground is soft: wherever the ball goes, it digs. The dashed line is the original ground. Watch the valley the ball likes get deeper, and the ball get more and more stuck in it."
+        },
+        "wind": {
+          "short": "Neurofeedback: a gentle wind",
+          "title": "Neurofeedback: a gentle wind",
+          "text": "Same soft, restless landscape, but now a gentle wind blows towards the target valley. Watch where the ball spends its time, and which valley gets dug."
+        }
+      },
+      "city": {
+        "title": "A city at night",
+        "text": "Seen from above, a city at night is a pattern of lights that keeps changing: neighbourhoods light up together, then fade, while others come on. Brain activity looks a lot like this.",
+        "aria": "Lights of a city at night, changing in patterns",
+        "pause": "Pause",
+        "play": "Play"
+      }
+    },
+    "neuralNetworks": {
+      "steps": {
+        "neuron": {
+          "title": "One neuron, one decision",
+          "body": "<p>An <b>artificial neuron</b> is a very simple machine. It receives a few numbers (its <b>inputs</b>), multiplies each by its own <b>weight</b>, adds them up together with a <b>bias</b>, and then decides: if the sum is above zero it <b>fires</b> (1), otherwise it stays quiet (0).</p><p>The weights say how much each input matters; the bias says how easily the neuron fires. So the question is: with these numbers, <b>what does it learn</b>? Try every pair of inputs and compare its answers with the tables.</p>"
+        },
+        "biology": {
+          "title": "The neuron in your head",
+          "body": "<p>The idea comes from the brain. Below is a drawing of a biological neuron: <b>dendrites</b>, a <b>cell body</b>, an <b>axon</b> that ends in <b>synapses</b>, where it touches the next neurons. Each synapse can be strong or weak.</p><p>The artificial neuron you just met is a cartoon of this one. Which part plays which role?</p>",
+          "reveal": "<p>Dendrites collect the signals of other neurons: they are the <b>inputs</b>. The strength of each synapse is a <b>weight</b>. The cell body adds up what arrives (the <b>sum</b>), and when the total passes a threshold the neuron sends a <b>spike</b> down its axon: the output. Much simpler, but the same parts.</p>"
+        },
+        "line": {
+          "title": "Classification: two groups, one line",
+          "body": "<p>Many problems are <b>classification</b>: given an example, say which group it belongs to. Is this email spam? Is this a cat or a dog? Here each example is a dot with two numbers, its coordinates, and its colour is the right answer (the <b>label</b>).</p><p>When the groups are well apart, a single straight <b>line</b> can split them: everything on one side is blue, everything on the other is amber. Look at the AND neuron again: its four inputs are the corners of a square, and it fires only at (1, 1). That is a line too, cutting off one corner.</p>"
+        },
+        "teach": {
+          "title": "A neuron is a line you can move",
+          "body": "<p>Here is why. Give the neuron the two coordinates of a dot as its inputs. It is exactly on the edge between firing and not firing where w₁·x + w₂·y + b = 0: that is the equation of a <b>line</b>. On one side it fires, on the other it does not.</p><p>So choosing the neuron's three numbers means choosing a line, and changing them moves it. <b>Learning</b> is this: changing the numbers until the line splits the examples the way we want.</p>"
+        },
+        "xor": {
+          "title": "The problem a line cannot solve",
+          "body": "<p>XOR (exclusive or) fires when <i>exactly one</i> input is on: (0, 1) and (1, 0) yes, (0, 0) and (1, 1) no. Drawn as dots, the two groups sit on opposite corners of the square.</p><p>Try as you like: no straight line puts both blue corners on one side and both amber corners on the other. One neuron cannot compute XOR. In 1969 this simple fact slowed down research on neural networks for years.</p>"
+        },
+        "hidden": {
+          "title": "Add a hidden layer",
+          "body": "<p>The solution is to use more neurons, in <b>layers</b>. Two neurons look at the inputs, each drawing its own line. They are called <b>hidden</b> because nobody sees their output directly. A third neuron looks at the two hidden ones and gives the answer.</p><p>Try the four inputs below and watch which hidden neurons fire.</p>",
+          "reveal": "<p>The first hidden neuron computes OR, the second \"not both\" (NAND), and the output fires only when both of them fire: together they compute <b>XOR</b>. Each layer turns the problem into an easier one for the next: this is what makes networks with many layers (<b>deep</b> networks) so powerful.</p>"
+        },
+        "learning": {
+          "title": "Learning from examples",
+          "body": "<p>So far we chose the weights by hand. A real network has thousands or millions of weights: nobody can set them. Instead, we give it a <b>dataset</b>: many examples with the right answer (the <b>label</b>), and let it learn from its mistakes.</p><p>Watch the neuron below find its own line, one small step at a time. After a mistake, which way should each weight move?</p>",
+          "reveal": "<p>So far we chose the weights by hand. A real network has thousands or millions of weights: nobody can set them. Instead, we give it a <b>dataset</b>: many examples with the right answer (the <b>label</b>), and let it learn.</p><p>Learning works like this. The network answers each example, and we measure how wrong it was (the <b>error</b>). Then the error is sent <b>backwards</b> through the network, and every weight is nudged a little in the direction that makes the error smaller. A weight whose input was large gets a bigger nudge; a weight whose input was zero did not contribute, so it does not move. This is <b>backpropagation</b>. Repeat it many times and the weights find their way.</p>"
+        },
+        "digits": {
+          "title": "Reading handwritten digits",
+          "body": "<p>A classic test for neural networks: recognise handwritten digits. Here each digit is a tiny 5 × 7 picture, so 35 pixels go in, one per input neuron. Ten neurons come out, one per digit: the one that fires most is the network's answer. In between there is a hidden layer of 12 neurons.</p><p>Train it below, then draw your own digits.</p>",
+          "reveal": "<p>After training, the 12 numbers of the hidden layer are the network's own short description of the picture: it found by itself which features matter to tell a 3 from an 8. Keep this in mind: turning a picture into a few meaningful numbers is exactly what the next module is about.</p>"
+        },
+        "recap": {
+          "title": "Recap",
+          "body": "<p>Five statements about what we have seen. True or false?</p>",
+          "reveal": "<p>A neuron weighs its inputs and decides. One neuron draws a line; layers of neurons draw any shape. Nobody sets the weights by hand: the network learns them from labelled examples, sending its error back through the layers (backpropagation). And along the way, the hidden layers learn a compact description of what they see.</p>"
+        }
+      },
+      "q": {
+        "nnNeuronCount": {
+          "prompt": "How many numbers does this neuron learn?",
+          "explain": "<p><b>Three</b>: the weights w₁ and w₂ and the bias b. The inputs are not learned: they come from outside.</p>"
+        },
+        "nnWhichGate": {
+          "prompt": "Look at the neuron's four answers in the table. Which rule has it learned?",
+          "options": {
+            "and": "AND: it fires only when both inputs are on",
+            "or": "OR: it fires when at least one input is on",
+            "neither": "Neither: its answers match none of these three rules",
+            "xor": "XOR: it fires when exactly one input is on"
+          },
+          "explain": "<p>With one input on the sum is 1 - 1.5 = -0.5: quiet. With both on it is 2 - 1.5 = 0.5: it fires. That is <b>AND</b>.</p>"
+        },
+        "nnBiology": {
+          "prompt": "Match each part of a biological neuron with its artificial version.",
+          "items": {
+            "dendrites": "Dendrites",
+            "synapse": "Strength of a synapse",
+            "body": "Cell body",
+            "spike": "Spike"
+          },
+          "slots": {
+            "inputs": "Inputs",
+            "weights": "Weights",
+            "sum": "Weighted sum",
+            "fires": "Output (fires or not)"
+          },
+          "explain": "<p>Dendrites bring the <b>inputs</b>, the strength of each synapse is a <b>weight</b>, the cell body computes the <b>sum</b>, and the spike is the <b>output</b>. Learning, in the brain too, mostly means changing the strength of synapses.</p>"
+        },
+        "nnBias": {
+          "prompt": "What does changing the bias b do to the line?",
+          "options": {
+            "slides": "It slides the line without turning it",
+            "turns": "It turns the line around a point",
+            "colours": "It changes which dots are blue",
+            "nothing": "Nothing: only the weights move the line"
+          },
+          "explain": "<p>The bias <b>slides</b> the line parallel to itself; the weights set its direction. The dots' colours are the labels: they belong to the data, not to the neuron.</p>"
+        },
+        "nnWhichLine": {
+          "prompt": "Which neuron gets every dot right?",
+          "explain": "<p>The diagonal one with every blue dot on the shaded side and every amber dot on the other. Another draws the same line but fires on the wrong side: the sign of the weights decides which side fires. The straight ones cut through a group.</p>"
+        },
+        "nnXorBest": {
+          "prompt": "With one line, at best how many of the four XOR corners can you get right?",
+          "options": {
+            "two": "Two",
+            "three": "Three",
+            "four": "All four",
+            "one": "One"
+          },
+          "explain": "<p><b>Three</b>. Any line that keeps both blue corners together leaves at least one amber corner with them.</p>"
+        },
+        "nnXorParams": {
+          "prompt": "This network has 2 inputs, 2 hidden neurons and 1 output. How many numbers does it learn?",
+          "explain": "<p>Each hidden neuron has 2 weights and 1 bias: 6. The output neuron has 2 weights and 1 bias: 3. In all, <b>9</b>.</p>"
+        },
+        "nnHiddenOne": {
+          "prompt": "In the lab above, the first hidden neuron fires for (0, 1), (1, 0) and (1, 1). Which gate is it?",
+          "options": {
+            "or": "OR",
+            "and": "AND",
+            "xor": "XOR",
+            "nand": "NAND"
+          },
+          "explain": "<p><b>OR</b>: it fires when at least one input is on.</p>"
+        },
+        "nnNudgeDown": {
+          "prompt": "The neuron answered 0.9 for a dot whose label is 0, and that dot's x is 1. Which way should w₁ move?",
+          "options": {
+            "up": "It goes up a bit",
+            "down": "It goes down a bit",
+            "same": "It stays the same",
+            "zero": "It goes all the way to 0"
+          },
+          "explain": "<p><b>Down</b>. The answer was too high, and w₁ multiplied an input of 1, so it pushed the answer up: lowering it brings the answer towards 0.</p>"
+        },
+        "nnNudgeZero": {
+          "prompt": "Same mistake, but this dot's x is 0. Which way should w₁ move?",
+          "options": {
+            "up": "It goes up a bit",
+            "down": "It goes down a bit",
+            "same": "It stays the same",
+            "zero": "It goes all the way to 0"
+          },
+          "explain": "<p>It <b>should not move</b>: an input of 0 times any weight is 0, so w₁ did not contribute to this mistake. Backpropagation gives each weight a share of the error in proportion to what it did. (The bias b still moves.)</p>"
+        },
+        "nnBackprop": {
+          "prompt": "Put the steps of learning in order.",
+          "steps": {
+            "forward": "The network answers an example",
+            "compare": "The answer is compared with the label: that gives the error",
+            "back": "The error is sent backwards, layer by layer, to every weight",
+            "nudge": "Each weight moves a little in the direction that makes the error smaller",
+            "repeat": "Repeat with the next example, many times over the whole dataset"
+          },
+          "explain": "<p>Answer, compare, send back, nudge, repeat. Each step is tiny; thousands of them make a network that works.</p>"
+        },
+        "nnDigitParams": {
+          "prompt": "35 inputs, 12 hidden neurons, 10 outputs. How many numbers does this network learn?",
+          "explain": "<p>Hidden layer: 35 × 12 weights + 12 biases = 432. Output layer: 12 × 10 weights + 10 biases = 130. In all, <b>562</b>. Networks that read real photos have millions.</p>"
+        },
+        "nnWhyMany": {
+          "prompt": "Why do we train on many slightly different 3s instead of one perfect 3?",
+          "options": {
+            "shape": "To learn what all 3s share, so it recognises new ones",
+            "memory": "To store every picture, so it recognises them later",
+            "faster": "Because more pictures make every single training step faster",
+            "pixels": "To learn how many dark pixels a 3 usually has"
+          },
+          "explain": "<p>The goal is to <b>generalise</b>: to recognise new drawings. A network that only memorises its examples fails on the first new one. That is why we test it on digits it has never seen.</p>"
+        },
+        "nnHiddenCode": {
+          "prompt": "What are the 12 numbers of the hidden layer, for a picture?",
+          "options": {
+            "summary": "A short description of the picture, invented by the network",
+            "copy": "A copy of the 12 most important pixels of the original picture",
+            "answer": "The network's probability for each of the ten digits",
+            "random": "Random numbers, drawn again for every picture"
+          },
+          "explain": "<p>A <b>short description</b>: 35 pixels became 12 numbers that keep what matters to tell digits apart. Nobody told the network what to put there. How to describe something with a few numbers is the subject of the next module, Encoding.</p>"
+        },
+        "nnTfThreshold": {
+          "prompt": "A neuron whose two weights are both zero can still fire for every input.",
+          "explain": "<p><b>True.</b> The weights are zero, but the bias is not: if b is above zero, the sum is above zero whatever the inputs, and the neuron always fires.</p>"
+        },
+        "nnTfXorOne": {
+          "prompt": "Adding a second output neuron, still with no hidden layer, lets a network compute XOR.",
+          "explain": "<p><b>False.</b> Each output neuron still looks straight at the inputs and draws one line, and no single line splits XOR's corners. It takes a hidden layer whose lines the next neuron combines.</p>"
+        },
+        "nnTfHidden": {
+          "prompt": "A network with a hidden layer of just two neurons can separate the dots with a border that is not a straight line.",
+          "explain": "<p><b>True.</b> Each hidden neuron draws its own line, and the output neuron combines the two: the border can bend, as it did for XOR.</p>"
+        },
+        "nnTfByHand": {
+          "prompt": "A network that gets every training example right will get new examples right too.",
+          "explain": "<p><b>False.</b> It may have learned the examples by heart instead of what they have in common. That is why a network is always tested on examples it has never seen.</p>"
+        },
+        "nnTfBackprop": {
+          "prompt": "After a mistake, backpropagation moves every weight of the network by the same amount.",
+          "explain": "<p><b>False.</b> Each weight moves in proportion to its share of the mistake: a weight whose input was 0 did not contribute and does not move at all.</p>"
+        }
+      }
+    },
+    "demo": {
+      "protocols": "Open the protocols"
+    },
+    "plasticity": {
+      "steps": {
+        "braid": {
+          "title": "Be the signal",
+          "body": "<p>Let's start with a game. The network below is a tangle of connections. A signal enters on the left and has to reach the end on the right. At every crossing you choose where it goes next.</p><p>The network follows one rule, the rule of the brain. Nobody will tell you what it is: play several rounds, watch the connections, and see what happens.</p>",
+          "reveal": "<p>The rule: <b>every time a connection is used, it gets stronger</b>. Here, stronger means thicker, and in the class game a vote on a thick edge counts more. So the route we used became easier to take again, round after round, while the others thinned.</p>"
+        },
+        "hebb": {
+          "title": "Neurons that fire together, wire together",
+          "body": "<p>In 1949 the psychologist Donald Hebb asked what happens to the connection between two neurons, the <b>synapse</b>, when one of them repeatedly helps the other to fire. Think of the game you just played: what would you expect? And what about the connections nobody uses?</p>",
+          "reveal": "<p>In 1949 the psychologist Donald Hebb proposed that when one neuron repeatedly helps another to fire, the connection between them, the <b>synapse</b>, gets stronger. Decades later this was measured in the lab: it is called <b>long-term potentiation</b>. The opposite happens too: connections that are rarely used get weaker, and some are removed.</p><p>This is <b>plasticity</b>: the brain changes its own wiring with use. It is what you just did in the game, and it is how we learn, remember, and form habits. A memory is not stored in one place like a file: it is a pattern of stronger connections.</p>"
+        },
+        "lifespan": {
+          "title": "Plasticity across a lifetime",
+          "body": "<p>How does plasticity change from birth to old age? How many synapses does a brain have at two, at twenty, at eighty, and how easily do its connections change? Make your guesses first: the picture that answers them comes after the questions.</p>",
+          "reveal": "<p>A newborn's brain grows connections at an amazing speed: by the age of two or three a child has many more synapses than an adult. Then, through childhood and adolescence, the brain <b>prunes</b> the connections it does not use and strengthens the ones it does. Some abilities have <b>critical periods</b>, windows when they are learnt most easily: seeing in depth, the sounds of a first language.</p><p>The front of the brain, which plans and controls, finishes maturing around the mid-twenties. That is probably where the idea that \"the brain stops changing at 25\" comes from, but it is wrong: plasticity goes on <b>all life long</b>. Adults who learn to juggle or London taxi drivers who learn the city show measurable changes in their brains. It becomes slower and needs more practice, but it never stops.</p><p>The brain even adjusts <i>how</i> plastic it is, depending on its recent activity. This is called <b>metaplasticity</b>, the plasticity of plasticity: a leading idea, still being studied.</p>"
+        },
+        "habits": {
+          "title": "What it means for us: learning and habits",
+          "body": "<p>If use strengthens connections, then what we do again and again shapes our brain. Practice makes a skill automatic; a habit is a route so well dug that we take it without thinking.</p><p>How long does that take? In a well-known study (Lally and colleagues, 2010), 96 people picked a new daily habit, such as a glass of water at lunch or a walk after dinner, and said every day how automatic it felt. What do you think they found?</p>",
+          "reveal": "<p>On average it took about <b>66 days</b> for the habit to become automatic, but with huge differences: from 18 to 254 days, depending on the person and the habit. The popular \"21 days\" comes from a 1960 self-help book and is not backed by data. The good news from the same study: missing a single day did not undo the progress. What counts is repeating it, in the same situation, most of the time.</p>"
+        },
+        "city": {
+          "title": "The brain at scale",
+          "body": "<p>Zoom out from single connections to the whole brain. Billions of neurons are active at every moment, like the lights of a city seen from a plane at night. Watch the city below for a while: what do you see?</p>",
+          "reveal": "<p>Zoom out from single connections to the whole brain. Billions of neurons are active at every moment, and their activity forms <b>patterns</b> that keep moving, like the lights of a city seen from a plane at night.</p><p>We can call each pattern a <b>brain state</b>: focused, relaxed, sleepy, anxious, daydreaming. The brain is a dynamical system: at each moment it is in a state, and it moves to the next one. It is like our game, but the nodes are now states and the edges are the transitions between them. How does the brain pick where to go next?</p>"
+        },
+        "landscape": {
+          "title": "The energy landscape",
+          "body": "<p>A useful picture comes from physics: the <b>energy landscape</b>. Imagine the brain's state as a ball on a landscape of hills and valleys. The ball rolls down the slopes. Drop it in different places, with little friction and with much friction, and watch where it ends up.</p>",
+          "reveal": "<p>A useful picture comes from physics: the <b>energy landscape</b>. Imagine the brain's state as a ball on a landscape of hills and valleys. The ball rolls down the slopes and tends to settle in the valleys. The valleys are the states the brain likes to be in: stable, easy to reach, hard to leave.</p><p>Where the ball ends up depends on the shape of the landscape and on where it starts. With little friction it rocks back and forth between a few valleys; with much friction it stays stuck in the first valley it falls into.</p>"
+        },
+        "restless": {
+          "title": "A restless brain",
+          "body": "<p>A real brain is never still: its activity is noisy, always moving a little at random. So our ball is not a calm ball rolling down: it is a restless ball, shaken all the time. Watch it for a while: does it always stay where it is?</p>",
+          "reveal": "<p>Most shakes are small and the ball stays in its valley. But sometimes a bigger one carries it over a hill into another valley. Noise is not just a nuisance: it is what lets the brain explore and change state.</p>"
+        },
+        "soft": {
+          "title": "Plasticity digs the valleys",
+          "body": "<p>Now put plasticity into the picture. The landscape is not fixed: it is <b>soft</b>. Every time the ball passes somewhere, the ground there gets a little deeper, like a river that digs its own bed. Watch what happens to the valley the ball visits most.</p>",
+          "reveal": "<p>Now put plasticity into the picture. The landscape is not fixed: it is <b>soft</b>. Every time the ball passes somewhere, the ground there gets a little deeper, like a river that digs its own bed and so carries more and more water along it.</p><p>This is how we learn, but it is also how we can get <b>stuck</b>. A state visited again and again (worry, for example) becomes a deep valley that is hard to leave.</p><p>Why so hard, for a brain and not just a ball? Think back to the braided path: after a few rounds you stopped looking around and simply <i>expected</i> the thick edge to be the way. The brain does this all the time. It does not wait to see what happens: it guesses what comes next from what usually happened, and checks the guess against what it sees. When the guess is wrong, that surprise is what makes it learn. This idea is called <b>predictive coding</b>, one of the leading theories of the brain. Its catch: the deeper the valley, the stronger the guess, and since we tend to see what we expect, the surprises that could move us go unnoticed.</p><p>That is why, to leave a deep valley, the brain often needs something from <i>outside</i>: a new experience, practice, a push.</p>"
+        },
+        "wind": {
+          "title": "Neurofeedback: a wind towards a valley",
+          "body": "<p>The brain learns from <b>rewards</b>: when something good follows what we did, the chemical dopamine helps strengthen what led to it.</p><p><b>Neurofeedback</b> uses this. A headband reads your brain activity, and when it moves towards a target state you get a reward: a sound, an image, a video that becomes clearer. Below, the reward is a gentle wind on the landscape. Watch what it does to the ball, and when.</p>",
+          "reveal": "<p>The brain learns from <b>rewards</b>: when something good follows what we did, the chemical dopamine helps strengthen what led to it. For the reward to work, it has to come <b>right away</b>, while the state that earned it is still there.</p><p><b>Neurofeedback</b> uses exactly this. A headband reads your brain activity, and when it moves towards a target state you get an immediate reward: a sound, an image, a video that becomes clearer. It does not force the brain anywhere. It is like a gentle wind that always blows towards one valley: each step in that direction becomes a little easier, and over time that is the valley that gets dug. Exercises and training work in a similar way; research on <b>cognitive reserve</b> suggests that a brain kept active copes better with ageing.</p><p>An honest note: the evidence for neurofeedback is promising but mixed, and well-controlled studies are still under way. That is part of why we measure.</p>"
+        },
+        "demo": {
+          "title": "Your own landscape",
+          "body": "<p>Everything in this module comes together in Brain Trails. When you record your EEG with the headband, every few seconds of it are turned into a list of numbers (remember Encoding), and all your recordings are drawn on one map: your <b>Brain Landscape</b>. Its valleys are the states your brain visits most; your <b>trail</b> is the path the ball took.</p><p>Neurofeedback in Brain Trails picks a target on your own landscape and rewards every step towards it: the wind of the previous step, blowing on your own map. A map needs recordings first, so the way in is a protocol: a short session with the headband on.</p>"
+        }
+      },
+      "q": {
+        "plBraidWhy": {
+          "prompt": "Why did the route get faster and more obvious, round after round?",
+          "options": {
+            "thick": "The edges we used got thicker, so their votes counted more",
+            "memory": "We memorised the map, so we knew where to go",
+            "luck": "Luck: the random draws happened to favour one route",
+            "teacher": "The teacher's screen quietly steered us towards the best route"
+          },
+          "explain": "<p>The edges we used got <b>thicker</b>, so the route we took became easier to take again: use strengthens connections, and strong connections get used. In the brain this is how habits form, the good and the bad ones.</p>"
+        },
+        "plTfContinuous": {
+          "prompt": "True or false: in the game, an edge nobody chose for several rounds ended up thinner than at the start.",
+          "explain": "<p><b>True.</b> After every round the unused edges thin a little, even below their first thickness, like a synapse that nobody uses.</p>"
+        },
+        "plTfUnused": {
+          "prompt": "True or false: in the game, the thickest edges always lie on the shortest route to the end.",
+          "explain": "<p><b>False.</b> Edges get thick because they are used, not because they are good: a route chosen by chance in the first rounds can become the thick one.</p>"
+        },
+        "plTf25": {
+          "prompt": "True or false: the brain stops rewiring at about 25 years old.",
+          "explain": "<p><b>False</b>. Around 25 the front of the brain finishes maturing, but plasticity goes on for the whole of life. It gets slower, not absent.</p>"
+        },
+        "plTfToddler": {
+          "prompt": "True or false: a two-year-old has more synapses than an adult.",
+          "explain": "<p><b>True</b>. The brain first grows far more connections than it needs, then prunes the unused ones through childhood and adolescence.</p>"
+        },
+        "plMeta": {
+          "prompt": "What is metaplasticity?",
+          "options": {
+            "meta": "The brain changing how easily its connections change",
+            "age": "The slow loss of plasticity as the brain grows old",
+            "fixed": "The connections that stay the same for the whole of life",
+            "young": "The extra plasticity a brain has in early childhood"
+          },
+          "explain": "<p>Metaplasticity is the <b>plasticity of plasticity</b>: how ready a synapse is to change depends on what it has done recently. It is an active area of research.</p>"
+        },
+        "plHabitDays": {
+          "prompt": "On average, how long did it take for a new daily habit to become automatic in the study?",
+          "options": {
+            "seven": "About a week, if the habit is repeated every single day",
+            "twentyOne": "About 21 days, for nearly everyone",
+            "sixtySix": "About 66 days, varying a lot between people",
+            "year": "About a year, for nearly everyone"
+          },
+          "explain": "<p>About <b>66 days</b> on average, from 18 to 254 depending on the person and the habit. \"21 days\" is a myth.</p>"
+        },
+        "plTfMissDay": {
+          "prompt": "True or false: missing a single day sends a new habit back to the start.",
+          "explain": "<p><b>False</b>. In the study, missing one occasion did not undo the progress. What counts is repeating it most of the time.</p>"
+        },
+        "plTfRepeat": {
+          "prompt": "True or false: doing a new habit at a different time and place each day makes it automatic just as fast.",
+          "explain": "<p><b>False</b>. The same situation (after breakfast, on the way home) is what links the habit to a cue and lets the route dig in.</p>"
+        },
+        "plState": {
+          "prompt": "What do we mean by a brain state?",
+          "options": {
+            "pattern": "The activity of the whole brain at one moment",
+            "region": "The one region of the brain that is most active",
+            "thought": "The single thought someone is having at one moment",
+            "neuron": "Whether one particular neuron is firing or resting"
+          },
+          "explain": "<p>A <b>pattern</b> over the whole brain, like the lights of the whole city at one moment, not one neighbourhood.</p>"
+        },
+        "plValley": {
+          "prompt": "In the energy landscape, what is a valley?",
+          "options": {
+            "state": "A state the brain tends to fall into and stay in",
+            "region": "A region of the brain where activity is low",
+            "mistake": "A mistake the brain makes now and then, and quickly corrects",
+            "sleep": "A moment when the brain is asleep and quiet"
+          },
+          "explain": "<p>A valley is a <b>state</b> that attracts the brain and holds it for a while: stable, easy to reach, hard to leave.</p>"
+        },
+        "plTfNoiseThird": {
+          "prompt": "True or false: thanks to its restless noise, the ball never stays in one of the three valleys more than a third of the time.",
+          "explain": "<p><b>False</b>. Noise does not share the time out evenly: the ball spends more of it in the deeper valleys, which are harder to leave.</p>"
+        },
+        "plTfNoiseEscape": {
+          "prompt": "True or false: thanks to its restless noise, the ball always has a chance to escape any valley.",
+          "explain": "<p><b>True</b>. However deep the valley, a big enough shake can come. In a deep valley the chance is small, so it may take a very long time.</p>"
+        },
+        "plTfNoiseShallow": {
+          "prompt": "True or false: thanks to its restless noise, the ball leaves the shallowest valley more often than the deepest one.",
+          "explain": "<p><b>True</b>. A low hill needs only a medium shake, a high one needs a rare big one. That is why the ball spends least time in the middle valley.</p>"
+        },
+        "plTfNoiseStart": {
+          "prompt": "True or false: thanks to its restless noise, where the ball starts decides where it spends most of its time.",
+          "explain": "<p><b>False</b>. With noise, the ball visits every valley in the end, and over a long time how much it stays in each depends on their depth, not on where it was dropped.</p>"
+        },
+        "plStuck": {
+          "prompt": "The ball is stuck at the bottom of a deep valley. What helps it out?",
+          "options": {
+            "outside": "A push from outside: new experiences, practice",
+            "wait": "Waiting: sooner or later it leaves by itself",
+            "nothing": "Nothing: once it is that deep it stays for ever",
+            "harder": "Rolling faster and faster around the same valley"
+          },
+          "explain": "<p>A <b>push from outside</b>. On a soft landscape, waiting only digs the valley deeper. But the landscape is soft for everyone: the same plasticity that dug the valley can dig a new one.</p>"
+        },
+        "plTfPredict": {
+          "prompt": "True or false: on the soft landscape, the longer the ball stays in a valley, the harder it becomes to leave it.",
+          "explain": "<p><b>True</b>. While the ball stays, the ground under it keeps digging: the valley gets deeper and the hills around it higher.</p>"
+        },
+        "plTfForce": {
+          "prompt": "True or false: with the wind, the valley that gets dug deepest can be the one that was shallowest at the start.",
+          "explain": "<p><b>True</b>. The wind blows towards the middle valley, the shallowest. The ball spends more time there, and on soft ground time spent is depth dug.</p>"
+        },
+        "plReward": {
+          "prompt": "When should the reward come, for the brain to link it to the right state?",
+          "options": {
+            "now": "Right away, while the brain is still in that state",
+            "later": "At the end of the session, once the scores are in",
+            "never": "Any time: the brain links it to the state anyway",
+            "morning": "The next morning, after sleep has sorted the memories"
+          },
+          "explain": "<p><b>Right away</b>. A reward that comes late cannot tell the brain which state earned it. This is why neurofeedback gives feedback within a fraction of a second.</p>"
+        },
+        "plTfUseIt": {
+          "prompt": "A connection that is never used keeps its strength, as long as nothing damages it.",
+          "explain": "<p><b>False.</b> Disuse alone is enough: unused synapses weaken and some are pruned, like the edges that thinned in the game.</p>"
+        },
+        "plTfDig": {
+          "prompt": "The valley we visit most is not always the one that is best for us.",
+          "explain": "<p><b>True.</b> Plasticity digs whatever we repeat, good or bad: a worry visited again and again becomes a deep valley too.</p>"
+        },
+        "plTfForever": {
+          "prompt": "The deeper a valley, the bigger the push from outside it takes to leave it.",
+          "explain": "<p><b>True.</b> A deep valley has high hills around it: noise alone rarely gets over them, so new experiences, practice or a well-timed reward have to help.</p>"
+        },
+        "plTfLate": {
+          "prompt": "A reward that comes an hour late strengthens the state the brain was in an hour earlier.",
+          "explain": "<p><b>False.</b> By then the brain is in another state, and that is the one a reward would strengthen. It has to come right away.</p>"
+        }
+      }
+    },
+    "revealTitle": "What we found"
   }
 }
