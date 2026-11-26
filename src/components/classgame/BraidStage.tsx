@@ -86,6 +86,8 @@ export function BraidStage({ game }: { game: Host }) {
         kind: "braid",
         options: ids,
         buttons: ids.map((id) => ({ id, colour: colours[id] })),
+        // phones count down from when the round reaches them
+        seconds: VOTE_SECONDS,
       });
       setAskedAt(Date.now());
 

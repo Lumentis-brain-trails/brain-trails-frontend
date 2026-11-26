@@ -210,7 +210,8 @@ export function ModuleView({
           </Card>
         )}
         {step.lab === "ecg" && <EcgExplorer />}
-        {step.lab === "braid" && <BraidLab />}
+        {/* in a lesson the class plays one shared braid, run by the teacher's screen */}
+        {step.lab === "braid" && !control && <BraidLab />}
         {step.lab === "city" && <CityLab />}
         {step.lab === "ballHard" && <BallLab worlds={["rocking", "stuck"]} />}
         {step.lab === "ballRestless" && <BallLab worlds={["restless"]} />}
