@@ -36,15 +36,15 @@ import { type LearningModule, stepIndex } from "@/lib/learning/modules";
 
 /** What a teacher-paced lesson hands the module: see `ModuleView`. */
 export interface ModuleControl {
-  /** The step on screen, counted from zero. */
-  step: number;
-  /** The last question out (from zero); -1 shows the step without questions. */
-  upTo: number;
   /**
    * Show what the step held back (its "What we found" box, the gallery's codes, the
    * playground) whatever this screen answered: the teacher's call for the whole class.
    */
   reveal?: boolean;
+  /** The step on screen, counted from zero. */
+  step: number;
+  /** The last question out (from zero); -1 shows the step without questions. */
+  upTo: number;
   onVerdict: (questionId: string, verdict: "right" | "wrong" | "shown") => void;
 }
 
