@@ -211,11 +211,35 @@ export const NF_SIGNALS = [
 ] as const;
 
 /**
+ * The feedbacks that are played rather than watched (V4-0013): the trained signal
+ * changes the game's world, the person's hands meet its challenge.
+ */
+export const NF_GAMES = ["lantern"] as const;
+
+/**
  * What the person watches while they train: the author's video, or one of the built-in
  * animations (V4-0010) - a plane that takes off, two notes that come into tune, the
- * landing page's two ribbons of light drawing together out of their blur.
+ * landing page's two ribbons of light drawing together out of their blur - or a game
+ * (`NF_GAMES`, V4-0013).
  */
-export const NF_FEEDBACK = ["video", "plane", "tuning", "ribbons"] as const;
+export const NF_FEEDBACK = [
+  "video",
+  "plane",
+  "tuning",
+  "ribbons",
+  ...NF_GAMES,
+] as const;
+
+/** Whether a feedback is a game: played with the hands, scored at the end (V4-0013). */
+export function isNfGame(
+  feedback: string | undefined
+): feedback is (typeof NF_GAMES)[number] {
+  return (NF_GAMES as readonly string[]).includes(feedback ?? "");
+}
+
+/** The hands' levels a game climbs between rounds (V4-0013). */
+export const NF_GAME_MIN_LEVEL = 1;
+export const NF_GAME_MAX_LEVEL = 10;
 
 /** Most points a landscape target may hold. */
 export const NF_MAX_TARGETS = 3;
@@ -322,8 +346,31 @@ export const neurofeedbackConfigSchema = z
           /** Relative power (0-1) for a band; the ratio itself for a ratio. */
           value: z.number().positive(),
         }),
+        z.object({
+          /**
+           * V4-0013: the threshold the run's previous neurofeedback block on the same
+           * signal (and targets) ended on, nudges included, with no baseline; the
+           * run's first such block runs its baseline and sets it as `baseline` does.
+           */
+          mode: z.literal("carry"),
+          target_fraction: z.number().min(0.1).max(0.9).default(0.4),
+        }),
       ])
       .default({ mode: "baseline", target_fraction: 0.4 }),
+    /**
+     * A game's own settings (V4-0013): the hands' level the block starts at, when the
+     * run has no level of its own yet; the level then climbs between rounds.
+     */
+    game: z
+      .object({
+        start_level: z
+          .number()
+          .int()
+          .min(NF_GAME_MIN_LEVEL)
+          .max(NF_GAME_MAX_LEVEL)
+          .default(1),
+      })
+      .optional(),
     window_s: z.union([z.literal(1), z.literal(2)]).default(1),
     smoothing_s: z.number().min(0.25).max(5).default(1),
     /** How long a full swing of the picture takes. */
@@ -342,8 +389,13 @@ export const neurofeedbackConfigSchema = z
     path: ["src"],
   })
   .refine((c) => c.baseline_s > 0 || c.threshold.mode === "fixed", {
-    message: "without a baseline the threshold must be fixed",
+    message:
+      "without a baseline the threshold must be fixed (a carried one needs a baseline for the run's first block)",
     path: ["threshold"],
+  })
+  .refine((c) => c.game === undefined || isNfGame(c.feedback), {
+    message: "game settings belong to a game feedback",
+    path: ["game"],
   })
   .refine((c) => (c.signal === "landscape_region") === Boolean(c.targets), {
     message: "a landscape signal needs targets, and only it",
@@ -380,6 +432,13 @@ export const neurofeedbackConfigSchema = z
         },
         then: { required: ["targets"] },
         else: { not: { required: ["targets"] } },
+      },
+      {
+        if: {
+          properties: { feedback: { enum: [...NF_GAMES] } },
+          required: ["feedback"],
+        },
+        else: { not: { required: ["game"] } },
       },
     ],
   });

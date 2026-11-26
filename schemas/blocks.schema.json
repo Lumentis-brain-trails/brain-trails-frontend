@@ -1065,7 +1065,8 @@
             "video",
             "plane",
             "tuning",
-            "ribbons"
+            "ribbons",
+            "lantern"
           ]
         },
         "targets": {
@@ -1236,8 +1237,37 @@
                 "mode",
                 "value"
               ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "const": "carry"
+                },
+                "target_fraction": {
+                  "default": 0.4,
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 0.9
+                }
+              },
+              "required": [
+                "mode"
+              ]
             }
           ]
+        },
+        "game": {
+          "type": "object",
+          "properties": {
+            "start_level": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          }
         },
         "window_s": {
           "default": 1,
@@ -1370,6 +1400,27 @@
             "not": {
               "required": [
                 "targets"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "feedback": {
+                "enum": [
+                  "lantern"
+                ]
+              }
+            },
+            "required": [
+              "feedback"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "game"
               ]
             }
           }

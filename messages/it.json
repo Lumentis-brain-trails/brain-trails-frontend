@@ -399,7 +399,19 @@
       "timeout": "Il segnale della fascia non è arrivato. Andiamo avanti.",
       "needsLive": "Questa parte segue dove ti trovi nel tuo brain landscape, e il servizio live non è attivo per questa sessione. La saltiamo.",
       "baselineFailedMap": "Il tuo landscape non è arrivato abbastanza chiaro per iniziare questa parte. Andiamo avanti.",
-      "soundOn": "Attiva il suono"
+      "soundOn": "Attiva il suono",
+      "lantern": {
+        "aria": "Lanterna: un viandante su un sentiero al buio. A ogni bivio premi sinistra o destra, dal lato del segno.",
+        "hint": "A ogni bivio premi ← o → (o tocca quel lato) verso il segno.",
+        "card": {
+          "title": "Fine del giro",
+          "light": "Quanto è arrivata lontano la tua luce",
+          "choices": "{correct} bivi giusti su {total}",
+          "levelUp": "Livello {level} → {next}: i bivi arrivano più in fretta.",
+          "levelDown": "Livello {level} → {next}: i bivi arrivano più piano.",
+          "levelSame": "Ancora livello {level}."
+        }
+      }
     }
   },
   "builder": {
@@ -1223,12 +1235,13 @@
         },
         "feedback": {
           "label": "Cosa guarda la persona",
-          "help": "Il video qui sotto, o un'animazione integrata che non richiede media: un aereo che decolla nel target, due note che si accordano, o i due nastri di luce che si mettono a fuoco.",
+          "help": "Il video qui sotto, o un'animazione integrata che non richiede media: un aereo che decolla nel target, due note che si accordano, o i due nastri di luce che si mettono a fuoco. Oppure un gioco, Lanterna: il segnale è la luce sul sentiero, le mani scelgono a ogni bivio.",
           "options": {
             "video": "Il video",
             "plane": "Un aereo che decolla",
             "tuning": "Due note che si accordano",
-            "ribbons": "I nastri che si mettono a fuoco"
+            "ribbons": "I nastri che si mettono a fuoco",
+            "lantern": "Lanterna, un gioco"
           }
         },
         "direction": {
@@ -1270,10 +1283,11 @@
         },
         "threshold/mode": {
           "label": "Soglia da",
-          "help": "Dalla baseline di questa persona oggi, oppure un numero fisso che resta uguale tra le sessioni.",
+          "help": "Dalla baseline di questa persona oggi, un numero fisso che resta uguale tra le sessioni, oppure portata: la soglia su cui è finito il blocco di neurofeedback precedente della sessione con lo stesso segnale, senza baseline (il primo blocco così fa la sua baseline). Portata è per i giochi a giri.",
           "options": {
             "baseline": "La baseline",
-            "fixed": "Un valore fisso"
+            "fixed": "Un valore fisso",
+            "carry": "Portata dal blocco precedente"
           }
         },
         "threshold/target_fraction": {
@@ -1283,6 +1297,13 @@
         "threshold/value": {
           "label": "Soglia fissa",
           "help": "Una quota tra 0 e 1 per una banda (0,25 è un quarto della potenza), oppure il rapporto stesso."
+        },
+        "game": {
+          "label": "Il gioco"
+        },
+        "game/start_level": {
+          "label": "Livello di partenza",
+          "help": "Il livello delle mani, da 1 a 10, da cui parte il primo giro: quanto spesso arrivano i bivi e quanto tempo c'è per scegliere. Tra un giro e l'altro sale all'85% di risposte giuste e scende sotto il 65%; non cambia mai il segnale allenato."
         },
         "window_s": {
           "label": "Finestra di analisi (secondi)",
@@ -2338,6 +2359,17 @@
         "drawing": "Disegno del sentiero…",
         "unavailable": "Sentiero non disponibile"
       }
+    },
+    "rounds": {
+      "title": "Giri",
+      "round": "Giro",
+      "game": "Luce accesa, nel gioco",
+      "after": "Rimasto lì, a riposo",
+      "level": "Livello",
+      "pending": "non ancora",
+      "firstLast": "A riposo senza gioco: {first} del primo riposo, {last} dell'ultimo.",
+      "firstLastPending": "I riposi sulla tua mappa sono misurati quando la mappa li ha collocati.",
+      "disclaimer": "Cosa ha fatto il tuo segnale, giro per giro. Non è una misura dei progressi né di quanto funzioni l'allenamento."
     }
   },
   "device": {
@@ -3298,6 +3330,60 @@
         }
       }
     },
+    "lantern-rounds": {
+      "title": "Giri della lanterna",
+      "summary": "Tre giri di un gioco con la lanterna sul tuo alfa, ognuno seguito da un riposo sullo schermo.",
+      "description": "Percorri un sentiero al buio: la luce arriva più lontano quando il tuo alfa sale, e le tue mani scelgono a ogni bivio. Tra un giro e l'altro riposi con gli occhi sullo schermo, senza niente da seguire, così la registrazione mostra cosa mantieni senza l'aiuto del gioco.",
+      "contentWarning": "Una luce calda che cresce e si attenua lentamente con il tuo segnale, tre volte per tre minuti. Puoi fermarti quando vuoi.",
+      "groups": {
+        "rounds": {
+          "label": "Giri"
+        }
+      },
+      "blocks": {
+        "welcome": {
+          "label": "Preparati",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Tre giri: percorri un sentiero con una lanterna, poi riposi con gli occhi sullo schermo."
+              },
+              "1": {
+                "text": "Più sei calmo e concentrato, più lontano arriva la luce.\nA ogni bivio premi la freccia dal lato del segno."
+              },
+              "2": {
+                "text": "Tieni la testa ferma: la luce oscilla quando si muove.\nCirca venti minuti in tutto."
+              }
+            },
+            "advance": {
+              "label": "Inizia"
+            }
+          }
+        },
+        "map_before": {
+          "label": "Occhi sullo schermo"
+        },
+        "lantern": {
+          "label": "Lanterna"
+        },
+        "map": {
+          "label": "Occhi sullo schermo"
+        },
+        "outro": {
+          "label": "Fatto",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "È tutto. I tuoi giri sono nella pagina della registrazione."
+              }
+            },
+            "advance": {
+              "label": "Fine"
+            }
+          }
+        }
+      }
+    },
     "processing-speed": {
       "title": "Velocità di elaborazione",
       "summary": "Abbina simboli e numeri contro il tempo, due volte per novanta secondi.",
@@ -3817,7 +3903,15 @@
       "lower": "Abbassa la soglia del 5%",
       "raise": "Alza la soglia del 5%",
       "nudges": "{n, plural, one {# modifica} other {# modifiche}}",
-      "disclaimer": "Il valore è quello che calcola lo schermo del partecipante, in diretta. Non è una misura clinica."
+      "disclaimer": "Il valore è quello che calcola lo schermo del partecipante, in diretta. Non è una misura clinica.",
+      "game": {
+        "level": "Livello del gioco",
+        "forks": "Bivi",
+        "forksValue": "{correct} giusti su {total}",
+        "head": "Testa",
+        "moving": "in movimento",
+        "still": "ferma"
+      }
     }
   },
   "subjects": {
@@ -4339,6 +4433,10 @@
       "ribbons": {
         "label": "I nastri",
         "text": "I nostri due nastri di luce, sfocati negli angoli, che si mettono a fuoco e si avvicinano quando arrivi."
+      },
+      "lantern": {
+        "label": "Lanterna",
+        "text": "Un gioco a giri: il tuo segnale è la luce sul sentiero, le tue mani scelgono a ogni bivio. Tra un giro e l'altro un breve riposo con gli occhi sullo schermo."
       }
     },
     "long": {
@@ -4365,8 +4463,10 @@
       "how": {
         "plane": "Prima un minuto per vedere dove sei. Poi porta su l'aereo: decolla quando arrivi.",
         "tuning": "Prima un minuto per vedere dove sei. Poi ascolta: le due note si accordano quando arrivi.",
-        "ribbons": "Prima un minuto per vedere dove sei. Poi i nastri si mettono a fuoco quando arrivi."
-      }
+        "ribbons": "Prima un minuto per vedere dove sei. Poi i nastri si mettono a fuoco quando arrivi.",
+        "lantern": "Prima un minuto per vedere dove sei. Poi percorri il sentiero: la lanterna arriva più lontano quando arrivi, e i bivi sono per le tue mani. Tra un giro e l'altro riposi."
+      },
+      "map": "Occhi sullo schermo"
     }
   },
   "schools": {

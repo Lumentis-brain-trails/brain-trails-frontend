@@ -26,6 +26,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import type { Field } from "@/lib/builder/fields";
+import { isNfGame } from "@/lib/protocol/blocks";
 
 /** The facts about one documented setting; `{}` is one with nothing special about it. */
 export interface FieldDoc {
@@ -42,6 +43,10 @@ export interface FieldDoc {
 /** A neurofeedback block that trains toward places of the map (V4-0010). */
 const onLandscape = (config: Record<string, unknown>) =>
   config.signal === "landscape_region";
+
+/** A neurofeedback block whose feedback is a game (V4-0013). */
+const isGame = (config: Record<string, unknown>) =>
+  typeof config.feedback === "string" && isNfGame(config.feedback);
 
 /** A documented setting, and where its words are in the catalogue. */
 export interface LocatedFieldDoc extends FieldDoc {
@@ -163,6 +168,9 @@ const BY_KIND: Record<string, Record<string, FieldDoc>> = {
     "threshold.mode": {},
     "threshold.target_fraction": {},
     "threshold.value": {},
+    // a game's own settings (V4-0013): only for a feedback that is a game
+    game: { shownIf: isGame },
+    "game.start_level": { shownIf: isGame },
     window_s: { advanced: true },
     smoothing_s: { advanced: true },
     ramp_s: { advanced: true },

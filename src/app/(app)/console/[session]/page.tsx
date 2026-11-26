@@ -480,13 +480,20 @@ function Console({
   // channel for nothing. The block measures its own baseline once mounted, so the few
   // packets sent before its state reaches the console are not needed.
   const nfOnScreen = runner?.nudgeable === true;
-  const { eegFeed } = muse;
+  const { eegFeed, motionFeed } = muse;
   useEffect(() => {
     if (!nfOnScreen) return;
     return eegFeed.subscribe((packet) =>
       channelRef.current?.post({ type: "eeg", packet })
     );
   }, [eegFeed, nfOnScreen]);
+  // the gyroscope too, for a game's stillness (V4-0013), under the same rule
+  useEffect(() => {
+    if (!nfOnScreen) return;
+    return motionFeed.subscribe((sample) =>
+      channelRef.current?.post({ type: "motion", sample })
+    );
+  }, [motionFeed, nfOnScreen]);
 
   useEffect(() => {
     if (!nfOnScreen) return;

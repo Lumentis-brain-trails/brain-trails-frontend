@@ -27,6 +27,7 @@ import {
   type RunBoot,
   commandPortFrom,
   eegFeedFrom,
+  motionFeedFrom,
   openChannel,
   shiftFit,
   teeSink,
@@ -38,7 +39,7 @@ import {
   eegAnchor,
 } from "@/lib/protocol/clock";
 import type { CommandPort } from "@/lib/protocol/commands";
-import type { EegFeed } from "@/lib/protocol/types";
+import type { EegFeed, MotionFeed } from "@/lib/protocol/types";
 import { type MarkerSink, createSessionSink } from "@/lib/protocol/sink";
 
 /** One run, made when the console's boot arrives. */
@@ -49,6 +50,7 @@ interface Run {
   anchor: ClockAnchor;
   commands: CommandPort;
   signal: EegFeed;
+  motion: MotionFeed;
 }
 
 export default function ParticipantRunPage({
@@ -109,6 +111,7 @@ export default function ParticipantRunPage({
               ),
               commands: commandPortFrom(channel),
               signal: eegFeedFrom(channel, boot.origin),
+              motion: motionFeedFrom(channel, boot.origin),
             }
         );
       }
@@ -154,6 +157,7 @@ export default function ParticipantRunPage({
         anchor={run.anchor}
         commands={run.commands}
         signal={run.signal}
+        motion={run.motion}
         resume={boot.resume}
         onState={(state) => channel.post({ type: "state", state })}
         onFinish={(results, markers) => {

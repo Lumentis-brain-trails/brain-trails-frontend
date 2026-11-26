@@ -257,6 +257,57 @@ describe("thresholds", () => {
     expect(outputs.at(-1)).toEqual({ type: "done", reason: "baseline_failed" });
   });
 
+  test("carry starts from the run's threshold, with no baseline (V4-0013)", () => {
+    const c = config({ threshold: { mode: "carry", target_fraction: 0.4 } });
+    const engine = new NeurofeedbackEngine(c, 0.27);
+    expect(engine.isCarried).toBe(true);
+    const outputs = packetsOf(RECORDING).flatMap((p) => engine.push(p));
+    expect(outputs[0]).toEqual({
+      type: "threshold",
+      threshold: 0.27,
+      previous: null,
+      cause: "carried",
+    });
+    const updates = outputs.flatMap((o) =>
+      o.type === "update" ? [o.update] : []
+    );
+    expect(updates[0].phase).toBe("training");
+    expect(updates).toHaveLength(320);
+    expect(outputs.some((o) => o.type === "baseline_end")).toBe(false);
+  });
+
+  test("carry with nothing to carry runs its baseline as baseline mode does", () => {
+    const carry = run(
+      config({ threshold: { mode: "carry", target_fraction: 0.4 } })
+    );
+    const baseline = run(config());
+    expect(carry.engine.isCarried).toBe(false);
+    expect(carry.engine.currentThreshold).toBe(
+      baseline.engine.currentThreshold
+    );
+    const set = carry.outputs.find((o) => o.type === "threshold");
+    expect(set).toMatchObject({ cause: "baseline" });
+    // a carried value that is not a threshold is no carry
+    expect(
+      new NeurofeedbackEngine(
+        config({ threshold: { mode: "carry", target_fraction: 0.4 } }),
+        Number.NaN
+      ).isCarried
+    ).toBe(false);
+    // and a block that is not `carry` ignores what the run holds
+    expect(new NeurofeedbackEngine(config(), 0.3).isCarried).toBe(false);
+  });
+
+  test("carry needs a baseline for the run's first block", () => {
+    expect(
+      neurofeedbackConfigSchema.safeParse({
+        media_id: MEDIA,
+        baseline_s: 0,
+        threshold: { mode: "carry" },
+      }).success
+    ).toBe(false);
+  });
+
   test("a fixed threshold survives an unusable baseline", () => {
     const clenched = makeRecording({ seconds: 42, jaw: [[0, 12]] });
     const { outputs } = run(

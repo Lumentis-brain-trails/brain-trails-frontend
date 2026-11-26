@@ -33,7 +33,11 @@ import {
 } from "./session";
 import { PacketTimeline, type TimelineStats } from "./timeline";
 import type { EegPacket } from "@/lib/neurofeedback/engine";
-import type { EegFeed } from "@/lib/protocol/types";
+import {
+  gyroMagnitudes,
+  type MotionSample,
+} from "@/lib/neurofeedback/stillness";
+import type { EegFeed, MotionFeed } from "@/lib/protocol/types";
 
 export type MuseStatus = "idle" | "connecting" | "connected" | "error";
 
@@ -172,6 +176,7 @@ export function useMuse(createDevice: () => MuseDevice) {
   // Who wants every EEG packet as it arrives: a neurofeedback block (V4-0009), the
   // console forwarding them to the participant's window, the live producer (T5).
   const eegListeners = useRef(new Set<(packet: EegPacket) => void>());
+  const motionListeners = useRef(new Set<(sample: MotionSample) => void>());
 
   const teardown = useCallback(() => {
     for (const off of unsubscribe.current) off();
@@ -223,7 +228,13 @@ export function useMuse(createDevice: () => MuseDevice) {
         const v = packet.samples;
         const mag = Math.hypot(v[6], v[7], v[8]); // last of the three readings
         if (kind === "acc") sensorsRef.current.accG = mag;
-        else sensorsRef.current.gyroDps = mag;
+        else {
+          sensorsRef.current.gyroDps = mag;
+          if (motionListeners.current.size > 0)
+            for (const dps of gyroMagnitudes(v))
+              for (const listener of motionListeners.current)
+                listener({ dps, hostMs });
+        }
         sensorsRef.current.motionPackets += 1;
         extrasRef.current?.feed(
           kind,
@@ -408,6 +419,17 @@ export function useMuse(createDevice: () => MuseDevice) {
     []
   );
 
+  /** Every gyroscope reading as it arrives, for the games' stillness (V4-0013). */
+  const motionFeed = useMemo<MotionFeed>(
+    () => ({
+      subscribe(listener) {
+        motionListeners.current.add(listener);
+        return () => void motionListeners.current.delete(listener);
+      },
+    }),
+    []
+  );
+
   /** Every EEG packet from now on, one channel at a time; returns the unsubscribe. */
   const onEeg = useCallback(
     (listener: EegListener) =>
@@ -431,6 +453,7 @@ export function useMuse(createDevice: () => MuseDevice) {
     readTimelineFit,
     readFirstSampleIndex,
     eegFeed,
+    motionFeed,
     onEeg,
     readTimeline,
   };

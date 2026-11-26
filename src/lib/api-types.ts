@@ -1968,6 +1968,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recordings/{recording_id}/rounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Rounds
+         * @description The session's rounds of game and map (V4-0013), computed from its block rows.
+         *
+         *     Per round, the game's share in target, the following map's transfer and the hands'
+         *     level; then the first map against the last: did the session move the person, with
+         *     no help, toward what they trained. Empty `rounds` for a session without a game.
+         *     409 `not_ready` without an analysis.
+         */
+        get: operations["get_rounds_recordings__recording_id__rounds_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/recordings/{recording_id}/selection": {
         parameters: {
             query?: never;
@@ -2288,7 +2313,8 @@ export interface paths {
          *
          *     A version with a `neurofeedback` block starts only where the flag is on for the
          *     workspace's kind (403 `feature_disabled`, V4-0009): never in a clinic in production
-         *     until the regulatory question is answered.
+         *     until the regulatory question is answered. A game block (V4-0013) also needs
+         *     `nf_games`, never in a school, and never for a person under 18.
          */
         post: operations["start_session_sessions_post"];
         delete?: never;
@@ -3664,8 +3690,9 @@ export interface components {
          *     `prestimulus`, its windows' trial `labels` (one per window whose start falls in the
          *     block, null where no trial onset falls in the window) and the average person's
          *     `norm`; any block may carry `cardiac` and `dynamics`, and a heartbeat-counting block
-         *     `interoception`, and a neurofeedback block `neurofeedback`. All are null where they
-         *     do not apply and on older analyses.
+         *     `interoception`, and a neurofeedback block `neurofeedback` (with `game` for a game,
+         *     V4-0013); a map block of a session in rounds carries `transfer`. All are null where
+         *     they do not apply and on older analyses.
          */
         BlockMetricsOut: {
             /** Artefact */
@@ -3718,6 +3745,7 @@ export interface components {
             t_end_s: number;
             /** T Start S */
             t_start_s: number;
+            transfer?: components["schemas"]["NfTransferOut"] | null;
         };
         /**
          * BlockNormOut
@@ -4287,6 +4315,8 @@ export interface components {
                 mfa_required: boolean;
                 /** @description Live neurofeedback block: band power drives a video (V4-0009, T5b). */
                 neurofeedback: boolean;
+                /** @description Neurofeedback games in rounds with a mapping between them (V4-0013, T5c). */
+                nf_games: boolean;
                 /** @description Protocol model, runtime, official templates, protocol from media (S18). */
                 protocols: boolean;
                 /** @description Recording review with annotations (S20). */
@@ -4888,6 +4918,14 @@ export interface components {
             summary?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * FirstVsLastOut
+         * @description The first map block with a transfer (the pre-test) against the last.
+         */
+        FirstVsLastOut: {
+            first: components["schemas"]["RoundEndOut"];
+            last: components["schemas"]["RoundEndOut"];
         };
         /**
          * GameTicketOut
@@ -5587,6 +5625,7 @@ export interface components {
             epoch?: number | null;
             /** Feedback */
             feedback?: string | null;
+            game?: components["schemas"]["NfGameOut"] | null;
             /** Gated */
             gated: {
                 [key: string]: number;
@@ -5615,6 +5654,35 @@ export interface components {
             value: components["schemas"]["NfQuantilesOut"];
         };
         /**
+         * NfGameOut
+         * @description What the hands did in a game block (V4-0013), from its scored forks only.
+         *
+         *     `accuracy` is `correct / (correct + wrong + missed)`; strays are presses with no fork
+         *     open; `moving_share` the share of the training the head moved. Not a measure of
+         *     attention: a score of the game, read beside the signal, never instead of it.
+         */
+        NfGameOut: {
+            /** Accuracy */
+            accuracy: number | null;
+            /** Correct */
+            correct: number;
+            /** Game */
+            game: string;
+            level: components["schemas"]["NfLevelOut"];
+            /** Missed */
+            missed: number;
+            /** Moving Share */
+            moving_share: number | null;
+            /** Prompts */
+            prompts: number;
+            rt_ms: components["schemas"]["NfRtOut"];
+            score: components["schemas"]["NfScoreOut"];
+            /** Stray */
+            stray: number;
+            /** Wrong */
+            wrong: number;
+        };
+        /**
          * NfLatencyOut
          * @description Measured `age_ms` of the updates: packet arrival to the frame that showed it.
          */
@@ -5623,6 +5691,16 @@ export interface components {
             median: number | null;
             /** P95 */
             p95: number | null;
+        };
+        /**
+         * NfLevelOut
+         * @description The hands' level a game block started at and the one the next starts at (1-10).
+         */
+        NfLevelOut: {
+            /** End */
+            end: number | null;
+            /** Start */
+            start: number | null;
         };
         /**
          * NfQuantilesOut
@@ -5656,6 +5734,28 @@ export interface components {
             value_agreement: number | null;
         };
         /**
+         * NfRtOut
+         * @description Median and 90th percentile of a game's scored response times, in ms.
+         */
+        NfRtOut: {
+            /** Median */
+            median: number | null;
+            /** P90 */
+            p90: number | null;
+        };
+        /**
+         * NfScoreOut
+         * @description The round's card: the light's share of clean training, the choices right of all.
+         */
+        NfScoreOut: {
+            /** Correct */
+            correct: number;
+            /** Light */
+            light: number | null;
+            /** Total */
+            total: number;
+        };
+        /**
          * NfThresholdOut
          * @description The threshold over the block: first and last value, range, changes and nudges.
          */
@@ -5672,6 +5772,36 @@ export interface components {
             nudges: number;
             /** Start */
             start: number | null;
+        };
+        /**
+         * NfTransferOut
+         * @description A map block's share in target without feedback, at its game's threshold (V4-0013).
+         *
+         *     `status`: `ok`; `pending` (a landscape game, until the person's map placed this
+         *     block's windows); `no_map` (the map was redrawn since the targets were chosen);
+         *     `no_threshold` (the game never set one); `no_signal` (no EEG for the electrodes).
+         *     `paired_with` is the game block's `key`; `pretest` the map before the first game.
+         *     The shares and the median are null unless `ok`.
+         */
+        NfTransferOut: {
+            /** Clean Windows */
+            clean_windows: number | null;
+            /** Gated Share */
+            gated_share: number | null;
+            /** In Target Share */
+            in_target_share: number | null;
+            /** Paired With */
+            paired_with: string;
+            /** Pretest */
+            pretest: boolean;
+            /** Signal */
+            signal: string | null;
+            /** Status */
+            status: string;
+            /** Threshold */
+            threshold: number | null;
+            /** Value Median */
+            value_median: number | null;
         };
         /**
          * NogoTypeOut
@@ -6311,6 +6441,41 @@ export interface components {
          * @enum {string}
          */
         ReviewState: "none" | "pending" | "approved" | "refused";
+        /**
+         * RoundEndOut
+         * @description A map block's key and its transfer share.
+         */
+        RoundEndOut: {
+            /** Key */
+            key: string | null;
+            /** Share */
+            share: number | null;
+        };
+        /**
+         * RoundOut
+         * @description One round: the game's share in target, the following map's transfer, the level.
+         */
+        RoundOut: {
+            /** Game */
+            game: string;
+            /** In Target Share */
+            in_target_share: number | null;
+            /** Level */
+            level: number | null;
+            /** Next Level */
+            next_level: number | null;
+            /** Transfer */
+            transfer: number | null;
+        };
+        /**
+         * RoundsOut
+         * @description A session in rounds (V4-0013), read off its block rows; empty without a game.
+         */
+        RoundsOut: {
+            first_vs_last: components["schemas"]["FirstVsLastOut"] | null;
+            /** Rounds */
+            rounds: components["schemas"]["RoundOut"][];
+        };
         /**
          * SchoolDeclaration
          * @description What a teacher declared with a school request (V4-0012), for the admin to judge.
@@ -10473,6 +10638,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rounds_recordings__recording_id__rounds_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundsOut"];
                 };
             };
             /** @description Validation Error */

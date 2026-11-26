@@ -34,6 +34,8 @@ import {
 } from "@/lib/neurofeedback/engine";
 import type { TaskContext, TaskKind } from "@/lib/protocol/types";
 import { FeedbackStage } from "@/components/neurofeedback/FeedbackStage";
+import { useGameRound } from "@/components/neurofeedback/games/useGameRound";
+import { rememberThreshold, thresholdKey } from "@/lib/neurofeedback/rounds";
 import {
   type FeedbackFrame,
   restingFrame,
@@ -63,10 +65,15 @@ function NeurofeedbackRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
 
 function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
   const t = useTranslations("kinds");
-  const { config, signal, adjustments } = ctx;
+  const { config, signal, adjustments, carry } = ctx;
   const finish = useFinish(ctx, "neurofeedback");
   const emit = useLatest(ctx.emit);
-  const engine = useMemo(() => new NeurofeedbackEngine(config), [config]);
+  // a `carry` block starts from the threshold the run's previous block on this signal
+  // ended on (V4-0013); read once, when the block mounts
+  const engine = useMemo(
+    () => new NeurofeedbackEngine(config, carry?.get(thresholdKey(config))),
+    [config, carry]
+  );
   // The picture at rest, once: later updates write the element's style directly, and a
   // style prop that changed would overwrite them on the next render.
   const style = useMemo(
@@ -82,6 +89,17 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
     restingFrame(engine.restingBrightness)
   );
   const [notice, setNotice] = useState<Notice>(signal ? null : "unavailable");
+  const game = useGameRound({
+    config,
+    seed: ctx.seed,
+    reducedMotion: ctx.reducedMotion,
+    motion: ctx.motion,
+    carry,
+    carried: engine.isCarried,
+    emit,
+    frameRef,
+    finish,
+  });
   const tally = useRef({
     updates: 0,
     inTarget: 0,
@@ -123,14 +141,18 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
         hop_samples: HOP_SAMPLES,
         sfreq: SFREQ,
         threshold_mode: config.threshold.mode,
-        baseline_s: config.baseline_s,
+        threshold_carried: engine.isCarried,
+        baseline_s: engine.isCarried ? 0 : config.baseline_s,
         duration_s: config.duration_s,
         live_signal: Boolean(signal),
+        ...(game.lantern
+          ? { game_level: game.lantern.level, motion: Boolean(ctx.motion) }
+          : {}),
       },
     });
-    if (signal && config.baseline_s > 0)
+    if (signal && engine.currentPhase === "baseline")
       emit.current({ label: "nf_baseline_start", kind: "stage" });
-  }, [config, emit, engine, signal]);
+  }, [config, ctx.motion, emit, engine, game.lantern, signal]);
 
   // The signal, packet by packet, through the engine.
   useEffect(() => {
@@ -144,6 +166,7 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
           tally.current.updates += 1;
           if (u.inTarget) tally.current.inTarget += 1;
           if (u.gated) tally.current.gated += 1;
+          game.onUpdate(u);
           frameRef.current = {
             level: u.level,
             brightness: u.brightness,
@@ -174,6 +197,7 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
                   age_ms: u.firstArrivalMs
                     ? Math.round(frameMs - u.firstArrivalMs)
                     : null,
+                  ...game.motionMeta(),
                   ...timingMeta("raf", FRAME_MS),
                 },
               },
@@ -225,7 +249,10 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
           return;
         case "done":
           if (output.reason === "baseline_failed") setNotice("baseline_failed");
-          else finish(summaryRef.current({ ended: "duration" }));
+          else {
+            rememberThreshold(carry, config, engine.currentThreshold);
+            game.end(summaryRef.current({ ended: "duration" }));
+          }
       }
     };
     const unsubscribe = signal.subscribe((packet) => {
@@ -237,7 +264,13 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
       for (const output of engine.push(packet)) handle(output);
     });
     const watchdog = setInterval(() => {
-      if (lost || performance.now() - lastPacket < SIGNAL_LOST_MS) return;
+      // a block that ran its length (a game's card standing) has nothing to lose
+      if (
+        lost ||
+        engine.done ||
+        performance.now() - lastPacket < SIGNAL_LOST_MS
+      )
+        return;
       lost = true;
       emit.current({ label: "nf_signal_lost", kind: "system" });
     }, 1000);
@@ -245,7 +278,7 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
       unsubscribe();
       clearInterval(watchdog);
     };
-  }, [emit, engine, finish, signal, summaryRef]);
+  }, [carry, config, emit, engine, finish, game, signal, summaryRef]);
 
   // The operator's nudges (V4-0009): logged here with the command they came from.
   useEffect(
@@ -274,9 +307,11 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
   useEffect(() => {
     if (!signal) return;
     const planned = config.baseline_s * 2 + config.duration_s + GRACE_S;
-    const timer = setTimeout(() => setNotice("timeout"), planned * 1000);
+    const timer = setTimeout(() => {
+      if (!engine.done) setNotice("timeout");
+    }, planned * 1000);
     return () => clearTimeout(timer);
-  }, [config.baseline_s, config.duration_s, signal]);
+  }, [config.baseline_s, config.duration_s, engine, signal]);
 
   // Why the block stops early, read for a moment, then the run goes on.
   useEffect(() => {
@@ -323,6 +358,9 @@ function BandRenderer(ctx: TaskContext<NeurofeedbackConfig>) {
         pictureRef.current = el;
       }}
       videoStyle={style}
+      game={game}
+      minLevel={config.min_level}
+      reducedMotion={ctx.reducedMotion}
     />
   );
 }

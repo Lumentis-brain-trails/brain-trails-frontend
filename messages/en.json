@@ -399,7 +399,19 @@
       "timeout": "The headband signal did not come through. Let's move on.",
       "needsLive": "This part follows where you are on your brain landscape, and the live service is not on for this session. It will be skipped.",
       "baselineFailedMap": "Your landscape did not come through clearly enough to start this part. Let's move on.",
-      "soundOn": "Turn the sound on"
+      "soundOn": "Turn the sound on",
+      "lantern": {
+        "aria": "Lantern: a walker on a path in the dark. Press left or right at each fork, on the side of the mark.",
+        "hint": "At each fork, press ← or → (or tap that side) toward the mark.",
+        "card": {
+          "title": "Round over",
+          "light": "How long your light reached",
+          "choices": "{correct} of {total} forks right",
+          "levelUp": "Level {level} → {next}: the forks come faster.",
+          "levelDown": "Level {level} → {next}: the forks come slower.",
+          "levelSame": "Level {level} again."
+        }
+      }
     }
   },
   "builder": {
@@ -1223,12 +1235,13 @@
         },
         "feedback": {
           "label": "What the person watches",
-          "help": "The video below, or a built-in animation that needs no media: a plane that takes off in target, two notes that come into tune, or the two ribbons of light coming into focus.",
+          "help": "The video below, or a built-in animation that needs no media: a plane that takes off in target, two notes that come into tune, or the two ribbons of light coming into focus. Or a game, Lantern: the signal is the light on a path, the hands choose each fork.",
           "options": {
             "video": "The video",
             "plane": "A plane taking off",
             "tuning": "Two notes coming into tune",
-            "ribbons": "The ribbons coming into focus"
+            "ribbons": "The ribbons coming into focus",
+            "lantern": "Lantern, a game"
           }
         },
         "direction": {
@@ -1270,10 +1283,11 @@
         },
         "threshold/mode": {
           "label": "Threshold from",
-          "help": "From this person's baseline today, or a fixed number that stays the same across sessions.",
+          "help": "From this person's baseline today, a fixed number that stays the same across sessions, or carried: the threshold the run's previous neurofeedback block on the same signal ended on, with no baseline (the first such block runs its baseline). Carry is for games in rounds.",
           "options": {
             "baseline": "The baseline",
-            "fixed": "A fixed value"
+            "fixed": "A fixed value",
+            "carry": "Carried from the previous block"
           }
         },
         "threshold/target_fraction": {
@@ -1283,6 +1297,13 @@
         "threshold/value": {
           "label": "Fixed threshold",
           "help": "A share between 0 and 1 for a band (0.25 is a quarter of the power), or the ratio itself."
+        },
+        "game": {
+          "label": "The game"
+        },
+        "game/start_level": {
+          "label": "Starting level",
+          "help": "The hands' level, 1 to 10, the first round starts at: how often the forks come and how long there is to choose. Between rounds it climbs at 85% right and drops below 65%; it never changes the trained signal."
         },
         "window_s": {
           "label": "Analysis window (seconds)",
@@ -2338,6 +2359,17 @@
         "drawing": "Drawing the trail…",
         "unavailable": "Trail unavailable"
       }
+    },
+    "rounds": {
+      "title": "Rounds",
+      "round": "Round",
+      "game": "Light on, in the game",
+      "after": "Stayed there, at rest",
+      "level": "Level",
+      "pending": "not yet",
+      "firstLast": "At rest with no game: {first} of the first rest, {last} of the last.",
+      "firstLastPending": "The rests on your map are measured once your map has placed them.",
+      "disclaimer": "What your signal did, round by round. Not a measure of progress or of how well the training works."
     }
   },
   "device": {
@@ -3298,6 +3330,60 @@
         }
       }
     },
+    "lantern-rounds": {
+      "title": "Lantern rounds",
+      "summary": "Three rounds of a lantern game on your alpha, each followed by a rest on the screen.",
+      "description": "Walk a path in the dark: the light reaches further as your alpha rises, and your hands choose each fork. Between rounds you rest your eyes on the screen, with nothing to follow, so the recording shows what you keep without the game's help.",
+      "contentWarning": "A warm light that grows and dims slowly with your signal, three times for three minutes. You can stop at any time.",
+      "groups": {
+        "rounds": {
+          "label": "Rounds"
+        }
+      },
+      "blocks": {
+        "welcome": {
+          "label": "Get ready",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "Three rounds: you walk a path with a lantern, then you rest your eyes on the screen."
+              },
+              "1": {
+                "text": "The calmer and more focused you are, the further the light reaches.\nAt each fork, press the arrow on the side of the mark."
+              },
+              "2": {
+                "text": "Keep your head still: the light sways when it moves.\nAbout twenty minutes in all."
+              }
+            },
+            "advance": {
+              "label": "Start"
+            }
+          }
+        },
+        "map_before": {
+          "label": "Eyes on the screen"
+        },
+        "lantern": {
+          "label": "Lantern"
+        },
+        "map": {
+          "label": "Eyes on the screen"
+        },
+        "outro": {
+          "label": "Done",
+          "config": {
+            "lines": {
+              "0": {
+                "text": "That's all. Your rounds are on your recording page."
+              }
+            },
+            "advance": {
+              "label": "Finish"
+            }
+          }
+        }
+      }
+    },
     "processing-speed": {
       "title": "Processing Speed",
       "summary": "Match symbols to numbers against the clock, twice for ninety seconds.",
@@ -3817,7 +3903,15 @@
       "lower": "Lower the threshold by 5%",
       "raise": "Raise the threshold by 5%",
       "nudges": "{n, plural, one {# change} other {# changes}}",
-      "disclaimer": "The value is what the participant's screen computes, live. It is not a clinical measure."
+      "disclaimer": "The value is what the participant's screen computes, live. It is not a clinical measure.",
+      "game": {
+        "level": "Game level",
+        "forks": "Forks",
+        "forksValue": "{correct} of {total} right",
+        "head": "Head",
+        "moving": "moving",
+        "still": "still"
+      }
     }
   },
   "subjects": {
@@ -4339,6 +4433,10 @@
       "ribbons": {
         "label": "The ribbons",
         "text": "Our two ribbons of light, blurred in their corners, coming into focus and toward each other as you get there."
+      },
+      "lantern": {
+        "label": "Lantern",
+        "text": "A game in rounds: your signal is the light on the path, your hands choose each fork. A short rest on the screen between rounds."
       }
     },
     "long": {
@@ -4365,8 +4463,10 @@
       "how": {
         "plane": "First a minute to see where you are. Then bring the plane up: it takes off when you get there.",
         "tuning": "First a minute to see where you are. Then listen: the two notes come into tune when you get there.",
-        "ribbons": "First a minute to see where you are. Then the ribbons come into focus when you get there."
-      }
+        "ribbons": "First a minute to see where you are. Then the ribbons come into focus when you get there.",
+        "lantern": "First a minute to see where you are. Then walk the path: the lantern reaches further when you get there, and the forks are for your hands. You rest between rounds."
+      },
+      "map": "Eyes on the screen"
     }
   },
   "schools": {

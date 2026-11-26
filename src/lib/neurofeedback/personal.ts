@@ -7,6 +7,11 @@
  * like any other, so the session, its timeline and its analysis are the usual ones. The
  * same protocol is updated each time, so the person's list does not fill up with copies.
  *
+ * A game (Lantern, V4-0013) is played in rounds instead: a short map, then a loop of
+ * the game and a map, the chosen minutes shared among the rounds (`roundsFor`). The game
+ * blocks carry the threshold from one round to the next, so only the first has a
+ * baseline; the maps show nothing, and what the person kept there is computed afterwards.
+ *
  * The words of the instruction are written in the person's language when the protocol
  * is made: a protocol's texts are its author's, and here the author is the person.
  */
@@ -24,6 +29,22 @@ import { inWorkspace } from "@/lib/workspace";
 export type Feedback = Exclude<NeurofeedbackConfig["feedback"], "video">;
 
 export const FEEDBACKS: readonly Feedback[] = ["plane", "tuning", "ribbons"];
+
+/** The feedbacks that are games, offered only with the `nf_games` flag (V4-0013). */
+export const GAME_FEEDBACKS: readonly Feedback[] = ["lantern"];
+
+/** A round's game, about three minutes (V4-0013's template). */
+export const ROUND_GAME_S = 180;
+
+/** The map before the first round and after each one: a minute, eyes on the screen. */
+export const MAP_S = 60;
+
+/** How many rounds `minutes` of game make, and how long each game runs. */
+export function roundsFor(minutes: number): { rounds: number; gameS: number } {
+  const total = Math.round(minutes * 60);
+  const rounds = Math.max(1, Math.round(total / ROUND_GAME_S));
+  return { rounds, gameS: Math.round(total / rounds) };
+}
 
 /** Training lengths offered, in minutes (Myndlift's sessions run 15-30 minutes). */
 export const MINUTES = [5, 10, 15, 20] as const;
@@ -51,6 +72,8 @@ export interface PersonalTexts {
   start: string;
   label: string;
   warning: string;
+  /** The map block's label, for a game. */
+  map: string;
 }
 
 /** The protocol tree for a choice. */
@@ -58,6 +81,78 @@ export function personalProtocol(
   choice: PersonalChoice,
   texts: PersonalTexts
 ): ProtocolTree {
+  const targets = {
+    ...choice.targets,
+    points: choice.targets.points.map(([x, y]) => [x, y]),
+  };
+  const isGame = GAME_FEEDBACKS.includes(choice.feedback);
+  const { rounds, gameS } = roundsFor(choice.minutes);
+  const map = (id: string) => ({
+    type: "block",
+    id,
+    kind: "baseline",
+    label: texts.map,
+    condition: "map",
+    config: { eyes: "open", duration_s: MAP_S, end_tone: false },
+  });
+  const training = isGame
+    ? [
+        map("map_before"),
+        {
+          type: "loop",
+          id: "rounds",
+          label: "Rounds",
+          conditions: {
+            columns: ["round"],
+            rows: Array.from({ length: rounds }, (_, i) => [i + 1]),
+          },
+          order: "sequential",
+          repetitions: 1,
+          template: {
+            type: "sequence",
+            id: "round",
+            order: "fixed",
+            children: [
+              {
+                type: "block",
+                id: "landscape_game",
+                kind: "neurofeedback",
+                label: "Neurofeedback",
+                condition: "game",
+                main: true,
+                config: {
+                  signal: "landscape_region",
+                  feedback: choice.feedback,
+                  targets,
+                  baseline_s: BASELINE_S,
+                  duration_s: gameS,
+                  threshold: {
+                    mode: "carry",
+                    target_fraction: TARGET_FRACTION,
+                  },
+                },
+              },
+              map("map"),
+            ],
+          },
+        },
+      ]
+    : [
+        {
+          type: "block",
+          id: "landscape_feedback",
+          kind: "neurofeedback",
+          label: "Neurofeedback",
+          config: {
+            signal: "landscape_region",
+            feedback: choice.feedback,
+            targets,
+            baseline_s: BASELINE_S,
+            duration_s: Math.round(choice.minutes * 60),
+            threshold: { mode: "baseline", target_fraction: TARGET_FRACTION },
+          },
+        },
+      ];
   return {
     schema: 1,
     manifest: {
@@ -85,23 +180,7 @@ export function personalProtocol(
             advance: { mode: "key", label: texts.start },
           },
         },
-        {
-          type: "block",
-          id: "landscape_feedback",
-          kind: "neurofeedback",
-          label: "Neurofeedback",
-          config: {
-            signal: "landscape_region",
-            feedback: choice.feedback,
-            targets: {
-              ...choice.targets,
-              points: choice.targets.points.map(([x, y]) => [x, y]),
-            },
-            baseline_s: BASELINE_S,
-            duration_s: Math.round(choice.minutes * 60),
-            threshold: { mode: "baseline", target_fraction: TARGET_FRACTION },
-          },
-        },
+        ...training,
       ],
     },
   } as unknown as ProtocolTree;
