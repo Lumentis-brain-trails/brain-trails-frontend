@@ -58,7 +58,9 @@
     "attestation_required": "Spunta entrambe le dichiarazioni per richiedere una scuola.",
     "confirmation_required": "Spunta di aver controllato il consenso del tutore.",
     "under_age": "Brain Trails è per chi ha almeno 18 anni.",
-    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica."
+    "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica.",
+    "already_enrolled": "Questo account è già in una scuola.",
+    "profile_required": "Prima aggiungi nome e anno di nascita nel tuo profilo."
   },
   "application": {
     "step": "Candidatura",
@@ -4469,6 +4471,13 @@
       "email": "Email del relatore",
       "invite": "Invita come relatore",
       "link": "Invia tu questo link:"
+    },
+    "join": {
+      "title": "Scuola",
+      "intro": "Il tuo insegnante ti ha dato un codice classe dopo che ti sei iscritto? Scrivilo qui per entrare nella tua classe.",
+      "tick": "Sono lo studente: ho letto l'<link>informativa sulla privacy</link> e do il mio consenso.",
+      "submit": "Entra nella scuola",
+      "enrolled": "Sei in {name}."
     }
   },
   "learning": {

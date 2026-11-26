@@ -58,7 +58,9 @@
     "attestation_required": "Tick both declarations to ask for a school.",
     "confirmation_required": "Tick that you checked the guardian's consent.",
     "under_age": "Brain Trails is for people aged 18 and over.",
-    "school_details_required": "A school needs its city, country, your role and your qualification."
+    "school_details_required": "A school needs its city, country, your role and your qualification.",
+    "already_enrolled": "This account is already in a school.",
+    "profile_required": "Add your name and year of birth in your profile first."
   },
   "application": {
     "step": "Application",
@@ -4469,6 +4471,13 @@
       "email": "Speaker's email",
       "invite": "Invite as speaker",
       "link": "Send this link yourself:"
+    },
+    "join": {
+      "title": "School",
+      "intro": "Did your teacher give you a class code after you signed up? Type it here to join your class.",
+      "tick": "I am the student: I have read the <link>privacy note</link> and I consent.",
+      "submit": "Join the school",
+      "enrolled": "You are in {name}."
     }
   },
   "learning": {

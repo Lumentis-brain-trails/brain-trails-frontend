@@ -34,6 +34,8 @@ import {
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { TransferCard } from "@/components/account/TransferCard";
+import { SchoolCard } from "@/components/account/SchoolCard";
+import { useFeature } from "@/lib/features";
 
 export default function AccountPage() {
   const signOut = useSignOut();
@@ -45,6 +47,7 @@ export default function AccountPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const contextEnabled = useContextEnabled();
+  const schoolsOn = useFeature("schools");
 
   const me = useQuery({
     queryKey: ["me"],
@@ -129,6 +132,12 @@ export default function AccountPage() {
             <ProfileCard data={profile.data} missing={!profile.data} />
           )}
         </section>
+
+        {schoolsOn && (
+          <section>
+            <SchoolCard />
+          </section>
+        )}
 
         {contextEnabled && <ContextSettingsCard />}
 
