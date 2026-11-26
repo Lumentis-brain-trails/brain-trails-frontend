@@ -96,6 +96,21 @@ export function LessonStage({
   const next = nextPlace(mod, place);
   const previous = previousPlace(mod, place);
   const moreQuestions = step && place.upTo + 1 < step.questions.length;
+  // what the step held back until its questions are answered: the teacher opens it for
+  // everyone at once (Andrea, 2026-11-26), by revealing the round; a move closes it
+  const heldBack =
+    !!step &&
+    !moreQuestions &&
+    (!!step.gallery ||
+      !!step.playground ||
+      ("reveal" in step && !!step.reveal));
+  const found = view.phase === "revealed" && view.question?.id === round.id;
+  const control = {
+    step: place.step,
+    upTo: place.upTo,
+    reveal: found,
+    onVerdict: () => {},
+  };
 
   return (
     <div className="space-y-5">
@@ -123,6 +138,15 @@ export function LessonStage({
           <Button disabled={!live || !next} onClick={() => next && go(next)}>
             {moreQuestions ? t("nextQuestion") : t("nextStep")}
           </Button>
+          {heldBack && (
+            <Button
+              variant="secondary"
+              disabled={!live || found}
+              onClick={() => game.reveal(null)}
+            >
+              {t(found ? "foundShown" : "showFound")}
+            </Button>
+          )}
           {choice && (
             <Button
               variant="ghost"
@@ -186,10 +210,7 @@ export function LessonStage({
         </Card>
       )}
 
-      <ModuleView
-        module={mod}
-        control={{ step: place.step, upTo: place.upTo, onVerdict: () => {} }}
-      />
+      <ModuleView module={mod} control={control} />
     </div>
   );
 }
