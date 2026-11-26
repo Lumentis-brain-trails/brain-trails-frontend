@@ -21,8 +21,10 @@ import {
   PARAM_SYMBOL,
   formatCode,
   isCorrect,
+  round,
   shuffled,
 } from "@/lib/learning/questions";
+import { guessFigure, sliderStart } from "@/lib/learning/encoding";
 
 /** Resolves `Words` against `learning.*`: keys are data here, checked by a unit test. */
 export function useWords() {
@@ -107,21 +109,23 @@ export function QuestionCard({
         </p>
       </div>
 
-      {"figures" in question && question.figures && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {question.figures.map((f, i) => (
-            <div
-              key={i}
-              className={cn(
-                "rounded-xl border border-hairline p-2",
-                question.figures?.length === 1 && "sm:col-span-2"
-              )}
-            >
-              <LearningFigure spec={f} />
-            </div>
-          ))}
-        </div>
-      )}
+      {"figures" in question &&
+        question.figures &&
+        !("sliders" in question && question.sliders) && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {question.figures.map((f, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "rounded-xl border border-hairline p-2",
+                  question.figures?.length === 1 && "sm:col-span-2"
+                )}
+              >
+                <LearningFigure spec={f} />
+              </div>
+            ))}
+          </div>
+        )}
 
       <Body
         key={version}
@@ -178,7 +182,10 @@ function initial(q: Question): Answer {
     case "count":
       return { kind: "count", value: Number.NaN };
     case "value":
-      return { kind: "value", values: q.labels.map(() => Number.NaN) };
+      return {
+        kind: "value",
+        values: q.sliders ? sliderStart(q) : q.labels.map(() => Number.NaN),
+      };
     case "choice":
       return { kind: "choice", id: "" };
     case "order":
@@ -223,6 +230,15 @@ function Body({
         value={answer.value}
         locked={locked}
         onChange={(value) => onChange({ kind: "count", value })}
+      />
+    );
+  if (question.kind === "value" && answer.kind === "value" && question.sliders)
+    return (
+      <ValueSliders
+        question={question}
+        values={answer.values}
+        locked={locked}
+        onChange={(values) => onChange({ kind: "value", values })}
       />
     );
   if (question.kind === "value" && answer.kind === "value")
@@ -288,6 +304,69 @@ function Body({
       />
     );
   return null;
+}
+
+/**
+ * A value question answered on sliders, one per number: the figure draws the guess over
+ * the target as the sliders move, and turns green once every number is close enough.
+ */
+function ValueSliders({
+  question,
+  values,
+  locked,
+  onChange,
+}: {
+  question: Extract<Question, { kind: "value" }>;
+  values: number[];
+  locked: boolean;
+  onChange: (values: number[]) => void;
+}) {
+  const t = useTranslations("learning.question");
+  const ok = isCorrect(question, { kind: "value", values });
+  const figure = guessFigure(question, values, ok);
+  return (
+    <div className="space-y-4">
+      {figure && (
+        <div className="rounded-xl border border-hairline p-2">
+          <LearningFigure spec={figure} className="mx-auto max-w-2xl" />
+          <p className="type-caption mt-1 text-center text-ink-3">
+            {t("sliderHint")}
+          </p>
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {question.labels.map((name, i) => {
+          const sl = question.sliders?.[i];
+          if (!sl) return null;
+          return (
+            <label key={name} className="block">
+              <span className="flex justify-between font-mono text-[15px] tabular-nums">
+                <span>{PARAM_SYMBOL[name]}</span>
+                <span>{round(values[i])}</span>
+              </span>
+              <input
+                type="range"
+                min={sl.min}
+                max={sl.max}
+                step={sl.step}
+                disabled={locked}
+                value={values[i]}
+                onChange={(e) => {
+                  const next = [...values];
+                  next[i] = Number(e.target.value);
+                  onChange(next);
+                }}
+                className={cn(
+                  "w-full",
+                  ok ? "accent-[var(--ok)]" : "accent-[var(--accent)]"
+                )}
+              />
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function CountInput({

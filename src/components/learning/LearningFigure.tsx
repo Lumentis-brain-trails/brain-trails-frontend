@@ -46,13 +46,23 @@ export function LearningFigure({
 }) {
   switch (spec.kind) {
     case "line":
-      return <LineFigure x={spec.x} range={spec.range} className={className} />;
+      return (
+        <LineFigure
+          x={spec.x}
+          range={spec.range}
+          ghost={spec.ghost}
+          ok={spec.ok}
+          className={className}
+        />
+      );
     case "plane":
       return (
         <PlaneFigure
           x={spec.x}
           y={spec.y}
           range={spec.range}
+          ghost={spec.ghost}
+          ok={spec.ok}
           className={className}
         />
       );
@@ -87,13 +97,36 @@ export function LearningFigure({
   }
 }
 
+/** The green of a guess that hit its target. */
+const OK = "var(--ok)";
+
+/** A target behind a guess: a hollow circle. */
+function Ghost({ cx, cy }: { cx: number; cy: number }) {
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={9}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeDasharray="3 2"
+      opacity={0.6}
+    />
+  );
+}
+
 function LineFigure({
   x,
   range = [0, 10],
+  ghost,
+  ok,
   className,
 }: {
   x: number;
   range?: [number, number];
+  ghost?: number;
+  ok?: boolean;
   className?: string;
 }) {
   const h = 64;
@@ -138,7 +171,8 @@ function LineFigure({
           </text>
         </g>
       ))}
-      <circle cx={sx(x)} cy={30} r={6} fill={PART_COLOURS[0]} />
+      {ghost !== undefined && <Ghost cx={sx(ghost)} cy={30} />}
+      <circle cx={sx(x)} cy={30} r={6} fill={ok ? OK : PART_COLOURS[0]} />
     </svg>
   );
 }
@@ -147,11 +181,15 @@ function PlaneFigure({
   x,
   y,
   range = [0, 10],
+  ghost,
+  ok,
   className,
 }: {
   x: number;
   y: number;
   range?: [number, number];
+  ghost?: [number, number];
+  ok?: boolean;
   className?: string;
 }) {
   const size = 180;
@@ -196,11 +234,12 @@ function PlaneFigure({
             </text>
           </g>
         ))}
+      {ghost && <Ghost cx={pad + s(ghost[0])} cy={size - pad - s(ghost[1])} />}
       <circle
         cx={pad + s(x)}
         cy={size - pad - s(y)}
         r={6}
-        fill={PART_COLOURS[0]}
+        fill={ok ? OK : PART_COLOURS[0]}
       />
     </svg>
   );
@@ -304,8 +343,8 @@ function SignalFigure({
           ))}
         <path
           d={pathOf(spec.parts, domain, yRange, hasEeg ? 800 : 400)}
-          stroke="currentColor"
-          strokeWidth={spec.showParts ? 1.4 : 2.2}
+          stroke={spec.ok ? OK : "currentColor"}
+          strokeWidth={spec.showParts ? 1.4 : spec.ok ? 3 : 2.2}
           opacity={spec.showParts ? 0.55 : 1}
         />
       </g>

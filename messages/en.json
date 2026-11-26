@@ -4519,13 +4519,15 @@
       "numbers": "{n, plural, one {# number} other {# numbers}}",
       "true": "True",
       "false": "False",
-      "reset": "Start over"
+      "reset": "Start over",
+      "sliderHint": "Your picture is solid; the dashed one is the target."
     },
     "gallery": {
-      "hint": "Nine pictures of one family. Guess the numbers behind them, then tap a picture to see its code.",
+      "hint": "Nine pictures of one family. Guess the numbers behind them: the codes open once you have answered the questions below.",
       "show": "Show all codes",
       "hide": "Hide the codes",
-      "hidden": "?"
+      "hidden": "?",
+      "locked": "Answer the questions first"
     },
     "playground": {
       "title": "Decode it yourself",
@@ -4565,35 +4567,43 @@
         },
         "line": {
           "title": "A point on a line",
-          "body": "<p>We start with the simplest picture there is: a dot on a ruler. Look at the nine pictures below. What changes from one to the next?</p><p>Only the position of the dot. So one number is enough to describe any of these pictures: how far along the ruler the dot is. We call it <b>x</b>.</p>"
+          "body": "<p>We start with the simplest picture there is: a dot on a ruler. Look at the nine pictures below. What changes from one to the next? How many numbers would you need to tell any of them apart?</p>",
+          "reveal": "<p>Only the position of the dot changes. So <b>one number</b> is enough: how far along the ruler the dot is. We call it <b>x</b>.</p>"
         },
         "plane": {
           "title": "A point on a plane",
-          "body": "<p>Now the dot can move left and right <i>and</i> up and down. One number is no longer enough: two dots can share the same x and still be in different places.</p><p>We need two numbers, <b>x</b> and <b>y</b>, the coordinates you know from maths. Each number answers one question: how far right, how far up.</p>"
+          "body": "<p>Now the dot can move left and right <i>and</i> up and down. Is one number still enough? Two dots can be just as far from the left edge and still be in different places.</p>",
+          "reveal": "<p>We need <b>two numbers</b>, <b>x</b> and <b>y</b>, the coordinates you know from maths. Each number answers one question: how far right, how far up.</p>"
         },
         "bellPosition": {
           "title": "A bell that moves",
-          "body": "<p>Now the pictures are curves: a <b>gaussian bell</b>, the shape of so many things in nature (heights in a class, errors of a measurement).</p><p>A curve is drawn with hundreds of dots, but look: in these nine pictures the bells are all the same, only shifted. So we still need <b>one number</b>: where the top of the bell is. We call it <b>μ</b> (mu, the centre).</p><p>This is the big idea of encoding: the number of numbers depends on <i>what changes</i>, not on how complicated the picture looks.</p>"
+          "body": "<p>Now the pictures are curves: a <b>gaussian bell</b>, the shape of so many things in nature (heights in a class, errors of a measurement).</p><p>A curve is drawn with hundreds of dots. Does that mean we need hundreds of numbers? Look at what changes from one picture to the next.</p>",
+          "reveal": "<p>The bells are all the same, only shifted. So <b>one number</b> is enough: where the top of the bell is. We call it <b>μ</b> (mu, the centre).</p><p>This is the big idea of encoding: the number of numbers depends on <i>what changes</i>, not on how complicated the picture looks.</p>"
         },
         "bellHeight": {
           "title": "A bell that moves and grows",
-          "body": "<p>Now the bells also have different heights. A second number is needed: the height of the top, <b>A</b> (for amplitude).</p><p>The code of each picture is now two numbers, <b>μ</b> and <b>A</b>: the same count as a point on a plane. In fact, every bell here <i>is</i> a point on a plane whose axes are μ and A.</p>"
+          "body": "<p>Bells again. Look closely at the nine pictures: what changes this time?</p>",
+          "reveal": "<p>The bells move <i>and</i> their heights change, so a second number is needed: the height of the top, <b>A</b> (for amplitude). The code is now <b>μ</b> and <b>A</b>: the same count as a point on a plane. In fact, every bell here <i>is</i> a point on a plane whose axes are μ and A.</p>"
         },
         "bellWidth": {
           "title": "A bell that moves, grows and spreads",
-          "body": "<p>Last ingredient: the bells now have different widths. The width is called <b>σ</b> (sigma, the spread). A small σ makes a thin spike, a large σ a wide hill.</p><p>Three numbers, <b>μ</b>, <b>A</b> and <b>σ</b>, describe any bell. The recipe to decode them is the formula <b>A · e^(−(x − μ)² / 2σ²)</b>: for every x, compute it, and draw the dot.</p><p>Try it below: move the three numbers until your bell sits on the dashed one.</p>"
+          "body": "<p>Bells once more, and something new changes. A thin spike and a wide hill can have the same centre and the same top: what tells them apart?</p>",
+          "reveal": "<p>The width, called <b>σ</b> (sigma, the spread). Three numbers, <b>μ</b>, <b>A</b> and <b>σ</b>, describe any bell. The recipe to decode them is the formula <b>A · e^(−(x − μ)² / 2σ²)</b>: for every x, compute it, and draw the dot.</p>"
         },
         "waves": {
           "title": "Waves",
-          "body": "<p>A new family: <b>sine waves</b>, the shape of sound, light and of many rhythms of the brain.</p><p>Two numbers change here. The <b>frequency f</b>: how many full waves fit in one second. The <b>amplitude A</b>: how high the wave goes. A cosine is the same wave shifted a little: if we wanted to allow that shift we would add a third number, the phase.</p>"
+          "body": "<p>A new family: <b>sine waves</b>, the shape of sound, light and of many rhythms of the brain. What changes from one wave to the next?</p>",
+          "reveal": "<p>Two numbers change. The <b>frequency f</b>: how many full waves fit in one second. The <b>amplitude A</b>: how high the wave goes. A cosine is the same wave shifted a little: to allow that shift we would add a third number, the phase.</p>"
         },
         "train": {
           "title": "Bells in a row",
-          "body": "<p>Now we put bells one after the other, at a regular distance, like the beats of a drum.</p><p>Each picture needs three numbers: the <b>height A</b> of the bells, their <b>width σ</b> and the <b>frequency f</b>, how many bells per second. We do not need the position of every bell: the frequency gives them all at once. A good recipe lets a few numbers say a lot.</p>"
+          "body": "<p>Now we put bells one after the other, at a regular distance, like the beats of a drum. Do we need the position of every single bell?</p>",
+          "reveal": "<p>No. Three numbers are enough: the <b>height A</b> of the bells, their <b>width σ</b> and the <b>frequency f</b>, how many bells per second. The frequency places every bell at once. A good recipe lets a few numbers say a lot.</p>"
         },
         "twoBells": {
           "title": "A bell up, a bell down",
-          "body": "<p>In every beat we now add a second bell with a <b>minus sign</b>: it points down. The beat gets the shape of a small wave going up and then down.</p><p>The code grows: the frequency <b>f</b>, the first bell's height and width (<b>A₁</b>, <b>σ₁</b>), the second bell's height and width (<b>A₂</b>, negative, and <b>σ₂</b>), and how long after the first the second comes (<b>d</b>).</p>"
+          "body": "<p>In every beat we now add a second bell with a <b>minus sign</b>: it points down. The beat gets the shape of a small wave going up and then down. What does the code need now?</p>",
+          "reveal": "<p>The code grows to six numbers: the frequency <b>f</b>, the first bell's height and width (<b>A₁</b>, <b>σ₁</b>), the second bell's height and width (<b>A₂</b>, negative, and <b>σ₂</b>), and how long after the first the second comes (<b>d</b>).</p>"
         },
         "ecg": {
           "title": "A heartbeat",
@@ -4605,7 +4615,7 @@
         },
         "vae": {
           "title": "Let a machine find the recipe",
-          "body": "<p>When we do not know the recipe, we can let a computer <b>learn it from many examples</b>. A <b>variational autoencoder</b> (VAE) is made of two neural networks: an <b>encoder</b>, which turns a piece of EEG into a few numbers, and a <b>decoder</b>, which rebuilds the EEG from those numbers.</p><p>It is exactly what we did all along: we choose <b>how many numbers</b> (here, eight), the encoder finds <b>their values</b>, the decoder <b>rebuilds</b>. The difference is that nobody writes the recipe: the two networks are trained together, on thousands of examples, until what comes out looks like what went in.</p><p>And the bells come back: in a VAE each number is not a single value but a small <b>bell</b> (a centre μ and a spread σ), so that close codes rebuild similar signals. Brain Trails uses a network of this family to turn every few seconds of your EEG into a list of numbers: your trail is drawn from them.</p>"
+          "body": "<p>When we do not know the recipe, we can let a computer <b>learn it from many examples</b>. A <b>variational autoencoder</b> (VAE) is made of two neural networks: an <b>encoder</b>, which turns a piece of EEG into a few numbers, and a <b>decoder</b>, which rebuilds the EEG from those numbers.</p><p>It is exactly what we did all along: we choose <b>how many numbers</b>, the encoder finds <b>their values</b>, the decoder <b>rebuilds</b>. The difference is that nobody writes the recipe: the two networks are trained together, on thousands of examples, until what comes out looks like what went in.</p><p>And the bells come back: in a VAE each number is not a single value but a small <b>bell</b> (a centre μ and a spread σ), so that close codes rebuild similar signals. Brain Trails uses a network of this family to turn every few seconds of your EEG into a list of numbers: your trail is drawn from them.</p>"
         },
         "recap": {
           "title": "Recap",
@@ -4627,7 +4637,7 @@
           "explain": "<p><b>One</b>: the position x of the dot along the line. Everything else (the line, the ticks) is the same in every picture, so it belongs to the recipe, not to the code.</p>"
         },
         "lineValue": {
-          "prompt": "Encode this picture: what is its x?",
+          "prompt": "Encode this picture: move the slider until your dot sits on the target. What is its x?",
           "explain": "<p>The dot is halfway between 6 and 7, so <b>x = 6.5</b>. Reading the value of a picture is the <b>encoding</b> step.</p>"
         },
         "lineDecode": {
@@ -4640,7 +4650,7 @@
           "explain": "<p>First the parts that never change (the recipe), then the code tells you where the only thing that changes goes. That is <b>decoding</b>.</p>"
         },
         "planeCount": {
-          "prompt": "How many numbers for a point on the plane?",
+          "prompt": "How many numbers do you need to describe one of these pictures?",
           "explain": "<p><b>Two</b>: x (how far right) and y (how far up). With only one, you could not tell apart two points one above the other.</p>"
         },
         "planeMatch": {
@@ -4656,7 +4666,7 @@
           "explain": "<p>μ is where the top is: the further right, the larger μ. Sorting pictures by a number is a way of reading their code.</p>"
         },
         "bellHeightCount": {
-          "prompt": "Now the bells move and change height. How many numbers?",
+          "prompt": "How many numbers do you need for one of these bells?",
           "explain": "<p><b>Two</b>: the centre μ and the height A.</p>"
         },
         "bellHeightMatch": {
@@ -4664,7 +4674,7 @@
           "explain": "<p>μ is where the top is, A how high it goes. Two bells in the same place but with different heights have different codes.</p>"
         },
         "bellWidthCount": {
-          "prompt": "Centre, height and width all change. How many numbers?",
+          "prompt": "And now, how many numbers for one of these bells?",
           "explain": "<p><b>Three</b>: μ, A and σ. Every possible bell is one point in a space with three axes.</p>"
         },
         "bellWidthSort": {
@@ -4686,7 +4696,7 @@
           "explain": "<p><b>Two</b>: the frequency f and the amplitude A. All these waves start at zero going up, so we do not need the phase.</p>"
         },
         "wavesValue": {
-          "prompt": "Encode this wave: what are its f and A? (The axis is in seconds.)",
+          "prompt": "Encode this wave: move the sliders until your wave lies on the dashed one. What are its f and A? (The axis is in seconds.)",
           "explain": "<p>In one second there are two full waves, so <b>f = 2</b>; the top reaches 1.5, so <b>A = 1.5</b>.</p>"
         },
         "wavesMatch": {
@@ -4694,7 +4704,7 @@
           "explain": "<p>Count the waves in one second for f, look at how high they go for A.</p>"
         },
         "trainCount": {
-          "prompt": "How many numbers for a row of bells like these?",
+          "prompt": "How many numbers do you need for one of these rows of bells?",
           "explain": "<p><b>Three</b>: height A, width σ and frequency f. The frequency places every bell at once, however many there are.</p>"
         },
         "trainRate": {
@@ -4702,7 +4712,7 @@
           "explain": "<p>The one with three bells every second: f = 3. The height and the width do not change the frequency.</p>"
         },
         "twoBellsCount": {
-          "prompt": "Each beat has a bell up and a bell down. How many numbers do you need?",
+          "prompt": "How many numbers do you need for one of these beats?",
           "explain": "<p><b>Six</b>: the frequency f, height and width of the first bell (A₁, σ₁), height and width of the second (A₂, σ₂), and the delay d between them.</p>"
         },
         "twoBellsSign": {
@@ -4776,6 +4786,30 @@
             "decode": "Decode: rebuild the picture from its numbers, and check that it looks like the original"
           },
           "explain": "<p>Recipe, count, encode, decode. When the recipe is unknown, as for the EEG, a neural network learns it.</p>"
+        },
+        "planeValue": {
+          "prompt": "Encode this point: move the two sliders until your dot sits on the target. What are its x and y?",
+          "explain": "<p>The target is 3 to the right and 7 up: <b>x = 3, y = 7</b>. Two numbers, one per direction, and each slider moves the dot along one of them only.</p>"
+        },
+        "bellPositionValue": {
+          "prompt": "Move the slider until your bell lies on the dashed one. Where is its centre μ?",
+          "explain": "<p><b>μ = 6.5</b>. Height and width are the same for every bell of this family, so one slider is enough to reach any of them.</p>"
+        },
+        "bellHeightValue": {
+          "prompt": "Now two sliders: find the centre μ and the height A of the dashed bell.",
+          "explain": "<p><b>μ = 3.5, A = 1.5</b>. Notice that each slider does one job: μ moves the bell sideways, A stretches it up.</p>"
+        },
+        "bellWidthValue": {
+          "prompt": "Three sliders: find μ, A and the width σ of the dashed bell.",
+          "explain": "<p><b>μ = 6, A = 1, σ = 0.5</b>. A small σ makes a narrow, sharp bell; a large one a wide, gentle bell.</p>"
+        },
+        "trainValue": {
+          "prompt": "Rebuild this row of bells: find its frequency f, the height A and the width σ.",
+          "explain": "<p><b>f = 2, A = 1.5, σ = 0.1</b>: two bells per second, each 1.5 tall and narrow. Three numbers rebuild the whole row, however long it is.</p>"
+        },
+        "twoBellsValue": {
+          "prompt": "Six sliders for six numbers: rebuild this beat, one bell up and one down.",
+          "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. The second bell's height is negative: that is what makes it point down.</p>"
         }
       }
     },
@@ -5242,6 +5276,7 @@
           "explain": "<p>Use, valleys, digging, nudging: plasticity is why we get stuck, and also why we can get out.</p>"
         }
       }
-    }
+    },
+    "revealTitle": "What we found"
   }
 }

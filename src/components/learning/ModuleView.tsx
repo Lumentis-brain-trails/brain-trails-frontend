@@ -120,6 +120,8 @@ export function ModuleView({
   const firstOpen = step.questions.findIndex(
     (q) => seen[q.id] !== "right" && seen[q.id] !== "shown"
   );
+  // what would give the answers away (codes, sliders, the explanation) waits for them
+  const answered = firstOpen === -1;
   const out = control
     ? control.upTo + 1
     : firstOpen === -1
@@ -193,8 +195,7 @@ export function ModuleView({
         {step.lab && NEURON_LABS.has(step.lab) && (
           <NeuronLab lab={step.lab as NeuronLabName} onGoal={labGoal} />
         )}
-        {step.gallery && <Gallery examples={step.gallery} />}
-        {step.playground && <Playground spec={step.playground} />}
+        {step.gallery && <Gallery examples={step.gallery} locked={!answered} />}
         {step.links && (
           <div className="flex flex-wrap gap-2">
             {step.links.map((l) => (
@@ -217,6 +218,16 @@ export function ModuleView({
             onVerdict={(v) => heard(q.id, v)}
           />
         ))}
+
+        {answered && step.reveal && (
+          <section className="learning-right space-y-2 rounded-[var(--radius-card)] border border-ok bg-ok-soft p-5">
+            <p className="type-eyebrow text-ok">{t("revealTitle")}</p>
+            <div className="type-body-lg space-y-3 text-pretty text-ink">
+              {words.rich({ key: `${key}.reveal` })}
+            </div>
+          </section>
+        )}
+        {answered && step.playground && <Playground spec={step.playground} />}
       </article>
 
       {!control && (

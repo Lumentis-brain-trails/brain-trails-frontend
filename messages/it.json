@@ -4519,13 +4519,15 @@
       "numbers": "{n, plural, one {# numero} other {# numeri}}",
       "true": "Vero",
       "false": "Falso",
-      "reset": "Ricomincia"
+      "reset": "Ricomincia",
+      "sliderHint": "La tua figura è piena; quella tratteggiata è l’obiettivo."
     },
     "gallery": {
-      "hint": "Nove immagini della stessa famiglia. Indovina i numeri che ci sono dietro, poi tocca un'immagine per vederne il codice.",
+      "hint": "Nove figure di una famiglia. Indovina i numeri dietro: i codici si aprono quando hai risposto alle domande qui sotto.",
       "show": "Mostra tutti i codici",
       "hide": "Nascondi i codici",
-      "hidden": "?"
+      "hidden": "?",
+      "locked": "Prima rispondi alle domande"
     },
     "playground": {
       "title": "Decodifica tu",
@@ -4565,35 +4567,43 @@
         },
         "line": {
           "title": "Un punto su una retta",
-          "body": "<p>Partiamo dall'immagine più semplice che ci sia: un punto su un righello. Guarda le nove immagini qui sotto. Cosa cambia da una all'altra?</p><p>Solo la posizione del punto. Quindi basta un numero per descrivere una qualsiasi di queste immagini: quanto lontano lungo il righello si trova il punto. Lo chiamiamo <b>x</b>.</p>"
+          "body": "<p>Partiamo dalla figura più semplice che ci sia: un punto su un righello. Guarda le nove figure qui sotto. Che cosa cambia dall’una all’altra? Quanti numeri ti servirebbero per distinguerle?</p>",
+          "reveal": "<p>Cambia solo la posizione del punto. Quindi basta <b>un numero</b>: quanto è lontano il punto lungo il righello. Lo chiamiamo <b>x</b>.</p>"
         },
         "plane": {
           "title": "Un punto su un piano",
-          "body": "<p>Ora il punto può muoversi a destra e a sinistra <i>e</i> in alto e in basso. Un numero non basta più: due punti possono avere la stessa x e trovarsi comunque in posti diversi.</p><p>Servono due numeri, <b>x</b> e <b>y</b>, le coordinate che conosci dalla matematica. Ogni numero risponde a una domanda: quanto a destra, quanto in alto.</p>"
+          "body": "<p>Ora il punto può muoversi a destra e a sinistra <i>e</i> in su e in giù. Basta ancora un numero? Due punti possono essere alla stessa distanza dal bordo sinistro ed essere comunque in posti diversi.</p>",
+          "reveal": "<p>Servono <b>due numeri</b>, <b>x</b> e <b>y</b>, le coordinate che conosci dalla matematica. Ogni numero risponde a una domanda: quanto a destra, quanto in su.</p>"
         },
         "bellPosition": {
           "title": "Una campana che si sposta",
-          "body": "<p>Ora le immagini sono curve: una <b>campana gaussiana</b>, la forma di tante cose in natura (le altezze in una classe, gli errori di una misura).</p><p>Una curva si disegna con centinaia di punti, ma guarda: in queste nove immagini le campane sono tutte uguali, solo spostate. Quindi ci basta ancora <b>un numero</b>: dove si trova la cima della campana. Lo chiamiamo <b>μ</b> (mu, il centro).</p><p>Ecco la grande idea della codifica: quanti numeri servono dipende da <i>cosa cambia</i>, non da quanto sembra complicata l'immagine.</p>"
+          "body": "<p>Ora le figure sono curve: una <b>campana gaussiana</b>, la forma di tante cose in natura (le altezze in una classe, gli errori di una misura).</p><p>Una curva si disegna con centinaia di punti. Vuol dire che servono centinaia di numeri? Guarda che cosa cambia da una figura all’altra.</p>",
+          "reveal": "<p>Le campane sono tutte uguali, solo spostate. Quindi basta <b>un numero</b>: dov’è la cima della campana. Lo chiamiamo <b>μ</b> (mu, il centro).</p><p>È la grande idea della codifica: quanti numeri servono dipende da <i>che cosa cambia</i>, non da quanto è complicata la figura.</p>"
         },
         "bellHeight": {
           "title": "Una campana che si sposta e cresce",
-          "body": "<p>Ora le campane hanno anche altezze diverse. Serve un secondo numero: l'altezza della cima, <b>A</b> (per ampiezza).</p><p>Il codice di ogni immagine ora è di due numeri, <b>μ</b> e <b>A</b>: tanti quanti per un punto su un piano. In effetti, ogni campana qui <i>è</i> un punto su un piano con gli assi μ e A.</p>"
+          "body": "<p>Di nuovo campane. Guarda bene le nove figure: che cosa cambia questa volta?</p>",
+          "reveal": "<p>Le campane si spostano <i>e</i> cambiano altezza, quindi serve un secondo numero: l’altezza della cima, <b>A</b> (per ampiezza). Il codice ora è <b>μ</b> e <b>A</b>: tanti numeri quanti un punto su un piano. Infatti ogni campana qui <i>è</i> un punto su un piano con assi μ e A.</p>"
         },
         "bellWidth": {
           "title": "Una campana che si sposta, cresce e si allarga",
-          "body": "<p>Ultimo ingrediente: ora le campane hanno larghezze diverse. La larghezza si chiama <b>σ</b> (sigma, la dispersione). Una σ piccola fa un picco sottile, una σ grande una collina larga.</p><p>Tre numeri, <b>μ</b>, <b>A</b> e <b>σ</b>, descrivono qualsiasi campana. La ricetta per decodificarli è la formula <b>A · e^(−(x − μ)² / 2σ²)</b>: per ogni x la calcoli e disegni il punto.</p><p>Prova qui sotto: muovi i tre numeri finché la tua campana non si posa su quella tratteggiata.</p>"
+          "body": "<p>Ancora campane, e cambia qualcosa di nuovo. Una punta sottile e una collina larga possono avere lo stesso centro e la stessa cima: che cosa le distingue?</p>",
+          "reveal": "<p>La larghezza, che si chiama <b>σ</b> (sigma, la dispersione). Tre numeri, <b>μ</b>, <b>A</b> e <b>σ</b>, descrivono qualsiasi campana. La ricetta per decodificarli è la formula <b>A · e^(−(x − μ)² / 2σ²)</b>: per ogni x la calcoli e disegni il punto.</p>"
         },
         "waves": {
           "title": "Onde",
-          "body": "<p>Una nuova famiglia: le <b>onde sinusoidali</b>, la forma del suono, della luce e di tanti ritmi del cervello.</p><p>Qui cambiano due numeri. La <b>frequenza f</b>: quante onde intere stanno in un secondo. L’<b>ampiezza A</b>: quanto in alto arriva l'onda. Un coseno è la stessa onda spostata un po': se volessimo permettere quello spostamento aggiungeremmo un terzo numero, la fase.</p>"
+          "body": "<p>Una nuova famiglia: le <b>onde sinusoidali</b>, la forma del suono, della luce e di molti ritmi del cervello. Che cosa cambia da un’onda all’altra?</p>",
+          "reveal": "<p>Cambiano due numeri. La <b>frequenza f</b>: quante onde complete stanno in un secondo. L’<b>ampiezza A</b>: quanto sale l’onda. Un coseno è la stessa onda spostata un poco: per permettere quello spostamento aggiungeremmo un terzo numero, la fase.</p>"
         },
         "train": {
           "title": "Campane in fila",
-          "body": "<p>Ora mettiamo le campane una dopo l'altra, a distanza regolare, come i colpi di un tamburo.</p><p>Ogni immagine richiede tre numeri: l’<b>altezza A</b> delle campane, la loro <b>larghezza σ</b> e la <b>frequenza f</b>, quante campane al secondo. Non ci serve la posizione di ogni campana: la frequenza le dà tutte insieme. Una buona ricetta fa dire molto a pochi numeri.</p>"
+          "body": "<p>Ora mettiamo le campane una dopo l’altra, a distanza regolare, come i colpi di un tamburo. Ci serve la posizione di ogni singola campana?</p>",
+          "reveal": "<p>No. Bastano tre numeri: l’<b>altezza A</b> delle campane, la loro <b>larghezza σ</b> e la <b>frequenza f</b>, quante campane al secondo. La frequenza le mette a posto tutte insieme. Una buona ricetta fa dire molto a pochi numeri.</p>"
         },
         "twoBells": {
           "title": "Una campana su, una campana giù",
-          "body": "<p>In ogni battito ora aggiungiamo una seconda campana con il <b>segno meno</b>: punta verso il basso. Il battito prende la forma di una piccola onda che sale e poi scende.</p><p>Il codice cresce: la frequenza <b>f</b>, altezza e larghezza della prima campana (<b>A₁</b>, <b>σ₁</b>), altezza e larghezza della seconda (<b>A₂</b>, negativa, e <b>σ₂</b>), e quanto dopo la prima arriva la seconda (<b>d</b>).</p>"
+          "body": "<p>In ogni battito ora aggiungiamo una seconda campana con il <b>segno meno</b>: punta in giù. Il battito prende la forma di una piccola onda che sale e poi scende. Di che cosa ha bisogno ora il codice?</p>",
+          "reveal": "<p>Il codice sale a sei numeri: la frequenza <b>f</b>, altezza e larghezza della prima campana (<b>A₁</b>, <b>σ₁</b>), altezza e larghezza della seconda (<b>A₂</b>, negativa, e <b>σ₂</b>), e quanto dopo la prima arriva la seconda (<b>d</b>).</p>"
         },
         "ecg": {
           "title": "Un battito del cuore",
@@ -4605,7 +4615,7 @@
         },
         "vae": {
           "title": "Lasciamo che una macchina trovi la ricetta",
-          "body": "<p>Quando non conosciamo la ricetta, possiamo lasciare che un computer la <b>impari da tanti esempi</b>. Un <b>autoencoder variazionale</b> (VAE) è fatto di due reti neurali: un <b>encoder</b>, che trasforma un pezzo di EEG in pochi numeri, e un <b>decoder</b>, che ricostruisce l'EEG da quei numeri.</p><p>È esattamente quello che abbiamo fatto finora: scegliamo <b>quanti numeri</b> (qui, otto), l'encoder trova <b>i loro valori</b>, il decoder <b>ricostruisce</b>. La differenza è che nessuno scrive la ricetta: le due reti vengono allenate insieme, su migliaia di esempi, finché quello che esce non somiglia a quello che è entrato.</p><p>E tornano le campane: in un VAE ogni numero non è un valore solo ma una piccola <b>campana</b> (un centro μ e una dispersione σ), così codici vicini ricostruiscono segnali simili. Brain Trails usa una rete di questa famiglia per trasformare ogni pochi secondi del tuo EEG in una lista di numeri: il tuo sentiero è disegnato da quelli.</p>"
+          "body": "<p>Quando non conosciamo la ricetta, possiamo lasciare che un computer la <b>impari da tanti esempi</b>. Un <b>autoencoder variazionale</b> (VAE) è fatto di due reti neurali: un <b>encoder</b>, che trasforma un pezzo di EEG in pochi numeri, e un <b>decoder</b>, che ricostruisce l'EEG da quei numeri.</p><p>È esattamente quello che abbiamo fatto finora: scegliamo <b>quanti numeri</b>, l'encoder trova <b>i loro valori</b>, il decoder <b>ricostruisce</b>. La differenza è che nessuno scrive la ricetta: le due reti vengono allenate insieme, su migliaia di esempi, finché quello che esce non somiglia a quello che è entrato.</p><p>E tornano le campane: in un VAE ogni numero non è un valore solo ma una piccola <b>campana</b> (un centro μ e una dispersione σ), così codici vicini ricostruiscono segnali simili. Brain Trails usa una rete di questa famiglia per trasformare ogni pochi secondi del tuo EEG in una lista di numeri: il tuo sentiero è disegnato da quelli.</p>"
         },
         "recap": {
           "title": "Riepilogo",
@@ -4627,7 +4637,7 @@
           "explain": "<p><b>Uno</b>: la posizione x del punto lungo la retta. Tutto il resto (la retta, le tacche) è uguale in ogni immagine, quindi fa parte della ricetta, non del codice.</p>"
         },
         "lineValue": {
-          "prompt": "Codifica questa immagine: quanto vale la sua x?",
+          "prompt": "Codifica questa figura: muovi il cursore finché il tuo punto non è sull’obiettivo. Quanto vale x?",
           "explain": "<p>Il punto è a metà tra 6 e 7, quindi <b>x = 6.5</b>. Leggere il valore di un'immagine è il passo di <b>codifica</b>.</p>"
         },
         "lineDecode": {
@@ -4640,7 +4650,7 @@
           "explain": "<p>Prima le parti che non cambiano mai (la ricetta), poi il codice ti dice dove va l'unica cosa che cambia. Questo è <b>decodificare</b>.</p>"
         },
         "planeCount": {
-          "prompt": "Quanti numeri per un punto sul piano?",
+          "prompt": "Quanti numeri ti servono per descrivere una di queste figure?",
           "explain": "<p><b>Due</b>: x (quanto a destra) e y (quanto in alto). Con uno solo non potresti distinguere due punti uno sopra l'altro.</p>"
         },
         "planeMatch": {
@@ -4656,7 +4666,7 @@
           "explain": "<p>μ è dove sta la cima: più è a destra, più μ è grande. Ordinare immagini secondo un numero è un modo di leggerne il codice.</p>"
         },
         "bellHeightCount": {
-          "prompt": "Ora le campane si spostano e cambiano altezza. Quanti numeri?",
+          "prompt": "Quanti numeri ti servono per una di queste campane?",
           "explain": "<p><b>Due</b>: il centro μ e l'altezza A.</p>"
         },
         "bellHeightMatch": {
@@ -4664,7 +4674,7 @@
           "explain": "<p>μ è dove sta la cima, A quanto è alta. Due campane nello stesso posto ma con altezze diverse hanno codici diversi.</p>"
         },
         "bellWidthCount": {
-          "prompt": "Cambiano centro, altezza e larghezza. Quanti numeri?",
+          "prompt": "E ora, quanti numeri per una di queste campane?",
           "explain": "<p><b>Tre</b>: μ, A e σ. Ogni campana possibile è un punto in uno spazio con tre assi.</p>"
         },
         "bellWidthSort": {
@@ -4686,7 +4696,7 @@
           "explain": "<p><b>Due</b>: la frequenza f e l'ampiezza A. Tutte queste onde partono da zero salendo, quindi la fase non ci serve.</p>"
         },
         "wavesValue": {
-          "prompt": "Codifica quest'onda: quanto valgono f e A? (L'asse è in secondi.)",
+          "prompt": "Codifica quest’onda: muovi i cursori finché la tua onda non si sovrappone a quella tratteggiata. Quanto valgono f e A? (L’asse è in secondi.)",
           "explain": "<p>In un secondo ci sono due onde intere, quindi <b>f = 2</b>; la cima arriva a 1.5, quindi <b>A = 1.5</b>.</p>"
         },
         "wavesMatch": {
@@ -4694,7 +4704,7 @@
           "explain": "<p>Conta le onde in un secondo per f, guarda quanto salgono per A.</p>"
         },
         "trainCount": {
-          "prompt": "Quanti numeri per una fila di campane come queste?",
+          "prompt": "Quanti numeri ti servono per una di queste file di campane?",
           "explain": "<p><b>Tre</b>: altezza A, larghezza σ e frequenza f. La frequenza mette a posto tutte le campane insieme, per quante siano.</p>"
         },
         "trainRate": {
@@ -4702,7 +4712,7 @@
           "explain": "<p>Quella con tre campane al secondo: f = 3. L'altezza e la larghezza non cambiano la frequenza.</p>"
         },
         "twoBellsCount": {
-          "prompt": "Ogni battito ha una campana in su e una in giù. Quanti numeri ti servono?",
+          "prompt": "Quanti numeri ti servono per uno di questi battiti?",
           "explain": "<p><b>Sei</b>: la frequenza f, altezza e larghezza della prima campana (A₁, σ₁), altezza e larghezza della seconda (A₂, σ₂), e il ritardo d tra le due.</p>"
         },
         "twoBellsSign": {
@@ -4776,6 +4786,30 @@
             "decode": "Decodifica: ricostruisci l'immagine dai suoi numeri, e controlla che somigli all'originale"
           },
           "explain": "<p>Ricetta, quanti numeri, codifica, decodifica. Quando la ricetta non si conosce, come per l'EEG, la impara una rete neurale.</p>"
+        },
+        "planeValue": {
+          "prompt": "Codifica questo punto: muovi i due cursori finché il tuo punto non è sull’obiettivo. Quanto valgono x e y?",
+          "explain": "<p>L’obiettivo è 3 a destra e 7 in su: <b>x = 3, y = 7</b>. Due numeri, uno per direzione, e ogni cursore muove il punto lungo una sola delle due.</p>"
+        },
+        "bellPositionValue": {
+          "prompt": "Muovi il cursore finché la tua campana non si sovrappone a quella tratteggiata. Dov’è il suo centro μ?",
+          "explain": "<p><b>μ = 6.5</b>. Altezza e larghezza sono le stesse per tutte le campane di questa famiglia, quindi basta un cursore per raggiungerle tutte.</p>"
+        },
+        "bellHeightValue": {
+          "prompt": "Ora due cursori: trova il centro μ e l’altezza A della campana tratteggiata.",
+          "explain": "<p><b>μ = 3.5, A = 1.5</b>. Nota che ogni cursore fa un solo lavoro: μ sposta la campana di lato, A la allunga in su.</p>"
+        },
+        "bellWidthValue": {
+          "prompt": "Tre cursori: trova μ, A e la larghezza σ della campana tratteggiata.",
+          "explain": "<p><b>μ = 6, A = 1, σ = 0.5</b>. Una σ piccola fa una campana stretta e appuntita; una grande una campana larga e dolce.</p>"
+        },
+        "trainValue": {
+          "prompt": "Ricostruisci questa fila di campane: trova la frequenza f, l’altezza A e la larghezza σ.",
+          "explain": "<p><b>f = 2, A = 1.5, σ = 0.1</b>: due campane al secondo, alte 1.5 e strette. Tre numeri ricostruiscono tutta la fila, per quanto sia lunga.</p>"
+        },
+        "twoBellsValue": {
+          "prompt": "Sei cursori per sei numeri: ricostruisci questo battito, una campana in su e una in giù.",
+          "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. L’altezza della seconda campana è negativa: è questo che la fa puntare in giù.</p>"
         }
       }
     },
@@ -5242,6 +5276,7 @@
           "explain": "<p>Uso, valli, scavare, spingere: la plasticità è il motivo per cui restiamo bloccati, e anche quello per cui possiamo uscirne.</p>"
         }
       }
-    }
+    },
+    "revealTitle": "Che cosa abbiamo scoperto"
   }
 }

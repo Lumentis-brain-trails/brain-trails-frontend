@@ -5,6 +5,8 @@ import {
   ECG_NUMBERS,
   ENCODING,
   codeValues,
+  guessFigure,
+  sliderStart,
   playgroundParts,
 } from "@/lib/learning/encoding";
 import { MODULES, moduleOf, stepIndex } from "@/lib/learning/modules";
@@ -643,5 +645,45 @@ describe("the ball on the landscape", () => {
     expect(
       stepBall(WORLDS.stuck, right, 0.01, seeded(1)).x
     ).toBeLessThanOrEqual(10);
+  });
+});
+
+describe("encoding questions do not give their answers away", () => {
+  const values = ENCODING.flatMap((s) => s.questions).filter(
+    (q): q is Extract<Question, { kind: "value" }> => q.kind === "value"
+  );
+
+  test("every value question is answered on sliders that can reach the answer", () => {
+    for (const q of values) {
+      expect(q.sliders, q.id).toHaveLength(q.labels.length);
+      q.answer.forEach((v, i) => {
+        const s = q.sliders![i];
+        expect(v, q.id).toBeGreaterThanOrEqual(s.min);
+        expect(v, q.id).toBeLessThanOrEqual(s.max);
+        const steps = (v - s.min) / s.step;
+        expect(Math.abs(steps - Math.round(steps)), q.id).toBeLessThan(1e-6);
+      });
+      // the sliders do not start on the answer, and the answer itself is right
+      expect(
+        isCorrect(q, { kind: "value", values: sliderStart(q) }),
+        q.id
+      ).toBe(false);
+      expect(isCorrect(q, { kind: "value", values: q.answer }), q.id).toBe(
+        true
+      );
+      expect(guessFigure(q, q.answer, true), q.id).not.toBeNull();
+    }
+  });
+
+  test("steps that hold back their explanation have one, and ask first", () => {
+    const steps = en.learning.encoding.steps as Record<
+      string,
+      { body: string; reveal?: string }
+    >;
+    for (const s of ENCODING.filter((s) => s.reveal)) {
+      expect(steps[s.id].reveal, s.id).toBeTruthy();
+      expect(s.questions[0].kind, s.id).toBe("count");
+      expect(s.questions[1].kind, s.id).toBe("value");
+    }
   });
 });
