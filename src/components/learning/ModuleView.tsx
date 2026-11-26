@@ -38,7 +38,8 @@ import { type LearningModule, stepIndex } from "@/lib/learning/modules";
 export interface ModuleControl {
   /**
    * Show what the step held back (its "What we found" box, the gallery's codes, the
-   * playground) whatever this screen answered: the teacher's call for the whole class.
+   * playground). In a teacher-paced lesson only this opens it, never a student's own
+   * answers: the teacher shows it to the whole class at once.
    */
   reveal?: boolean;
   /** The step on screen, counted from zero. */
@@ -126,7 +127,8 @@ export function ModuleView({
     (q) => seen[q.id] !== "right" && seen[q.id] !== "shown"
   );
   // what would give the answers away (codes, sliders, the explanation) waits for them
-  const answered = firstOpen === -1 || control?.reveal === true;
+  // in a teacher-paced lesson only the teacher opens it, for the whole class at once
+  const answered = control ? control.reveal === true : firstOpen === -1;
   const out = control
     ? control.upTo + 1
     : firstOpen === -1
