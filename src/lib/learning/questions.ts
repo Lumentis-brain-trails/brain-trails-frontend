@@ -192,6 +192,12 @@ export type Question =
       figures?: FigureSpec[];
       options: Item[];
       answer: string;
+      /**
+       * Sliders to find the answer with before picking it (Andrea, 2026-11-26): a value
+       * question's sliders, guess and target, drawn above the options; they only help,
+       * the pick is the answer.
+       */
+      explore?: Extract<Question, { kind: "value" }>;
       explain: Words;
     }
   | {

@@ -698,11 +698,19 @@ describe("the ball on the landscape", () => {
 });
 
 describe("encoding questions do not give their answers away", () => {
-  const values = ENCODING.flatMap((s) => s.questions).filter(
-    (q): q is Extract<Question, { kind: "value" }> => q.kind === "value"
+  const picks = ENCODING.flatMap((s) => s.questions).filter(
+    (q): q is Extract<Question, { kind: "choice" }> =>
+      q.kind === "choice" && !!q.explore
   );
+  const values = picks.map((q) => q.explore!);
 
-  test("every value question is answered on sliders that can reach the answer", () => {
+  test("the codes are picked from four distinct ones, after sliders that can reach them", () => {
+    expect(picks.length).toBe(8);
+    for (const q of picks) {
+      const codes = q.options.map((o) => String(o.words?.values?.code));
+      expect(new Set(codes).size, q.id).toBe(4);
+      expect(codes[0], q.id).toContain(String(q.explore!.answer[0]));
+    }
     for (const q of values) {
       expect(q.sliders, q.id).toHaveLength(q.labels.length);
       q.answer.forEach((v, i) => {
@@ -733,7 +741,8 @@ describe("encoding questions do not give their answers away", () => {
       expect(steps[s.id].reveal, s.id).toBeTruthy();
       if (!s.gallery) continue;
       expect(s.questions[0].kind, s.id).toBe("count");
-      expect(s.questions[1].kind, s.id).toBe("value");
+      const second = s.questions[1];
+      expect(second.kind === "choice" && !!second.explore, s.id).toBe(true);
     }
   });
 
