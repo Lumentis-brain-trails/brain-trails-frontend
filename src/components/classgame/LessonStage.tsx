@@ -14,6 +14,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleView } from "@/components/learning/ModuleView";
+import { BraidStage } from "@/components/classgame/BraidStage";
 import { LiveChoice } from "@/components/classgame/LiveChoice";
 import { toWire } from "@/lib/classgame/game";
 import { Button, Card, cn } from "@/components/ui";
@@ -36,17 +37,43 @@ import { type LearningModule } from "@/lib/learning/modules";
 
 type Host = ReturnType<typeof useHostGame>;
 
+/** Where this browser last left the class in a module (see `useLesson`). */
+const placeKey = (slug: string) => `bt-lesson-place-${slug}`;
+
+function storedPlace(mod: LearningModule): LessonPlace | null {
+  try {
+    const raw = sessionStorage.getItem(placeKey(mod.slug));
+    const place = raw ? (JSON.parse(raw) as LessonPlace) : null;
+    return place?.module === mod.slug && mod.steps[place.step] ? place : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Where the class is in `mod`, and the move that takes everyone elsewhere. Until the
  * teacher moves, the place is the room's (coming back to the page resumes the lesson),
  * else the module's start, which is put to the class once the room has said hello.
+ * While another round holds the room (the braided path's class vote, on its step) the
+ * place is the one this browser last kept, so a reload does not lose the lesson.
  */
 export function useLesson(game: Host, mod: LearningModule) {
   const { view, askRound } = game;
   const roomHeld = asLesson(view.question);
   const held = roomHeld?.module === mod.slug ? roomHeld : null;
+  const elsewhere = !!view.question && !roomHeld;
+  const [kept] = useState(() => storedPlace(mod));
   const [moved, setMoved] = useState<LessonPlace | null>(null);
-  const place: LessonPlace = moved ?? held ?? startPlace(mod);
+  const place: LessonPlace =
+    moved ?? held ?? (elsewhere ? kept : null) ?? startPlace(mod);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(placeKey(mod.slug), JSON.stringify(place));
+    } catch {
+      // a private window: a reload starts from the room again
+    }
+  }, [mod.slug, place]);
 
   const go = useCallback(
     (next: LessonPlace) => {
@@ -61,8 +88,8 @@ export function useLesson(game: Host, mod: LearningModule) {
   useEffect(() => {
     if (!greeted || started.current) return;
     started.current = true;
-    if (!held) askRound(lessonRound(mod, startPlace(mod)));
-  }, [greeted, held, mod, askRound]);
+    if (!held && !elsewhere) askRound(lessonRound(mod, startPlace(mod)));
+  }, [greeted, held, elsewhere, mod, askRound]);
 
   return { place, go };
 }
@@ -108,6 +135,10 @@ export function LessonStage({
     (!!step.gallery ||
       !!step.playground ||
       ("reveal" in step && !!step.reveal));
+  // the braided path's step is played as a class vote: the shared board takes the room,
+  // and "Back to the questions" puts the step's round out again (Andrea, 2026-11-26)
+  const braid = step?.lab === "braid";
+  const away = !!view.question && view.question.id !== round.id;
   const control = {
     step: place.step,
     upTo: place.upTo,
@@ -141,7 +172,7 @@ export function LessonStage({
           >
             {t("back")}
           </Button>
-          {(question || heldBack) && (
+          {(question || heldBack) && !away && (
             <Button
               variant="secondary"
               disabled={!live || revealedNow}
@@ -152,12 +183,21 @@ export function LessonStage({
                 : t(revealedNow ? "foundShown" : "showFound")}
             </Button>
           )}
+          {away && (
+            <Button
+              variant="secondary"
+              disabled={!live}
+              onClick={() => go(here)}
+            >
+              {t("backToQuestions")}
+            </Button>
+          )}
           <Button disabled={!live || !next} onClick={() => next && go(next)}>
             {moreQuestions ? t("nextQuestion") : t("nextStep")}
           </Button>
         </div>
 
-        {counted && secret && (
+        {counted && !away && secret && (
           // before the reveal the board shows only how many answered: the split
           // would give the answer away on the projector, so it waits under the pointer
           <div className="grid grid-cols-2 gap-4">
@@ -178,7 +218,7 @@ export function LessonStage({
             </div>
           </div>
         )}
-        {counted && !secret && (
+        {counted && !away && !secret && (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {VERDICTS.map((v) => (
               <div
@@ -227,6 +267,8 @@ export function LessonStage({
           />
         </Card>
       )}
+
+      {braid && <BraidStage game={game} />}
 
       <ModuleView module={mod} control={control} />
     </div>

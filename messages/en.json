@@ -4325,7 +4325,8 @@
       "steps": "Steps",
       "answered": "Answered",
       "revealAnswer": "Reveal the answer",
-      "answerRevealed": "Answer revealed"
+      "answerRevealed": "Answer revealed",
+      "backToQuestions": "Back to the questions"
     }
   },
   "neurofeedback": {
