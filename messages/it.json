@@ -1951,6 +1951,16 @@
       "confirm": "Elimina tutto",
       "deleting": "Eliminazione…",
       "done": "Il tuo account e i tuoi dati sono stati eliminati."
+    },
+    "invitations": {
+      "title": "Inviti",
+      "accept": "Accetta",
+      "seat": {
+        "speaker": "Relatore: puoi gestire questa classe e i suoi giochi di classe",
+        "owner": "Titolare",
+        "admin": "Amministratore",
+        "member": "Membro"
+      }
     }
   },
   "transfers": {
@@ -2484,7 +2494,7 @@
       "participants": "Partecipanti",
       "my": "Le mie sessioni",
       "neurofeedback": "Neurofeedback",
-      "school": "Scuola",
+      "school": "Insegnamento",
       "learning": "Impara"
     },
     "sections": "Sezioni",

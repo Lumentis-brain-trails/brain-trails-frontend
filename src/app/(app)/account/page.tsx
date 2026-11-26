@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { TransferCard } from "@/components/account/TransferCard";
 import { SchoolCard } from "@/components/account/SchoolCard";
+import { InvitationsCard } from "@/components/account/InvitationsCard";
 import { useFeature } from "@/lib/features";
 
 export default function AccountPage() {
@@ -48,6 +49,7 @@ export default function AccountPage() {
   const [error, setError] = useState<string | null>(null);
   const contextEnabled = useContextEnabled();
   const schoolsOn = useFeature("schools");
+  const multiOn = useFeature("workspaces_multi");
 
   const me = useQuery({
     queryKey: ["me"],
@@ -132,6 +134,8 @@ export default function AccountPage() {
             <ProfileCard data={profile.data} missing={!profile.data} />
           )}
         </section>
+
+        {multiOn && <InvitationsCard />}
 
         {schoolsOn && (
           <section>
