@@ -69,7 +69,8 @@ export function QuestionCard({
 }: {
   question: Question;
   index: number;
-  onVerdict?: (verdict: "right" | "wrong" | "shown") => void;
+  /** The answer given rides along, so a live lesson can count which option was chosen. */
+  onVerdict?: (verdict: "right" | "wrong" | "shown", answer: Answer) => void;
   feedback?: Feedback;
 }) {
   const t = useTranslations("learning.question");
@@ -98,13 +99,13 @@ export function QuestionCard({
     const v = isCorrect(question, answer) ? "right" : "wrong";
     if (held) setSent(answer);
     else setVerdict(v);
-    onVerdict?.(v);
+    onVerdict?.(v, answer);
   };
   const show = () => {
     setAnswer(solution(question));
     setVersion((v) => v + 1);
     setVerdict("shown");
-    onVerdict?.("shown");
+    onVerdict?.("shown", solution(question));
   };
   const reset = () => {
     setAnswer(initial(question));
