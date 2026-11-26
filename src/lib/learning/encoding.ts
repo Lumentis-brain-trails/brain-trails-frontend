@@ -912,10 +912,10 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: { line: "n1", plane: "n2", bell: "n3", two: "n6", ecg: "n25" },
         explain: w("q.recapMatch.explain"),
       },
-      trueFalse("enTfChanges", true),
+      trueFalse("enTfChanges", false),
       trueFalse("enTfDots", false),
       trueFalse("enTfDecode", true),
-      trueFalse("enTfEeg", false),
+      trueFalse("enTfEeg", true),
     ],
   },
 ];

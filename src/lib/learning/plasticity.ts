@@ -58,7 +58,7 @@ export const PLASTICITY: Step[] = [
     figure: { kind: "bioNeuron", highlight: "synapse" },
     questions: [
       trueFalse("plTfContinuous", true),
-      trueFalse("plTfUnused", true),
+      trueFalse("plTfUnused", false),
     ],
   },
   {
@@ -97,7 +97,7 @@ export const PLASTICITY: Step[] = [
         explain: w("q.plHabitDays.explain"),
       },
       trueFalse("plTfMissDay", false),
-      trueFalse("plTfRepeat", true),
+      trueFalse("plTfRepeat", false),
     ],
   },
   {
@@ -134,7 +134,12 @@ export const PLASTICITY: Step[] = [
     id: "restless",
     reveal: true,
     lab: "ballRestless",
-    questions: [trueFalse("plTfNoise", true)],
+    questions: [
+      trueFalse("plTfNoiseThird", false),
+      trueFalse("plTfNoiseEscape", true),
+      trueFalse("plTfNoiseShallow", true),
+      trueFalse("plTfNoiseStart", false),
+    ],
   },
   {
     id: "soft",
@@ -157,7 +162,7 @@ export const PLASTICITY: Step[] = [
     reveal: true,
     lab: "ballWind",
     questions: [
-      trueFalse("plTfForce", false),
+      trueFalse("plTfForce", true),
       {
         kind: "choice",
         id: "plReward",
@@ -175,9 +180,9 @@ export const PLASTICITY: Step[] = [
       { href: "/neurofeedback", words: { key: "demo.neurofeedback" } },
     ],
     questions: [
-      trueFalse("plTfUseIt", true),
+      trueFalse("plTfUseIt", false),
       trueFalse("plTfDig", true),
-      trueFalse("plTfForever", false),
+      trueFalse("plTfForever", true),
       trueFalse("plTfLate", false),
     ],
   },

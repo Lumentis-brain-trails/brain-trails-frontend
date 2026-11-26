@@ -4809,20 +4809,20 @@
           "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Sei cursori, sei numeri: uno per ogni cosa che può cambiare nel battito.</p>"
         },
         "enTfChanges": {
-          "prompt": "Quanti numeri servono a un codice dipende da che cosa cambia tra le figure, non da quanto sono complicate.",
-          "explain": "<p><b>Vero.</b> Una campana disegnata con centinaia di punti aveva bisogno di un numero solo quando cambiava solo la posizione.</p>"
+          "prompt": "Due famiglie di immagini disegnate con lo stesso numero di punti hanno sempre bisogno di codici della stessa lunghezza.",
+          "explain": "<p><b>Falso.</b> La lunghezza del codice dipende da che cosa cambia da un’immagine all’altra: un punto su una retta voleva un numero, una campana con tre caratteristiche libere ne voleva tre, con altrettanti punti.</p>"
         },
         "enTfDots": {
-          "prompt": "Una curva disegnata con centinaia di punti ha sempre bisogno di centinaia di numeri.",
-          "explain": "<p><b>Falso.</b> Con la ricetta giusta, pochi numeri ricostruiscono tutti quei punti: tre per una campana, 25 per un battito.</p>"
+          "prompt": "Se di una campana cambia solo la posizione, disegnarla con più punti rende il suo codice più lungo.",
+          "explain": "<p><b>Falso.</b> Il codice resta un numero, la posizione. Più punti rendono il disegno più liscio, non il codice più lungo.</p>"
         },
         "enTfDecode": {
-          "prompt": "Decodificare vuol dire usare la ricetta al contrario, per ricostruire la figura dai suoi numeri.",
-          "explain": "<p><b>Vero.</b> La codifica va dalla figura ai numeri, la decodifica dai numeri di nuovo alla figura, con la stessa ricetta.</p>"
+          "prompt": "Con la stessa ricetta, lo stesso codice ricostruisce sempre la stessa immagine.",
+          "explain": "<p><b>Vero.</b> Decodificare segue la ricetta passo per passo: stessi numeri in ingresso, stessa immagine in uscita. È questo che rende utile un codice.</p>"
         },
         "enTfEeg": {
-          "prompt": "Per l’EEG conosciamo la ricetta: bastano poche campane, come per il battito.",
-          "explain": "<p><b>Falso.</b> Nessuno conosce una ricetta per l’EEG: per questo una rete neurale ne impara una, da tanti esempi.</p>"
+          "prompt": "In un autoencoder variazionale, lo stesso pezzo di EEG può ricevere codici leggermente diversi ogni volta.",
+          "explain": "<p><b>Vero.</b> L’encoder dà una piccola campana per ogni numero, e ogni volta se ne estrae un valore. Codici vicini ricostruiscono segnali simili, quindi non è un danno: aiuta.</p>"
         }
       }
     },
@@ -5115,24 +5115,24 @@
           "explain": "<p>Una <b>descrizione breve</b>: 35 pixel sono diventati 12 numeri che tengono ciò che serve per distinguere le cifre. Nessuno ha detto alla rete cosa metterci. Come descrivere qualcosa con pochi numeri è l’argomento del prossimo modulo, Codifica.</p>"
         },
         "nnTfThreshold": {
-          "prompt": "Un neurone somma i suoi ingressi pesati e il bias, e si attiva quando la somma è sopra lo zero.",
-          "explain": "<p><b>Vero.</b> È tutta la macchina: pesare, sommare, decidere.</p>"
+          "prompt": "Un neurone con entrambi i pesi a zero può comunque attivarsi per ogni ingresso.",
+          "explain": "<p><b>Vero.</b> I pesi sono zero, ma il bias no: se b è sopra lo zero, la somma è sopra lo zero qualunque siano gli ingressi, e il neurone si attiva sempre.</p>"
         },
         "nnTfXorOne": {
-          "prompt": "Con i pesi giusti, un neurone da solo può calcolare XOR.",
-          "explain": "<p><b>Falso.</b> Un neurone disegna una retta, e nessuna retta separa gli angoli di XOR: al massimo tre su quattro. Serve uno strato nascosto.</p>"
+          "prompt": "Aggiungere un secondo neurone di uscita, sempre senza strato nascosto, permette a una rete di calcolare lo XOR.",
+          "explain": "<p><b>Falso.</b> Ogni neurone di uscita guarda ancora direttamente gli ingressi e traccia una sola retta, e nessuna retta da sola separa gli angoli dello XOR. Serve uno strato nascosto, le cui rette il neurone dopo combina.</p>"
         },
         "nnTfHidden": {
-          "prompt": "Uno strato nascosto permette a una rete di risolvere problemi che una sola retta non risolve.",
-          "explain": "<p><b>Vero.</b> Ogni neurone nascosto disegna la sua retta, e lo strato dopo le combina: è così che si risolve XOR.</p>"
+          "prompt": "Una rete con uno strato nascosto di soli due neuroni può separare i punti con un confine che non è una retta.",
+          "explain": "<p><b>Vero.</b> Ogni neurone nascosto traccia la sua retta, e il neurone di uscita le combina: il confine può piegarsi, come per lo XOR.</p>"
         },
         "nnTfByHand": {
-          "prompt": "In una rete vera, i pesi li sceglie una persona a mano.",
-          "explain": "<p><b>Falso.</b> Sono troppi. La rete li impara da un dataset di esempi con l’etichetta.</p>"
+          "prompt": "Una rete che risponde giusto a tutti gli esempi dell’allenamento risponderà giusto anche a esempi nuovi.",
+          "explain": "<p><b>Falso.</b> Potrebbe aver imparato gli esempi a memoria invece di ciò che hanno in comune. Per questo una rete si prova sempre su esempi che non ha mai visto.</p>"
         },
         "nnTfBackprop": {
-          "prompt": "La backpropagation sposta ogni peso nella direzione che rende l’errore più piccolo.",
-          "explain": "<p><b>Vero.</b> L’errore viene mandato indietro attraverso gli strati, e ogni peso si sposta un poco, in proporzione alla sua parte nell’errore.</p>"
+          "prompt": "Dopo un errore, la backpropagation sposta ogni peso della rete della stessa quantità.",
+          "explain": "<p><b>Falso.</b> Ogni peso si sposta in proporzione alla sua parte nell’errore: un peso il cui ingresso era 0 non ha contribuito e non si sposta affatto.</p>"
         }
       }
     },
@@ -5180,7 +5180,7 @@
         "soft": {
           "title": "La plasticità scava le valli",
           "body": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, lì il terreno si abbassa un poco, come un fiume che si scava il letto. Guarda cosa succede alla valle che la pallina visita di più.</p>",
-          "reveal": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, il terreno lì diventa un po’ più profondo, come un fiume che scava il proprio letto e così ci porta sempre più acqua.</p><p>È così che impariamo, ma è anche così che possiamo <b>restare bloccati</b>. Uno stato visitato di continuo (la preoccupazione, per esempio) diventa una valle profonda, difficile da lasciare. Una delle teorie principali sul cervello, il <b>predictive coding</b> (codifica predittiva), dice che il cervello prevede di continuo cosa succederà e impara dai propri errori; previsioni forti possono tenerci negli stessi schemi, perché tendiamo a vedere ciò che ci aspettiamo. Per uscire da una valle profonda il cervello ha spesso bisogno di qualcosa che viene da <i>fuori</i>: un’esperienza nuova, la pratica, una spinta.</p>"
+          "reveal": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, il terreno lì diventa un po’ più profondo, come un fiume che scava il proprio letto e così ci porta sempre più acqua.</p><p>È così che impariamo, ma è anche così che possiamo <b>restare bloccati</b>. Uno stato visitato di continuo (la preoccupazione, per esempio) diventa una valle profonda, difficile da lasciare.</p><p>Perché così difficile, per un cervello e non solo per una pallina? Ripensa al sentiero intrecciato: dopo qualche giro hai smesso di guardarti intorno e ti <i>aspettavi</i> semplicemente che il collegamento spesso fosse la strada. Il cervello lo fa di continuo. Non aspetta di vedere cosa succede: indovina cosa verrà dopo da ciò che di solito è successo, e confronta l’ipotesi con ciò che vede. Quando l’ipotesi è sbagliata, è quella sorpresa a farlo imparare. Questa idea si chiama <b>predictive coding</b> (codifica predittiva), una delle teorie principali sul cervello. Il suo rovescio: più la valle è profonda, più l’ipotesi è forte, e siccome tendiamo a vedere ciò che ci aspettiamo, le sorprese che potrebbero smuoverci passano inosservate.</p><p>Per questo, per uscire da una valle profonda, il cervello ha spesso bisogno di qualcosa che viene da <i>fuori</i>: un’esperienza nuova, la pratica, una spinta.</p>"
         },
         "wind": {
           "title": "Neurofeedback: un vento verso una valle",
@@ -5204,12 +5204,12 @@
           "explain": "<p>I collegamenti usati sono diventati <b>più spessi</b>, quindi il percorso fatto è diventato più facile da rifare: l’uso rafforza i collegamenti, e i collegamenti forti vengono usati. Nel cervello è così che nascono le abitudini, buone e cattive.</p>"
         },
         "plTfContinuous": {
-          "prompt": "Vero o falso: il cervello cambia i suoi collegamenti di continuo.",
-          "explain": "<p><b>Vero</b>. Ogni giorno i collegamenti si rafforzano, si indeboliscono, nascono e vengono eliminati, per tutto ciò che facciamo e impariamo.</p>"
+          "prompt": "Vero o falso: nel gioco, un collegamento che nessuno ha scelto per diversi giri è finito più sottile che all’inizio.",
+          "explain": "<p><b>Vero.</b> Dopo ogni giro i collegamenti non usati si assottigliano un po’, anche sotto lo spessore iniziale, come una sinapsi che nessuno usa.</p>"
         },
         "plTfUnused": {
-          "prompt": "Vero o falso: i collegamenti mai usati tendono a indebolirsi.",
-          "explain": "<p><b>Vero</b>. \"Usalo o lo perdi\": le sinapsi non usate si indeboliscono e alcune vengono potate, come i collegamenti che si sono assottigliati nel gioco.</p>"
+          "prompt": "Vero o falso: nel gioco, i collegamenti più spessi stanno sempre sul percorso più breve verso l’arrivo.",
+          "explain": "<p><b>Falso.</b> I collegamenti si ispessiscono perché vengono usati, non perché sono buoni: un percorso scelto per caso nei primi giri può diventare quello spesso.</p>"
         },
         "plTf25": {
           "prompt": "Vero o falso: il cervello smette di cambiare i suoi collegamenti verso i 25 anni.",
@@ -5240,12 +5240,12 @@
           "explain": "<p>Circa <b>66 giorni</b> in media, da 18 a 254 a seconda della persona e dell’abitudine. I \"21 giorni\" sono un mito.</p>"
         },
         "plTfMissDay": {
-          "prompt": "Vero o falso: saltare un solo giorno rovina una nuova abitudine.",
-          "explain": "<p><b>Falso</b>. Nello studio, saltare una volta non cambiava davvero la formazione dell’abitudine. Conta ripeterla la maggior parte delle volte.</p>"
+          "prompt": "Vero o falso: saltare un solo giorno riporta una nuova abitudine al punto di partenza.",
+          "explain": "<p><b>Falso</b>. Nello studio, saltare un’occasione non ha cancellato i progressi. Quello che conta è ripeterla quasi sempre.</p>"
         },
         "plTfRepeat": {
-          "prompt": "Vero o falso: un’abitudine diventa automatica ripetendola nella stessa situazione.",
-          "explain": "<p><b>Vero</b>. Fare la stessa cosa nello stesso contesto (dopo colazione, tornando a casa) è ciò che scava il percorso.</p>"
+          "prompt": "Vero o falso: fare una nuova abitudine ogni giorno in un momento e in un posto diversi la rende automatica altrettanto in fretta.",
+          "explain": "<p><b>Falso</b>. È la stessa situazione (dopo colazione, tornando a casa) che lega l’abitudine a un segnale e fa scavare il percorso.</p>"
         },
         "plState": {
           "prompt": "Cosa intendiamo per stato cerebrale?",
@@ -5267,9 +5267,21 @@
           },
           "explain": "<p>Una valle è uno <b>stato</b> che attira il cervello e lo trattiene per un po’: stabile, facile da raggiungere, difficile da lasciare.</p>"
         },
-        "plTfNoise": {
-          "prompt": "Vero o falso: grazie al suo rumore irrequieto, il cervello può uscire da solo da una valle poco profonda.",
-          "explain": "<p><b>Vero</b>. Una scossa più forte può portare la pallina oltre una collina bassa. Una valle profonda è un’altra storia.</p>"
+        "plTfNoiseThird": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, la pallina non resta mai in una delle tre valli più di un terzo del tempo.",
+          "explain": "<p><b>Falso</b>. Il rumore non divide il tempo in parti uguali: la pallina ne passa di più nelle valli più profonde, che sono più difficili da lasciare.</p>"
+        },
+        "plTfNoiseEscape": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, la pallina ha sempre una possibilità di uscire da qualunque valle.",
+          "explain": "<p><b>Vero</b>. Per quanto profonda sia la valle, una scossa abbastanza forte può arrivare. In una valle profonda la possibilità è piccola, quindi può volerci moltissimo tempo.</p>"
+        },
+        "plTfNoiseShallow": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, la pallina esce dalla valle meno profonda più spesso che da quella più profonda.",
+          "explain": "<p><b>Vero</b>. Una collina bassa chiede solo una scossa media, una alta una scossa forte e rara. Per questo la pallina passa meno tempo nella valle di mezzo.</p>"
+        },
+        "plTfNoiseStart": {
+          "prompt": "Vero o falso: grazie al suo rumore irrequieto, il punto di partenza della pallina decide dove passerà la maggior parte del tempo.",
+          "explain": "<p><b>Falso</b>. Con il rumore la pallina finisce per visitare tutte le valli, e a lungo andare quanto resta in ciascuna dipende dalla loro profondità, non da dove è stata lasciata.</p>"
         },
         "plStuck": {
           "prompt": "La pallina è bloccata in fondo a una valle profonda. Cosa la aiuta a uscire?",
@@ -5282,12 +5294,12 @@
           "explain": "<p>Una <b>spinta da fuori</b>. Su un paesaggio morbido, aspettare scava solo di più la valle. Ma il paesaggio è morbido per tutti: la stessa plasticità che ha scavato la valle può scavarne una nuova.</p>"
         },
         "plTfPredict": {
-          "prompt": "Vero o falso: secondo il predictive coding, il cervello prevede sempre cosa succederà dopo.",
-          "explain": "<p><b>Vero</b>, secondo questa teoria di primo piano: il cervello confronta le sue previsioni con ciò che succede davvero e impara dalla differenza.</p>"
+          "prompt": "Vero o falso: sul paesaggio morbido, più a lungo la pallina resta in una valle, più diventa difficile lasciarla.",
+          "explain": "<p><b>Vero</b>. Mentre la pallina resta, il terreno sotto di lei continua a scavarsi: la valle diventa più profonda e le colline intorno più alte.</p>"
         },
         "plTfForce": {
-          "prompt": "Vero o falso: il neurofeedback spinge il cervello in uno stato con la forza.",
-          "explain": "<p><b>Falso</b>. Premia il cervello solo quando si muove nella direzione giusta. Il movimento, e l’apprendimento, li fa il cervello.</p>"
+          "prompt": "Vero o falso: con il vento, la valle scavata più a fondo può essere quella che all’inizio era la meno profonda.",
+          "explain": "<p><b>Vero</b>. Il vento soffia verso la valle di mezzo, la meno profonda. La pallina ci passa più tempo, e su un terreno morbido il tempo passato è profondità scavata.</p>"
         },
         "plReward": {
           "prompt": "Quando deve arrivare la ricompensa, perché il cervello la colleghi allo stato giusto?",
@@ -5300,20 +5312,20 @@
           "explain": "<p><b>Subito</b>. Una ricompensa che arriva tardi non può dire al cervello quale stato l’ha meritata. Per questo il neurofeedback risponde in una frazione di secondo.</p>"
         },
         "plTfUseIt": {
-          "prompt": "I collegamenti usati diventano più forti, e quelli che non si usano si indeboliscono.",
-          "explain": "<p><b>Vero.</b> È la regola del sentiero intrecciato, e del cervello.</p>"
+          "prompt": "Un collegamento mai usato conserva la sua forza, purché niente lo danneggi.",
+          "explain": "<p><b>Falso.</b> Basta non usarlo: le sinapsi non usate si indeboliscono e alcune vengono eliminate, come i collegamenti che si assottigliavano nel gioco.</p>"
         },
         "plTfDig": {
-          "prompt": "La plasticità scava le valli che visitiamo di più, ed è così che possiamo restarci bloccati.",
-          "explain": "<p><b>Vero.</b> Su un paesaggio morbido, la valle più visitata diventa più profonda e più difficile da lasciare.</p>"
+          "prompt": "La valle che visitiamo di più non è sempre quella migliore per noi.",
+          "explain": "<p><b>Vero.</b> La plasticità scava qualunque cosa ripetiamo, buona o cattiva: anche una preoccupazione visitata di continuo diventa una valle profonda.</p>"
         },
         "plTfForever": {
-          "prompt": "Quando una valle è profonda, niente può farci uscire.",
-          "explain": "<p><b>Falso.</b> Il paesaggio resta morbido per tutta la vita: la pratica, le esperienze nuove e le ricompense immediate possono scavare valli nuove.</p>"
+          "prompt": "Più una valle è profonda, più grande è la spinta da fuori che serve per uscirne.",
+          "explain": "<p><b>Vero.</b> Una valle profonda ha colline alte intorno: il rumore da solo le supera di rado, quindi devono aiutare nuove esperienze, esercizio o una ricompensa al momento giusto.</p>"
         },
         "plTfLate": {
-          "prompt": "Una ricompensa funziona altrettanto bene se arriva un’ora dopo.",
-          "explain": "<p><b>Falso.</b> La ricompensa deve arrivare subito, finché c’è ancora lo stato che l’ha meritata.</p>"
+          "prompt": "Una ricompensa che arriva con un’ora di ritardo rafforza lo stato in cui il cervello era un’ora prima.",
+          "explain": "<p><b>Falso.</b> Ormai il cervello è in un altro stato, ed è quello che la ricompensa rafforzerebbe. Deve arrivare subito.</p>"
         }
       }
     },

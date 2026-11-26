@@ -4809,20 +4809,20 @@
           "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Six sliders, six numbers: one for each thing that can change in the beat.</p>"
         },
         "enTfChanges": {
-          "prompt": "The number of numbers a code needs depends on what changes between the pictures, not on how complicated they look.",
-          "explain": "<p><b>True.</b> A bell drawn with hundreds of dots needed one number when only its position changed.</p>"
+          "prompt": "Two families of pictures drawn with the same number of dots always need codes of the same length.",
+          "explain": "<p><b>False.</b> The length of the code depends on what changes from one picture to the next: a dot on a line needed one number, a bell with three free features needed three, with just as many dots.</p>"
         },
         "enTfDots": {
-          "prompt": "A curve drawn with hundreds of dots always needs hundreds of numbers.",
-          "explain": "<p><b>False.</b> With the right recipe, a few numbers rebuild all those dots: three for a bell, 25 for a heartbeat.</p>"
+          "prompt": "If only a bell's position changes, drawing it with more dots makes its code longer.",
+          "explain": "<p><b>False.</b> The code is still one number, the position. More dots make the drawing smoother, not the code longer.</p>"
         },
         "enTfDecode": {
-          "prompt": "Decoding means using the recipe backwards, to rebuild the picture from its numbers.",
-          "explain": "<p><b>True.</b> Encoding goes from the picture to the numbers, decoding from the numbers back to the picture, with the same recipe.</p>"
+          "prompt": "With the same recipe, the same code always rebuilds the same picture.",
+          "explain": "<p><b>True.</b> Decoding follows the recipe step by step: the same numbers in, the same picture out. That is what makes a code useful.</p>"
         },
         "enTfEeg": {
-          "prompt": "For the EEG we know the recipe: a few bells are enough, as for the heartbeat.",
-          "explain": "<p><b>False.</b> Nobody knows a recipe for the EEG: that is why a neural network learns one, from many examples.</p>"
+          "prompt": "In a variational autoencoder, the same piece of EEG can get slightly different codes each time.",
+          "explain": "<p><b>True.</b> The encoder gives a small bell for each number, and a value is picked from it every time. Close codes rebuild similar signals, so this does not hurt: it helps.</p>"
         }
       }
     },
@@ -5115,24 +5115,24 @@
           "explain": "<p>A <b>short description</b>: 35 pixels became 12 numbers that keep what matters to tell digits apart. Nobody told the network what to put there. How to describe something with a few numbers is the subject of the next module, Encoding.</p>"
         },
         "nnTfThreshold": {
-          "prompt": "A neuron adds up its weighted inputs and the bias, and fires when the sum is above zero.",
-          "explain": "<p><b>True.</b> That is the whole machine: weigh, add, decide.</p>"
+          "prompt": "A neuron whose two weights are both zero can still fire for every input.",
+          "explain": "<p><b>True.</b> The weights are zero, but the bias is not: if b is above zero, the sum is above zero whatever the inputs, and the neuron always fires.</p>"
         },
         "nnTfXorOne": {
-          "prompt": "With the right weights, one neuron alone can compute XOR.",
-          "explain": "<p><b>False.</b> One neuron draws one line, and no line splits XOR's corners: at best three out of four. It takes a hidden layer.</p>"
+          "prompt": "Adding a second output neuron, still with no hidden layer, lets a network compute XOR.",
+          "explain": "<p><b>False.</b> Each output neuron still looks straight at the inputs and draws one line, and no single line splits XOR's corners. It takes a hidden layer whose lines the next neuron combines.</p>"
         },
         "nnTfHidden": {
-          "prompt": "A hidden layer lets a network solve problems a single line cannot.",
-          "explain": "<p><b>True.</b> Each hidden neuron draws its own line, and the next layer combines them: that is how XOR is solved.</p>"
+          "prompt": "A network with a hidden layer of just two neurons can separate the dots with a border that is not a straight line.",
+          "explain": "<p><b>True.</b> Each hidden neuron draws its own line, and the output neuron combines the two: the border can bend, as it did for XOR.</p>"
         },
         "nnTfByHand": {
-          "prompt": "In a real network, people choose the weights by hand.",
-          "explain": "<p><b>False.</b> There are far too many. The network learns them from a dataset of labelled examples.</p>"
+          "prompt": "A network that gets every training example right will get new examples right too.",
+          "explain": "<p><b>False.</b> It may have learned the examples by heart instead of what they have in common. That is why a network is always tested on examples it has never seen.</p>"
         },
         "nnTfBackprop": {
-          "prompt": "Backpropagation nudges each weight in the direction that makes the error smaller.",
-          "explain": "<p><b>True.</b> The error is sent back through the layers, and each weight moves a little, in proportion to its share of the mistake.</p>"
+          "prompt": "After a mistake, backpropagation moves every weight of the network by the same amount.",
+          "explain": "<p><b>False.</b> Each weight moves in proportion to its share of the mistake: a weight whose input was 0 did not contribute and does not move at all.</p>"
         }
       }
     },
@@ -5180,7 +5180,7 @@
         "soft": {
           "title": "Plasticity digs the valleys",
           "body": "<p>Now put plasticity into the picture. The landscape is not fixed: it is <b>soft</b>. Every time the ball passes somewhere, the ground there gets a little deeper, like a river that digs its own bed. Watch what happens to the valley the ball visits most.</p>",
-          "reveal": "<p>Now put plasticity into the picture. The landscape is not fixed: it is <b>soft</b>. Every time the ball passes somewhere, the ground there gets a little deeper, like a river that digs its own bed and so carries more and more water along it.</p><p>This is how we learn, but it is also how we can get <b>stuck</b>. A state visited again and again (worry, for example) becomes a deep valley that is hard to leave. One leading theory of the brain, <b>predictive coding</b>, says that the brain constantly predicts what will happen and learns from its mistakes; strong predictions can keep us in the same patterns, because we tend to see what we expect. To leave a deep valley, the brain often needs something from <i>outside</i>: a new experience, practice, a push.</p>"
+          "reveal": "<p>Now put plasticity into the picture. The landscape is not fixed: it is <b>soft</b>. Every time the ball passes somewhere, the ground there gets a little deeper, like a river that digs its own bed and so carries more and more water along it.</p><p>This is how we learn, but it is also how we can get <b>stuck</b>. A state visited again and again (worry, for example) becomes a deep valley that is hard to leave.</p><p>Why so hard, for a brain and not just a ball? Think back to the braided path: after a few rounds you stopped looking around and simply <i>expected</i> the thick edge to be the way. The brain does this all the time. It does not wait to see what happens: it guesses what comes next from what usually happened, and checks the guess against what it sees. When the guess is wrong, that surprise is what makes it learn. This idea is called <b>predictive coding</b>, one of the leading theories of the brain. Its catch: the deeper the valley, the stronger the guess, and since we tend to see what we expect, the surprises that could move us go unnoticed.</p><p>That is why, to leave a deep valley, the brain often needs something from <i>outside</i>: a new experience, practice, a push.</p>"
         },
         "wind": {
           "title": "Neurofeedback: a wind towards a valley",
@@ -5204,12 +5204,12 @@
           "explain": "<p>The edges we used got <b>thicker</b>, so the route we took became easier to take again: use strengthens connections, and strong connections get used. In the brain this is how habits form, the good and the bad ones.</p>"
         },
         "plTfContinuous": {
-          "prompt": "True or false: the brain rewires itself all the time.",
-          "explain": "<p><b>True</b>. Connections are strengthened, weakened, created and removed every day, by everything we do and learn.</p>"
+          "prompt": "True or false: in the game, an edge nobody chose for several rounds ended up thinner than at the start.",
+          "explain": "<p><b>True.</b> After every round the unused edges thin a little, even below their first thickness, like a synapse that nobody uses.</p>"
         },
         "plTfUnused": {
-          "prompt": "True or false: connections that are never used tend to weaken.",
-          "explain": "<p><b>True</b>. \"Use it or lose it\": unused synapses weaken and some are pruned, like the edges that thinned in the game.</p>"
+          "prompt": "True or false: in the game, the thickest edges always lie on the shortest route to the end.",
+          "explain": "<p><b>False.</b> Edges get thick because they are used, not because they are good: a route chosen by chance in the first rounds can become the thick one.</p>"
         },
         "plTf25": {
           "prompt": "True or false: the brain stops rewiring at about 25 years old.",
@@ -5240,12 +5240,12 @@
           "explain": "<p>About <b>66 days</b> on average, from 18 to 254 depending on the person and the habit. \"21 days\" is a myth.</p>"
         },
         "plTfMissDay": {
-          "prompt": "True or false: missing a single day ruins a new habit.",
-          "explain": "<p><b>False</b>. In the study, missing one occasion did not really affect how the habit formed. What counts is repeating it most of the time.</p>"
+          "prompt": "True or false: missing a single day sends a new habit back to the start.",
+          "explain": "<p><b>False</b>. In the study, missing one occasion did not undo the progress. What counts is repeating it most of the time.</p>"
         },
         "plTfRepeat": {
-          "prompt": "True or false: a habit becomes automatic by repeating it in the same situation.",
-          "explain": "<p><b>True</b>. Doing the same thing in the same context (after breakfast, on the way home) is what makes the route dig in.</p>"
+          "prompt": "True or false: doing a new habit at a different time and place each day makes it automatic just as fast.",
+          "explain": "<p><b>False</b>. The same situation (after breakfast, on the way home) is what links the habit to a cue and lets the route dig in.</p>"
         },
         "plState": {
           "prompt": "What do we mean by a brain state?",
@@ -5267,9 +5267,21 @@
           },
           "explain": "<p>A valley is a <b>state</b> that attracts the brain and holds it for a while: stable, easy to reach, hard to leave.</p>"
         },
-        "plTfNoise": {
-          "prompt": "True or false: thanks to its restless noise, the brain can leave a shallow valley by itself.",
-          "explain": "<p><b>True</b>. A bigger shake can carry the ball over a low hill. A deep valley is another story.</p>"
+        "plTfNoiseThird": {
+          "prompt": "True or false: thanks to its restless noise, the ball never stays in one of the three valleys more than a third of the time.",
+          "explain": "<p><b>False</b>. Noise does not share the time out evenly: the ball spends more of it in the deeper valleys, which are harder to leave.</p>"
+        },
+        "plTfNoiseEscape": {
+          "prompt": "True or false: thanks to its restless noise, the ball always has a chance to escape any valley.",
+          "explain": "<p><b>True</b>. However deep the valley, a big enough shake can come. In a deep valley the chance is small, so it may take a very long time.</p>"
+        },
+        "plTfNoiseShallow": {
+          "prompt": "True or false: thanks to its restless noise, the ball leaves the shallowest valley more often than the deepest one.",
+          "explain": "<p><b>True</b>. A low hill needs only a medium shake, a high one needs a rare big one. That is why the ball spends least time in the middle valley.</p>"
+        },
+        "plTfNoiseStart": {
+          "prompt": "True or false: thanks to its restless noise, where the ball starts decides where it spends most of its time.",
+          "explain": "<p><b>False</b>. With noise, the ball visits every valley in the end, and over a long time how much it stays in each depends on their depth, not on where it was dropped.</p>"
         },
         "plStuck": {
           "prompt": "The ball is stuck at the bottom of a deep valley. What helps it out?",
@@ -5282,12 +5294,12 @@
           "explain": "<p>A <b>push from outside</b>. On a soft landscape, waiting only digs the valley deeper. But the landscape is soft for everyone: the same plasticity that dug the valley can dig a new one.</p>"
         },
         "plTfPredict": {
-          "prompt": "True or false: according to predictive coding, the brain is always predicting what will happen next.",
-          "explain": "<p><b>True</b>, according to this leading theory: the brain compares its predictions with what really happens and learns from the difference.</p>"
+          "prompt": "True or false: on the soft landscape, the longer the ball stays in a valley, the harder it becomes to leave it.",
+          "explain": "<p><b>True</b>. While the ball stays, the ground under it keeps digging: the valley gets deeper and the hills around it higher.</p>"
         },
         "plTfForce": {
-          "prompt": "True or false: neurofeedback pushes the brain into a state by force.",
-          "explain": "<p><b>False</b>. It only rewards the brain when it moves in the right direction. The brain does the moving, and the learning.</p>"
+          "prompt": "True or false: with the wind, the valley that gets dug deepest can be the one that was shallowest at the start.",
+          "explain": "<p><b>True</b>. The wind blows towards the middle valley, the shallowest. The ball spends more time there, and on soft ground time spent is depth dug.</p>"
         },
         "plReward": {
           "prompt": "When should the reward come, for the brain to link it to the right state?",
@@ -5300,20 +5312,20 @@
           "explain": "<p><b>Right away</b>. A reward that comes late cannot tell the brain which state earned it. This is why neurofeedback gives feedback within a fraction of a second.</p>"
         },
         "plTfUseIt": {
-          "prompt": "Connections that are used get stronger, and those that are not used weaken.",
-          "explain": "<p><b>True.</b> It is the rule of the braided path, and of the brain.</p>"
+          "prompt": "A connection that is never used keeps its strength, as long as nothing damages it.",
+          "explain": "<p><b>False.</b> Disuse alone is enough: unused synapses weaken and some are pruned, like the edges that thinned in the game.</p>"
         },
         "plTfDig": {
-          "prompt": "Plasticity digs the valleys we visit most, which is how we can get stuck in them.",
-          "explain": "<p><b>True.</b> On a soft landscape, the valley we visit most gets deeper and harder to leave.</p>"
+          "prompt": "The valley we visit most is not always the one that is best for us.",
+          "explain": "<p><b>True.</b> Plasticity digs whatever we repeat, good or bad: a worry visited again and again becomes a deep valley too.</p>"
         },
         "plTfForever": {
-          "prompt": "Once a valley is deep, nothing can get us out of it.",
-          "explain": "<p><b>False.</b> The landscape stays soft all life long: practice, new experiences and immediate rewards can dig new valleys.</p>"
+          "prompt": "The deeper a valley, the bigger the push from outside it takes to leave it.",
+          "explain": "<p><b>True.</b> A deep valley has high hills around it: noise alone rarely gets over them, so new experiences, practice or a well-timed reward have to help.</p>"
         },
         "plTfLate": {
-          "prompt": "A reward works just as well if it comes an hour later.",
-          "explain": "<p><b>False.</b> The reward has to come right away, while the state that earned it is still there.</p>"
+          "prompt": "A reward that comes an hour late strengthens the state the brain was in an hour earlier.",
+          "explain": "<p><b>False.</b> By then the brain is in another state, and that is the one a reward would strengthen. It has to come right away.</p>"
         }
       }
     },

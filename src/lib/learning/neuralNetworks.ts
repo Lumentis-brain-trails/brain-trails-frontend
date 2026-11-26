@@ -298,7 +298,7 @@ export const NEURAL_NETWORKS: Step[] = [
       trueFalse("nnTfXorOne", false),
       trueFalse("nnTfHidden", true),
       trueFalse("nnTfByHand", false),
-      trueFalse("nnTfBackprop", true),
+      trueFalse("nnTfBackprop", false),
     ],
   },
 ];
