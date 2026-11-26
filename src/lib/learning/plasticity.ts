@@ -39,13 +39,14 @@ function trueFalse(id: string, answer: boolean) {
 export const PLASTICITY: Step[] = [
   {
     id: "braid",
+    reveal: true,
     lab: "braid",
     questions: [
       {
         kind: "choice",
         id: "plBraidWhy",
         prompt: w("q.plBraidWhy.prompt"),
-        options: options("plBraidWhy", ["thick", "memory", "luck"]),
+        options: options("plBraidWhy", ["thick", "memory", "luck", "teacher"]),
         answer: "thick",
         explain: w("q.plBraidWhy.explain"),
       },
@@ -53,15 +54,18 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "hebb",
-    figure: { kind: "neuron" },
+    reveal: true,
+    figure: { kind: "bioNeuron", highlight: "synapse" },
     questions: [
       trueFalse("plTfContinuous", true),
-      trueFalse("plTfUnused", true),
+      trueFalse("plTfUnused", false),
     ],
   },
   {
     id: "lifespan",
+    reveal: true,
     figure: { kind: "lifespan" },
+    figureAnswers: true,
     questions: [
       trueFalse("plTf25", false),
       trueFalse("plTfToddler", true),
@@ -69,7 +73,7 @@ export const PLASTICITY: Step[] = [
         kind: "choice",
         id: "plMeta",
         prompt: w("q.plMeta.prompt"),
-        options: options("plMeta", ["meta", "age", "fixed"]),
+        options: options("plMeta", ["meta", "age", "fixed", "young"]),
         answer: "meta",
         explain: w("q.plMeta.explain"),
       },
@@ -77,6 +81,7 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "habits",
+    reveal: true,
     questions: [
       {
         kind: "choice",
@@ -92,18 +97,19 @@ export const PLASTICITY: Step[] = [
         explain: w("q.plHabitDays.explain"),
       },
       trueFalse("plTfMissDay", false),
-      trueFalse("plTfRepeat", true),
+      trueFalse("plTfRepeat", false),
     ],
   },
   {
     id: "city",
+    reveal: true,
     lab: "city",
     questions: [
       {
         kind: "choice",
         id: "plState",
         prompt: w("q.plState.prompt"),
-        options: options("plState", ["pattern", "region", "thought"]),
+        options: options("plState", ["pattern", "region", "thought", "neuron"]),
         answer: "pattern",
         explain: w("q.plState.explain"),
       },
@@ -111,13 +117,14 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "landscape",
+    reveal: true,
     lab: "ballHard",
     questions: [
       {
         kind: "choice",
         id: "plValley",
         prompt: w("q.plValley.prompt"),
-        options: options("plValley", ["state", "region", "mistake"]),
+        options: options("plValley", ["state", "region", "mistake", "sleep"]),
         answer: "state",
         explain: w("q.plValley.explain"),
       },
@@ -125,18 +132,25 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "restless",
+    reveal: true,
     lab: "ballRestless",
-    questions: [trueFalse("plTfNoise", true)],
+    questions: [
+      trueFalse("plTfNoiseThird", false),
+      trueFalse("plTfNoiseEscape", true),
+      trueFalse("plTfNoiseShallow", true),
+      trueFalse("plTfNoiseStart", false),
+    ],
   },
   {
     id: "soft",
+    reveal: true,
     lab: "ballSoft",
     questions: [
       {
         kind: "choice",
         id: "plStuck",
         prompt: w("q.plStuck.prompt"),
-        options: options("plStuck", ["outside", "wait", "nothing"]),
+        options: options("plStuck", ["outside", "wait", "nothing", "harder"]),
         answer: "outside",
         explain: w("q.plStuck.explain"),
       },
@@ -145,14 +159,15 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "wind",
+    reveal: true,
     lab: "ballWind",
     questions: [
-      trueFalse("plTfForce", false),
+      trueFalse("plTfForce", true),
       {
         kind: "choice",
         id: "plReward",
         prompt: w("q.plReward.prompt"),
-        options: options("plReward", ["now", "later", "never"]),
+        options: options("plReward", ["now", "later", "never", "morning"]),
         answer: "now",
         explain: w("q.plReward.explain"),
       },
@@ -160,22 +175,13 @@ export const PLASTICITY: Step[] = [
   },
   {
     id: "demo",
-    links: [
-      { href: "/landscape", words: { key: "demo.landscape" } },
-      { href: "/neurofeedback", words: { key: "demo.neurofeedback" } },
-    ],
+    // nobody in class has recorded yet: the way in is a protocol, not their map
+    links: [{ href: "/protocols", words: { key: "demo.protocols" } }],
     questions: [
-      {
-        kind: "order",
-        id: "plRecap",
-        prompt: w("q.plRecap.prompt"),
-        items: ["use", "valleys", "stuck", "nudge"].map((id) => ({
-          id,
-          words: w(`q.plRecap.steps.${id}`),
-        })),
-        answer: ["use", "valleys", "stuck", "nudge"],
-        explain: w("q.plRecap.explain"),
-      },
+      trueFalse("plTfUseIt", false),
+      trueFalse("plTfDig", true),
+      trueFalse("plTfForever", true),
+      trueFalse("plTfLate", false),
     ],
   },
 ];

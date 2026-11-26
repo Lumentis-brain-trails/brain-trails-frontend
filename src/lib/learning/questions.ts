@@ -72,17 +72,35 @@ export type ArtificialPart = "inputs" | "weights" | "sum" | "fires";
 /** The parts of a biological neuron a figure can highlight. */
 export type BioPart = "dendrites" | "body" | "axon" | "synapse";
 
+/** What a value question's sliders draw: a point, or a signal of one family. */
+export type GuessModel =
+  "line" | "plane" | "bell" | "wave" | "train" | "twoBells";
+
 /** What a figure draws. */
 export type FigureSpec =
   /** One point on a number line from `range[0]` to `range[1]`, ticks every unit. */
-  | { kind: "line"; x: number; range?: [number, number] }
-  /** One point on a square grid. */
-  | { kind: "plane"; x: number; y: number; range?: [number, number] }
+  /** `ghost` is a second point, hollow (the target a guess aims at); `ok` paints it green. */
+  | {
+      kind: "line";
+      x: number;
+      range?: [number, number];
+      ghost?: number;
+      ok?: boolean;
+    }
+  /** One point on a square grid; `ghost` and `ok` as for the line. */
+  | {
+      kind: "plane";
+      x: number;
+      y: number;
+      range?: [number, number];
+      ghost?: [number, number];
+      ok?: boolean;
+    }
   /**
    * A signal: the sum of `parts` over `domain`, on a vertical scale of `yRange`.
    * `showParts` also draws each part on its own, faint; `ghost` draws another signal
    * behind it, dashed (the original a reconstruction is aiming at); `ticks` labels the
-   * horizontal axis every unit.
+   * horizontal axis every unit; `ok` draws the signal green (it matches its ghost).
    */
   | {
       kind: "signal";
@@ -92,6 +110,7 @@ export type FigureSpec =
       showParts?: boolean;
       ghost?: Part[];
       ticks?: boolean;
+      ok?: boolean;
     }
   /** The variational autoencoder's diagram: signal, encoder, `latent` numbers, decoder. */
   | { kind: "vae"; latent: number }
@@ -154,7 +173,16 @@ export type Question =
       figures?: FigureSpec[];
       labels: ParamName[];
       answer: number[];
-      tolerance: number;
+      /** How far each value may be from the answer: one for all, or one per label. */
+      tolerance: number | number[];
+      /**
+       * With `sliders` (one per label) the values are set on sliders, and the figure
+       * draws the person's guess over `figures[0]` as it moves (`guessFigure`); `model`
+       * says what to draw, `fixed` the numbers the question does not ask.
+       */
+      sliders?: { min: number; max: number; step: number }[];
+      model?: GuessModel;
+      fixed?: Partial<Record<ParamName, number>>;
       explain: Words;
     }
   | {
@@ -213,7 +241,11 @@ export function isCorrect(question: Question, answer: Answer): boolean {
         question.answer.every(
           (v, i) =>
             Number.isFinite(answer.values[i]) &&
-            Math.abs(answer.values[i] - v) <= question.tolerance + 1e-9
+            Math.abs(answer.values[i] - v) <=
+              (typeof question.tolerance === "number"
+                ? question.tolerance
+                : (question.tolerance[i] ?? 0)) +
+                1e-9
         )
       );
     case "choice":

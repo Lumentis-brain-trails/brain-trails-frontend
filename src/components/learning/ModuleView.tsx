@@ -13,7 +13,8 @@
  * A step's questions come one at a time: the next shows once the one before is right or
  * its answer shown. In a teacher-paced lesson (`control`) the teacher's screen decides
  * instead: the step and how many of its questions are out, with no way to wander off,
- * and every verdict (and a lab's reached goal, as `lab:<step id>`) goes back to the room.
+ * and every verdict (and a lab's reached goal, as `lab:<step id>`) goes back to the room,
+ * while the student sees no right or wrong until the teacher reveals the question.
  */
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,6 +38,23 @@ import type { Answer } from "@/lib/learning/questions";
 
 /** What a teacher-paced lesson hands the module: see `ModuleView`. */
 export interface ModuleControl {
+  /**
+   * Show what the step held back (its "What we found" box, the gallery's codes, the
+   * playground). In a teacher-paced lesson only this opens it, never a student's own
+   * answers: the teacher shows it to the whole class at once.
+   */
+  reveal?: boolean;
+  /**
+   * The step's questions whose answers the teacher has revealed: `0..revealedUpTo`
+   * (undefined: none). A later question only takes the answer, with no right or wrong,
+   * until it is revealed (Andrea, 2026-11-26: the class sees it at the reveal).
+   */
+  revealedUpTo?: number;
+  /**
+   * The teacher's own screen: questions are shown, never answered (no Send, no Check),
+   * and a revealed one shows its solution. Labs stay live for a demonstration.
+   */
+  presenter?: boolean;
   /** The step on screen, counted from zero. */
   step: number;
   /** The last question out (from zero); -1 shows the step without questions. */
@@ -125,6 +143,9 @@ export function ModuleView({
   const firstOpen = step.questions.findIndex(
     (q) => seen[q.id] !== "right" && seen[q.id] !== "shown"
   );
+  // what would give the answers away (codes, sliders, the explanation) waits for them
+  // in a teacher-paced lesson only the teacher opens it, for the whole class at once
+  const answered = control ? control.reveal === true : firstOpen === -1;
   const out = control
     ? control.upTo + 1
     : firstOpen === -1
@@ -183,13 +204,14 @@ export function ModuleView({
           </div>
         </div>
 
-        {step.figure && (
+        {step.figure && !step.figureAnswers && (
           <Card className="p-3 sm:p-4">
             <LearningFigure spec={step.figure} className="mx-auto max-w-3xl" />
           </Card>
         )}
         {step.lab === "ecg" && <EcgExplorer />}
-        {step.lab === "braid" && <BraidLab />}
+        {/* in a lesson the class plays one shared braid, run by the teacher's screen */}
+        {step.lab === "braid" && !control && <BraidLab />}
         {step.lab === "city" && <CityLab />}
         {step.lab === "ballHard" && <BallLab worlds={["rocking", "stuck"]} />}
         {step.lab === "ballRestless" && <BallLab worlds={["restless"]} />}
@@ -198,30 +220,41 @@ export function ModuleView({
         {step.lab && NEURON_LABS.has(step.lab) && (
           <NeuronLab lab={step.lab as NeuronLabName} onGoal={labGoal} />
         )}
-        {step.gallery && <Gallery examples={step.gallery} />}
-        {step.playground && <Playground spec={step.playground} />}
-        {step.links && (
-          <div className="flex flex-wrap gap-2">
-            {step.links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={buttonClass("primary")}
-              >
-                {words.text(l.words)}
-              </Link>
-            ))}
-          </div>
-        )}
+        {step.gallery && <Gallery examples={step.gallery} locked={!answered} />}
 
         {step.questions.slice(0, out).map((q, i) => (
           <QuestionCard
             key={`${step.id}-${q.id}`}
+            presenter={control?.presenter === true}
+            feedback={
+              !control
+                ? "now"
+                : i <= (control.revealedUpTo ?? -1)
+                  ? "revealed"
+                  : "held"
+            }
             question={q}
             index={i}
             onVerdict={(v, a) => heard(q.id, v, a)}
           />
         ))}
+
+        {answered && step.reveal && (
+          <section className="learning-right space-y-2 rounded-[var(--radius-card)] border border-ok bg-ok-soft p-5">
+            <p className="type-eyebrow text-ok">{t("revealTitle")}</p>
+            <div className="type-body-lg space-y-3 text-pretty text-ink">
+              {words.rich({ key: `${key}.reveal` })}
+            </div>
+          </section>
+        )}
+        {answered && step.figure && step.figureAnswers && (
+          <Card className="p-3 sm:p-4">
+            <LearningFigure spec={step.figure} className="mx-auto max-w-3xl" />
+          </Card>
+        )}
+        {answered && step.playground && <Playground spec={step.playground} />}
+        {/* the way on into the product closes the step, after everything else */}
+        {step.links && <StepLinks links={step.links} />}
       </article>
 
       {!control && (
@@ -248,5 +281,23 @@ export function ModuleView({
         </footer>
       )}
     </main>
+  );
+}
+
+/** A step's ways into the product (the demo), as buttons, after its questions. */
+function StepLinks({
+  links,
+}: {
+  links: NonNullable<LearningModule["steps"][number]["links"]>;
+}) {
+  const words = useWords();
+  return (
+    <div className="flex flex-wrap gap-2">
+      {links.map((l) => (
+        <Link key={l.href} href={l.href} className={buttonClass("primary")}>
+          {words.text(l.words)}
+        </Link>
+      ))}
+    </div>
   );
 }

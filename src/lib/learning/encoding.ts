@@ -82,10 +82,21 @@ export interface Step {
   gallery?: Example[];
   /** One larger picture. */
   figure?: FigureSpec;
+  /**
+   * The figure answers the questions (a graph of what they ask): it shows with the
+   * reveal, after the questions, instead of above them.
+   */
+  figureAnswers?: boolean;
   lab?: Lab;
   /** Pages of the product to open from this step (the demo), with their labels. */
   links?: { href: string; words: Words }[];
   playground?: Playground;
+  /**
+   * The step has `steps.<id>.reveal`: what the questions were about (the count, the
+   * names of the numbers), shown only once they are answered so the body does not
+   * give them away. A playground waits for the answers too.
+   */
+  reveal?: boolean;
   questions: Question[];
 }
 
@@ -107,6 +118,54 @@ export function playgroundParts(
     case "train":
       return [trainPart(v.rate ?? 1, v.a ?? 1, v.sigma ?? 0.1)];
   }
+}
+
+/**
+ * What a value question's sliders draw: the person's guess, with the target behind it
+ * (a hollow point, or the dashed signal), green once every value is close enough. The
+ * target is the question's first figure; `values` follow its labels.
+ */
+export function guessFigure(
+  q: Extract<Question, { kind: "value" }>,
+  values: number[],
+  ok: boolean
+): FigureSpec | null {
+  const target = q.figures?.[0];
+  if (!q.model || !target) return null;
+  const v: Partial<Record<ParamName, number>> = { ...q.fixed };
+  q.labels.forEach((name, i) => (v[name] = values[i]));
+  if (q.model === "line" && target.kind === "line")
+    return { ...target, x: v.x ?? 0, ghost: target.x, ok };
+  if (q.model === "plane" && target.kind === "plane")
+    return {
+      ...target,
+      x: v.x ?? 0,
+      y: v.y ?? 0,
+      ghost: [target.x, target.y],
+      ok,
+    };
+  if (target.kind !== "signal") return null;
+  const parts: Part[] =
+    q.model === "twoBells"
+      ? twoBellsPart(
+          v.rate ?? 1,
+          v.a1 ?? 1,
+          v.sigma1 ?? 0.1,
+          v.a2 ?? -0.5,
+          v.sigma2 ?? 0.1,
+          v.d ?? 0.3
+        )
+      : q.model === "line" || q.model === "plane"
+        ? []
+        : playgroundParts(q.model, v);
+  return { ...target, parts, ghost: target.parts, ok };
+}
+
+/** Where a value question's sliders start: the middle of each range, on a step. */
+export function sliderStart(q: Extract<Question, { kind: "value" }>): number[] {
+  return (q.sliders ?? []).map(
+    (s) => s.min + Math.round((s.max - s.min) / 2 / s.step) * s.step
+  );
 }
 
 /** A code as a record, for `playgroundParts`. */
@@ -146,22 +205,33 @@ function twoBellsFigure(
   sigma2: number,
   d: number
 ): FigureSpec {
-  const first = 0.25 / rate;
   return {
     kind: "signal",
-    parts: [
-      {
-        type: "train",
-        rate,
-        bells: [
-          { mu: first, a: a1, sigma: sigma1 },
-          { mu: first + d, a: a2, sigma: sigma2 },
-        ],
-      },
-    ],
+    parts: twoBellsPart(rate, a1, sigma1, a2, sigma2, d),
     domain: [0, 3],
     yRange: [-1.3, 1.6],
   };
+}
+
+function twoBellsPart(
+  rate: number,
+  a1: number,
+  sigma1: number,
+  a2: number,
+  sigma2: number,
+  d: number
+): Part[] {
+  const first = 0.25 / rate;
+  return [
+    {
+      type: "train",
+      rate,
+      bells: [
+        { mu: first, a: a1, sigma: sigma1 },
+        { mu: first + d, a: a2, sigma: sigma2 },
+      ],
+    },
+  ];
 }
 
 function waveFigure(
@@ -323,6 +393,21 @@ function steps(question: string, ids: string[]) {
   return ids.map((id) => ({ id, words: w(`q.${question}.steps.${id}`) }));
 }
 
+/** A true/false statement for the recap: two options, `true` and `false`. */
+function trueFalse(id: string, answer: boolean): Question {
+  return {
+    kind: "choice",
+    id,
+    prompt: w(`q.${id}.prompt`),
+    options: [
+      { id: "true", words: { key: "question.true" } },
+      { id: "false", words: { key: "question.false" } },
+    ],
+    answer: answer ? "true" : "false",
+    explain: w(`q.${id}.explain`),
+  };
+}
+
 /** Options from `q.<id>.options.*`. */
 function options(question: string, ids: string[]) {
   return ids.map((id) => ({ id, words: w(`q.${question}.options.${id}`) }));
@@ -338,7 +423,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         kind: "choice",
         id: "introWhy",
         prompt: w("q.introWhy.prompt"),
-        options: options("introWhy", ["pixels", "numbers", "words"]),
+        options: options("introWhy", ["pixels", "numbers", "words", "photo"]),
         answer: "numbers",
         explain: w("q.introWhy.explain"),
       },
@@ -346,6 +431,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "line",
+    reveal: true,
     gallery: LINE,
     questions: [
       {
@@ -363,6 +449,8 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         labels: ["x"],
         answer: [6.5],
         tolerance: 0.25,
+        sliders: [{ min: 0, max: 10, step: 0.5 }],
+        model: "line",
         explain: w("q.lineValue.explain"),
       },
       {
@@ -377,6 +465,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "plane",
+    reveal: true,
     gallery: PLANE,
     questions: [
       {
@@ -385,6 +474,21 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         prompt: w("q.planeCount.prompt"),
         answer: 2,
         explain: w("q.planeCount.explain"),
+      },
+      {
+        kind: "value",
+        id: "planeValue",
+        prompt: w("q.planeValue.prompt"),
+        figures: [{ kind: "plane", x: 3, y: 7 }],
+        labels: ["x", "y"],
+        answer: [3, 7],
+        tolerance: 0.25,
+        sliders: [
+          { min: 0, max: 10, step: 0.5 },
+          { min: 0, max: 10, step: 0.5 },
+        ],
+        model: "plane",
+        explain: w("q.planeValue.explain"),
       },
       {
         kind: "match",
@@ -407,6 +511,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "bellPosition",
+    reveal: true,
     gallery: BELL_POSITION,
     questions: [
       {
@@ -415,6 +520,19 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         prompt: w("q.bellPositionCount.prompt"),
         answer: 1,
         explain: w("q.bellPositionCount.explain"),
+      },
+      {
+        kind: "value",
+        id: "bellPositionValue",
+        prompt: w("q.bellPositionValue.prompt"),
+        figures: [bellFigure(6.5, 1.5, 0.8)],
+        labels: ["mu"],
+        answer: [6.5],
+        tolerance: 0.25,
+        sliders: [{ min: 0, max: 10, step: 0.5 }],
+        model: "bell",
+        fixed: { a: 1.5, sigma: 0.8 },
+        explain: w("q.bellPositionValue.explain"),
       },
       {
         kind: "order",
@@ -433,6 +551,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "bellHeight",
+    reveal: true,
     gallery: BELL_HEIGHT,
     questions: [
       {
@@ -441,6 +560,22 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         prompt: w("q.bellHeightCount.prompt"),
         answer: 2,
         explain: w("q.bellHeightCount.explain"),
+      },
+      {
+        kind: "value",
+        id: "bellHeightValue",
+        prompt: w("q.bellHeightValue.prompt"),
+        figures: [bellFigure(3.5, 1.5, 0.8)],
+        labels: ["mu", "a"],
+        answer: [3.5, 1.5],
+        tolerance: [0.25, 0.05],
+        sliders: [
+          { min: 0, max: 10, step: 0.5 },
+          { min: 0, max: 2, step: 0.1 },
+        ],
+        model: "bell",
+        fixed: { sigma: 0.8 },
+        explain: w("q.bellHeightValue.explain"),
       },
       {
         kind: "match",
@@ -463,6 +598,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "bellWidth",
+    reveal: true,
     gallery: BELL_WIDTH,
     playground: {
       id: "bellPlay",
@@ -483,6 +619,22 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         prompt: w("q.bellWidthCount.prompt"),
         answer: 3,
         explain: w("q.bellWidthCount.explain"),
+      },
+      {
+        kind: "value",
+        id: "bellWidthValue",
+        prompt: w("q.bellWidthValue.prompt"),
+        figures: [bellFigure(6, 1, 0.5)],
+        labels: ["mu", "a", "sigma"],
+        answer: [6, 1, 0.5],
+        tolerance: [0.25, 0.05, 0.05],
+        sliders: [
+          { min: 0, max: 10, step: 0.5 },
+          { min: 0, max: 2, step: 0.1 },
+          { min: 0.1, max: 3, step: 0.1 },
+        ],
+        model: "bell",
+        explain: w("q.bellWidthValue.explain"),
       },
       {
         kind: "order",
@@ -509,6 +661,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "waves",
+    reveal: true,
     gallery: WAVES,
     playground: {
       id: "wavePlay",
@@ -536,7 +689,12 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         figures: [{ ...waveFigure(2, 1.5), ticks: true }],
         labels: ["f", "a"],
         answer: [2, 1.5],
-        tolerance: 0.1,
+        tolerance: [0.1, 0.05],
+        sliders: [
+          { min: 0.5, max: 4, step: 0.5 },
+          { min: 0, max: 2, step: 0.1 },
+        ],
+        model: "wave",
         explain: w("q.wavesValue.explain"),
       },
       {
@@ -560,6 +718,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "train",
+    reveal: true,
     gallery: TRAINS,
     playground: {
       id: "trainPlay",
@@ -582,6 +741,22 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         explain: w("q.trainCount.explain"),
       },
       {
+        kind: "value",
+        id: "trainValue",
+        prompt: w("q.trainValue.prompt"),
+        figures: [trainFigure(2, 1.5, 0.1)],
+        labels: ["rate", "a", "sigma"],
+        answer: [2, 1.5, 0.1],
+        tolerance: [0.1, 0.05, 0.01],
+        sliders: [
+          { min: 0.5, max: 4, step: 0.5 },
+          { min: 0, max: 2, step: 0.1 },
+          { min: 0.02, max: 0.4, step: 0.02 },
+        ],
+        model: "train",
+        explain: w("q.trainValue.explain"),
+      },
+      {
         kind: "choice",
         id: "trainRate",
         prompt: w("q.trainRate.prompt"),
@@ -589,6 +764,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
           { id: "one", figure: trainFigure(1, 1.5, 0.08) },
           { id: "three", figure: trainFigure(3, 1, 0.05) },
           { id: "two", figure: trainFigure(2, 2, 0.08) },
+          { id: "tall", figure: trainFigure(1, 2, 0.2) },
         ],
         answer: "three",
         explain: w("q.trainRate.explain"),
@@ -597,6 +773,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "twoBells",
+    reveal: true,
     gallery: TWO,
     questions: [
       {
@@ -607,10 +784,34 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         explain: w("q.twoBellsCount.explain"),
       },
       {
+        kind: "value",
+        id: "twoBellsValue",
+        prompt: w("q.twoBellsValue.prompt"),
+        figures: [twoBellsFigure(1, 1, 0.08, -0.6, 0.08, 0.3)],
+        labels: ["rate", "a1", "sigma1", "a2", "sigma2", "d"],
+        answer: [1, 1, 0.08, -0.6, 0.08, 0.3],
+        tolerance: [0.1, 0.05, 0.01, 0.05, 0.01, 0.025],
+        sliders: [
+          { min: 0.5, max: 3, step: 0.5 },
+          { min: 0, max: 1.5, step: 0.1 },
+          { min: 0.02, max: 0.3, step: 0.02 },
+          { min: -1.5, max: 1.5, step: 0.1 },
+          { min: 0.02, max: 0.3, step: 0.02 },
+          { min: 0.05, max: 0.6, step: 0.05 },
+        ],
+        model: "twoBells",
+        explain: w("q.twoBellsValue.explain"),
+      },
+      {
         kind: "choice",
         id: "twoBellsSign",
         prompt: w("q.twoBellsSign.prompt"),
-        options: options("twoBellsSign", ["negative", "flip", "subtract"]),
+        options: options("twoBellsSign", [
+          "negative",
+          "flip",
+          "subtract",
+          "second",
+        ]),
         answer: "negative",
         explain: w("q.twoBellsSign.explain"),
       },
@@ -688,6 +889,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "recap",
+    reveal: true,
     questions: [
       {
         kind: "match",
@@ -710,14 +912,10 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: { line: "n1", plane: "n2", bell: "n3", two: "n6", ecg: "n25" },
         explain: w("q.recapMatch.explain"),
       },
-      {
-        kind: "order",
-        id: "recapSteps",
-        prompt: w("q.recapSteps.prompt"),
-        items: steps("recapSteps", ["recipe", "count", "encode", "decode"]),
-        answer: ["recipe", "count", "encode", "decode"],
-        explain: w("q.recapSteps.explain"),
-      },
+      trueFalse("enTfChanges", false),
+      trueFalse("enTfDots", false),
+      trueFalse("enTfDecode", true),
+      trueFalse("enTfEeg", true),
     ],
   },
 ];

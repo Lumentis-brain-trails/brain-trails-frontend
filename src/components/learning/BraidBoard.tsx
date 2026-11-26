@@ -3,7 +3,8 @@
 /**
  * The braided path, drawn: strands that cross and tangle between a start and an end,
  * each as thick as its synapse, with the pointer's node lit, the edges it can take next
- * in their vote colours, and a fog over everything more than a couple of hops away.
+ * in their vote colours, and a fog over everything more than a couple of hops away. A dead
+ * spot looks like any other node until the signal dies in it.
  *
  * `BraidBoard` is the picture alone, for the teacher's screen of the live class game
  * (the class game page drives it) and for `BraidLab`, the solo version on the module's
@@ -17,12 +18,15 @@ import {
   type BraidState,
   CAP,
   FOG,
-  arrived,
+  type RoundResult,
   byThickness,
   choicesAt,
+  deadEnd,
   endRound,
   makeBraid,
   move,
+  results,
+  roundOver,
   startState,
   visibleNodes,
 } from "@/lib/learning/braid";
@@ -113,12 +117,12 @@ export function BraidBoard({
             cy={n.y}
             r={n.kind === "start" || n.kind === "end" ? 2 : here ? 1.8 : 1.1}
             fill={
-              here
-                ? "var(--accent)"
-                : n.kind === "end"
-                  ? "#10b981"
-                  : n.kind === "dead"
-                    ? "var(--surface-3)"
+              here && n.kind === "dead"
+                ? "#ef4444"
+                : here
+                  ? "var(--accent)"
+                  : n.kind === "end"
+                    ? "#10b981"
                     : "var(--surface)"
             }
             stroke="currentColor"
@@ -157,24 +161,37 @@ export function BraidBoard({
         cy={at.y}
         r={3.2}
         fill="none"
-        stroke="var(--accent)"
+        stroke={at.kind === "dead" ? "#ef4444" : "var(--accent)"}
         strokeWidth={0.5}
       />
     </svg>
   );
 }
 
+/** The rounds played, as words: "9 steps · dead end · 7 steps". */
+export function useRoundHistory() {
+  const t = useTranslations("learning.labs.braid");
+  return (rounds: RoundResult[]) =>
+    rounds
+      .map((r) => (r.arrived ? t("steps", { n: r.steps }) : t("deadShort")))
+      .join(" · ");
+}
+
 /**
  * The braided path for one player: click a coloured edge to go there. Each crossing
- * thickens the edge; at the end a new round starts and unused edges thin. "Let the habit
- * choose" moves along an edge picked in proportion to thickness, like a tie in class.
+ * thickens the edge; a dead spot ends the round (game over) and prunes the edge into it.
+ * Rounds follow one another for as long as the player likes, with no fog to lift and no
+ * starting over: what the network has learned stays. "Let the habit choose" moves along
+ * an edge picked in proportion to thickness, like a tie in class.
  */
 export function BraidLab() {
   const t = useTranslations("learning.labs.braid");
+  const history = useRoundHistory();
   const braid = useMemo(() => makeBraid(4), []);
   const [state, setState] = useState<BraidState>(() => startState(braid));
-  const [fog, setFog] = useState(true);
-  const done = arrived(braid, state);
+  const over = roundOver(braid, state);
+  const dead = deadEnd(braid, state);
+  const played = results(braid, state);
   const pick = (edgeId: string) => setState((s) => move(braid, s, edgeId));
   const habit = () => {
     const choices = choicesAt(braid, state).map((e) => e.id);
@@ -190,13 +207,25 @@ export function BraidLab() {
         <BraidBoard
           braid={braid}
           state={state}
-          fog={fog ? FOG : Infinity}
-          onPick={done ? undefined : pick}
+          fog={FOG}
+          onPick={over ? undefined : pick}
         />
       </div>
+      {over && (
+        <p
+          className={cn(
+            "enter-pop rounded-xl p-3 font-medium",
+            dead ? "bg-warn-soft text-warn" : "bg-ok-soft text-ok"
+          )}
+        >
+          {dead
+            ? t("dead", { n: state.steps })
+            : t("arrived", { n: state.steps })}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
-        {done ? (
-          <Button size="sm" onClick={() => setState((s) => endRound(s))}>
+        {over ? (
+          <Button size="sm" onClick={() => setState((s) => endRound(braid, s))}>
             {t("next")}
           </Button>
         ) : (
@@ -204,25 +233,13 @@ export function BraidLab() {
             {t("habit")}
           </Button>
         )}
-        <Button size="sm" variant="ghost" onClick={() => setFog((f) => !f)}>
-          {fog ? t("liftFog") : t("fog")}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setState(startState(braid))}
-        >
-          {t("reset")}
-        </Button>
         <span className="type-caption ml-auto text-ink-3">
-          {done
-            ? t("arrived", { n: state.steps })
-            : t("status", { round: state.round, n: state.steps })}
+          {t("status", { round: state.round, n: state.steps })}
         </span>
       </div>
-      {state.finished.length > 0 && (
+      {played.length > 0 && (
         <p className="type-caption text-ink-2">
-          {t("history", { steps: state.finished.join(" → ") })}
+          {t("history", { rounds: history(played) })}
         </p>
       )}
     </Card>

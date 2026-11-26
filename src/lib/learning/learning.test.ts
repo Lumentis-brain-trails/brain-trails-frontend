@@ -1,10 +1,13 @@
 import { describe, expect, test } from "vitest";
 import en from "../../../messages/en.json";
+import it from "../../../messages/it.json";
 import {
   ECG_FIGURE,
   ECG_NUMBERS,
   ENCODING,
   codeValues,
+  guessFigure,
+  sliderStart,
   playgroundParts,
 } from "@/lib/learning/encoding";
 import { MODULES, moduleOf, stepIndex } from "@/lib/learning/modules";
@@ -22,6 +25,10 @@ import {
   startState,
   tally,
   visibleNodes,
+  MIN_WEIGHT,
+  deadEnd,
+  results,
+  roundOver,
 } from "@/lib/learning/braid";
 import {
   DIG_CAP,
@@ -485,6 +492,13 @@ describe("the Brain Plasticity module", () => {
         expect(message(w.key), w.key).toBeTypeOf("string");
   });
 
+  test("a figure that answers the questions waits for the reveal", () => {
+    const lifespan = PLASTICITY.find((s) => s.id === "lifespan")!;
+    expect(lifespan.figureAnswers).toBe(true);
+    for (const st of [...PLASTICITY, ...ENCODING, ...NEURAL_NETWORKS])
+      if (st.figureAnswers) expect(st.reveal, st.id).toBe(true);
+  });
+
   test("true/false questions have exactly the two options", () => {
     for (const q of PLASTICITY.flatMap((s) => s.questions))
       if (q.kind === "choice" && q.id.startsWith("plTf"))
@@ -519,17 +533,19 @@ describe("the braided path", () => {
     expect(s.steps).toBe(9);
   });
 
-  test("votes count with thickness and two thirds moves at once", () => {
+  test("votes count with thickness and nothing moves before the time is up", () => {
     let s = startState(braid);
     const [a, b] = choicesAt(braid, s).map((e) => e.id);
     expect(tally(braid, s, { [a]: 3, [b]: 1, nope: 9 })).toMatchObject({
       [a]: 3,
       [b]: 1,
     });
-    expect(decide(braid, s, { [a]: 6 }, 10)).toBeNull();
-    expect(decide(braid, s, { [a]: 7 }, 10)).toBe(a);
+    expect(decide(braid, s, { [a]: 10 }, 10)).toBeNull();
+    expect(decide(braid, s, { [a]: 7 }, 10, { timedOut: true })).toBe(a);
     s = { ...s, weights: { ...s.weights, [a]: 3 } };
-    expect(decide(braid, s, { [a]: 3 }, 10)).toBe(a);
+    expect(decide(braid, s, { [a]: 2, [b]: 5 }, 10, { timedOut: true })).toBe(
+      a
+    );
     expect(decide(braid, s, { [a]: 1, [b]: 4 }, 10, { timedOut: true })).toBe(
       b
     );
@@ -550,27 +566,62 @@ describe("the braided path", () => {
     expect(byThickness(["x"], {}, () => 2)).toBe("x");
   });
 
-  test("crossing thickens up to the cap, dead ends bounce back, unused edges thin", () => {
+  test("crossing thickens up to the cap, unused edges thin", () => {
     let s = startState(braid);
     const id = choicesAt(braid, s)[0].id;
     for (let i = 0; i < 10; i++) s = move(braid, { ...s, at: braid.start }, id);
     expect(s.weights[id]).toBe(CAP);
     expect(move(braid, s, "nope")).toBe(s);
-    const deadEdge = braid.edges.find((e) => braid.nodes[e.to].kind === "dead");
-    if (!deadEdge) throw new Error("no dead end");
-    const at = { ...startState(braid), at: deadEdge.from };
-    const bounced = move(braid, at, deadEdge.id);
-    expect(bounced.at).toBe(deadEdge.from);
-    expect(bounced.weights[deadEdge.id]).toBeCloseTo(1.25);
     const other = braid.edges.find((e) => e.id !== id)!.id;
     const thick = { ...s, weights: { ...s.weights, [other]: 3 } };
-    const next = endRound(thick);
+    const next = endRound(braid, thick);
     expect(next.weights[id]).toBe(CAP);
     expect(next.weights[other]).toBeLessThan(3);
     expect(next.round).toBe(2);
     expect(next.at).toBe(braid.start);
-    const thin = endRound({ ...s, weights: { [other]: 0.5 }, used: [] });
+    const thin = endRound(braid, { ...s, weights: { [other]: 0.5 }, used: [] });
     expect(thin.weights[other]).toBe(0.5);
+  });
+
+  test("some paths lead to a dead spot: game over, the edge pruned, a new round", () => {
+    const deadNodes = braid.nodes.filter((n) => n.kind === "dead");
+    // dead spots beside nodes and inside the tangle, which has no way on from them
+    expect(deadNodes.length).toBeGreaterThan(3);
+    const inner = deadNodes.filter((n) =>
+      braid.edges.some(
+        (e) => e.to === n.id && braid.nodes[e.from].kind === "mid"
+      )
+    );
+    expect(inner.length).toBeGreaterThan(0);
+    for (const n of deadNodes)
+      expect(braid.edges.some((e) => e.from === n.id)).toBe(false);
+    const deadEdge = braid.edges.find(
+      (e) => braid.nodes[e.to].kind === "dead"
+    )!;
+    const at = { ...startState(braid), at: deadEdge.from, steps: 3 };
+    const died = move(braid, at, deadEdge.id);
+    expect(deadEnd(braid, died)).toBe(true);
+    expect(roundOver(braid, died)).toBe(true);
+    expect(arrived(braid, died)).toBe(false);
+    expect(died.weights[deadEdge.id]).toBe(MIN_WEIGHT);
+    expect(results(braid, died)).toEqual([{ steps: 4, arrived: false }]);
+    const next = endRound(braid, died);
+    expect(next.at).toBe(braid.start);
+    expect(next.finished).toEqual([{ steps: 4, arrived: false }]);
+  });
+
+  test("every live node has a live way on, so the end is always reachable", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const b = makeBraid(seed);
+      for (const n of b.nodes)
+        if (n.kind === "start" || n.kind === "mid")
+          expect(
+            b.edges.some(
+              (e) => e.from === n.id && b.nodes[e.to].kind !== "dead"
+            ),
+            `${seed}:${n.id}`
+          ).toBe(true);
+    }
   });
 
   test("the fog shows two hops around the pointer, and always the end", () => {
@@ -643,5 +694,100 @@ describe("the ball on the landscape", () => {
     expect(
       stepBall(WORLDS.stuck, right, 0.01, seeded(1)).x
     ).toBeLessThanOrEqual(10);
+  });
+});
+
+describe("encoding questions do not give their answers away", () => {
+  const values = ENCODING.flatMap((s) => s.questions).filter(
+    (q): q is Extract<Question, { kind: "value" }> => q.kind === "value"
+  );
+
+  test("every value question is answered on sliders that can reach the answer", () => {
+    for (const q of values) {
+      expect(q.sliders, q.id).toHaveLength(q.labels.length);
+      q.answer.forEach((v, i) => {
+        const s = q.sliders![i];
+        expect(v, q.id).toBeGreaterThanOrEqual(s.min);
+        expect(v, q.id).toBeLessThanOrEqual(s.max);
+        const steps = (v - s.min) / s.step;
+        expect(Math.abs(steps - Math.round(steps)), q.id).toBeLessThan(1e-6);
+      });
+      // the sliders do not start on the answer, and the answer itself is right
+      expect(
+        isCorrect(q, { kind: "value", values: sliderStart(q) }),
+        q.id
+      ).toBe(false);
+      expect(isCorrect(q, { kind: "value", values: q.answer }), q.id).toBe(
+        true
+      );
+      expect(guessFigure(q, q.answer, true), q.id).not.toBeNull();
+    }
+  });
+
+  test("steps that hold back their explanation have one, and ask first", () => {
+    const steps = en.learning.encoding.steps as Record<
+      string,
+      { body: string; reveal?: string }
+    >;
+    for (const s of ENCODING.filter((s) => s.reveal)) {
+      expect(steps[s.id].reveal, s.id).toBeTruthy();
+      if (!s.gallery) continue;
+      expect(s.questions[0].kind, s.id).toBe("count");
+      expect(s.questions[1].kind, s.id).toBe("value");
+    }
+  });
+
+  test("every step that holds back its explanation has one, in every module", () => {
+    for (const m of MODULES)
+      for (const s of m.steps.filter((s) => s.reveal)) {
+        const step = (
+          en.learning as unknown as Record<
+            string,
+            { steps: Record<string, { reveal?: string }> }
+          >
+        )[m.key].steps[s.id];
+        expect(step.reveal, `${m.key}.${s.id}`).toBeTruthy();
+      }
+  });
+
+  test("multiple choices offer four options, true/false two", () => {
+    for (const m of MODULES)
+      for (const q of m.steps.flatMap((s) => s.questions))
+        if (q.kind === "choice")
+          expect([2, 4], `${m.key}.${q.id}`).toContain(q.options.length);
+  });
+});
+
+describe("answer options", () => {
+  // the right answer must not stand out as the only long, careful one (Andrea, 2026-11-26)
+  test("the right option is never the only longest, in either language", () => {
+    const resolve = (root: unknown, key: string) =>
+      key
+        .split(".")
+        .reduce<unknown>(
+          (o, k) => (o as Record<string, unknown> | undefined)?.[k],
+          root
+        );
+    for (const step of [...NEURAL_NETWORKS, ...ENCODING, ...PLASTICITY])
+      for (const q of step.questions) {
+        if (q.kind !== "choice" || q.options.some((o) => !o.words)) continue;
+        if (q.options.some((o) => o.id === "true")) continue;
+        for (const [lang, messages] of [
+          ["en", en],
+          ["it", it],
+        ] as const) {
+          const length = (id: string) => {
+            const o = q.options.find((x) => x.id === id)!;
+            return String(resolve(messages.learning, o.words!.key)).length;
+          };
+          const others = q.options
+            .filter((o) => o.id !== q.answer)
+            .map((o) => length(o.id));
+          expect(
+            length(q.answer),
+            `${lang} ${q.id}: the answer is the longest option`
+          ).toBeLessThanOrEqual(Math.max(...others));
+        }
+      }
   });
 });

@@ -6,7 +6,9 @@
  *
  * The explanation shows once the answer is right or the person asks for it, because the
  * point is the reasoning, not the score; a wrong answer can be changed and checked
- * again. Ordering and matching work by dragging with a mouse and by tapping on a phone
+ * again. In a teacher-paced lesson (`feedback: "held"`) the answer is only sent: no
+ * right or wrong, no explanation, no way to peek, and it can be changed and sent again
+ * until the teacher reveals it (`"revealed"`), when the last answer sent is judged. Ordering and matching work by dragging with a mouse and by tapping on a phone
  * or tablet (tap a picture, then tap where it goes), with arrows as a keyboard path.
  */
 import { useTranslations } from "next-intl";
@@ -21,8 +23,10 @@ import {
   PARAM_SYMBOL,
   formatCode,
   isCorrect,
+  round,
   shuffled,
 } from "@/lib/learning/questions";
+import { guessFigure, sliderStart } from "@/lib/learning/encoding";
 
 /** Resolves `Words` against `learning.*`: keys are data here, checked by a unit test. */
 export function useWords() {
@@ -49,16 +53,24 @@ export function useWords() {
 
 type Verdict = "right" | "wrong" | "shown" | null;
 
+/** When right or wrong is told: at once (alone), held until the teacher reveals, revealed. */
+export type Feedback = "now" | "held" | "revealed";
+
 /**
  * `onVerdict` hears every verdict after Check or Show answer (a wrong answer checked
  * again and now right reports "right"): the module uses it to show the next question,
  * and a teacher-paced lesson to count the class's answers without names.
  */
 export function QuestionCard({
+  feedback = "now",
+  presenter = false,
   question,
   index,
   onVerdict,
 }: {
+  feedback?: Feedback;
+  /** The teacher's screen of a lesson: the question read-only, the solution once revealed. */
+  presenter?: boolean;
   question: Question;
   index: number;
   /** The answer given rides along, so a live lesson can count which option was chosen. */
@@ -66,9 +78,21 @@ export function QuestionCard({
 }) {
   const t = useTranslations("learning.question");
   const words = useWords();
-  const [answer, setAnswer] = useState<Answer>(() => initial(question));
-  const [verdict, setVerdict] = useState<Verdict>(null);
+  const [own, setAnswer] = useState<Answer>(() => initial(question));
+  const [ownVerdict, setVerdict] = useState<Verdict>(null);
   const [version, setVersion] = useState(0);
+  // a teacher-paced lesson: the last answer sent, and a look at the solution once revealed
+  const [sent, setSent] = useState<Answer | null>(null);
+  const [peek, setPeek] = useState(false);
+  const held = feedback === "held";
+  const revealed = feedback === "revealed";
+  // once revealed, the card shows the answer sent (or the solution) and its verdict
+  const [answer, verdict]: [Answer, Verdict] = !revealed
+    ? [own, held ? null : ownVerdict]
+    : sent && !peek
+      ? [sent, isCorrect(question, sent) ? "right" : "wrong"]
+      : [solution(question), "shown"];
+  const sentNow = sent !== null && JSON.stringify(sent) === JSON.stringify(own);
 
   const change = (a: Answer) => {
     setAnswer(a);
@@ -76,6 +100,7 @@ export function QuestionCard({
   };
   const check = () => {
     const v = isCorrect(question, answer) ? "right" : "wrong";
+    if (held) setSent(answer);
     setVerdict(v);
     onVerdict?.(v, answer);
   };
@@ -90,7 +115,7 @@ export function QuestionCard({
     setVersion((v) => v + 1);
     setVerdict(null);
   };
-  const done = verdict === "right" || verdict === "shown";
+  const done = revealed || verdict === "right" || verdict === "shown";
 
   return (
     <Card
@@ -108,50 +133,70 @@ export function QuestionCard({
         </p>
       </div>
 
-      {"figures" in question && question.figures && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {question.figures.map((f, i) => (
-            <div
-              key={i}
-              className={cn(
-                "rounded-xl border border-hairline p-2",
-                question.figures?.length === 1 && "sm:col-span-2"
-              )}
-            >
-              <LearningFigure spec={f} />
-            </div>
-          ))}
-        </div>
-      )}
+      {"figures" in question &&
+        question.figures &&
+        !("sliders" in question && question.sliders) && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {question.figures.map((f, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "rounded-xl border border-hairline p-2",
+                  question.figures?.length === 1 && "sm:col-span-2"
+                )}
+              >
+                <LearningFigure spec={f} />
+              </div>
+            ))}
+          </div>
+        )}
 
       <Body
-        key={version}
+        key={`${version}-${feedback}-${peek}`}
         question={question}
         answer={answer}
         onChange={change}
-        locked={done}
+        locked={done || presenter}
         right={verdict === "right"}
+        judge={!held}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {!done && (
-          <Button size="sm" onClick={check}>
-            {t("check")}
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-2",
+          presenter && "hidden"
+        )}
+      >
+        {!done && !presenter && (
+          <Button size="sm" onClick={check} disabled={held && sentNow}>
+            {t(held ? "send" : "check")}
           </Button>
         )}
-        {!done && (
+        {!done && !held && !presenter && (
           <Button size="sm" variant="ghost" onClick={show}>
             {t("show")}
           </Button>
         )}
-        {!done && (question.kind === "order" || question.kind === "match") && (
-          <Button size="sm" variant="ghost" onClick={reset}>
-            {t("reset")}
-          </Button>
+        {held && sentNow && !presenter && (
+          <span className="inline-flex items-center gap-1.5 text-ink-2">
+            <Icon name="check" /> {t("sent")}
+          </span>
         )}
-        {done && (
+        {!done &&
+          !presenter &&
+          (question.kind === "order" || question.kind === "match") && (
+            <Button size="sm" variant="ghost" onClick={reset}>
+              {t("reset")}
+            </Button>
+          )}
+        {done && !revealed && (
           <Button size="sm" variant="secondary" onClick={reset}>
             {t("again")}
+          </Button>
+        )}
+        {revealed && verdict === "wrong" && (
+          <Button size="sm" variant="ghost" onClick={() => setPeek(true)}>
+            {t("show")}
           </Button>
         )}
         {verdict === "right" && (
@@ -160,7 +205,12 @@ export function QuestionCard({
           </span>
         )}
         {verdict === "wrong" && (
-          <span className="font-medium text-warn">{t("wrong")}</span>
+          <span className="font-medium text-warn">
+            {t(revealed ? "wrongSent" : "wrong")}
+          </span>
+        )}
+        {revealed && !sent && !presenter && (
+          <span className="text-ink-2">{t("notSent")}</span>
         )}
       </div>
 
@@ -179,7 +229,10 @@ function initial(q: Question): Answer {
     case "count":
       return { kind: "count", value: Number.NaN };
     case "value":
-      return { kind: "value", values: q.labels.map(() => Number.NaN) };
+      return {
+        kind: "value",
+        values: q.sliders ? sliderStart(q) : q.labels.map(() => Number.NaN),
+      };
     case "choice":
       return { kind: "choice", id: "" };
     case "order":
@@ -211,12 +264,15 @@ function Body({
   onChange,
   locked,
   right,
+  judge,
 }: {
   question: Question;
   answer: Answer;
   onChange: (a: Answer) => void;
   locked: boolean;
   right: boolean;
+  /** Whether sliders may turn green when right (not while a lesson holds it back). */
+  judge: boolean;
 }) {
   if (question.kind === "count" && answer.kind === "count")
     return (
@@ -224,6 +280,16 @@ function Body({
         value={answer.value}
         locked={locked}
         onChange={(value) => onChange({ kind: "count", value })}
+      />
+    );
+  if (question.kind === "value" && answer.kind === "value" && question.sliders)
+    return (
+      <ValueSliders
+        question={question}
+        values={answer.values}
+        locked={locked}
+        judge={judge}
+        onChange={(values) => onChange({ kind: "value", values })}
       />
     );
   if (question.kind === "value" && answer.kind === "value")
@@ -289,6 +355,72 @@ function Body({
       />
     );
   return null;
+}
+
+/**
+ * A value question answered on sliders, one per number: the figure draws the guess over
+ * the target as the sliders move, and turns green once every number is close enough
+ * (`judge`: never while a teacher-paced lesson holds the verdict back).
+ */
+function ValueSliders({
+  question,
+  values,
+  locked,
+  judge,
+  onChange,
+}: {
+  question: Extract<Question, { kind: "value" }>;
+  values: number[];
+  locked: boolean;
+  judge: boolean;
+  onChange: (values: number[]) => void;
+}) {
+  const t = useTranslations("learning.question");
+  const ok = judge && isCorrect(question, { kind: "value", values });
+  const figure = guessFigure(question, values, ok);
+  return (
+    <div className="space-y-4">
+      {figure && (
+        <div className="rounded-xl border border-hairline p-2">
+          <LearningFigure spec={figure} className="mx-auto max-w-2xl" />
+          <p className="type-caption mt-1 text-center text-ink-3">
+            {t("sliderHint")}
+          </p>
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {question.labels.map((name, i) => {
+          const sl = question.sliders?.[i];
+          if (!sl) return null;
+          return (
+            <label key={name} className="block">
+              <span className="flex justify-between font-mono text-[15px] tabular-nums">
+                <span>{PARAM_SYMBOL[name]}</span>
+                <span>{round(values[i])}</span>
+              </span>
+              <input
+                type="range"
+                min={sl.min}
+                max={sl.max}
+                step={sl.step}
+                disabled={locked}
+                value={values[i]}
+                onChange={(e) => {
+                  const next = [...values];
+                  next[i] = Number(e.target.value);
+                  onChange(next);
+                }}
+                className={cn(
+                  "w-full",
+                  ok ? "accent-[var(--ok)]" : "accent-[var(--accent)]"
+                )}
+              />
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function CountInput({
