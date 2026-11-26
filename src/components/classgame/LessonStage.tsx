@@ -113,6 +113,8 @@ export function LessonStage({
     upTo: place.upTo,
     revealedUpTo: here.revealed,
     reveal: stepRevealed(mod, place, phase),
+    // the teacher drives the lesson and never answers: the cards are read-only
+    presenter: true,
     onVerdict: () => {},
   };
 

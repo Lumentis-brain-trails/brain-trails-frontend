@@ -3,7 +3,7 @@
 /**
  * The note that calls a student into their class's game, on every page of the app while
  * the teacher has one open (flag `class_games`). Only an account enrolled in a school
- * asks (`useMyGame`). It never shows where the game already is (the student's `/play`,
+ * asks (`useMyGame`), and never one that teaches a school. It never shows where the game already is (the student's `/play`,
  * the teacher's `/school/...` pages), and once closed it stays closed for this browser
  * session (Andrea, 2026-11-25: it kept coming back while a lesson moved on).
  */
@@ -13,6 +13,8 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Icon, buttonClass } from "@/components/ui";
 import { useMyGame } from "@/lib/classgame/useClassGame";
+import { taughtSchools } from "@/lib/schools";
+import { useWorkspaces } from "@/lib/workspace";
 
 export const PLAY_PATH = "/play";
 const CLOSED_KEY = "bt-class-game-call-closed";
@@ -34,7 +36,10 @@ export function ClassGameCall() {
   const t = useTranslations("classGame.call");
   const pathname = usePathname();
   const [closed, setClosed] = useState(closedBefore);
-  const hidden = hiddenOn(pathname) || closed;
+  // a teacher (or speaker) runs the game from School, never joins it as a student, even
+  // when the account is also enrolled (Andrea, 2026-11-26)
+  const teaches = taughtSchools(useWorkspaces().data).length > 0;
+  const hidden = hiddenOn(pathname) || closed || teaches;
   const game = useMyGame(!hidden);
   if (hidden || !game.data?.open) return null;
   const close = () => {
