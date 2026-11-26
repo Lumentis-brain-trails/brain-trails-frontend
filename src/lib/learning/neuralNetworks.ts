@@ -79,6 +79,7 @@ export const NEURAL_NETWORKS: Step[] = [
   },
   {
     id: "biology",
+    reveal: true,
     figure: { kind: "bioNeuron" },
     questions: [
       {
@@ -191,6 +192,7 @@ export const NEURAL_NETWORKS: Step[] = [
   },
   {
     id: "hidden",
+    reveal: true,
     lab: "xor",
     questions: [
       {
@@ -213,6 +215,7 @@ export const NEURAL_NETWORKS: Step[] = [
   },
   {
     id: "learning",
+    reveal: true,
     lab: "learn",
     questions: [
       {
@@ -249,6 +252,7 @@ export const NEURAL_NETWORKS: Step[] = [
   },
   {
     id: "digits",
+    reveal: true,
     lab: "digits",
     questions: [
       {
@@ -288,6 +292,7 @@ export const NEURAL_NETWORKS: Step[] = [
   },
   {
     id: "recap",
+    reveal: true,
     questions: [
       trueFalse("nnTfThreshold", true),
       trueFalse("nnTfXorOne", false),

@@ -388,6 +388,21 @@ function steps(question: string, ids: string[]) {
   return ids.map((id) => ({ id, words: w(`q.${question}.steps.${id}`) }));
 }
 
+/** A true/false statement for the recap: two options, `true` and `false`. */
+function trueFalse(id: string, answer: boolean): Question {
+  return {
+    kind: "choice",
+    id,
+    prompt: w(`q.${id}.prompt`),
+    options: [
+      { id: "true", words: { key: "question.true" } },
+      { id: "false", words: { key: "question.false" } },
+    ],
+    answer: answer ? "true" : "false",
+    explain: w(`q.${id}.explain`),
+  };
+}
+
 /** Options from `q.<id>.options.*`. */
 function options(question: string, ids: string[]) {
   return ids.map((id) => ({ id, words: w(`q.${question}.options.${id}`) }));
@@ -403,7 +418,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         kind: "choice",
         id: "introWhy",
         prompt: w("q.introWhy.prompt"),
-        options: options("introWhy", ["pixels", "numbers", "words"]),
+        options: options("introWhy", ["pixels", "numbers", "words", "photo"]),
         answer: "numbers",
         explain: w("q.introWhy.explain"),
       },
@@ -744,6 +759,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
           { id: "one", figure: trainFigure(1, 1.5, 0.08) },
           { id: "three", figure: trainFigure(3, 1, 0.05) },
           { id: "two", figure: trainFigure(2, 2, 0.08) },
+          { id: "tall", figure: trainFigure(1, 2, 0.2) },
         ],
         answer: "three",
         explain: w("q.trainRate.explain"),
@@ -774,7 +790,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
           { min: 0.5, max: 3, step: 0.5 },
           { min: 0, max: 1.5, step: 0.1 },
           { min: 0.02, max: 0.3, step: 0.02 },
-          { min: -1.5, max: 0, step: 0.1 },
+          { min: -1.5, max: 1.5, step: 0.1 },
           { min: 0.02, max: 0.3, step: 0.02 },
           { min: 0.05, max: 0.6, step: 0.05 },
         ],
@@ -785,7 +801,12 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         kind: "choice",
         id: "twoBellsSign",
         prompt: w("q.twoBellsSign.prompt"),
-        options: options("twoBellsSign", ["negative", "flip", "subtract"]),
+        options: options("twoBellsSign", [
+          "negative",
+          "flip",
+          "subtract",
+          "second",
+        ]),
         answer: "negative",
         explain: w("q.twoBellsSign.explain"),
       },
@@ -863,6 +884,7 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
   },
   {
     id: "recap",
+    reveal: true,
     questions: [
       {
         kind: "match",
@@ -885,14 +907,10 @@ export const ENCODING: (Step & { id: EncodingStepId })[] = [
         answer: { line: "n1", plane: "n2", bell: "n3", two: "n6", ecg: "n25" },
         explain: w("q.recapMatch.explain"),
       },
-      {
-        kind: "order",
-        id: "recapSteps",
-        prompt: w("q.recapSteps.prompt"),
-        items: steps("recapSteps", ["recipe", "count", "encode", "decode"]),
-        answer: ["recipe", "count", "encode", "decode"],
-        explain: w("q.recapSteps.explain"),
-      },
+      trueFalse("enTfChanges", true),
+      trueFalse("enTfDots", false),
+      trueFalse("enTfDecode", true),
+      trueFalse("enTfEeg", false),
     ],
   },
 ];

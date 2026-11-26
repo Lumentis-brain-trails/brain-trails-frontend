@@ -682,8 +682,29 @@ describe("encoding questions do not give their answers away", () => {
     >;
     for (const s of ENCODING.filter((s) => s.reveal)) {
       expect(steps[s.id].reveal, s.id).toBeTruthy();
+      if (!s.gallery) continue;
       expect(s.questions[0].kind, s.id).toBe("count");
       expect(s.questions[1].kind, s.id).toBe("value");
     }
+  });
+
+  test("every step that holds back its explanation has one, in every module", () => {
+    for (const m of MODULES)
+      for (const s of m.steps.filter((s) => s.reveal)) {
+        const step = (
+          en.learning as unknown as Record<
+            string,
+            { steps: Record<string, { reveal?: string }> }
+          >
+        )[m.key].steps[s.id];
+        expect(step.reveal, `${m.key}.${s.id}`).toBeTruthy();
+      }
+  });
+
+  test("multiple choices offer four options, true/false two", () => {
+    for (const m of MODULES)
+      for (const q of m.steps.flatMap((s) => s.questions))
+        if (q.kind === "choice")
+          expect([2, 4], `${m.key}.${q.id}`).toContain(q.options.length);
   });
 });

@@ -4602,7 +4602,7 @@
         },
         "twoBells": {
           "title": "Una campana su, una campana giù",
-          "body": "<p>In ogni battito ora aggiungiamo una seconda campana con il <b>segno meno</b>: punta in giù. Il battito prende la forma di una piccola onda che sale e poi scende. Di che cosa ha bisogno ora il codice?</p>",
+          "body": "<p>In ogni battito ora aggiungiamo una seconda campana che <b>punta in giù</b>. Il battito prende la forma di una piccola onda che sale e poi scende. Di che cosa ha bisogno ora il codice?</p>",
           "reveal": "<p>Il codice sale a sei numeri: la frequenza <b>f</b>, altezza e larghezza della prima campana (<b>A₁</b>, <b>σ₁</b>), altezza e larghezza della seconda (<b>A₂</b>, negativa, e <b>σ₂</b>), e quanto dopo la prima arriva la seconda (<b>d</b>).</p>"
         },
         "ecg": {
@@ -4619,7 +4619,8 @@
         },
         "recap": {
           "title": "Riepilogo",
-          "body": "<p>Codificare richiede sempre le stesse tre decisioni: una <b>ricetta</b> (un punto, una campana, un'onda, una fila di campane, una rete), <b>quanti numeri</b> le servono, e come <b>decodificarli</b>. Un buon codice è corto e ricostruisce comunque bene l'immagine.</p>"
+          "body": "<p>È il momento di mettere tutto insieme: abbina ogni figura alla lunghezza del suo codice, poi decidi quali affermazioni sono vere.</p>",
+          "reveal": "<p>Codificare richiede sempre le stesse tre decisioni: una <b>ricetta</b> (un punto, una campana, un'onda, una fila di campane, una rete), <b>quanti numeri</b> le servono, e come <b>decodificarli</b>. Un buon codice è corto e ricostruisce comunque bene l'immagine.</p>"
         }
       },
       "q": {
@@ -4628,7 +4629,8 @@
           "options": {
             "pixels": "Il colore di ogni punto dello schermo",
             "numbers": "Pochi numeri che ne descrivono la forma",
-            "words": "Una frase come \"sembra normale\""
+            "words": "Una frase come \"sembra normale\"",
+            "photo": "Una foto dello schermo"
           },
           "explain": "<p>Pochi numeri. I punti occupano molto spazio e non dicono niente della forma; con una frase non si può ridisegnare il battito. Un codice corto che si può <b>decodificare</b> di nuovo nell'immagine prende il meglio di entrambi.</p>"
         },
@@ -4720,9 +4722,10 @@
           "options": {
             "negative": "La sua altezza A₂ è un numero negativo",
             "flip": "Aggiungiamo un numero che dice \"capovolta\"",
-            "subtract": "Il decoder disegna sempre la seconda campana verso il basso"
+            "subtract": "Il decoder disegna sempre la seconda campana verso il basso",
+            "second": "Una seconda frequenza per la campana che punta in giù"
           },
-          "explain": "<p>Basta un’<b>altezza negativa</b>, senza numeri in più: la stessa formula, con A sotto zero, disegna una campana che punta in giù. (Anche la terza risposta funziona, ma così non si potrebbe mai codificare una seconda campana in su.)</p>"
+          "explain": "<p>Basta un’<b>altezza negativa</b>, senza numeri in più: la stessa formula, con A sotto zero, disegna una campana che punta in giù. (Funzionerebbe anche un decoder che disegna sempre in giù la seconda campana, ma così non si potrebbe mai codificare una seconda campana in su.)</p>"
         },
         "ecgCount": {
           "prompt": "Un battito è fatto di otto campane. Ogni campana ha bisogno di posizione, larghezza e altezza, e il cuore batte a una certa frequenza. Quanti numeri in tutto?",
@@ -4777,16 +4780,6 @@
           "prompt": "Trascina ogni immagine su quanti numeri servono al suo codice.",
           "explain": "<p>Un punto su una retta 1, su un piano 2, una campana 3, un battito con due campane 6, un battito del cuore 25. Le immagini si fanno più ricche, i codici restano corti.</p>"
         },
-        "recapSteps": {
-          "prompt": "Metti in ordine le decisioni di una codifica.",
-          "steps": {
-            "recipe": "Scegli una ricetta: di cosa sono fatte le immagini",
-            "count": "Decidi quanti numeri servono alla ricetta",
-            "encode": "Codifica: trova i valori dei numeri per ogni immagine",
-            "decode": "Decodifica: ricostruisci l'immagine dai suoi numeri, e controlla che somigli all'originale"
-          },
-          "explain": "<p>Ricetta, quanti numeri, codifica, decodifica. Quando la ricetta non si conosce, come per l'EEG, la impara una rete neurale.</p>"
-        },
         "planeValue": {
           "prompt": "Codifica questo punto: muovi i due cursori finché il tuo punto non è sull’obiettivo. Quanto valgono x e y?",
           "explain": "<p>L’obiettivo è 3 a destra e 7 in su: <b>x = 3, y = 7</b>. Due numeri, uno per direzione, e ogni cursore muove il punto lungo una sola delle due.</p>"
@@ -4809,7 +4802,23 @@
         },
         "twoBellsValue": {
           "prompt": "Sei cursori per sei numeri: ricostruisci questo battito, una campana in su e una in giù.",
-          "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. L’altezza della seconda campana è negativa: è questo che la fa puntare in giù.</p>"
+          "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Sei cursori, sei numeri: uno per ogni cosa che può cambiare nel battito.</p>"
+        },
+        "enTfChanges": {
+          "prompt": "Quanti numeri servono a un codice dipende da che cosa cambia tra le figure, non da quanto sono complicate.",
+          "explain": "<p><b>Vero.</b> Una campana disegnata con centinaia di punti aveva bisogno di un numero solo quando cambiava solo la posizione.</p>"
+        },
+        "enTfDots": {
+          "prompt": "Una curva disegnata con centinaia di punti ha sempre bisogno di centinaia di numeri.",
+          "explain": "<p><b>Falso.</b> Con la ricetta giusta, pochi numeri ricostruiscono tutti quei punti: tre per una campana, 25 per un battito.</p>"
+        },
+        "enTfDecode": {
+          "prompt": "Decodificare vuol dire usare la ricetta al contrario, per ricostruire la figura dai suoi numeri.",
+          "explain": "<p><b>Vero.</b> La codifica va dalla figura ai numeri, la decodifica dai numeri di nuovo alla figura, con la stessa ricetta.</p>"
+        },
+        "enTfEeg": {
+          "prompt": "Per l’EEG conosciamo la ricetta: bastano poche campane, come per il battito.",
+          "explain": "<p><b>Falso.</b> Nessuno conosce una ricetta per l’EEG: per questo una rete neurale ne impara una, da tanti esempi.</p>"
         }
       }
     },
@@ -4880,7 +4889,7 @@
       },
       "braid": {
         "title": "Il sentiero intrecciato",
-        "text": "Sei un segnale che viaggia in un groviglio di collegamenti, dalla partenza (a sinistra) all’arrivo (verde). Scegli il prossimo collegamento cliccando su uno di quelli colorati. Ogni collegamento che attraversi diventa più spesso. Gioca qualche giro e guarda cosa succede al tuo percorso.",
+        "text": "Sei un segnale che viaggia in un groviglio di collegamenti, dalla partenza (a sinistra) all’arrivo (verde). Scegli il prossimo collegamento cliccando su uno di quelli colorati. Gioca qualche giro e guarda cosa succede ai collegamenti e al tuo percorso.",
         "next": "Giro successivo",
         "habit": "Lascia scegliere l’abitudine",
         "fog": "Nebbia sì",
@@ -4912,7 +4921,7 @@
         "restless": {
           "short": "Una pallina irrequieta",
           "title": "Una pallina irrequieta",
-          "text": "Ora la pallina viene scossa a caso di continuo, come l’attività irrequieta del cervello. Passa ancora quasi tutto il tempo nelle valli, ma ogni tanto una scossa la porta oltre una collina, in un’altra valle."
+          "text": "Ora la pallina viene scossa a caso di continuo, come l’attività irrequieta del cervello. Guardala per un po’."
         },
         "soft": {
           "short": "Un paesaggio morbido",
@@ -4922,7 +4931,7 @@
         "wind": {
           "short": "Neurofeedback: un vento leggero",
           "title": "Neurofeedback: un vento leggero",
-          "text": "Lo stesso paesaggio morbido e irrequieto, ma ora un vento leggero soffia sempre verso la valle obiettivo. Non ci porta la pallina: rende solo un po’ più facili i movimenti in quella direzione. Col tempo, è quella la valle che viene scavata."
+          "text": "Lo stesso paesaggio morbido e irrequieto, ma ora un vento leggero soffia verso la valle obiettivo. Guarda dove passa il tempo la pallina, e quale valle viene scavata."
         }
       },
       "city": {
@@ -4941,7 +4950,8 @@
         },
         "biology": {
           "title": "Il neurone nella tua testa",
-          "body": "<p>L’idea viene dal cervello. Un neurone biologico raccoglie segnali da altri neuroni attraverso i <b>dendriti</b>. Ogni collegamento, una <b>sinapsi</b>, può essere forte o debole. Il <b>corpo cellulare</b> somma ciò che arriva, e quando il totale supera una soglia il neurone manda un <b>impulso</b> lungo l’assone ai neuroni successivi.</p><p>Il neurone artificiale ne è una caricatura: molto più semplice, ma con le stesse parti.</p>"
+          "body": "<p>L’idea viene dal cervello. Qui sotto c’è il disegno di un neurone biologico: i <b>dendriti</b>, il <b>corpo cellulare</b>, un <b>assone</b> che finisce nelle <b>sinapsi</b>, dove tocca i neuroni successivi. Ogni sinapsi può essere forte o debole.</p><p>Il neurone artificiale che hai appena conosciuto ne è una caricatura. Quale parte fa quale lavoro?</p>",
+          "reveal": "<p>I dendriti raccolgono i segnali degli altri neuroni: sono gli <b>ingressi</b>. La forza di ogni sinapsi è un <b>peso</b>. Il corpo cellulare somma ciò che arriva (la <b>somma</b>), e quando il totale supera una soglia il neurone manda un <b>impulso</b> lungo l’assone: l’uscita. Molto più semplice, ma con le stesse parti.</p>"
         },
         "line": {
           "title": "Classificare: due gruppi, una retta",
@@ -4957,19 +4967,23 @@
         },
         "hidden": {
           "title": "Aggiungi uno strato nascosto",
-          "body": "<p>La soluzione è usare più neuroni, a <b>strati</b>. Due neuroni guardano gli ingressi, e ognuno disegna la sua retta: uno calcola OR, l’altro \"non entrambi\". Si chiamano <b>nascosti</b> perché nessuno vede direttamente la loro uscita. Un terzo neurone guarda i due nascosti e si attiva solo quando si attivano entrambi.</p><p>Insieme calcolano XOR. Ogni strato trasforma il problema in uno più facile per lo strato dopo: è questo che rende così potenti le reti con tanti strati (le reti <b>profonde</b>).</p>"
+          "body": "<p>La soluzione è usare più neuroni, a <b>strati</b>. Due neuroni guardano gli ingressi, e ognuno disegna la sua retta. Si chiamano <b>nascosti</b> perché nessuno vede direttamente la loro uscita. Un terzo neurone guarda i due nascosti e dà la risposta.</p><p>Prova i quattro ingressi qui sotto e guarda quali neuroni nascosti si attivano.</p>",
+          "reveal": "<p>Il primo neurone nascosto calcola OR, il secondo \"non entrambi\" (NAND), e l’uscita si attiva solo quando si attivano tutti e due: insieme calcolano <b>XOR</b>. Ogni strato trasforma il problema in uno più facile per lo strato dopo: è questo che rende così potenti le reti con tanti strati (le reti <b>profonde</b>).</p>"
         },
         "learning": {
           "title": "Imparare dagli esempi",
-          "body": "<p>Finora abbiamo scelto i pesi a mano. Una rete vera ha migliaia o milioni di pesi: nessuno può sceglierli. Le diamo invece un <b>dataset</b>: tanti esempi con la risposta giusta (l’<b>etichetta</b>), e la lasciamo imparare.</p><p>L’apprendimento funziona così. La rete risponde a ogni esempio, e misuriamo quanto ha sbagliato (l’<b>errore</b>). Poi l’errore viene mandato <b>all’indietro</b> attraverso la rete, e ogni peso viene spostato un po’ nella direzione che rende l’errore più piccolo. Un peso il cui ingresso era grande riceve una spinta più grande; un peso il cui ingresso era zero non ha contribuito, quindi non si muove. Questa è la <b>retropropagazione</b> (backpropagation). Ripetuta tante volte, i pesi trovano la loro strada.</p>"
+          "body": "<p>Finora abbiamo scelto i pesi a mano. Una rete vera ha migliaia o milioni di pesi: nessuno può sceglierli. Le diamo invece un <b>dataset</b>: tanti esempi con la risposta giusta (l’<b>etichetta</b>), e la lasciamo imparare dai suoi errori.</p><p>Guarda il neurone qui sotto trovare da solo la sua retta, un piccolo passo alla volta. Dopo un errore, da che parte deve spostarsi ogni peso?</p>",
+          "reveal": "<p>Finora abbiamo scelto i pesi a mano. Una rete vera ha migliaia o milioni di pesi: nessuno può sceglierli. Le diamo invece un <b>dataset</b>: tanti esempi con la risposta giusta (l’<b>etichetta</b>), e la lasciamo imparare.</p><p>L’apprendimento funziona così. La rete risponde a ogni esempio, e misuriamo quanto ha sbagliato (l’<b>errore</b>). Poi l’errore viene mandato <b>all’indietro</b> attraverso la rete, e ogni peso viene spostato un po’ nella direzione che rende l’errore più piccolo. Un peso il cui ingresso era grande riceve una spinta più grande; un peso il cui ingresso era zero non ha contribuito, quindi non si muove. Questa è la <b>retropropagazione</b> (backpropagation). Ripetuta tante volte, i pesi trovano la loro strada.</p>"
         },
         "digits": {
           "title": "Leggere cifre scritte a mano",
-          "body": "<p>Un classico banco di prova per le reti neurali: riconoscere cifre scritte a mano. Qui ogni cifra è una minuscola immagine di 5 × 7, quindi entrano 35 pixel, uno per neurone d’ingresso. Escono dieci neuroni, uno per cifra: quello che si attiva di più è la risposta della rete.</p><p>In mezzo c’è uno strato nascosto di 12 neuroni. Dopo l’allenamento, quei 12 numeri sono la descrizione breve dell’immagine che la rete si è fatta da sola: ha trovato da sé quali caratteristiche servono per distinguere un 3 da un 8. Tienilo a mente: trasformare un’immagine in pochi numeri che hanno senso è proprio l’argomento del prossimo modulo.</p>"
+          "body": "<p>Un classico banco di prova per le reti neurali: riconoscere le cifre scritte a mano. Qui ogni cifra è una figurina di 5 × 7, quindi entrano 35 pixel, uno per neurone d’ingresso. Escono dieci neuroni, uno per cifra: quello che si attiva di più è la risposta della rete. In mezzo c’è uno strato nascosto di 12 neuroni.</p><p>Allenala qui sotto, poi disegna le tue cifre.</p>",
+          "reveal": "<p>Dopo l’allenamento, i 12 numeri dello strato nascosto sono la descrizione breve della figura inventata dalla rete: ha trovato da sola quali caratteristiche contano per distinguere un 3 da un 8. Tienilo a mente: trasformare una figura in pochi numeri significativi è proprio l’argomento del prossimo modulo.</p>"
         },
         "recap": {
           "title": "Riepilogo",
-          "body": "<p>Un neurone pesa i suoi ingressi e decide. Un neurone disegna una retta; strati di neuroni disegnano qualsiasi forma. Nessuno sceglie i pesi a mano: la rete li impara da esempi etichettati, mandando l’errore all’indietro attraverso gli strati (retropropagazione). E strada facendo, gli strati nascosti imparano una descrizione compatta di ciò che vedono.</p>"
+          "body": "<p>Cinque affermazioni su quello che abbiamo visto. Vero o falso?</p>",
+          "reveal": "<p>Un neurone pesa i suoi ingressi e decide. Un neurone disegna una retta; strati di neuroni disegnano qualsiasi forma. Nessuno sceglie i pesi a mano: la rete li impara da esempi etichettati, mandando l’errore all’indietro attraverso gli strati (retropropagazione). E strada facendo, gli strati nascosti imparano una descrizione compatta di ciò che vedono.</p>"
         }
       },
       "q": {
@@ -4985,7 +4999,7 @@
             "neither": "Nessuno dei due",
             "xor": "XOR: si attiva quando esattamente un ingresso è acceso"
           },
-          "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>. Con b = -0.5 sarebbe OR.</p>"
+          "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>.</p>"
         },
         "nnBiology": {
           "prompt": "Abbina ogni parte di un neurone biologico alla sua versione artificiale.",
@@ -5039,7 +5053,7 @@
             "xor": "XOR",
             "nand": "NAND (non entrambi)"
           },
-          "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso. Il secondo è \"non entrambi\", e l’uscita è l’AND dei due.</p>"
+          "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso.</p>"
         },
         "nnNudgeDown": {
           "prompt": "Il neurone ha risposto 0.9 per un punto con etichetta 0, e la x di quel punto è 1. In che direzione deve muoversi w₁?",
@@ -5126,39 +5140,48 @@
       "steps": {
         "braid": {
           "title": "Sii il segnale",
-          "body": "<p>Cominciamo con un gioco. La rete qui sotto è un groviglio di collegamenti. Un segnale entra a sinistra e deve raggiungere l’arrivo a destra. A ogni incrocio scegli dove va.</p><p>C’è una sola regola, ed è la regola del cervello: <b>ogni volta che un collegamento viene usato, diventa più forte</b>. Qui, più forte vuol dire più spesso, e nel gioco di classe un voto su un collegamento spesso conta di più. Gioca più giri e guarda cosa succede.</p>"
+          "body": "<p>Cominciamo con un gioco. La rete qui sotto è un groviglio di collegamenti. Un segnale entra a sinistra e deve raggiungere l’arrivo a destra. A ogni incrocio scegli dove va.</p><p>La rete segue una sola regola, la regola del cervello. Nessuno ti dirà qual è: gioca più giri, guarda i collegamenti e scopri cosa succede.</p>",
+          "reveal": "<p>La regola: <b>ogni volta che un collegamento viene usato, diventa più forte</b>. Qui, più forte vuol dire più spesso, e nel gioco di classe un voto su un collegamento spesso conta di più. Così la strada che abbiamo usato è diventata sempre più facile da riprendere, giro dopo giro, mentre le altre si assottigliavano.</p>"
         },
         "hebb": {
           "title": "Neuroni che si attivano insieme si collegano insieme",
-          "body": "<p>Nel 1949 lo psicologo Donald Hebb propose che quando un neurone aiuta ripetutamente un altro ad attivarsi, il collegamento tra i due, la <b>sinapsi</b>, si rafforza. Decenni dopo lo si è misurato in laboratorio: si chiama <b>potenziamento a lungo termine</b>. Succede anche il contrario: i collegamenti usati di rado si indeboliscono, e alcuni vengono eliminati.</p><p>Questa è la <b>plasticità</b>: il cervello cambia i propri collegamenti con l’uso. È quello che hai appena fatto nel gioco, ed è così che impariamo, ricordiamo e prendiamo abitudini. Un ricordo non è salvato in un punto come un file: è un disegno di collegamenti più forti.</p>"
+          "body": "<p>Nel 1949 lo psicologo Donald Hebb si chiese che cosa succede al collegamento tra due neuroni, la <b>sinapsi</b>, quando uno dei due aiuta l’altro ad attivarsi più e più volte. Pensa al gioco che hai appena fatto: che cosa ti aspetti? E i collegamenti che nessuno usa?</p>",
+          "reveal": "<p>Nel 1949 lo psicologo Donald Hebb propose che quando un neurone aiuta ripetutamente un altro ad attivarsi, il collegamento tra i due, la <b>sinapsi</b>, si rafforza. Decenni dopo lo si è misurato in laboratorio: si chiama <b>potenziamento a lungo termine</b>. Succede anche il contrario: i collegamenti usati di rado si indeboliscono, e alcuni vengono eliminati.</p><p>Questa è la <b>plasticità</b>: il cervello cambia i propri collegamenti con l’uso. È quello che hai appena fatto nel gioco, ed è così che impariamo, ricordiamo e prendiamo abitudini. Un ricordo non è salvato in un punto come un file: è un disegno di collegamenti più forti.</p>"
         },
         "lifespan": {
           "title": "La plasticità lungo la vita",
-          "body": "<p>Il cervello di un neonato crea collegamenti a una velocità incredibile: a due o tre anni un bambino ha molte più sinapsi di un adulto. Poi, durante l’infanzia e l’adolescenza, il cervello <b>pota</b> i collegamenti che non usa e rafforza quelli che usa. Alcune capacità hanno <b>periodi critici</b>, finestre in cui si imparano più facilmente: vedere in profondità, i suoni della prima lingua.</p><p>La parte anteriore del cervello, che pianifica e controlla, finisce di maturare verso i venticinque anni. Probabilmente da qui viene l’idea che \"il cervello smette di cambiare a 25 anni\", ma è sbagliata: la plasticità continua <b>per tutta la vita</b>. Gli adulti che imparano a fare giocoleria o i tassisti di Londra che imparano la città mostrano cambiamenti misurabili nel cervello. Diventa più lenta e richiede più pratica, ma non si ferma mai.</p><p>Il cervello regola perfino <i>quanto</i> essere plastico, in base alla sua attività recente. Si chiama <b>metaplasticità</b>, la plasticità della plasticità: un’idea di primo piano, ancora in studio.</p>"
+          "body": "<p>Come cambia la plasticità dalla nascita alla vecchiaia? La figura qui sotto segue due cose lungo tutta la vita: quante sinapsi ci sono, e quanto facilmente cambiano i collegamenti. Leggi le curve, poi vota.</p>",
+          "reveal": "<p>Il cervello di un neonato crea collegamenti a una velocità incredibile: a due o tre anni un bambino ha molte più sinapsi di un adulto. Poi, durante l’infanzia e l’adolescenza, il cervello <b>pota</b> i collegamenti che non usa e rafforza quelli che usa. Alcune capacità hanno <b>periodi critici</b>, finestre in cui si imparano più facilmente: vedere in profondità, i suoni della prima lingua.</p><p>La parte anteriore del cervello, che pianifica e controlla, finisce di maturare verso i venticinque anni. Probabilmente da qui viene l’idea che \"il cervello smette di cambiare a 25 anni\", ma è sbagliata: la plasticità continua <b>per tutta la vita</b>. Gli adulti che imparano a fare giocoleria o i tassisti di Londra che imparano la città mostrano cambiamenti misurabili nel cervello. Diventa più lenta e richiede più pratica, ma non si ferma mai.</p><p>Il cervello regola perfino <i>quanto</i> essere plastico, in base alla sua attività recente. Si chiama <b>metaplasticità</b>, la plasticità della plasticità: un’idea di primo piano, ancora in studio.</p>"
         },
         "habits": {
           "title": "Cosa vuol dire per noi: imparare e abitudini",
-          "body": "<p>Se l’uso rafforza i collegamenti, allora ciò che facciamo e rifacciamo dà forma al nostro cervello. La pratica rende automatica un’abilità; un’abitudine è un percorso così scavato che lo prendiamo senza pensarci.</p><p>Quanto ci vuole? In uno studio noto (Lally e colleghi, 2010), 96 persone hanno scelto una nuova abitudine quotidiana, come un bicchiere d’acqua a pranzo o una camminata dopo cena. In media ci sono voluti circa <b>66 giorni</b> perché l’abitudine diventasse automatica, ma con differenze enormi: da 18 a 254 giorni, a seconda della persona e dell’abitudine. I famosi \"21 giorni\" vengono da un libro di auto-aiuto del 1960 e non sono sostenuti dai dati. La buona notizia dallo stesso studio: saltare un giorno non cancellava i progressi.</p>"
+          "body": "<p>Se l’uso rafforza i collegamenti, allora quello che facciamo e rifacciamo dà forma al nostro cervello. La pratica rende automatica un’abilità; un’abitudine è una strada così scavata che la prendiamo senza pensarci.</p><p>Quanto ci vuole? In uno studio famoso (Lally e colleghi, 2010), 96 persone hanno scelto una nuova abitudine quotidiana, come un bicchiere d’acqua a pranzo o una passeggiata dopo cena, e ogni giorno hanno detto quanto la sentivano automatica. Che cosa pensi che abbiano scoperto?</p>",
+          "reveal": "<p>In media ci sono voluti circa <b>66 giorni</b> perché l’abitudine diventasse automatica, ma con differenze enormi: da 18 a 254 giorni, a seconda della persona e dell’abitudine. I famosi \"21 giorni\" vengono da un libro di auto-aiuto del 1960 e non hanno dati alle spalle. La buona notizia dallo stesso studio: saltare un solo giorno non cancellava i progressi. Conta ripeterla, nella stessa situazione, quasi sempre.</p>"
         },
         "city": {
           "title": "Il cervello in grande",
-          "body": "<p>Allarghiamo lo sguardo dai singoli collegamenti a tutto il cervello. Miliardi di neuroni sono attivi in ogni momento, e la loro attività forma <b>disegni</b> che si muovono di continuo, come le luci di una città vista da un aereo di notte.</p><p>Possiamo chiamare ogni disegno uno <b>stato cerebrale</b>: concentrato, rilassato, assonnato, in ansia, con la testa tra le nuvole. Il cervello è un sistema dinamico: in ogni momento è in uno stato, e passa al successivo. È come il nostro gioco, ma ora i nodi sono stati e i collegamenti sono i passaggi tra uno stato e l’altro. Come sceglie il cervello dove andare?</p>"
+          "body": "<p>Allontaniamoci dai singoli collegamenti e guardiamo il cervello intero. Miliardi di neuroni sono attivi in ogni momento, come le luci di una città vista da un aereo di notte. Guarda per un po’ la città qui sotto: che cosa vedi?</p>",
+          "reveal": "<p>Allarghiamo lo sguardo dai singoli collegamenti a tutto il cervello. Miliardi di neuroni sono attivi in ogni momento, e la loro attività forma <b>disegni</b> che si muovono di continuo, come le luci di una città vista da un aereo di notte.</p><p>Possiamo chiamare ogni disegno uno <b>stato cerebrale</b>: concentrato, rilassato, assonnato, in ansia, con la testa tra le nuvole. Il cervello è un sistema dinamico: in ogni momento è in uno stato, e passa al successivo. È come il nostro gioco, ma ora i nodi sono stati e i collegamenti sono i passaggi tra uno stato e l’altro. Come sceglie il cervello dove andare?</p>"
         },
         "landscape": {
           "title": "Il paesaggio energetico",
-          "body": "<p>Un’immagine utile viene dalla fisica: il <b>paesaggio energetico</b>. Immagina lo stato del cervello come una pallina su un paesaggio di colline e valli. La pallina rotola giù per i pendii e tende a fermarsi nelle valli. Le valli sono gli stati in cui il cervello ama stare: stabili, facili da raggiungere, difficili da lasciare.</p><p>Dove finisce la pallina dipende dalla forma del paesaggio e da dove parte. Con poco attrito oscilla avanti e indietro tra alcune valli; con molto attrito resta bloccata nella prima valle in cui cade. Prova entrambi.</p>"
+          "body": "<p>Un’immagine utile viene dalla fisica: il <b>paesaggio energetico</b>. Immagina lo stato del cervello come una pallina su un paesaggio di colline e valli. La pallina rotola giù per i pendii. Lasciala cadere in posti diversi, con poco attrito e con molto attrito, e guarda dove finisce.</p>",
+          "reveal": "<p>Un’immagine utile viene dalla fisica: il <b>paesaggio energetico</b>. Immagina lo stato del cervello come una pallina su un paesaggio di colline e valli. La pallina rotola giù per i pendii e tende a fermarsi nelle valli. Le valli sono gli stati in cui il cervello ama stare: stabili, facili da raggiungere, difficili da lasciare.</p><p>Dove finisce la pallina dipende dalla forma del paesaggio e da dove parte. Con poco attrito oscilla avanti e indietro tra alcune valli; con molto attrito resta bloccata nella prima valle in cui cade.</p>"
         },
         "restless": {
           "title": "Un cervello irrequieto",
-          "body": "<p>Un cervello vero non sta mai fermo: la sua attività è rumorosa, sempre un po’ in movimento a caso. Quindi la nostra pallina non è una pallina tranquilla che rotola giù: è una pallina <b>irrequieta</b>, scossa di continuo.</p><p>Quasi tutte le scosse sono piccole e la pallina resta nella sua valle. Ma ogni tanto una più forte la porta oltre una collina, in un’altra valle. Il rumore non è solo un fastidio: è ciò che permette al cervello di esplorare e cambiare stato.</p>"
+          "body": "<p>Un cervello vero non sta mai fermo: la sua attività è rumorosa, si muove sempre un po’ a caso. Quindi la nostra pallina non è una pallina tranquilla che rotola giù: è una pallina irrequieta, scossa di continuo. Guardala per un po’: resta sempre dov’è?</p>",
+          "reveal": "<p>Quasi tutte le scosse sono piccole e la pallina resta nella sua valle. Ma ogni tanto una più forte la porta oltre una collina, in un’altra valle. Il rumore non è solo un fastidio: è ciò che permette al cervello di esplorare e cambiare stato.</p>"
         },
         "soft": {
           "title": "La plasticità scava le valli",
-          "body": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, il terreno lì diventa un po’ più profondo, come un fiume che scava il proprio letto e così ci porta sempre più acqua.</p><p>È così che impariamo, ma è anche così che possiamo <b>restare bloccati</b>. Uno stato visitato di continuo (la preoccupazione, per esempio) diventa una valle profonda, difficile da lasciare. Una delle teorie principali sul cervello, il <b>predictive coding</b> (codifica predittiva), dice che il cervello prevede di continuo cosa succederà e impara dai propri errori; previsioni forti possono tenerci negli stessi schemi, perché tendiamo a vedere ciò che ci aspettiamo. Per uscire da una valle profonda il cervello ha spesso bisogno di qualcosa che viene da <i>fuori</i>: un’esperienza nuova, la pratica, una spinta.</p>"
+          "body": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, lì il terreno si abbassa un poco, come un fiume che si scava il letto. Guarda cosa succede alla valle che la pallina visita di più.</p>",
+          "reveal": "<p>Ora mettiamo la plasticità nell’immagine. Il paesaggio non è fisso: è <b>morbido</b>. Ogni volta che la pallina passa da qualche parte, il terreno lì diventa un po’ più profondo, come un fiume che scava il proprio letto e così ci porta sempre più acqua.</p><p>È così che impariamo, ma è anche così che possiamo <b>restare bloccati</b>. Uno stato visitato di continuo (la preoccupazione, per esempio) diventa una valle profonda, difficile da lasciare. Una delle teorie principali sul cervello, il <b>predictive coding</b> (codifica predittiva), dice che il cervello prevede di continuo cosa succederà e impara dai propri errori; previsioni forti possono tenerci negli stessi schemi, perché tendiamo a vedere ciò che ci aspettiamo. Per uscire da una valle profonda il cervello ha spesso bisogno di qualcosa che viene da <i>fuori</i>: un’esperienza nuova, la pratica, una spinta.</p>"
         },
         "wind": {
           "title": "Neurofeedback: un vento verso una valle",
-          "body": "<p>Il cervello impara dalle <b>ricompense</b>: quando a ciò che abbiamo fatto segue qualcosa di buono, la dopamina aiuta a rafforzare ciò che l’ha prodotto. Perché la ricompensa funzioni, deve arrivare <b>subito</b>, mentre lo stato che l’ha meritata c’è ancora.</p><p>Il <b>neurofeedback</b> usa proprio questo. Una fascia legge l’attività del cervello, e quando si muove verso uno stato obiettivo ricevi subito una ricompensa: un suono, un’immagine, un video che si fa più nitido. Non costringe il cervello ad andare da nessuna parte. È come un vento leggero che soffia sempre verso una valle: ogni passo in quella direzione diventa un po’ più facile, e col tempo è quella la valle che viene scavata. Esercizi e allenamento funzionano in modo simile; la ricerca sulla <b>riserva cognitiva</b> suggerisce che un cervello tenuto attivo affronta meglio l’invecchiamento.</p><p>Una nota onesta: le prove sul neurofeedback sono promettenti ma contrastanti, e gli studi ben controllati sono ancora in corso. Anche per questo misuriamo.</p>"
+          "body": "<p>Il cervello impara dalle <b>ricompense</b>: quando a quello che abbiamo fatto segue qualcosa di buono, una sostanza chimica, la dopamina, aiuta a rafforzare ciò che l’ha prodotto.</p><p>Il <b>neurofeedback</b> usa proprio questo. Una fascia legge la tua attività cerebrale, e quando si muove verso uno stato obiettivo ricevi una ricompensa: un suono, un’immagine, un video che diventa più nitido. Qui sotto la ricompensa è un vento leggero sul paesaggio. Guarda cosa fa alla pallina, e quando.</p>",
+          "reveal": "<p>Il cervello impara dalle <b>ricompense</b>: quando a ciò che abbiamo fatto segue qualcosa di buono, la dopamina aiuta a rafforzare ciò che l’ha prodotto. Perché la ricompensa funzioni, deve arrivare <b>subito</b>, mentre lo stato che l’ha meritata c’è ancora.</p><p>Il <b>neurofeedback</b> usa proprio questo. Una fascia legge l’attività del cervello, e quando si muove verso uno stato obiettivo ricevi subito una ricompensa: un suono, un’immagine, un video che si fa più nitido. Non costringe il cervello ad andare da nessuna parte. È come un vento leggero che soffia sempre verso una valle: ogni passo in quella direzione diventa un po’ più facile, e col tempo è quella la valle che viene scavata. Esercizi e allenamento funzionano in modo simile; la ricerca sulla <b>riserva cognitiva</b> suggerisce che un cervello tenuto attivo affronta meglio l’invecchiamento.</p><p>Una nota onesta: le prove sul neurofeedback sono promettenti ma contrastanti, e gli studi ben controllati sono ancora in corso. Anche per questo misuriamo.</p>"
         },
         "demo": {
           "title": "Il tuo paesaggio",
@@ -5171,7 +5194,8 @@
           "options": {
             "thick": "I collegamenti usati sono diventati più spessi, quindi contano di più e attirano le scelte successive",
             "memory": "Abbiamo imparato la mappa a memoria",
-            "luck": "Pura fortuna"
+            "luck": "Pura fortuna",
+            "teacher": "L’insegnante ha scelto per noi la strada migliore"
           },
           "explain": "<p>I collegamenti usati sono diventati <b>più spessi</b>, quindi il percorso fatto è diventato più facile da rifare: l’uso rafforza i collegamenti, e i collegamenti forti vengono usati. Nel cervello è così che nascono le abitudini, buone e cattive.</p>"
         },
@@ -5196,7 +5220,8 @@
           "options": {
             "meta": "Il cervello che regola quanto facilmente cambiano i suoi collegamenti, in base all’attività recente",
             "age": "La plasticità che scompare in vecchiaia",
-            "fixed": "Alcuni collegamenti che non cambiano mai"
+            "fixed": "Alcuni collegamenti che non cambiano mai",
+            "young": "La plasticità in più di un cervello giovane"
           },
           "explain": "<p>La metaplasticità è la <b>plasticità della plasticità</b>: quanto una sinapsi è pronta a cambiare dipende da ciò che ha fatto di recente. È un campo di ricerca molto attivo.</p>"
         },
@@ -5223,7 +5248,8 @@
           "options": {
             "pattern": "Il disegno dell’attività di tutto il cervello in un momento",
             "region": "Una regione del cervello che si accende",
-            "thought": "Un singolo pensiero"
+            "thought": "Un singolo pensiero",
+            "neuron": "L’attività di un solo neurone"
           },
           "explain": "<p>Un <b>disegno</b> su tutto il cervello, come le luci di tutta la città in un momento, non un solo quartiere.</p>"
         },
@@ -5232,7 +5258,8 @@
           "options": {
             "state": "Uno stato verso cui il cervello tende ad andare e in cui resta",
             "region": "Una regione del cervello",
-            "mistake": "Un errore del cervello"
+            "mistake": "Un errore del cervello",
+            "sleep": "Un momento in cui il cervello dorme"
           },
           "explain": "<p>Una valle è uno <b>stato</b> che attira il cervello e lo trattiene per un po’: stabile, facile da raggiungere, difficile da lasciare.</p>"
         },
@@ -5245,7 +5272,8 @@
           "options": {
             "outside": "Qualcosa da fuori: una spinta, esperienze nuove, la pratica",
             "wait": "Aspettare: uscirà da sola",
-            "nothing": "Niente: è bloccata per sempre"
+            "nothing": "Niente: è bloccata per sempre",
+            "harder": "Rotolare più veloce nella stessa valle"
           },
           "explain": "<p>Una <b>spinta da fuori</b>. Su un paesaggio morbido, aspettare scava solo di più la valle. Ma il paesaggio è morbido per tutti: la stessa plasticità che ha scavato la valle può scavarne una nuova.</p>"
         },
@@ -5262,19 +5290,26 @@
           "options": {
             "now": "Subito, mentre lo stato c’è ancora",
             "later": "Alla fine della sessione",
-            "never": "Non importa"
+            "never": "Non importa",
+            "morning": "Il mattino dopo, dopo una notte di sonno"
           },
           "explain": "<p><b>Subito</b>. Una ricompensa che arriva tardi non può dire al cervello quale stato l’ha meritata. Per questo il neurofeedback risponde in una frazione di secondo.</p>"
         },
-        "plRecap": {
-          "prompt": "Metti in ordine la storia di questo modulo.",
-          "steps": {
-            "use": "L’uso rafforza i collegamenti, e ciò che non si usa si indebolisce",
-            "valleys": "Gli stati del cervello sono come le valli di un paesaggio",
-            "stuck": "La plasticità scava le valli che visitiamo, così possiamo restare bloccati",
-            "nudge": "La pratica e le ricompense immediate possono spingerci piano verso valli nuove"
-          },
-          "explain": "<p>Uso, valli, scavare, spingere: la plasticità è il motivo per cui restiamo bloccati, e anche quello per cui possiamo uscirne.</p>"
+        "plTfUseIt": {
+          "prompt": "I collegamenti usati diventano più forti, e quelli che non si usano si indeboliscono.",
+          "explain": "<p><b>Vero.</b> È la regola del sentiero intrecciato, e del cervello.</p>"
+        },
+        "plTfDig": {
+          "prompt": "La plasticità scava le valli che visitiamo di più, ed è così che possiamo restarci bloccati.",
+          "explain": "<p><b>Vero.</b> Su un paesaggio morbido, la valle più visitata diventa più profonda e più difficile da lasciare.</p>"
+        },
+        "plTfForever": {
+          "prompt": "Quando una valle è profonda, niente può farci uscire.",
+          "explain": "<p><b>Falso.</b> Il paesaggio resta morbido per tutta la vita: la pratica, le esperienze nuove e le ricompense immediate possono scavare valli nuove.</p>"
+        },
+        "plTfLate": {
+          "prompt": "Una ricompensa funziona altrettanto bene se arriva un’ora dopo.",
+          "explain": "<p><b>Falso.</b> La ricompensa deve arrivare subito, finché c’è ancora lo stato che l’ha meritata.</p>"
         }
       }
     },
