@@ -232,9 +232,6 @@ export function ModuleView({
         {step.questions.slice(0, out).map((q, i) => (
           <QuestionCard
             key={`${step.id}-${q.id}`}
-            question={q}
-            index={i}
-            onVerdict={(v, a) => heard(q.id, v, a)}
             feedback={
               !control
                 ? "now"
@@ -242,6 +239,9 @@ export function ModuleView({
                   ? "revealed"
                   : "held"
             }
+            question={q}
+            index={i}
+            onVerdict={(v, a) => heard(q.id, v, a)}
           />
         ))}
 

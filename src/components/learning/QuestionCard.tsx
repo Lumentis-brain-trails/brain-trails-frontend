@@ -62,16 +62,16 @@ export type Feedback = "now" | "held" | "revealed";
  * and a teacher-paced lesson to count the class's answers without names.
  */
 export function QuestionCard({
+  feedback = "now",
   question,
   index,
   onVerdict,
-  feedback = "now",
 }: {
+  feedback?: Feedback;
   question: Question;
   index: number;
   /** The answer given rides along, so a live lesson can count which option was chosen. */
   onVerdict?: (verdict: "right" | "wrong" | "shown", answer: Answer) => void;
-  feedback?: Feedback;
 }) {
   const t = useTranslations("learning.question");
   const words = useWords();
@@ -98,7 +98,7 @@ export function QuestionCard({
   const check = () => {
     const v = isCorrect(question, answer) ? "right" : "wrong";
     if (held) setSent(answer);
-    else setVerdict(v);
+    setVerdict(v);
     onVerdict?.(v, answer);
   };
   const show = () => {
