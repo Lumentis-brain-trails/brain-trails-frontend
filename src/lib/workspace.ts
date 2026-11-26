@@ -43,7 +43,9 @@ export const PENDING_POLL_MS = 60_000;
 
 /** Whether any of the caller's organisations still waits for an admin's decision. */
 export function anyPending(workspaces: Workspace[] | undefined): boolean {
-  return (workspaces ?? []).some((w) => w.status === "pending");
+  return (
+    Array.isArray(workspaces) && workspaces.some((w) => w.status === "pending")
+  );
 }
 
 /**
