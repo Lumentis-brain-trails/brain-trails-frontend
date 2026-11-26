@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type Workspace,
+  anyPending,
   editionOf,
   inWorkspace,
   managesMembers,
@@ -62,6 +63,16 @@ function ws(
 const PERSONAL = ws("p", "personal", ["data_reader", "owner"]);
 const CLINIC = ws("c", "practice", ["member"]);
 const PENDING = ws("q", "lab", [], "pending");
+
+describe("anyPending", () => {
+  it("is true only while a request waits for a decision", () => {
+    expect(anyPending([PERSONAL, PENDING])).toBe(true);
+    expect(anyPending([PERSONAL, CLINIC, ws("s", "school", ["owner"])])).toBe(
+      false
+    );
+    expect(anyPending(undefined)).toBe(false);
+  });
+});
 
 describe("pickCurrent", () => {
   it("is the personal workspace when nothing was chosen", () => {
