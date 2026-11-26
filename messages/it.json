@@ -4782,7 +4782,7 @@
     "labs": {
       "gates": {
         "title": "Che cosa ha imparato?",
-        "text": "Ecco un neurone con i numeri già scelti: w₁ = 1, w₂ = 1, b = -1.5. Tocca i due ingressi per accenderli e spegnerli e guarda quando si attiva. Le sue quattro risposte sono nella tabella, accanto a tre regole famose: AND, OR e XOR. Quale ha imparato?",
+        "text": "I numeri di questo neurone sono già fissati, dall’allenamento: w₁ = 1, w₂ = 1, b = -1.5. Qui non c’è niente da muovere: il tuo compito è scoprire che cosa fa. Tocca gli ingressi (o una riga della tabella) per provare ogni coppia, e la sua risposta compare. Poi confronta le sue quattro risposte con tre regole famose: AND, OR e XOR.",
         "learnTitle": "Insegnagli OR",
         "learnText": "Lo stesso neurone del primo passo, che calcola ancora AND. La sua retta è disegnata sui quattro angoli del quadrato, uno per ogni coppia di ingressi. Ora l’insegnante sei tu.",
         "sum": "somma = {s}",
@@ -4795,7 +4795,8 @@
         "task": "Muovi i suoi numeri finché non calcola OR: solo l’angolo (0, 0) resta dal lato spento.",
         "done": "Il tuo neurone calcola OR!",
         "backToAnd": "Torna ad AND",
-        "neuron": "neurone"
+        "neuron": "neurone",
+        "tryAll": "Prova tutte e quattro le coppie di ingressi: finora {n} su 4."
       },
       "classify": {
         "title": "Due gruppi, una retta",
@@ -4943,7 +4944,7 @@
           "explain": "<p><b>Tre</b>: i pesi w₁ e w₂ e il bias b. Gli ingressi non si imparano: arrivano da fuori.</p>"
         },
         "nnWhichGate": {
-          "prompt": "Un neurone ha w₁ = 1, w₂ = 1 e b = -1.5. Cosa calcola?",
+          "prompt": "Guarda le quattro risposte del neurone nella tabella. Quale regola ha imparato?",
           "options": {
             "and": "AND: si attiva solo quando entrambi gli ingressi sono accesi",
             "or": "OR: si attiva quando almeno un ingresso è acceso",

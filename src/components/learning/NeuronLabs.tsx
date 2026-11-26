@@ -174,11 +174,19 @@ function GatesLab({
       onGoal?.();
     }
   };
-  const [x, setX] = useState<[number, number]>([1, 1]);
+  const [x, setXState] = useState<[number, number]>([0, 0]);
+  // in the first step the class finds the neuron's answers itself: a row of the table
+  // fills in only once its pair of inputs has been tried
+  const [tried, setTried] = useState<Set<string>>(() => new Set(["00"]));
+  const setX = (next: [number, number]) => {
+    setXState(next);
+    setTried((s) => new Set(s).add(`${next[0]}${next[1]}`));
+  };
   const table = truthTable(neuron);
   const sum = neuron.w1 * x[0] + neuron.w2 * x[1] + neuron.b;
   const gates: Gate[] = ["and", "or", "xor"];
-  const matched = gates.find((g) => computes(neuron, g)) ?? null;
+  const all = learnable || tried.size === PAIRS.length;
+  const matched = all ? (gates.find((g) => computes(neuron, g)) ?? null) : null;
   return (
     <Card className="space-y-5">
       <div>
@@ -195,13 +203,11 @@ function GatesLab({
           <button
             key={i}
             type="button"
-            onClick={() =>
-              setX((v) => {
-                const next: [number, number] = [...v];
-                next[i] = 1 - next[i];
-                return next;
-              })
-            }
+            onClick={() => {
+              const next: [number, number] = [...x];
+              next[i] = 1 - next[i];
+              setX(next);
+            }}
             className="pressable flex items-center gap-2 rounded-full border border-hairline-strong bg-surface px-3 py-1.5"
           >
             <span className="font-mono">{i ? "x₂" : "x₁"}</span>
@@ -239,16 +245,28 @@ function GatesLab({
           </thead>
           <tbody>
             {PAIRS.map(([a, b], i) => (
-              <tr key={i} className="border-t border-hairline">
+              <tr
+                key={i}
+                onClick={() => setX([a, b])}
+                className={cn(
+                  "cursor-pointer border-t border-hairline",
+                  x[0] === a && x[1] === b && "bg-accent-soft"
+                )}
+              >
                 <td className="py-1.5">{a}</td>
                 <td>{b}</td>
-                <td className="font-semibold">{table[i]}</td>
+                <td className="font-semibold">
+                  {learnable || tried.has(`${a}${b}`) ? table[i] : "?"}
+                </td>
                 {gates.map((g) => (
                   <td
                     key={g}
                     className={cn(
                       matched === g && "bg-ok-soft",
-                      GATES[g][i] === table[i] ? "text-ink" : "text-ink-3"
+                      GATES[g][i] === table[i] ||
+                        !(learnable || tried.has(`${a}${b}`))
+                        ? "text-ink"
+                        : "text-ink-3"
                     )}
                   >
                     {GATES[g][i]}
@@ -260,9 +278,11 @@ function GatesLab({
         </table>
       </div>
       <p className={cn("font-medium", matched ? "text-ok" : "text-ink-2")}>
-        {matched
-          ? t("gates.matches", { gate: t(`gates.${matched}`) })
-          : t("gates.none")}
+        {!all
+          ? t("gates.tryAll", { n: tried.size })
+          : matched
+            ? t("gates.matches", { gate: t(`gates.${matched}`) })
+            : t("gates.none")}
       </p>
 
       {learnable && (
