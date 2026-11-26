@@ -4286,13 +4286,13 @@
     },
     "braid": {
       "title": "The braided path",
-      "round": "Round {round} of {rounds}, choice {steps}",
-      "history": "Choices per round: {steps}",
+      "round": "Round {round}, choice {steps}",
+      "history": "Rounds so far: {rounds}",
       "start": "Start the first round",
       "next": "Next round",
       "arrived": "The class reached the end in {steps} choices.",
-      "over": "Every round played. Did the path get shorter and thicker?",
-      "again": "Play again"
+      "over": "Did the path get shorter and thicker? Play more rounds to see it settle.",
+      "dead": "Game over: the class's signal died in a dead spot after {steps} choices."
     },
     "lesson": {
       "module": "Module",
@@ -4893,15 +4893,15 @@
       },
       "braid": {
         "title": "The braided path",
-        "text": "You are a signal travelling through a tangle of connections, from the start (left) to the end (green). Pick the next edge by clicking one of the coloured ones. Play a few rounds and watch what happens to the connections and to your route.",
+        "text": "You are a signal travelling through a tangle of connections, from the start (left) to the end (green). Pick the next edge by clicking one of the coloured ones. Careful: some paths lead to a dead spot, where the signal dies. Play round after round and watch what happens to the connections and to your route.",
         "next": "Next round",
         "habit": "Let the habit choose",
-        "fog": "Fog on",
-        "liftFog": "Lift the fog",
-        "reset": "Start over",
         "status": "Round {round} · {n, plural, one {# step} other {# steps}}",
-        "arrived": "Arrived in {n} steps!",
-        "history": "Steps per round: {steps}"
+        "arrived": "Arrived in {n, plural, one {# step} other {# steps}}!",
+        "history": "Rounds so far: {rounds}",
+        "dead": "Game over: the signal died in a dead spot after {n, plural, one {# step} other {# steps}}.",
+        "deadShort": "dead end",
+        "steps": "{n, plural, one {# step} other {# steps}}"
       },
       "ball": {
         "version": "Version",

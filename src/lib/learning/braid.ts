@@ -11,9 +11,14 @@
  *
  * Rules (Andrea, 2026-11-25): the pointer moves as soon as one edge's weighted votes
  * reach two thirds of the class; after `VOTE_SECONDS` it goes where the votes are; a tie
- * (no votes is a tie too) is broken at random in proportion to thickness. Dead ends send
- * the pointer back, but the edge into them still thickens a little. A fog hides what is
- * more than `FOG` hops away, so the route is never obvious.
+ * (no votes is a tie too) is broken at random in proportion to thickness. A fog hides what
+ * is more than `FOG` hops away, so the route is never obvious.
+ *
+ * Some paths lead to a dead spot (Andrea, 2026-11-26): a short branch beside a node, or a
+ * node of the tangle itself with no way on, drawn like any other until the signal gets
+ * there. Reaching one is game over for the round: the signal dies, the edge into it is
+ * pruned, and the next round starts from the beginning. Rounds go on as long as the class
+ * wants; there is no starting over, so what the network learned stays.
  *
  * Pure and seeded: the same seed draws the same network for the teacher and every
  * phone, and the live room can replay the state from the moves alone.
@@ -23,9 +28,8 @@ import { seeded } from "@/lib/learning/signals";
 export const CAP = 4;
 export const START_WEIGHT = 1;
 export const MIN_WEIGHT = 0.5;
-/** Thickening per crossing, and the smaller one into a dead end. */
+/** Thickening per crossing; the edge into a dead spot loses as much instead. */
 export const GROW = 0.75;
-export const GROW_DEAD_END = 0.25;
 /** Unused edges keep this share of their extra thickness after a round. */
 export const DECAY = 0.85;
 export const VOTE_SECONDS = 10;
@@ -61,23 +65,31 @@ export interface Braid {
   height: number;
 }
 
+/** How a round ended: at the end, or in a dead spot, after `steps` choices. */
+export interface RoundResult {
+  steps: number;
+  arrived: boolean;
+}
+
 export interface BraidState {
   at: number;
   weights: Record<string, number>;
   /** Edges crossed this round. */
   used: string[];
   round: number;
-  /** Choices made this round (a dead end and its bounce count as one). */
+  /** Choices made this round. */
   steps: number;
-  /** Steps of every finished round, to show the class getting faster. */
-  finished: number[];
+  /** Every finished round, to show the class getting faster and dying less. */
+  finished: RoundResult[];
 }
 
 /**
  * A network of `columns` columns of `rows` nodes between a start and an end. Each node
  * links to two nodes of the next column, picked at random, so the curves cross and
- * braid; a third of the nodes also have an edge to a dead end beside them. Every route
- * takes `columns + 1` choices without dead ends: about ten with the default sizes.
+ * braid; a third of the nodes also have an edge to a dead end beside them, and about
+ * every other inner column has one node that is itself a dead spot (no way on). Each
+ * column keeps live nodes and every live node has a live way on, so a route to the end
+ * always exists; it takes `columns + 1` choices: about ten with the default sizes.
  */
 export function makeBraid(seed = 1, columns = 8, rows = 4): Braid {
   const rand = seeded(seed);
@@ -126,22 +138,32 @@ export function makeBraid(seed = 1, columns = 8, rows = 4): Braid {
     });
   };
 
+  // dead spots inside the tangle: one node in about every other inner column
+  for (let c = 2; c < columns - 1; c++)
+    if (rand() < 0.5) nodes[grid[c][Math.floor(rand() * rows)]].kind = "dead";
+  const live = (id: number) => nodes[id].kind !== "dead";
+
   // start -> three of the first column
   const firstPick = shuffle(grid[0], rand).slice(0, 3);
   for (const id of firstPick) link(start.id, id);
   for (let c = 0; c < columns - 1; c++)
-    for (const id of grid[c]) {
+    for (const id of grid[c].filter(live)) {
       for (const to of shuffle(grid[c + 1], rand).slice(0, 2)) link(id, to);
+      // a node whose two picks include a dead spot still has a live way on
+      if (!edges.some((e) => e.from === id && live(e.to)))
+        link(id, grid[c + 1].filter(live)[0]);
     }
-  for (const id of grid[columns - 1]) link(id, end.id);
-  // nodes nobody reaches still need a way in: link them from a random previous node
+  for (const id of grid[columns - 1].filter(live)) link(id, end.id);
+  // nodes nobody reaches still need a way in: link them from a live previous node
   for (let c = 0; c < columns; c++)
     for (const id of grid[c])
-      if (!edges.some((e) => e.to === id))
-        link(c ? grid[c - 1][Math.floor(rand() * rows)] : start.id, id);
+      if (!edges.some((e) => e.to === id)) {
+        const before = c ? grid[c - 1].filter(live) : [start.id];
+        link(before[Math.floor(rand() * before.length)], id);
+      }
   // dead ends, a little off the node, for a third of the middle nodes
   for (let c = 0; c < columns - 1; c++)
-    for (const id of grid[c]) {
+    for (const id of grid[c].filter(live)) {
       if (rand() > 0.33) continue;
       const n = nodes[id];
       const dead: BraidNode = {
@@ -242,8 +264,9 @@ export function byThickness(
 }
 
 /**
- * The pointer crosses `edgeId`: the edge thickens (less into a dead end, which sends the
- * pointer straight back), and the step is counted.
+ * The pointer crosses `edgeId` and the step is counted. The edge thickens, unless it
+ * leads to a dead spot: then it is pruned (thinner, never below `MIN_WEIGHT`) and the
+ * round is over (`deadEnd`).
  */
 export function move(
   braid: Braid,
@@ -256,10 +279,10 @@ export function move(
   const w = state.weights[edgeId] ?? START_WEIGHT;
   return {
     ...state,
-    at: dead ? state.at : edge.to,
+    at: edge.to,
     weights: {
       ...state.weights,
-      [edgeId]: Math.min(CAP, w + (dead ? GROW_DEAD_END : GROW)),
+      [edgeId]: dead ? Math.max(MIN_WEIGHT, w - GROW) : Math.min(CAP, w + GROW),
     },
     used: state.used.includes(edgeId) ? state.used : [...state.used, edgeId],
     steps: state.steps + 1,
@@ -271,11 +294,31 @@ export function arrived(braid: Braid, state: BraidState): boolean {
   return state.at === braid.end;
 }
 
+/** Whether the signal died in a dead spot: game over for this round. */
+export function deadEnd(braid: Braid, state: BraidState): boolean {
+  return braid.nodes[state.at]?.kind === "dead";
+}
+
+/** Whether this round is over, at the end or in a dead spot. */
+export function roundOver(braid: Braid, state: BraidState): boolean {
+  return arrived(braid, state) || deadEnd(braid, state);
+}
+
+/** Every round played so far, the one just over included. */
+export function results(braid: Braid, state: BraidState): RoundResult[] {
+  return roundOver(braid, state)
+    ? [
+        ...state.finished,
+        { steps: state.steps, arrived: arrived(braid, state) },
+      ]
+    : state.finished;
+}
+
 /**
  * A new round from the start: unused edges lose part of their extra thickness (a synapse
  * nobody uses weakens), used ones keep theirs.
  */
-export function endRound(state: BraidState): BraidState {
+export function endRound(braid: Braid, state: BraidState): BraidState {
   const weights: Record<string, number> = {};
   for (const [id, w] of Object.entries(state.weights))
     weights[id] = state.used.includes(id)
@@ -284,13 +327,12 @@ export function endRound(state: BraidState): BraidState {
         ? START_WEIGHT + (w - START_WEIGHT) * DECAY
         : Math.max(MIN_WEIGHT, w - 0.05);
   return {
-    // `makeBraid` always numbers the start 0
-    at: 0,
+    at: braid.start,
     weights,
     used: [],
     round: state.round + 1,
     steps: 0,
-    finished: [...state.finished, state.steps],
+    finished: results(braid, state),
   };
 }
 

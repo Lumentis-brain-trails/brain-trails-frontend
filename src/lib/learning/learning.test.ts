@@ -24,6 +24,10 @@ import {
   startState,
   tally,
   visibleNodes,
+  MIN_WEIGHT,
+  deadEnd,
+  results,
+  roundOver,
 } from "@/lib/learning/braid";
 import {
   DIG_CAP,
@@ -552,27 +556,62 @@ describe("the braided path", () => {
     expect(byThickness(["x"], {}, () => 2)).toBe("x");
   });
 
-  test("crossing thickens up to the cap, dead ends bounce back, unused edges thin", () => {
+  test("crossing thickens up to the cap, unused edges thin", () => {
     let s = startState(braid);
     const id = choicesAt(braid, s)[0].id;
     for (let i = 0; i < 10; i++) s = move(braid, { ...s, at: braid.start }, id);
     expect(s.weights[id]).toBe(CAP);
     expect(move(braid, s, "nope")).toBe(s);
-    const deadEdge = braid.edges.find((e) => braid.nodes[e.to].kind === "dead");
-    if (!deadEdge) throw new Error("no dead end");
-    const at = { ...startState(braid), at: deadEdge.from };
-    const bounced = move(braid, at, deadEdge.id);
-    expect(bounced.at).toBe(deadEdge.from);
-    expect(bounced.weights[deadEdge.id]).toBeCloseTo(1.25);
     const other = braid.edges.find((e) => e.id !== id)!.id;
     const thick = { ...s, weights: { ...s.weights, [other]: 3 } };
-    const next = endRound(thick);
+    const next = endRound(braid, thick);
     expect(next.weights[id]).toBe(CAP);
     expect(next.weights[other]).toBeLessThan(3);
     expect(next.round).toBe(2);
     expect(next.at).toBe(braid.start);
-    const thin = endRound({ ...s, weights: { [other]: 0.5 }, used: [] });
+    const thin = endRound(braid, { ...s, weights: { [other]: 0.5 }, used: [] });
     expect(thin.weights[other]).toBe(0.5);
+  });
+
+  test("some paths lead to a dead spot: game over, the edge pruned, a new round", () => {
+    const deadNodes = braid.nodes.filter((n) => n.kind === "dead");
+    // dead spots beside nodes and inside the tangle, which has no way on from them
+    expect(deadNodes.length).toBeGreaterThan(3);
+    const inner = deadNodes.filter((n) =>
+      braid.edges.some(
+        (e) => e.to === n.id && braid.nodes[e.from].kind === "mid"
+      )
+    );
+    expect(inner.length).toBeGreaterThan(0);
+    for (const n of deadNodes)
+      expect(braid.edges.some((e) => e.from === n.id)).toBe(false);
+    const deadEdge = braid.edges.find(
+      (e) => braid.nodes[e.to].kind === "dead"
+    )!;
+    const at = { ...startState(braid), at: deadEdge.from, steps: 3 };
+    const died = move(braid, at, deadEdge.id);
+    expect(deadEnd(braid, died)).toBe(true);
+    expect(roundOver(braid, died)).toBe(true);
+    expect(arrived(braid, died)).toBe(false);
+    expect(died.weights[deadEdge.id]).toBe(MIN_WEIGHT);
+    expect(results(braid, died)).toEqual([{ steps: 4, arrived: false }]);
+    const next = endRound(braid, died);
+    expect(next.at).toBe(braid.start);
+    expect(next.finished).toEqual([{ steps: 4, arrived: false }]);
+  });
+
+  test("every live node has a live way on, so the end is always reachable", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const b = makeBraid(seed);
+      for (const n of b.nodes)
+        if (n.kind === "start" || n.kind === "mid")
+          expect(
+            b.edges.some(
+              (e) => e.from === n.id && b.nodes[e.to].kind !== "dead"
+            ),
+            `${seed}:${n.id}`
+          ).toBe(true);
+    }
   });
 
   test("the fog shows two hops around the pointer, and always the end", () => {

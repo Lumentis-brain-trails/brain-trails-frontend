@@ -6,30 +6,38 @@
  * class votes. The rules are `src/lib/learning/braid.ts`'s: a vote counts with its
  * edge's thickness; the pointer moves when the leading edge reaches two thirds of the
  * class, or after `VOTE_SECONDS` to the leader (a tie drawn by thickness); a crossed
- * edge thickens, unused ones thin between rounds. A round is about ten choices, a game
- * `ROUNDS` rounds, so the class sees its own habit form.
+ * edge thickens, unused ones thin between rounds; a dead spot is game over for the round
+ * and prunes the edge into it. A round is about ten choices; after `ROUNDS` rounds the
+ * class is asked what it sees, and can go on for more. There is no starting over: what
+ * the network learned stays.
  *
  * The teacher's screen runs the loop; the server only counts (`useHostGame`).
  */
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BraidBoard, choiceColours } from "@/components/learning/BraidBoard";
+import {
+  BraidBoard,
+  choiceColours,
+  useRoundHistory,
+} from "@/components/learning/BraidBoard";
 import { Button, Card } from "@/components/ui";
 import type { useHostGame } from "@/lib/classgame/useClassGame";
 import {
   FOG,
   VOTE_SECONDS,
   type BraidState,
-  arrived,
   choicesAt,
+  deadEnd,
   decide,
   endRound,
   makeBraid,
   move,
+  results,
+  roundOver,
   startState,
 } from "@/lib/learning/braid";
 
-/** Rounds in one game: enough for the path to thicken visibly. */
+/** Rounds before the class is asked what it sees: enough for the path to thicken. */
 export const ROUNDS = 5;
 /** How long the class sees where it went before the next choice. */
 const PAUSE_MS = 1200;
@@ -40,6 +48,7 @@ type Host = ReturnType<typeof useHostGame>;
 
 export function BraidStage({ game }: { game: Host }) {
   const t = useTranslations("classGame.braid");
+  const history = useRoundHistory();
   const braid = useMemo(() => makeBraid(SEED), []);
   const [state, setState] = useState<BraidState>(() => startState(braid));
   const [askedAt, setAskedAt] = useState<number | null>(null);
@@ -83,7 +92,7 @@ export function BraidStage({ game }: { game: Host }) {
       function advance(edge: string) {
         const next = move(braid, stateRef.current, edge);
         setState(next);
-        if (arrived(braid, next)) setBetween(true);
+        if (roundOver(braid, next)) setBetween(true);
         else ask(next);
       }
     },
@@ -100,7 +109,7 @@ export function BraidStage({ game }: { game: Host }) {
       setTimeout(() => {
         const next = move(braid, stateRef.current, edge);
         setState(next);
-        if (arrived(braid, next)) setBetween(true);
+        if (roundOver(braid, next)) setBetween(true);
         else ask(next);
       }, PAUSE_MS);
     },
@@ -132,20 +141,16 @@ export function BraidStage({ game }: { game: Host }) {
     resolve,
   ]);
 
-  const done = arrived(braid, state);
-  const over = done && state.round >= ROUNDS;
+  const done = roundOver(braid, state);
+  const dead = deadEnd(braid, state);
+  const enough = done && state.round >= ROUNDS;
   const startRound = () => {
-    const next = done ? endRound(state) : state;
+    const next = done ? endRound(braid, state) : state;
     setState(next);
     setBetween(false);
     ask(next);
   };
-  const restart = () => {
-    const fresh = startState(braid);
-    setState(fresh);
-    setBetween(true);
-  };
-  const finished = done ? [...state.finished, state.steps] : state.finished;
+  const finished = results(braid, state);
 
   return (
     <Card className="space-y-4">
@@ -153,11 +158,7 @@ export function BraidStage({ game }: { game: Host }) {
         <div>
           <h2 className="type-heading">{t("title")}</h2>
           <p className="text-ink-2">
-            {t("round", {
-              round: state.round,
-              rounds: ROUNDS,
-              steps: state.steps,
-            })}
+            {t("round", { round: state.round, steps: state.steps })}
           </p>
         </div>
         {askedAt !== null && (
@@ -181,31 +182,21 @@ export function BraidStage({ game }: { game: Host }) {
 
       {finished.length > 0 && (
         <p className="text-sm text-ink-2">
-          {t("history", { steps: finished.join(" · ") })}
+          {t("history", { rounds: history(finished) })}
         </p>
       )}
 
       {between && (
         <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
-          {over ? (
-            <>
-              <p className="text-ink-2">{t("over")}</p>
-              <Button variant="secondary" onClick={restart}>
-                {t("again")}
-              </Button>
-            </>
-          ) : (
-            <>
-              {done && (
-                <p className="text-ink-2">
-                  {t("arrived", { steps: state.steps })}
-                </p>
-              )}
-              <Button disabled={!live} onClick={startRound}>
-                {t(done ? "next" : "start")}
-              </Button>
-            </>
+          {done && (
+            <p className={dead ? "font-medium text-warn" : "text-ink-2"}>
+              {t(dead ? "dead" : "arrived", { steps: state.steps })}
+            </p>
           )}
+          {enough && <p className="text-ink-2">{t("over")}</p>}
+          <Button disabled={!live} onClick={startRound}>
+            {t(done ? "next" : "start")}
+          </Button>
         </div>
       )}
     </Card>

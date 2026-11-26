@@ -4286,13 +4286,13 @@
     },
     "braid": {
       "title": "Il sentiero intrecciato",
-      "round": "Giro {round} di {rounds}, scelta {steps}",
-      "history": "Scelte per giro: {steps}",
+      "round": "Giro {round}, scelta {steps}",
+      "history": "Giri finora: {rounds}",
       "start": "Inizia il primo giro",
       "next": "Giro successivo",
       "arrived": "La classe è arrivata in fondo in {steps} scelte.",
-      "over": "Tutti i giri giocati. Il sentiero è diventato più corto e più spesso?",
-      "again": "Gioca di nuovo"
+      "over": "Il sentiero è diventato più corto e più spesso? Gioca altri giri per vederlo assestarsi.",
+      "dead": "Fine partita: il segnale della classe si è spento in un punto morto dopo {steps} scelte."
     },
     "lesson": {
       "module": "Modulo",
@@ -4893,15 +4893,15 @@
       },
       "braid": {
         "title": "Il sentiero intrecciato",
-        "text": "Sei un segnale che viaggia in un groviglio di collegamenti, dalla partenza (a sinistra) all’arrivo (verde). Scegli il prossimo collegamento cliccando su uno di quelli colorati. Gioca qualche giro e guarda cosa succede ai collegamenti e al tuo percorso.",
+        "text": "Sei un segnale che viaggia in un groviglio di collegamenti, dalla partenza (a sinistra) all’arrivo (verde). Scegli il prossimo collegamento cliccando su uno di quelli colorati. Attenzione: alcune strade portano a un punto morto, dove il segnale si spegne. Gioca un giro dopo l’altro e guarda cosa succede ai collegamenti e al tuo percorso.",
         "next": "Giro successivo",
         "habit": "Lascia scegliere l’abitudine",
-        "fog": "Nebbia sì",
-        "liftFog": "Togli la nebbia",
-        "reset": "Ricomincia",
         "status": "Giro {round} · {n, plural, one {# passo} other {# passi}}",
-        "arrived": "Arrivato in {n} passi!",
-        "history": "Passi per giro: {steps}"
+        "arrived": "Arrivato in {n, plural, one {# passo} other {# passi}}!",
+        "history": "Giri finora: {rounds}",
+        "dead": "Fine partita: il segnale si è spento in un punto morto dopo {n, plural, one {# passo} other {# passi}}.",
+        "deadShort": "punto morto",
+        "steps": "{n, plural, one {# passo} other {# passi}}"
       },
       "ball": {
         "version": "Versione",
