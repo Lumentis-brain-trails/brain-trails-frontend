@@ -4634,7 +4634,7 @@
             "pixels": "The colour of every dot of the screen",
             "numbers": "A few numbers that describe its shape",
             "words": "A sentence like \"it looks normal\"",
-            "photo": "A photo of the screen"
+            "photo": "A photo of the screen, taken with a phone"
           },
           "explain": "<p>A few numbers. The dots take a lot of space and say nothing about the shape; a sentence cannot be used to draw the beat again. A short code that can be <b>decoded</b> back into the picture is the best of both.</p>"
         },
@@ -4758,10 +4758,10 @@
         "eegHow": {
           "prompt": "How could we encode this EEG?",
           "options": {
-            "bells": "With a few bells, like the ECG",
-            "waves": "With a few sine waves",
-            "learn": "We do not know the recipe: let a computer learn one from many EEGs",
-            "pixels": "We cannot: we must keep every dot"
+            "bells": "With a few bells, as we did for the ECG",
+            "waves": "With a few sine waves, one for each brain rhythm",
+            "learn": "Let a computer learn the recipe from many EEGs",
+            "pixels": "We cannot: we have to keep every single dot"
           },
           "explain": "<p>Bells and waves can help (the brain does have rhythms, the alpha waves for example), but no fixed recipe of a few shapes rebuilds an EEG well. Keeping every dot works but it is not a code. The modern answer is to <b>learn the recipe</b> from many examples: that is the next step.</p>"
         },
@@ -5000,7 +5000,7 @@
           "options": {
             "and": "AND: it fires only when both inputs are on",
             "or": "OR: it fires when at least one input is on",
-            "neither": "Neither",
+            "neither": "Neither: its answers match none of these three rules",
             "xor": "XOR: it fires when exactly one input is on"
           },
           "explain": "<p>With one input on the sum is 1 - 1.5 = -0.5: quiet. With both on it is 2 - 1.5 = 0.5: it fires. That is <b>AND</b>.</p>"
@@ -5055,27 +5055,27 @@
             "or": "OR",
             "and": "AND",
             "xor": "XOR",
-            "nand": "NAND (not both)"
+            "nand": "NAND"
           },
           "explain": "<p><b>OR</b>: it fires when at least one input is on.</p>"
         },
         "nnNudgeDown": {
           "prompt": "The neuron answered 0.9 for a dot whose label is 0, and that dot's x is 1. Which way should w₁ move?",
           "options": {
-            "up": "Up",
-            "down": "Down",
-            "same": "It should not move",
-            "zero": "It should be set to 0"
+            "up": "It goes up a bit",
+            "down": "It goes down a bit",
+            "same": "It stays the same",
+            "zero": "It goes all the way to 0"
           },
           "explain": "<p><b>Down</b>. The answer was too high, and w₁ multiplied an input of 1, so it pushed the answer up: lowering it brings the answer towards 0.</p>"
         },
         "nnNudgeZero": {
           "prompt": "Same mistake, but this dot's x is 0. Which way should w₁ move?",
           "options": {
-            "up": "Up",
-            "down": "Down",
-            "same": "It should not move",
-            "zero": "It should be set to 0"
+            "up": "It goes up a bit",
+            "down": "It goes down a bit",
+            "same": "It stays the same",
+            "zero": "It goes all the way to 0"
           },
           "explain": "<p>It <b>should not move</b>: an input of 0 times any weight is 0, so w₁ did not contribute to this mistake. Backpropagation gives each weight a share of the error in proportion to what it did. (The bias b still moves.)</p>"
         },
@@ -5097,20 +5097,20 @@
         "nnWhyMany": {
           "prompt": "Why do we train on many slightly different 3s instead of one perfect 3?",
           "options": {
-            "shape": "So it learns what all 3s have in common, and recognises 3s it has never seen",
-            "memory": "So it can remember every picture by heart",
-            "faster": "Because training is faster with more pictures",
-            "pixels": "So it learns how many pixels each digit has"
+            "shape": "To learn what all 3s share, so it recognises new ones",
+            "memory": "To store every picture, so it recognises them later",
+            "faster": "Because more pictures make every single training step faster",
+            "pixels": "To learn how many dark pixels a 3 usually has"
           },
           "explain": "<p>The goal is to <b>generalise</b>: to recognise new drawings. A network that only memorises its examples fails on the first new one. That is why we test it on digits it has never seen.</p>"
         },
         "nnHiddenCode": {
           "prompt": "What are the 12 numbers of the hidden layer, for a picture?",
           "options": {
-            "summary": "A short description of the picture that the network invented to do its job",
-            "copy": "A copy of 12 of the pixels",
-            "answer": "The probability of each digit",
-            "random": "Random numbers, different every time"
+            "summary": "A short description of the picture, invented by the network",
+            "copy": "A copy of the 12 most important pixels of the original picture",
+            "answer": "The network's probability for each of the ten digits",
+            "random": "Random numbers, drawn again for every picture"
           },
           "explain": "<p>A <b>short description</b>: 35 pixels became 12 numbers that keep what matters to tell digits apart. Nobody told the network what to put there. How to describe something with a few numbers is the subject of the next module, Encoding.</p>"
         },
@@ -5196,10 +5196,10 @@
         "plBraidWhy": {
           "prompt": "Why did the route get faster and more obvious, round after round?",
           "options": {
-            "thick": "The edges we used got thicker, so they count more and attract the next choices",
-            "memory": "We memorised the map",
-            "luck": "Pure luck",
-            "teacher": "The teacher chose the best route for us"
+            "thick": "The edges we used got thicker, so their votes counted more",
+            "memory": "We memorised the map, so we knew where to go",
+            "luck": "Luck: the random draws happened to favour one route",
+            "teacher": "The teacher's screen quietly steered us towards the best route"
           },
           "explain": "<p>The edges we used got <b>thicker</b>, so the route we took became easier to take again: use strengthens connections, and strong connections get used. In the brain this is how habits form, the good and the bad ones.</p>"
         },
@@ -5222,20 +5222,20 @@
         "plMeta": {
           "prompt": "What is metaplasticity?",
           "options": {
-            "meta": "The brain adjusting how easily its connections change, depending on its recent activity",
-            "age": "Plasticity disappearing in old age",
-            "fixed": "Some connections that never change",
-            "young": "The extra plasticity of a young brain"
+            "meta": "The brain changing how easily its connections change",
+            "age": "The slow loss of plasticity as the brain grows old",
+            "fixed": "The connections that stay the same for the whole of life",
+            "young": "The extra plasticity a brain has in early childhood"
           },
           "explain": "<p>Metaplasticity is the <b>plasticity of plasticity</b>: how ready a synapse is to change depends on what it has done recently. It is an active area of research.</p>"
         },
         "plHabitDays": {
           "prompt": "On average, how long did it take for a new daily habit to become automatic in the study?",
           "options": {
-            "seven": "A week",
-            "twentyOne": "21 days",
-            "sixtySix": "About 66 days, with big differences between people",
-            "year": "A year"
+            "seven": "About a week, if the habit is repeated every single day",
+            "twentyOne": "About 21 days, for nearly everyone",
+            "sixtySix": "About 66 days, varying a lot between people",
+            "year": "About a year, for nearly everyone"
           },
           "explain": "<p>About <b>66 days</b> on average, from 18 to 254 depending on the person and the habit. \"21 days\" is a myth.</p>"
         },
@@ -5250,20 +5250,20 @@
         "plState": {
           "prompt": "What do we mean by a brain state?",
           "options": {
-            "pattern": "The pattern of activity of the whole brain at one moment",
-            "region": "One region of the brain that switches on",
-            "thought": "A single thought",
-            "neuron": "The activity of a single neuron"
+            "pattern": "The activity of the whole brain at one moment",
+            "region": "The one region of the brain that is most active",
+            "thought": "The single thought someone is having at one moment",
+            "neuron": "Whether one particular neuron is firing or resting"
           },
           "explain": "<p>A <b>pattern</b> over the whole brain, like the lights of the whole city at one moment, not one neighbourhood.</p>"
         },
         "plValley": {
           "prompt": "In the energy landscape, what is a valley?",
           "options": {
-            "state": "A state the brain tends to go to and stay in",
-            "region": "A region of the brain",
-            "mistake": "A mistake of the brain",
-            "sleep": "A moment when the brain is asleep"
+            "state": "A state the brain tends to fall into and stay in",
+            "region": "A region of the brain where activity is low",
+            "mistake": "A mistake the brain makes now and then, and quickly corrects",
+            "sleep": "A moment when the brain is asleep and quiet"
           },
           "explain": "<p>A valley is a <b>state</b> that attracts the brain and holds it for a while: stable, easy to reach, hard to leave.</p>"
         },
@@ -5274,10 +5274,10 @@
         "plStuck": {
           "prompt": "The ball is stuck at the bottom of a deep valley. What helps it out?",
           "options": {
-            "outside": "Something from outside: a push, new experiences, practice",
-            "wait": "Waiting: it will leave by itself",
-            "nothing": "Nothing: it is stuck for ever",
-            "harder": "Rolling faster around the same valley"
+            "outside": "A push from outside: new experiences, practice",
+            "wait": "Waiting: sooner or later it leaves by itself",
+            "nothing": "Nothing: once it is that deep it stays for ever",
+            "harder": "Rolling faster and faster around the same valley"
           },
           "explain": "<p>A <b>push from outside</b>. On a soft landscape, waiting only digs the valley deeper. But the landscape is soft for everyone: the same plasticity that dug the valley can dig a new one.</p>"
         },
@@ -5292,10 +5292,10 @@
         "plReward": {
           "prompt": "When should the reward come, for the brain to link it to the right state?",
           "options": {
-            "now": "Right away, while the state is still there",
-            "later": "At the end of the session",
-            "never": "It does not matter",
-            "morning": "The next morning, after a night's sleep"
+            "now": "Right away, while the brain is still in that state",
+            "later": "At the end of the session, once the scores are in",
+            "never": "Any time: the brain links it to the state anyway",
+            "morning": "The next morning, after sleep has sorted the memories"
           },
           "explain": "<p><b>Right away</b>. A reward that comes late cannot tell the brain which state earned it. This is why neurofeedback gives feedback within a fraction of a second.</p>"
         },

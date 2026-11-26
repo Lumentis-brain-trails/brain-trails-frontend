@@ -4634,7 +4634,7 @@
             "pixels": "Il colore di ogni punto dello schermo",
             "numbers": "Pochi numeri che ne descrivono la forma",
             "words": "Una frase come \"sembra normale\"",
-            "photo": "Una foto dello schermo"
+            "photo": "Una foto dello schermo, scattata con il telefono"
           },
           "explain": "<p>Pochi numeri. I punti occupano molto spazio e non dicono niente della forma; con una frase non si può ridisegnare il battito. Un codice corto che si può <b>decodificare</b> di nuovo nell'immagine prende il meglio di entrambi.</p>"
         },
@@ -4758,10 +4758,10 @@
         "eegHow": {
           "prompt": "Come potremmo codificare questo EEG?",
           "options": {
-            "bells": "Con poche campane, come l'ECG",
-            "waves": "Con poche onde sinusoidali",
-            "learn": "Non conosciamo la ricetta: lasciamo che un computer ne impari una da tanti EEG",
-            "pixels": "Non si può: dobbiamo tenere ogni punto"
+            "bells": "Con qualche campana, come abbiamo fatto per l’ECG",
+            "waves": "Con qualche onda sinusoidale, una per ogni ritmo del cervello",
+            "learn": "Lasciando che un computer impari la ricetta da tanti EEG",
+            "pixels": "Non si può: dobbiamo tenere ogni singolo punto"
           },
           "explain": "<p>Campane e onde possono aiutare (il cervello ha i suoi ritmi, per esempio le onde alfa), ma nessuna ricetta fissa di poche forme ricostruisce bene un EEG. Tenere ogni punto funziona ma non è un codice. La risposta moderna è <b>imparare la ricetta</b> da tanti esempi: è il prossimo passo.</p>"
         },
@@ -5000,7 +5000,7 @@
           "options": {
             "and": "AND: si attiva solo quando entrambi gli ingressi sono accesi",
             "or": "OR: si attiva quando almeno un ingresso è acceso",
-            "neither": "Nessuno dei due",
+            "neither": "Nessuna: le sue risposte non seguono nessuna delle tre regole",
             "xor": "XOR: si attiva quando esattamente un ingresso è acceso"
           },
           "explain": "<p>Con un ingresso acceso la somma è 1 - 1.5 = -0.5: spento. Con entrambi è 2 - 1.5 = 0.5: si attiva. È <b>AND</b>.</p>"
@@ -5055,27 +5055,27 @@
             "or": "OR",
             "and": "AND",
             "xor": "XOR",
-            "nand": "NAND (non entrambi)"
+            "nand": "NAND"
           },
           "explain": "<p><b>OR</b>: si attiva quando almeno un ingresso è acceso.</p>"
         },
         "nnNudgeDown": {
           "prompt": "Il neurone ha risposto 0.9 per un punto con etichetta 0, e la x di quel punto è 1. In che direzione deve muoversi w₁?",
           "options": {
-            "up": "Su",
-            "down": "Giù",
-            "same": "Non deve muoversi",
-            "zero": "Va messo a 0"
+            "up": "Sale un po’",
+            "down": "Scende un po’",
+            "same": "Resta uguale",
+            "zero": "Viene portato a 0"
           },
           "explain": "<p><b>Giù</b>. La risposta era troppo alta, e w₁ moltiplicava un ingresso di 1, quindi spingeva la risposta in su: abbassarlo avvicina la risposta a 0.</p>"
         },
         "nnNudgeZero": {
           "prompt": "Stesso errore, ma la x di questo punto è 0. In che direzione deve muoversi w₁?",
           "options": {
-            "up": "Su",
-            "down": "Giù",
-            "same": "Non deve muoversi",
-            "zero": "Va messo a 0"
+            "up": "Sale un po’",
+            "down": "Scende un po’",
+            "same": "Resta uguale",
+            "zero": "Viene portato a 0"
           },
           "explain": "<p><b>Non deve muoversi</b>: un ingresso di 0 per qualsiasi peso fa 0, quindi w₁ non ha contribuito a questo errore. La retropropagazione dà a ogni peso una parte dell’errore in proporzione a ciò che ha fatto. (Il bias b invece si muove.)</p>"
         },
@@ -5097,20 +5097,20 @@
         "nnWhyMany": {
           "prompt": "Perché la alleniamo su tanti 3 un po’ diversi invece che su un solo 3 perfetto?",
           "options": {
-            "shape": "Perché impari cosa hanno in comune tutti i 3, e riconosca 3 che non ha mai visto",
-            "memory": "Perché possa ricordare ogni immagine a memoria",
-            "faster": "Perché con più immagini l’allenamento è più veloce",
-            "pixels": "Così impara quanti pixel ha ogni cifra"
+            "shape": "Per imparare cosa hanno in comune tutti i 3, e riconoscerne di nuovi",
+            "memory": "Per conservare ogni immagine, e riconoscerla più avanti",
+            "faster": "Perché con più immagini ogni singolo passo dell’allenamento è più veloce",
+            "pixels": "Per imparare quanti pixel scuri ha di solito un 3"
           },
           "explain": "<p>L’obiettivo è <b>generalizzare</b>: riconoscere disegni nuovi. Una rete che si limita a memorizzare i suoi esempi sbaglia al primo nuovo. Per questo la mettiamo alla prova su cifre che non ha mai visto.</p>"
         },
         "nnHiddenCode": {
           "prompt": "Cosa sono, per un’immagine, i 12 numeri dello strato nascosto?",
           "options": {
-            "summary": "Una descrizione breve dell’immagine che la rete si è inventata per fare il suo lavoro",
-            "copy": "Una copia di 12 dei pixel",
-            "answer": "La probabilità di ogni cifra",
-            "random": "Numeri a caso, diversi ogni volta"
+            "summary": "Una breve descrizione dell’immagine, inventata dalla rete",
+            "copy": "Una copia dei 12 pixel più importanti dell’immagine",
+            "answer": "La probabilità che la rete dà a ciascuna delle dieci cifre",
+            "random": "Numeri a caso, estratti di nuovo per ogni immagine"
           },
           "explain": "<p>Una <b>descrizione breve</b>: 35 pixel sono diventati 12 numeri che tengono ciò che serve per distinguere le cifre. Nessuno ha detto alla rete cosa metterci. Come descrivere qualcosa con pochi numeri è l’argomento del prossimo modulo, Codifica.</p>"
         },
@@ -5196,10 +5196,10 @@
         "plBraidWhy": {
           "prompt": "Perché, giro dopo giro, il percorso è diventato più veloce e più ovvio?",
           "options": {
-            "thick": "I collegamenti usati sono diventati più spessi, quindi contano di più e attirano le scelte successive",
-            "memory": "Abbiamo imparato la mappa a memoria",
-            "luck": "Pura fortuna",
-            "teacher": "L’insegnante ha scelto per noi la strada migliore"
+            "thick": "I collegamenti usati si sono ispessiti, quindi i loro voti contavano di più",
+            "memory": "Abbiamo memorizzato la mappa, quindi sapevamo dove andare",
+            "luck": "Fortuna: le estrazioni a caso hanno favorito un percorso",
+            "teacher": "Lo schermo dell’insegnante ci ha guidati di nascosto verso il percorso migliore"
           },
           "explain": "<p>I collegamenti usati sono diventati <b>più spessi</b>, quindi il percorso fatto è diventato più facile da rifare: l’uso rafforza i collegamenti, e i collegamenti forti vengono usati. Nel cervello è così che nascono le abitudini, buone e cattive.</p>"
         },
@@ -5222,20 +5222,20 @@
         "plMeta": {
           "prompt": "Cos’è la metaplasticità?",
           "options": {
-            "meta": "Il cervello che regola quanto facilmente cambiano i suoi collegamenti, in base all’attività recente",
-            "age": "La plasticità che scompare in vecchiaia",
-            "fixed": "Alcuni collegamenti che non cambiano mai",
-            "young": "La plasticità in più di un cervello giovane"
+            "meta": "Il cervello che cambia quanto facilmente cambiano i suoi collegamenti",
+            "age": "La lenta perdita di plasticità quando il cervello invecchia",
+            "fixed": "I collegamenti che restano uguali per tutta la vita",
+            "young": "La plasticità in più che ha il cervello di un bambino nella prima infanzia"
           },
           "explain": "<p>La metaplasticità è la <b>plasticità della plasticità</b>: quanto una sinapsi è pronta a cambiare dipende da ciò che ha fatto di recente. È un campo di ricerca molto attivo.</p>"
         },
         "plHabitDays": {
           "prompt": "Nello studio, quanto ci è voluto in media perché una nuova abitudine quotidiana diventasse automatica?",
           "options": {
-            "seven": "Una settimana",
-            "twentyOne": "21 giorni",
+            "seven": "Circa una settimana, se l’abitudine si ripete ogni singolo giorno",
+            "twentyOne": "Circa 21 giorni, per quasi tutti",
             "sixtySix": "Circa 66 giorni, con grandi differenze tra le persone",
-            "year": "Un anno"
+            "year": "Circa un anno, per quasi tutti"
           },
           "explain": "<p>Circa <b>66 giorni</b> in media, da 18 a 254 a seconda della persona e dell’abitudine. I \"21 giorni\" sono un mito.</p>"
         },
@@ -5250,20 +5250,20 @@
         "plState": {
           "prompt": "Cosa intendiamo per stato cerebrale?",
           "options": {
-            "pattern": "Il disegno dell’attività di tutto il cervello in un momento",
-            "region": "Una regione del cervello che si accende",
-            "thought": "Un singolo pensiero",
-            "neuron": "L’attività di un solo neurone"
+            "pattern": "L’attività di tutto il cervello in un dato momento",
+            "region": "L’unica regione del cervello che è più attiva",
+            "thought": "Il singolo pensiero che una persona ha in un dato momento",
+            "neuron": "Se un certo neurone sta scaricando o è a riposo"
           },
           "explain": "<p>Un <b>disegno</b> su tutto il cervello, come le luci di tutta la città in un momento, non un solo quartiere.</p>"
         },
         "plValley": {
           "prompt": "Nel paesaggio energetico, cos’è una valle?",
           "options": {
-            "state": "Uno stato verso cui il cervello tende ad andare e in cui resta",
-            "region": "Una regione del cervello",
-            "mistake": "Un errore del cervello",
-            "sleep": "Un momento in cui il cervello dorme"
+            "state": "Uno stato in cui il cervello tende a cadere e restare",
+            "region": "Una regione del cervello dove l’attività è bassa",
+            "mistake": "Un errore che il cervello fa ogni tanto e corregge subito",
+            "sleep": "Un momento in cui il cervello dorme ed è calmo"
           },
           "explain": "<p>Una valle è uno <b>stato</b> che attira il cervello e lo trattiene per un po’: stabile, facile da raggiungere, difficile da lasciare.</p>"
         },
@@ -5274,10 +5274,10 @@
         "plStuck": {
           "prompt": "La pallina è bloccata in fondo a una valle profonda. Cosa la aiuta a uscire?",
           "options": {
-            "outside": "Qualcosa da fuori: una spinta, esperienze nuove, la pratica",
-            "wait": "Aspettare: uscirà da sola",
-            "nothing": "Niente: è bloccata per sempre",
-            "harder": "Rotolare più veloce nella stessa valle"
+            "outside": "Una spinta da fuori: nuove esperienze, esercizio",
+            "wait": "Aspettare: prima o poi esce da sola",
+            "nothing": "Niente: quando è così in fondo ci resta per sempre",
+            "harder": "Rotolare sempre più veloce nella stessa valle"
           },
           "explain": "<p>Una <b>spinta da fuori</b>. Su un paesaggio morbido, aspettare scava solo di più la valle. Ma il paesaggio è morbido per tutti: la stessa plasticità che ha scavato la valle può scavarne una nuova.</p>"
         },
@@ -5292,10 +5292,10 @@
         "plReward": {
           "prompt": "Quando deve arrivare la ricompensa, perché il cervello la colleghi allo stato giusto?",
           "options": {
-            "now": "Subito, mentre lo stato c’è ancora",
-            "later": "Alla fine della sessione",
-            "never": "Non importa",
-            "morning": "Il mattino dopo, dopo una notte di sonno"
+            "now": "Subito, mentre il cervello è ancora in quello stato",
+            "later": "Alla fine della sessione, quando ci sono i punteggi",
+            "never": "Quando vuoi: il cervello la collega comunque allo stato",
+            "morning": "La mattina dopo, quando il sonno ha messo in ordine i ricordi"
           },
           "explain": "<p><b>Subito</b>. Una ricompensa che arriva tardi non può dire al cervello quale stato l’ha meritata. Per questo il neurofeedback risponde in una frazione di secondo.</p>"
         },

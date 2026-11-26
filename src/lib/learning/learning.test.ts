@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import en from "../../../messages/en.json";
+import it from "../../../messages/it.json";
 import {
   ECG_FIGURE,
   ECG_NUMBERS,
@@ -754,5 +755,39 @@ describe("encoding questions do not give their answers away", () => {
       for (const q of m.steps.flatMap((s) => s.questions))
         if (q.kind === "choice")
           expect([2, 4], `${m.key}.${q.id}`).toContain(q.options.length);
+  });
+});
+
+describe("answer options", () => {
+  // the right answer must not stand out as the only long, careful one (Andrea, 2026-11-26)
+  test("the right option is never the only longest, in either language", () => {
+    const resolve = (root: unknown, key: string) =>
+      key
+        .split(".")
+        .reduce<unknown>(
+          (o, k) => (o as Record<string, unknown> | undefined)?.[k],
+          root
+        );
+    for (const step of [...NEURAL_NETWORKS, ...ENCODING, ...PLASTICITY])
+      for (const q of step.questions) {
+        if (q.kind !== "choice" || q.options.some((o) => !o.words)) continue;
+        if (q.options.some((o) => o.id === "true")) continue;
+        for (const [lang, messages] of [
+          ["en", en],
+          ["it", it],
+        ] as const) {
+          const length = (id: string) => {
+            const o = q.options.find((x) => x.id === id)!;
+            return String(resolve(messages.learning, o.words!.key)).length;
+          };
+          const others = q.options
+            .filter((o) => o.id !== q.answer)
+            .map((o) => length(o.id));
+          expect(
+            length(q.answer),
+            `${lang} ${q.id}: the answer is the longest option`
+          ).toBeLessThanOrEqual(Math.max(...others));
+        }
+      }
   });
 });
