@@ -40,6 +40,11 @@ export interface ModuleControl {
   step: number;
   /** The last question out (from zero); -1 shows the step without questions. */
   upTo: number;
+  /**
+   * Show what the step held back (its "What we found" box, the gallery's codes, the
+   * playground) whatever this screen answered: the teacher's call for the whole class.
+   */
+  reveal?: boolean;
   onVerdict: (questionId: string, verdict: "right" | "wrong" | "shown") => void;
 }
 
@@ -121,7 +126,7 @@ export function ModuleView({
     (q) => seen[q.id] !== "right" && seen[q.id] !== "shown"
   );
   // what would give the answers away (codes, sliders, the explanation) waits for them
-  const answered = firstOpen === -1;
+  const answered = firstOpen === -1 || control?.reveal === true;
   const out = control
     ? control.upTo + 1
     : firstOpen === -1
