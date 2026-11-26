@@ -491,6 +491,13 @@ describe("the Brain Plasticity module", () => {
         expect(message(w.key), w.key).toBeTypeOf("string");
   });
 
+  test("a figure that answers the questions waits for the reveal", () => {
+    const lifespan = PLASTICITY.find((s) => s.id === "lifespan")!;
+    expect(lifespan.figureAnswers).toBe(true);
+    for (const st of [...PLASTICITY, ...ENCODING, ...NEURAL_NETWORKS])
+      if (st.figureAnswers) expect(st.reveal, st.id).toBe(true);
+  });
+
   test("true/false questions have exactly the two options", () => {
     for (const q of PLASTICITY.flatMap((s) => s.questions))
       if (q.kind === "choice" && q.id.startsWith("plTf"))

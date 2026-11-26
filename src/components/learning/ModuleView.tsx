@@ -204,7 +204,7 @@ export function ModuleView({
           </div>
         </div>
 
-        {step.figure && (
+        {step.figure && !step.figureAnswers && (
           <Card className="p-3 sm:p-4">
             <LearningFigure spec={step.figure} className="mx-auto max-w-3xl" />
           </Card>
@@ -258,6 +258,11 @@ export function ModuleView({
               {words.rich({ key: `${key}.reveal` })}
             </div>
           </section>
+        )}
+        {answered && step.figure && step.figureAnswers && (
+          <Card className="p-3 sm:p-4">
+            <LearningFigure spec={step.figure} className="mx-auto max-w-3xl" />
+          </Card>
         )}
         {answered && step.playground && <Playground spec={step.playground} />}
       </article>

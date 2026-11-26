@@ -82,6 +82,11 @@ export interface Step {
   gallery?: Example[];
   /** One larger picture. */
   figure?: FigureSpec;
+  /**
+   * The figure answers the questions (a graph of what they ask): it shows with the
+   * reveal, after the questions, instead of above them.
+   */
+  figureAnswers?: boolean;
   lab?: Lab;
   /** Pages of the product to open from this step (the demo), with their labels. */
   links?: { href: string; words: Words }[];

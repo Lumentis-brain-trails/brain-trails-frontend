@@ -65,6 +65,7 @@ export const PLASTICITY: Step[] = [
     id: "lifespan",
     reveal: true,
     figure: { kind: "lifespan" },
+    figureAnswers: true,
     questions: [
       trueFalse("plTf25", false),
       trueFalse("plTfToddler", true),
