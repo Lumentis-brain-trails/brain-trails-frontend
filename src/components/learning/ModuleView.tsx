@@ -253,20 +253,8 @@ export function ModuleView({
           </Card>
         )}
         {answered && step.playground && <Playground spec={step.playground} />}
-        {/* the way on into the product closes the module, after everything else */}
-        {step.links && (
-          <div className="flex flex-wrap gap-2">
-            {step.links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={buttonClass("primary")}
-              >
-                {words.text(l.words)}
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* the way on into the product closes the step, after everything else */}
+        {step.links && <StepLinks links={step.links} />}
       </article>
 
       {!control && (
@@ -293,5 +281,23 @@ export function ModuleView({
         </footer>
       )}
     </main>
+  );
+}
+
+/** A step's ways into the product (the demo), as buttons, after its questions. */
+function StepLinks({
+  links,
+}: {
+  links: NonNullable<LearningModule["steps"][number]["links"]>;
+}) {
+  const words = useWords();
+  return (
+    <div className="flex flex-wrap gap-2">
+      {links.map((l) => (
+        <Link key={l.href} href={l.href} className={buttonClass("primary")}>
+          {words.text(l.words)}
+        </Link>
+      ))}
+    </div>
   );
 }
