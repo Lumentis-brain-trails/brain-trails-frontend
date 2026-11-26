@@ -111,7 +111,9 @@ export default function RequestOrganisationPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <header className="mb-8">
-        <h1 className="type-title">{t("title")}</h1>
+        <h1 className="type-title">
+          {t(schoolsOn ? "titleWithSchool" : "title")}
+        </h1>
         <p className="mt-2 text-ink-2">{t("intro")}</p>
       </header>
 

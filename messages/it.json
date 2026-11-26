@@ -2531,7 +2531,8 @@
       "kindAndSeat": "{kind} · {seat}",
       "pending": "In attesa di approvazione",
       "rejected": "Non approvata",
-      "request": "Richiedi una clinica o un laboratorio"
+      "request": "Richiedi una clinica o un laboratorio",
+      "requestWithSchool": "Richiedi una clinica, un laboratorio o una scuola"
     },
     "kinds": {
       "personal": "Personale",
@@ -2552,6 +2553,7 @@
   },
   "organisationRequest": {
     "title": "Richiedi una clinica o un laboratorio",
+    "titleWithSchool": "Richiedi una clinica, un laboratorio o una scuola",
     "intro": "Un'organizzazione è uno spazio di lavoro condiviso: i colleghi costruiscono i protocolli insieme e ognuno segue le proprie persone. Durante la beta approviamo ogni richiesta a mano.",
     "unavailable": "Le organizzazioni non sono ancora disponibili qui.",
     "kind": "Tipo",
