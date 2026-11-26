@@ -17,6 +17,7 @@ import type { components } from "@/lib/api-types";
 import { useErrorMessage } from "@/lib/errorMessage";
 import { useFeature } from "@/lib/features";
 import { formatDate } from "@/lib/format";
+import { WORKSPACES_QUERY_KEY } from "@/lib/workspace";
 import {
   Button,
   Card,
@@ -50,8 +51,11 @@ export default function AdminOrganisationsPage() {
   const decide = useMutation({
     mutationFn: ({ id, decision }: { id: string; decision: Decision }) =>
       api.post<Row>(`admin/workspaces/${id}/decide`, { decision }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["admin-organisations"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-organisations"] });
+      // an admin may approve their own school: their sidebar must see it at once
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_QUERY_KEY });
+    },
   });
 
   return (

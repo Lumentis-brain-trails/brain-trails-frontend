@@ -53,7 +53,11 @@ export function WorkspaceSwitcher() {
   }, [open]);
 
   const usable = workspaces.filter(isUsable);
-  const waiting = workspaces.filter((w) => !isUsable(w));
+  // requests still waiting or refused; an approved school is not one of them (it is
+  // never switched to: its teacher reaches it from the School entry of the rail)
+  const waiting = workspaces.filter(
+    (w) => w.status === "pending" || w.status === "rejected"
+  );
   const nameOf = (w: Workspace) =>
     w.kind === "personal" ? t("kinds.personal") : w.name;
 

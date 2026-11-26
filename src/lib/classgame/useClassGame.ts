@@ -93,10 +93,14 @@ function useGameSocket(
  * The teacher's end of their school's game: opens it (or rejoins it) and drives it.
  * `enabled` false keeps the socket shut (no game until the teacher starts one).
  */
-export function useHostGame(schoolId: string, enabled: boolean) {
+export function useHostGame(
+  schoolId: string,
+  enabled: boolean,
+  plan: string | null = null
+) {
   const answers = useRef(new Map<string, string>());
   const game = useGameSocket(
-    () => api.post<Ticket>(`schools/${schoolId}/game`, {}),
+    () => api.post<Ticket>(`schools/${schoolId}/game`, plan ? { plan } : {}),
     enabled
   );
   const { send } = game;
@@ -164,6 +168,22 @@ export function useMyGame(enabled = true) {
     enabled: flag && enabled && enrolled.data?.status === "verified",
     refetchInterval: (query) => (query.state.error ? false : GAME_POLL_MS),
     refetchIntervalInBackground: false,
+    retry: false,
+  });
+}
+
+/** `GET /schools/{id}/game`: whether the school's game is open, and on what. */
+export interface GameState {
+  open: boolean;
+  plan: string | null;
+}
+
+/** The teacher's School page and start screen: is a game running to resume? */
+export function useGameState(schoolId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["school", schoolId, "game"],
+    queryFn: () => api.get<GameState>(`schools/${schoolId}/game`),
+    enabled,
     retry: false,
   });
 }

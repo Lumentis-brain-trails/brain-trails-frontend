@@ -58,7 +58,9 @@
     "attestation_required": "Tick both declarations to ask for a school.",
     "confirmation_required": "Tick that you checked the guardian's consent.",
     "under_age": "Brain Trails is for people aged 18 and over.",
-    "school_details_required": "A school needs its city, country, your role and your qualification."
+    "school_details_required": "A school needs its city, country, your role and your qualification.",
+    "already_enrolled": "This account is already in a school.",
+    "profile_required": "Add your name and year of birth in your profile first."
   },
   "application": {
     "step": "Application",
@@ -1949,6 +1951,16 @@
       "confirm": "Delete everything",
       "deleting": "Deleting…",
       "done": "Your account and data were deleted."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "accept": "Accept",
+      "seat": {
+        "speaker": "Speaker: you can run this class and its class games",
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member"
+      }
     }
   },
   "transfers": {
@@ -4233,11 +4245,9 @@
       "open": "Start a class game",
       "off": "Class games are not available here.",
       "title": "Class game",
-      "intro": "Put a Learning question on the projector and let the class vote from their phones. Your students see a note inviting them in as soon as you start.",
+      "intro": "Choose what the class does. Your students see a note inviting them in as soon as you start; you can leave this page and resume the game later.",
       "privacy": "You see how many voted for each answer, never who voted what.",
       "ended": "The game is over. Every student's screen has been told.",
-      "start": "Start the game",
-      "again": "Start a new game",
       "unavailable": "The live service is not available in this environment.",
       "questions": "Questions",
       "from": "{module}, step {step}",
@@ -4254,11 +4264,16 @@
       "next": "Next question",
       "hideCount": "Hide the count",
       "showCount": "Show the count",
-      "games": "Class games",
       "braid": "The braided path",
       "braidFrom": "Brain plasticity",
-      "lesson": "Teach a module live",
-      "lessonFrom": "Learning"
+      "lessonFrom": "Learning",
+      "playersBig": "<b>{n}</b> connected",
+      "choose": "What will the class do?",
+      "teach": "Teach {module} live",
+      "questionsGame": "Single questions",
+      "questionsFrom": "Quiz",
+      "running": "A game is running",
+      "resume": "Resume the game"
     },
     "player": {
       "off": "Class games are not available here.",
@@ -4282,7 +4297,8 @@
     },
     "call": {
       "title": "Your class has a live game",
-      "join": "Join"
+      "join": "Join",
+      "close": "Close"
     },
     "braid": {
       "title": "The braided path",
@@ -4295,7 +4311,6 @@
       "again": "Play again"
     },
     "lesson": {
-      "module": "Module",
       "where": "Step {step} of {steps}, {shown} of {questions} questions out",
       "back": "Back",
       "nextQuestion": "Show the next question",
@@ -4304,7 +4319,14 @@
       "wrong": "Wrong",
       "shown": "Asked for the answer",
       "waiting": "Not answered yet",
-      "labHint": "Counts the students who reached the goal of this step's exercise."
+      "labHint": "Counts the students who reached the goal of this step's exercise.",
+      "showFound": "Show what we found",
+      "foundShown": "Shown to the class",
+      "steps": "Steps",
+      "answered": "Answered",
+      "revealAnswer": "Reveal the answer",
+      "answerRevealed": "Answer revealed",
+      "backToQuestions": "Back to the questions"
     }
   },
   "neurofeedback": {
@@ -4469,6 +4491,13 @@
       "email": "Speaker's email",
       "invite": "Invite as speaker",
       "link": "Send this link yourself:"
+    },
+    "join": {
+      "title": "School",
+      "intro": "Did your teacher give you a class code after you signed up? Type it here to join your class.",
+      "tick": "I am the student: I have read the <link>privacy note</link> and I consent.",
+      "submit": "Join the school",
+      "enrolled": "You are in {name}."
     }
   },
   "learning": {
