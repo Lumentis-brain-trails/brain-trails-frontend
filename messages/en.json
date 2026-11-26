@@ -4815,8 +4815,8 @@
     },
     "labs": {
       "gates": {
-        "title": "What does it learn?",
-        "text": "Here is one neuron with its numbers already set: w₁ = 1, w₂ = 1, b = -1.5. Tap the two inputs to switch them on and off and watch when it fires. Its four answers are in the table, next to three famous rules: AND, OR and XOR. Which one has it learned?",
+        "title": "What has it learned?",
+        "text": "This neuron's numbers are already set, by training: w₁ = 1, w₂ = 1, b = -1.5. Nothing to move here: your job is to find out what it does. Tap the inputs (or a row of the table) to try each pair, and its answer fills in. Then compare its four answers with three famous rules: AND, OR and XOR.",
         "learnTitle": "Teach it OR",
         "learnText": "The same neuron as in the first step, still computing AND. Its line is drawn across the four corners of the square, one per pair of inputs. Now you are the teacher.",
         "sum": "sum = {s}",
@@ -4829,7 +4829,8 @@
         "task": "Move its numbers until it computes OR: only the (0, 0) corner stays on the quiet side.",
         "done": "Your neuron computes OR!",
         "backToAnd": "Back to AND",
-        "neuron": "neuron"
+        "neuron": "neuron",
+        "tryAll": "Try all four pairs of inputs: {n} of 4 so far."
       },
       "classify": {
         "title": "Two groups, one line",
@@ -4977,7 +4978,7 @@
           "explain": "<p><b>Three</b>: the weights w₁ and w₂ and the bias b. The inputs are not learned: they come from outside.</p>"
         },
         "nnWhichGate": {
-          "prompt": "A neuron has w₁ = 1, w₂ = 1 and b = -1.5. What does it compute?",
+          "prompt": "Look at the neuron's four answers in the table. Which rule has it learned?",
           "options": {
             "and": "AND: it fires only when both inputs are on",
             "or": "OR: it fires when at least one input is on",
