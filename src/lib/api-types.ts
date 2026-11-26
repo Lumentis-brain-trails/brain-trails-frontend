@@ -2108,6 +2108,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/schools/me/game": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Game
+         * @description Whether the caller's school has a game open; a player ticket when it has.
+         *
+         *     Only a verified enrolment plays (a held account never gets here: `current_user`).
+         *     Every call with a game open issues a fresh ticket: the student's page calls this to
+         *     join and to rejoin.
+         */
+        get: operations["my_game_schools_me_game_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/schools/{workspace_id}": {
         parameters: {
             query?: never;
@@ -2143,6 +2167,33 @@ export interface paths {
          */
         post: operations["new_code_schools__workspace_id__code_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schools/{workspace_id}/game": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Game
+         * @description Open the school's game (or keep the one already open) and hand back a host ticket.
+         *
+         *     Opening again while a game runs is how a teacher's screen reconnects: the question,
+         *     the votes and the phase stay as they were.
+         */
+        post: operations["open_game_schools__workspace_id__game_post"];
+        /**
+         * End Game
+         * @description End the school's game: every screen is told, every key is deleted.
+         */
+        delete: operations["end_game_schools__workspace_id__game_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4242,6 +4293,8 @@ export interface components {
                 builder: boolean;
                 /** @description Protocol catalog with detail page and Play; /library is gone (S16). */
                 catalog: boolean;
+                /** @description Class games: a teacher's live question, the class votes (on schools, live). */
+                class_games: boolean;
                 /** @description The patient's after-session picture; off until counsel answers (T6). */
                 client_summary: boolean;
                 /** @description Operator console on the same machine (S21). */
@@ -4874,6 +4927,20 @@ export interface components {
             first: components["schemas"]["RoundEndOut"];
             last: components["schemas"]["RoundEndOut"];
         };
+        /**
+         * GameTicketOut
+         * @description A single-use ticket for the game socket, and where to open it.
+         */
+        GameTicketOut: {
+            /** Expires In */
+            expires_in: number;
+            /** Protocol */
+            protocol: number;
+            /** Ticket */
+            ticket: string;
+            /** Ws Path */
+            ws_path: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -5447,6 +5514,17 @@ export interface components {
             school_name: string | null;
             /** Status */
             status: string;
+        };
+        /**
+         * MyGameOut
+         * @description A student's view: is a game open in their school, and the ticket to join it.
+         */
+        MyGameOut: {
+            /** Open */
+            open: boolean;
+            /** School Name */
+            school_name?: string | null;
+            ticket?: components["schemas"]["GameTicketOut"] | null;
         };
         /**
          * MySession
@@ -10762,6 +10840,26 @@ export interface operations {
             };
         };
     };
+    my_game_schools_me_game_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyGameOut"];
+                };
+            };
+        };
+    };
     get_school_schools__workspace_id__get: {
         parameters: {
             query?: never;
@@ -10799,6 +10897,44 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SchoolOut"];
                 };
+            };
+        };
+    };
+    open_game_schools__workspace_id__game_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameTicketOut"];
+                };
+            };
+        };
+    };
+    end_game_schools__workspace_id__game_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

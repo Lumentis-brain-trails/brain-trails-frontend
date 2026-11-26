@@ -11,7 +11,11 @@
 import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { cn } from "@/components/ui";
-import type { FigureSpec } from "@/lib/learning/questions";
+import type {
+  ArtificialPart,
+  BioPart,
+  FigureSpec,
+} from "@/lib/learning/questions";
 import { type Part, sample } from "@/lib/learning/signals";
 
 /** The colours of a signal's parts, one per part in turn (the heartbeat has eight). */
@@ -73,7 +77,11 @@ export function LearningFigure({
         />
       );
     case "neuron":
-      return <NeuronFigure className={className} />;
+      return <NeuronFigure highlight={spec.highlight} className={className} />;
+    case "bioNeuron":
+      return (
+        <BioNeuronFigure highlight={spec.highlight} className={className} />
+      );
     case "lifespan":
       return <LifespanFigure className={className} />;
   }
@@ -414,10 +422,13 @@ export const GROUP_COLOURS = ["#f59e0b", "#3b82f6"] as const;
 export function DotsFigure({
   dots,
   line,
+  ok = false,
   className,
 }: {
   dots: { x: number; y: number; label: 0 | 1 }[];
   line?: { w1: number; w2: number; b: number };
+  /** Every dot on its side: the line and its half-plane turn green. */
+  ok?: boolean;
   className?: string;
 }) {
   const size = 200;
@@ -480,15 +491,21 @@ export function DotsFigure({
         stroke="currentColor"
         opacity={0.15}
       />
-      {shade && <path d={shade} fill={GROUP_COLOURS[1]} opacity={0.1} />}
+      {shade && (
+        <path
+          d={shade}
+          fill={ok ? "var(--ok)" : GROUP_COLOURS[1]}
+          opacity={ok ? 0.14 : 0.1}
+        />
+      )}
       {lineEnds && (
         <line
           x1={lineEnds[0]}
           y1={lineEnds[1]}
           x2={lineEnds[2]}
           y2={lineEnds[3]}
-          stroke="currentColor"
-          strokeWidth={2}
+          stroke={ok ? "var(--ok)" : "currentColor"}
+          strokeWidth={ok ? 3 : 2}
         />
       )}
       {dots.map((d, i) => (
@@ -498,8 +515,8 @@ export function DotsFigure({
           cy={size - s(d.y)}
           r={5}
           fill={GROUP_COLOURS[d.label]}
-          stroke="var(--surface)"
-          strokeWidth={1.2}
+          stroke={ok ? "var(--ok)" : "var(--surface)"}
+          strokeWidth={ok ? 2 : 1.2}
         />
       ))}
     </svg>
@@ -645,48 +662,187 @@ export function PixelsFigure({
   );
 }
 
+/** The highlight colour of a neuron's part, and how the other parts fade. */
+const HI = "#3b82f6";
+const look = (on: boolean, any: boolean) => ({
+  stroke: on ? HI : "currentColor",
+  opacity: any && !on ? 0.3 : 1,
+});
+
 /**
  * One artificial neuron with its parts named: two inputs, their weights on the wires,
- * the sum in the body, and the output that fires past the threshold.
+ * the sum in the body, and the output that fires past the threshold. `highlight` colours
+ * one part and fades the rest (the matching question shows one part per card).
  */
-function NeuronFigure({ className }: { className?: string }) {
+function NeuronFigure({
+  highlight,
+  className,
+}: {
+  highlight?: ArtificialPart;
+  className?: string;
+}) {
   const t = useTranslations("learning.figure");
+  const any = highlight !== undefined;
+  const part = (p: ArtificialPart) => look(highlight === p, any);
   return (
     <svg
       viewBox="0 0 360 170"
       className={cn("mx-auto w-full max-w-[520px] text-ink", className)}
       role="img"
+      aria-label={t("neuronAria")}
     >
-      <g fill="none" stroke="currentColor" strokeWidth={1.6}>
-        <line x1={46} y1={45} x2={160} y2={80} />
-        <line x1={46} y1={125} x2={160} y2={90} />
-        <line x1={210} y1={85} x2={300} y2={85} />
-        <path d="M296,79 L306,85 L296,91" />
-        <circle cx={185} cy={85} r={27} fill="var(--surface)" />
+      <g fill="none" strokeWidth={2}>
+        <g {...part("weights")}>
+          <line x1={48} y1={45} x2={160} y2={78} />
+          <line x1={48} y1={125} x2={160} y2={92} />
+        </g>
+        <g {...part("fires")}>
+          <line x1={212} y1={85} x2={300} y2={85} />
+          <path d="M294,78 L306,85 L294,92" />
+        </g>
+        <circle
+          cx={185}
+          cy={85}
+          r={27}
+          fill="var(--surface)"
+          {...part("sum")}
+        />
       </g>
-      <circle cx={36} cy={45} r={10} fill={PART_COLOURS[0]} />
-      <circle cx={36} cy={125} r={10} fill={PART_COLOURS[0]} />
-      <g fontSize={12} fill="currentColor" textAnchor="middle">
-        <text x={36} y={20}>
+      <g
+        {...part("inputs")}
+        fill={highlight === "inputs" ? HI : "currentColor"}
+      >
+        <circle cx={36} cy={45} r={11} fillOpacity={0.25} />
+        <circle cx={36} cy={125} r={11} fillOpacity={0.25} />
+      </g>
+      <g fontSize={12} textAnchor="middle">
+        <text
+          x={36}
+          y={20}
+          fill="currentColor"
+          {...part("inputs")}
+          stroke="none"
+        >
           {t("inputs")}
         </text>
-        <text x={100} y={50} fill={PART_COLOURS[1]}>
-          {"w₁"}
-        </text>
-        <text x={100} y={128} fill={PART_COLOURS[1]}>
-          {"w₂"}
-        </text>
-        <text x={100} y={160} fill={PART_COLOURS[1]}>
-          {t("weights")}
-        </text>
-        <text x={185} y={90} fontSize={18}>
-          Σ
-        </text>
-        <text x={185} y={135}>
-          {t("sum")}
-        </text>
-        <text x={320} y={70}>
+        <g
+          fill={highlight === "weights" ? HI : "currentColor"}
+          opacity={part("weights").opacity}
+        >
+          <text x={100} y={50}>
+            {"w₁"}
+          </text>
+          <text x={100} y={130}>
+            {"w₂"}
+          </text>
+          <text x={100} y={162}>
+            {t("weights")}
+          </text>
+        </g>
+        <g
+          fill={highlight === "sum" ? HI : "currentColor"}
+          opacity={part("sum").opacity}
+        >
+          <text x={185} y={91} fontSize={18}>
+            {"Σ"}
+          </text>
+          <text x={185} y={134}>
+            {t("sum")}
+          </text>
+        </g>
+        <text
+          x={318}
+          y={68}
+          fill={highlight === "fires" ? HI : "currentColor"}
+          opacity={part("fires").opacity}
+        >
           {t("fires")}
+        </text>
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * A biological neuron, sketched: dendrites branching into the cell body, the axon
+ * leaving it, and at its end the synapse, the small gap to the next neuron's dendrite.
+ * `highlight` colours one part and fades the rest; without it every part is named.
+ */
+function BioNeuronFigure({
+  highlight,
+  className,
+}: {
+  highlight?: BioPart;
+  className?: string;
+}) {
+  const t = useTranslations("learning.figure");
+  const any = highlight !== undefined;
+  const part = (p: BioPart) => look(highlight === p, any);
+  const label = (p: BioPart) => ({
+    fill: highlight === p ? HI : "currentColor",
+    opacity: any && highlight !== p ? 0.3 : 0.85,
+  });
+  return (
+    <svg
+      viewBox="0 0 360 170"
+      className={cn("mx-auto w-full max-w-[520px] text-ink", className)}
+      role="img"
+      aria-label={t("bioAria")}
+    >
+      <g fill="none" strokeWidth={2.2} strokeLinecap="round">
+        <g {...part("dendrites")}>
+          <path d="M88,80 C70,70 55,60 30,40 M55,60 C50,48 48,40 40,26 M88,90 C70,100 52,112 28,128 M52,112 C46,122 44,132 38,146 M86,85 C65,85 45,84 18,86 M45,84 C38,76 30,72 22,66" />
+        </g>
+        <g {...part("axon")}>
+          <path d="M130,85 L262,85" />
+          {[150, 182, 214].map((x) => (
+            <rect
+              key={x}
+              x={x}
+              y={79}
+              width={22}
+              height={12}
+              rx={6}
+              fill="var(--surface)"
+            />
+          ))}
+          <path d="M262,85 C272,78 278,70 286,62 M262,85 L288,85 M262,85 C272,92 278,100 286,108" />
+        </g>
+        <g {...part("synapse")}>
+          <circle cx={290} cy={62} r={4} fill="var(--surface)" />
+          <circle cx={292} cy={85} r={4} fill="var(--surface)" />
+          <circle cx={290} cy={108} r={4} fill="var(--surface)" />
+          <path d="M302,52 C306,70 306,100 302,118" />
+          <path d="M304,85 C320,84 334,80 350,72" strokeDasharray="2 3" />
+        </g>
+      </g>
+      <g {...part("body")}>
+        <path
+          d="M86,70 C96,56 122,58 132,72 C140,84 136,100 124,108 C108,116 90,110 84,98 C80,90 80,78 86,70 Z"
+          fill="var(--surface)"
+          strokeWidth={2.2}
+        />
+        <circle
+          cx={109}
+          cy={85}
+          r={7}
+          fill="currentColor"
+          fillOpacity={0.25}
+          stroke="none"
+        />
+      </g>
+      <g fontSize={11} textAnchor="middle">
+        <text x={40} y={16} {...label("dendrites")}>
+          {t("dendrites")}
+        </text>
+        <text x={110} y={134} {...label("body")}>
+          {t("cellBody")}
+        </text>
+        <text x={196} y={70} {...label("axon")}>
+          {t("axon")}
+        </text>
+        <text x={312} y={140} {...label("synapse")}>
+          {t("synapse")}
         </text>
       </g>
     </svg>

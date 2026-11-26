@@ -21,6 +21,7 @@ export const config = {
     "/my/:path*",
     "/organisations/:path*",
     "/school",
+    "/school/:path*",
     "/waiting",
     "/learning",
     "/learning/:path*",
@@ -38,5 +39,6 @@ export const config = {
     "/console/:path*",
     "/live/:path*",
     "/run/:path*",
+    "/play",
   ],
 };
