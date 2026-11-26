@@ -4320,11 +4320,12 @@
       "shown": "Asked for the answer",
       "waiting": "Not answered yet",
       "labHint": "Counts the students who reached the goal of this step's exercise.",
-      "showAnswers": "Show the answers",
       "showFound": "Show what we found",
       "foundShown": "Shown to the class",
-      "hideAnswers": "Hide the answers",
-      "steps": "Steps"
+      "steps": "Steps",
+      "answered": "Answered",
+      "revealAnswer": "Reveal the answer",
+      "answerRevealed": "Answer revealed"
     }
   },
   "neurofeedback": {

@@ -2,10 +2,12 @@
 
 /**
  * A Learning module taught live: the teacher's screen shows the step the class is on,
- * the controls that move everyone (next question, next step, back), and how the class
- * is doing on the question that is out - how many got it right, wrong, or asked for the
- * answer, and how many have not answered yet. On a multiple-choice question "Show the
- * answers" puts how many chose each option on the projector, with the right one marked.
+ * the controls that move everyone (back, reveal, next), and how many have answered the
+ * question that is out. Until the teacher reveals it nobody learns whether they were
+ * right: the board shows only how many answered (the right/wrong split waits under the
+ * teacher's pointer) and the phones no verdict (Andrea, 2026-11-26). The reveal closes
+ * the vote, puts right, wrong and shown on the board, how many chose each option on a
+ * multiple-choice question, and on the step's last question opens "What we found".
  * Counts only, never names (V4-0012). The module is chosen when the game starts and
  * stays (Andrea, 2026-11-25).
  */
@@ -25,7 +27,9 @@ import {
   lessonRound,
   nextPlace,
   previousPlace,
+  revealedUpTo,
   startPlace,
+  stepRevealed,
   verdictCounts,
 } from "@/lib/classgame/lesson";
 import { type LearningModule } from "@/lib/learning/modules";
@@ -75,40 +79,40 @@ export function LessonStage({
   const t = useTranslations("classGame.lesson");
   const { view } = game;
   const live = game.socketState === "open";
-  const { place, go: move } = lesson;
-  // "Show the answers" is per question: a move closes it
-  const [answersAt, setAnswersAt] = useState<string | null>(null);
-  const go = (next: LessonPlace) => {
-    setAnswersAt(null);
-    move(next);
-  };
+  const { place, go } = lesson;
 
   const step = mod.steps[place.step];
   const counted = countedAt(mod, place);
   const round = lessonRound(mod, place);
-  const answers = answersAt === round.id;
   const tally =
     view.tally && view.tally.question === round.id ? view.tally : null;
   const answered = tally?.votes ?? 0;
+  const waiting = Math.max(0, view.players - answered);
   const question = countedQuestion(mod, place);
   const choice = question?.kind === "choice" ? question : null;
   const counts = verdictCounts(round, tally?.counts ?? {}, choice?.answer);
-  const next = nextPlace(mod, place);
-  const previous = previousPlace(mod, place);
+  // the room's phase is this round's only while the room holds it
+  const phase = view.question?.id === round.id ? view.phase : null;
+  const revealedNow = phase === "revealed";
+  // where the class is, with what was revealed here, so a move carries it along
+  const here: LessonPlace = { ...place, revealed: revealedUpTo(place, phase) };
+  const next = nextPlace(mod, here);
+  const previous = previousPlace(mod, here);
   const moreQuestions = step && place.upTo + 1 < step.questions.length;
-  // what the step held back until its questions are answered: the teacher opens it for
-  // everyone at once (Andrea, 2026-11-26), by revealing the round; a move closes it
+  // whether the right answer is still the teacher's alone: a question out, not revealed
+  const secret = !!question && !revealedNow;
+  // a step without questions may still hold something back for the teacher to open
   const heldBack =
     !!step &&
-    !moreQuestions &&
+    step.questions.length === 0 &&
     (!!step.gallery ||
       !!step.playground ||
       ("reveal" in step && !!step.reveal));
-  const found = view.phase === "revealed" && view.question?.id === round.id;
   const control = {
     step: place.step,
     upTo: place.upTo,
-    reveal: found,
+    revealedUpTo: here.revealed,
+    reveal: stepRevealed(mod, place, phase),
     onVerdict: () => {},
   };
 
@@ -135,29 +139,44 @@ export function LessonStage({
           >
             {t("back")}
           </Button>
+          {(question || heldBack) && (
+            <Button
+              variant="secondary"
+              disabled={!live || revealedNow}
+              onClick={() => game.reveal(null)}
+            >
+              {question
+                ? t(revealedNow ? "answerRevealed" : "revealAnswer")
+                : t(revealedNow ? "foundShown" : "showFound")}
+            </Button>
+          )}
           <Button disabled={!live || !next} onClick={() => next && go(next)}>
             {moreQuestions ? t("nextQuestion") : t("nextStep")}
           </Button>
-          {heldBack && (
-            <Button
-              variant="secondary"
-              disabled={!live || found}
-              onClick={() => game.reveal(null)}
-            >
-              {t(found ? "foundShown" : "showFound")}
-            </Button>
-          )}
-          {choice && (
-            <Button
-              variant="ghost"
-              onClick={() => setAnswersAt(answers ? null : round.id)}
-            >
-              {t(answers ? "hideAnswers" : "showAnswers")}
-            </Button>
-          )}
         </div>
 
-        {counted && (
+        {counted && secret && (
+          // before the reveal the board shows only how many answered: the split
+          // would give the answer away on the projector, so it waits under the pointer
+          <div className="grid grid-cols-2 gap-4">
+            <div className="group rounded-2xl border border-hairline p-5">
+              <p className="type-subhead text-ink-2">{t("answered")}</p>
+              <p key={answered} className="type-display enter-pop tabular-nums">
+                {answered}
+              </p>
+              <p className="mt-1 text-sm text-ink-3 tabular-nums opacity-0 transition-opacity group-hover:opacity-100">
+                {VERDICTS.map((v) => `${t(v)} ${counts[v]}`).join(" · ")}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-hairline p-5">
+              <p className="type-subhead text-ink-2">{t("waiting")}</p>
+              <p key={waiting} className="type-display enter-pop tabular-nums">
+                {waiting}
+              </p>
+            </div>
+          </div>
+        )}
+        {counted && !secret && (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {VERDICTS.map((v) => (
               <div
@@ -183,11 +202,8 @@ export function LessonStage({
             ))}
             <div className="rounded-2xl border border-hairline p-5">
               <p className="type-subhead text-ink-2">{t("waiting")}</p>
-              <p
-                key={Math.max(0, view.players - answered)}
-                className="type-display enter-pop tabular-nums"
-              >
-                {Math.max(0, view.players - answered)}
+              <p key={waiting} className="type-display enter-pop tabular-nums">
+                {waiting}
               </p>
             </div>
           </div>
@@ -197,7 +213,7 @@ export function LessonStage({
         )}
       </Card>
 
-      {choice && answers && (
+      {choice && revealedNow && (
         <Card className="enter-up">
           <LiveChoice
             question={toWire(choice).choice!}

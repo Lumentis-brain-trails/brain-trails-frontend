@@ -4320,11 +4320,12 @@
       "shown": "Hanno chiesto la risposta",
       "waiting": "Non hanno ancora risposto",
       "labHint": "Conta gli studenti che hanno raggiunto l'obiettivo dell'esercizio di questo passo.",
-      "showAnswers": "Mostra le risposte",
       "showFound": "Mostra che cosa abbiamo scoperto",
       "foundShown": "Mostrato alla classe",
-      "hideAnswers": "Nascondi le risposte",
-      "steps": "Passi"
+      "steps": "Passi",
+      "answered": "Hanno risposto",
+      "revealAnswer": "Rivela la risposta",
+      "answerRevealed": "Risposta rivelata"
     }
   },
   "neurofeedback": {

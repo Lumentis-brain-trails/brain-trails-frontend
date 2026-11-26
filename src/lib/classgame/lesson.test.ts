@@ -8,6 +8,8 @@ import {
   firstUpTo,
   lessonRound,
   lessonVote,
+  revealedUpTo,
+  stepRevealed,
   nextPlace,
   previousPlace,
   startPlace,
@@ -24,7 +26,8 @@ describe("a teacher-paced lesson", () => {
       seen.push(`${place.step}:${place.upTo}`);
       const next = nextPlace(mod, place);
       if (!next) break;
-      expect(previousPlace(mod, next)).toEqual(place);
+      const back = previousPlace(mod, next);
+      expect([back?.step, back?.upTo]).toEqual([place.step, place.upTo]);
       place = next;
     }
     const expected = mod.steps.flatMap((s, i) => [
@@ -100,5 +103,27 @@ describe("a teacher-paced lesson", () => {
       wrong: 0,
       shown: 0,
     });
+  });
+
+  it("shows an answer only once the teacher reveals it", () => {
+    const at = { module: mod.slug, step: 0, upTo: 1 };
+    expect(revealedUpTo(at, "open")).toBe(-1);
+    expect(revealedUpTo(at, "revealed")).toBe(1);
+    expect(revealedUpTo({ ...at, revealed: 0 }, "open")).toBe(0);
+    // moving on within a step keeps what was revealed; a new step starts hidden
+    const i = mod.steps.findIndex((s) => s.questions.length >= 2);
+    const two = { module: mod.slug, step: i, upTo: 0, revealed: 0 };
+    expect(nextPlace(mod, two)?.revealed).toBe(0);
+    const last = mod.steps[i].questions.length - 1;
+    const end = { ...two, upTo: last, revealed: last };
+    expect(stepRevealed(mod, end, "open")).toBe(true);
+    expect(stepRevealed(mod, { ...end, revealed: last - 1 }, "open")).toBe(
+      false
+    );
+    expect(stepRevealed(mod, { ...end, revealed: last - 1 }, "revealed")).toBe(
+      true
+    );
+    const after = nextPlace(mod, end);
+    if (after && after.step !== i) expect(after.revealed).toBe(-1);
   });
 });

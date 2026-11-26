@@ -23,6 +23,12 @@ export interface LessonPlace {
   module: string;
   step: number;
   upTo: number;
+  /**
+   * The step's questions `0..revealed` whose answers the teacher has shown (-1: none,
+   * the default). Until then a student answers without learning whether they were right
+   * (Andrea, 2026-11-26).
+   */
+  revealed?: number;
 }
 
 /** A lesson round as the room carries it. */
@@ -78,6 +84,7 @@ export function lessonRound(
     module: place.module,
     step: place.step,
     upTo: place.upTo,
+    revealed: place.revealed ?? -1,
     counts: countedAt(module, place),
     picks,
   };
@@ -141,6 +148,34 @@ export function startPlace(module: LearningModule): LessonPlace {
   return { module: module.slug, step: 0, upTo: firstUpTo(module, 0) };
 }
 
+/**
+ * The last question of the step whose answer every screen may show: those the place
+ * says were revealed, and the one out when the room's round is revealed now (the
+ * teacher's reveal closes the vote and is the room's `revealed` phase).
+ */
+export function revealedUpTo(
+  place: LessonPlace,
+  phase: string | null | undefined
+): number {
+  const before = place.revealed ?? -1;
+  return phase === "revealed" ? Math.max(before, place.upTo) : before;
+}
+
+/**
+ * Whether what the step held back ("What we found", the gallery's codes, the
+ * playground) is open: once every question's answer is revealed, or, on a step without
+ * questions, once the teacher reveals the round.
+ */
+export function stepRevealed(
+  module: LearningModule,
+  place: LessonPlace,
+  phase: string | null | undefined
+): boolean {
+  const count = module.steps[place.step]?.questions.length ?? 0;
+  if (count === 0) return phase === "revealed";
+  return revealedUpTo(place, phase) >= count - 1;
+}
+
 /** The next place: the step's next question, else the next step as it opens; null at the end. */
 export function nextPlace(
   module: LearningModule,
@@ -154,6 +189,7 @@ export function nextPlace(
       ...place,
       step: place.step + 1,
       upTo: firstUpTo(module, place.step + 1),
+      revealed: -1,
     };
   return null;
 }
@@ -167,12 +203,10 @@ export function previousPlace(
     return { ...place, upTo: place.upTo - 1 };
   if (place.step === 0) return null;
   const before = module.steps[place.step - 1];
-  return {
-    ...place,
-    step: place.step - 1,
-    upTo: Math.max(
-      before.questions.length - 1,
-      firstUpTo(module, place.step - 1)
-    ),
-  };
+  const upTo = Math.max(
+    before.questions.length - 1,
+    firstUpTo(module, place.step - 1)
+  );
+  // a step the class went through was answered: going back shows it answered
+  return { ...place, step: place.step - 1, upTo, revealed: upTo };
 }

@@ -120,7 +120,7 @@ function PlayerStage() {
       ) : lesson ? (
         <LessonFollow
           round={lesson}
-          revealed={view.phase === "revealed"}
+          phase={view.phase}
           onVerdict={(question, verdict, answer) => {
             if (question === lesson.counts)
               game.vote(lessonVote(lesson, verdict, answer));
