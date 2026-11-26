@@ -5,16 +5,18 @@ import {
   LABS_WITH_GOAL,
   asLesson,
   countedAt,
+  firstUpTo,
   lessonRound,
   nextPlace,
   previousPlace,
+  startPlace,
 } from "./lesson";
 
 const mod = MODULES.find((m) => m.steps.length > 1)!;
 
 describe("a teacher-paced lesson", () => {
-  it("walks every question of a step, then the next step's content", () => {
-    let place = { module: mod.slug, step: 0, upTo: -1 };
+  it("walks every question of a step, then the next step as it opens", () => {
+    let place = startPlace(mod);
     const seen: string[] = [];
     for (let i = 0; i < 500; i++) {
       seen.push(`${place.step}:${place.upTo}`);
@@ -24,13 +26,20 @@ describe("a teacher-paced lesson", () => {
       place = next;
     }
     const expected = mod.steps.flatMap((s, i) => [
-      `${i}:-1`,
+      ...(firstUpTo(mod, i) === -1 ? [`${i}:-1`] : []),
       ...s.questions.map((_, q) => `${i}:${q}`),
     ]);
     expect(seen).toEqual(expected);
-    expect(
-      previousPlace(mod, { module: mod.slug, step: 0, upTo: -1 })
-    ).toBeNull();
+    expect(previousPlace(mod, startPlace(mod))).toBeNull();
+  });
+
+  it("opens a step with its first question out, unless its lab has a goal", () => {
+    mod.steps.forEach((step, i) => {
+      const goal = !!step.lab && LABS_WITH_GOAL.has(step.lab);
+      expect(firstUpTo(mod, i)).toBe(
+        step.questions.length === 0 || goal ? -1 : 0
+      );
+    });
   });
 
   it("counts the newest question out, or the step's lab before any", () => {

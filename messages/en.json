@@ -4270,7 +4270,9 @@
       "braid": "The braided path",
       "braidFrom": "Brain plasticity",
       "lesson": "Teach a module live",
-      "lessonFrom": "Learning"
+      "lessonFrom": "Learning",
+      "playersBig": "<b>{n}</b> connected",
+      "index": "Games and questions"
     },
     "player": {
       "off": "Class games are not available here.",
@@ -4294,7 +4296,8 @@
     },
     "call": {
       "title": "Your class has a live game",
-      "join": "Join"
+      "join": "Join",
+      "close": "Close"
     },
     "braid": {
       "title": "The braided path",

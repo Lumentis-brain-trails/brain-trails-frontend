@@ -4270,7 +4270,9 @@
       "braid": "Il sentiero intrecciato",
       "braidFrom": "Plasticità cerebrale",
       "lesson": "Insegna un modulo dal vivo",
-      "lessonFrom": "Learning"
+      "lessonFrom": "Learning",
+      "playersBig": "<b>{n}</b> collegati",
+      "index": "Giochi e domande"
     },
     "player": {
       "off": "I giochi di classe non sono disponibili qui.",
@@ -4294,7 +4296,8 @@
     },
     "call": {
       "title": "La tua classe ha un gioco in corso",
-      "join": "Entra"
+      "join": "Entra",
+      "close": "Chiudi"
     },
     "braid": {
       "title": "Il sentiero intrecciato",

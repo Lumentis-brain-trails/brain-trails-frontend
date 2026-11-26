@@ -19,6 +19,7 @@ import {
   lessonRound,
   nextPlace,
   previousPlace,
+  startPlace,
 } from "@/lib/classgame/lesson";
 import { MODULES, moduleOf } from "@/lib/learning/modules";
 
@@ -34,7 +35,9 @@ export function LessonStage({ game }: { game: Host }) {
   // the place the room holds wins (a reload, a second screen), else the first module
   const held = asLesson(view.question);
   const [place, setPlace] = useState<LessonPlace>(
-    () => held ?? { module: READY[0]?.slug ?? "", step: 0, upTo: -1 }
+    () =>
+      held ??
+      (READY[0] ? startPlace(READY[0]) : { module: "", step: 0, upTo: -1 })
   );
   const mod = moduleOf(place.module) ?? READY[0];
 
@@ -69,12 +72,16 @@ export function LessonStage({ game }: { game: Host }) {
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-4">
+      {/* the class's answers stay in view while the teacher scrolls the step */}
+      <Card className="sticky top-4 z-20 space-y-5 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Segmented
             label={t("module")}
             value={mod.slug}
-            onChange={(slug) => go({ module: slug, step: 0, upTo: -1 })}
+            onChange={(slug) => {
+              const target = moduleOf(slug);
+              if (target) go(startPlace(target));
+            }}
             options={READY.map((m) => ({
               value: m.slug,
               label: tm(`${m.key}.name`),
@@ -104,12 +111,12 @@ export function LessonStage({ game }: { game: Host }) {
         </div>
 
         {counted && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {VERDICTS.map((v) => (
               <div
                 key={v}
                 className={cn(
-                  "rounded-xl border p-3",
+                  "rounded-2xl border p-5",
                   v === "right"
                     ? "border-ok bg-ok-soft"
                     : v === "wrong"
@@ -117,15 +124,22 @@ export function LessonStage({ game }: { game: Host }) {
                       : "border-hairline"
                 )}
               >
-                <p className="text-sm text-ink-2">{t(v)}</p>
-                <p className="type-title tabular-nums">
+                <p className="type-subhead text-ink-2">{t(v)}</p>
+                {/* re-mounted on every change, so each vote pops in live */}
+                <p
+                  key={tally?.counts[v] ?? 0}
+                  className="type-display enter-pop tabular-nums"
+                >
                   {tally?.counts[v] ?? 0}
                 </p>
               </div>
             ))}
-            <div className="rounded-xl border border-hairline p-3">
-              <p className="text-sm text-ink-2">{t("waiting")}</p>
-              <p className="type-title tabular-nums">
+            <div className="rounded-2xl border border-hairline p-5">
+              <p className="type-subhead text-ink-2">{t("waiting")}</p>
+              <p
+                key={Math.max(0, view.players - answered)}
+                className="type-display enter-pop tabular-nums"
+              >
                 {Math.max(0, view.players - answered)}
               </p>
             </div>

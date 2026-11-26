@@ -73,7 +73,23 @@ export function asLesson(round: WireQuestion | null): LessonRound | null {
   return round as LessonRound;
 }
 
-/** The next place: the step's next question, else the next step's content; null at the end. */
+/**
+ * Where a step opens: its first question already out, so the class is never shown a
+ * step that asks something and hides the question (Andrea, 2026-11-25). A step whose lab
+ * reports a goal, or that has no question, opens on its content (`upTo` -1).
+ */
+export function firstUpTo(module: LearningModule, step: number): number {
+  const s = module.steps[step];
+  if (!s || s.questions.length === 0) return -1;
+  return s.lab && LABS_WITH_GOAL.has(s.lab) ? -1 : 0;
+}
+
+/** Where the class starts on `module`: its first step, opened as `firstUpTo` says. */
+export function startPlace(module: LearningModule): LessonPlace {
+  return { module: module.slug, step: 0, upTo: firstUpTo(module, 0) };
+}
+
+/** The next place: the step's next question, else the next step as it opens; null at the end. */
 export function nextPlace(
   module: LearningModule,
   place: LessonPlace
@@ -82,7 +98,11 @@ export function nextPlace(
   if (step && place.upTo + 1 < step.questions.length)
     return { ...place, upTo: place.upTo + 1 };
   if (place.step + 1 < module.steps.length)
-    return { ...place, step: place.step + 1, upTo: -1 };
+    return {
+      ...place,
+      step: place.step + 1,
+      upTo: firstUpTo(module, place.step + 1),
+    };
   return null;
 }
 
@@ -91,8 +111,16 @@ export function previousPlace(
   module: LearningModule,
   place: LessonPlace
 ): LessonPlace | null {
-  if (place.upTo >= 0) return { ...place, upTo: place.upTo - 1 };
+  if (place.upTo > firstUpTo(module, place.step))
+    return { ...place, upTo: place.upTo - 1 };
   if (place.step === 0) return null;
   const before = module.steps[place.step - 1];
-  return { ...place, step: place.step - 1, upTo: before.questions.length - 1 };
+  return {
+    ...place,
+    step: place.step - 1,
+    upTo: Math.max(
+      before.questions.length - 1,
+      firstUpTo(module, place.step - 1)
+    ),
+  };
 }

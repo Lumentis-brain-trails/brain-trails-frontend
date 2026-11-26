@@ -94,83 +94,96 @@ function HostStage({
   }, [view.ended, game.socketState, onEnded]);
 
   return (
-    <main className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[18rem_1fr]">
-      <aside className="space-y-3 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
-        <p className="type-eyebrow text-ink-3">{t("games")}</p>
-        <button
-          type="button"
-          onClick={() => setMode("lesson")}
-          className={cn(
-            "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
-            mode === "lesson"
-              ? "border-accent bg-accent-soft"
-              : "border-hairline hover:bg-surface-2"
-          )}
-        >
-          <span className="block text-xs text-ink-3">{t("lessonFrom")}</span>
-          <span>{t("lesson")}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("braid")}
-          className={cn(
-            "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
-            mode === "braid"
-              ? "border-accent bg-accent-soft"
-              : "border-hairline hover:bg-surface-2"
-          )}
-        >
-          <span className="block text-xs text-ink-3">{t("braidFrom")}</span>
-          <span>{t("braid")}</span>
-        </button>
-        <p className="type-eyebrow pt-3 text-ink-3">{t("questions")}</p>
-        <ol className="space-y-1.5">
-          {entries.map((e) => (
-            <li key={e.question.id}>
-              <button
-                type="button"
-                disabled={!live}
-                onClick={() => {
-                  setMode("questions");
-                  game.ask(e.question);
-                }}
-                className={cn(
-                  "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
-                  e.question.id === current
-                    ? "border-accent bg-accent-soft"
-                    : "border-hairline hover:bg-surface-2"
-                )}
-              >
-                <span className="block text-xs text-ink-3">
-                  {t("from", {
-                    module: tm(`${e.module.key}.name`),
-                    step: e.step + 1,
-                  })}
-                </span>
-                <span className="line-clamp-2">
-                  {words.rich(e.question.prompt)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
+    <main className="mx-auto grid w-full max-w-[96rem] grid-cols-[3rem_1fr] gap-6 px-6 py-8">
+      {/* The index: a narrow strip that opens over the stage on hover or focus, so the
+          votes and the class keep the room (Andrea, 2026-11-25). */}
+      <aside className="group relative z-30" aria-label={t("index")}>
+        <div className="sticky top-8 flex h-12 w-12 items-center justify-center rounded-xl border border-hairline bg-surface text-ink-2">
+          <Icon name="menu" />
+        </div>
+        <div className="invisible absolute top-0 left-0 w-80 space-y-3 rounded-2xl border border-hairline bg-surface p-4 opacity-0 shadow-xl transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100 max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <p className="type-eyebrow text-ink-3">{t("games")}</p>
+          <button
+            type="button"
+            onClick={() => setMode("lesson")}
+            className={cn(
+              "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
+              mode === "lesson"
+                ? "border-accent bg-accent-soft"
+                : "border-hairline hover:bg-surface-2"
+            )}
+          >
+            <span className="block text-xs text-ink-3">{t("lessonFrom")}</span>
+            <span>{t("lesson")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("braid")}
+            className={cn(
+              "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
+              mode === "braid"
+                ? "border-accent bg-accent-soft"
+                : "border-hairline hover:bg-surface-2"
+            )}
+          >
+            <span className="block text-xs text-ink-3">{t("braidFrom")}</span>
+            <span>{t("braid")}</span>
+          </button>
+          <p className="type-eyebrow pt-3 text-ink-3">{t("questions")}</p>
+          <ol className="space-y-1.5">
+            {entries.map((e) => (
+              <li key={e.question.id}>
+                <button
+                  type="button"
+                  disabled={!live}
+                  onClick={() => {
+                    setMode("questions");
+                    game.ask(e.question);
+                  }}
+                  className={cn(
+                    "pressable w-full rounded-xl border px-3 py-2 text-left text-sm",
+                    e.question.id === current
+                      ? "border-accent bg-accent-soft"
+                      : "border-hairline hover:bg-surface-2"
+                  )}
+                >
+                  <span className="block text-xs text-ink-3">
+                    {t("from", {
+                      module: tm(`${e.module.key}.name`),
+                      step: e.step + 1,
+                    })}
+                  </span>
+                  <span className="line-clamp-2">
+                    {words.rich(e.question.prompt)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
       </aside>
 
       <section className="space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-ink-2">
+          <div className="flex items-center gap-4">
             <span
-              className={cn(
-                "h-2.5 w-2.5 rounded-full",
-                live ? "bg-ok" : "bg-warn"
-              )}
+              className={cn("h-4 w-4 rounded-full", live ? "bg-ok" : "bg-warn")}
               aria-hidden
             />
-            <span>
-              {live ? t("players", { n: view.players }) : t("connecting")}
-            </span>
+            {live ? (
+              <span className="type-title">
+                {t.rich("playersBig", {
+                  n: view.players,
+                  b: (chunks) => (
+                    <span className="type-display tabular-nums">{chunks}</span>
+                  ),
+                })}
+              </span>
+            ) : (
+              <span className="text-ink-2">{t("connecting")}</span>
+            )}
             {view.tally && view.question && (
-              <span className="text-ink-3">
+              <span className="type-title text-ink-3">
                 {t("voted", { n: view.tally.votes })}
               </span>
             )}
