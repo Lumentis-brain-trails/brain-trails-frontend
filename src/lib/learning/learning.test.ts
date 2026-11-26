@@ -532,17 +532,19 @@ describe("the braided path", () => {
     expect(s.steps).toBe(9);
   });
 
-  test("votes count with thickness and two thirds moves at once", () => {
+  test("votes count with thickness and nothing moves before the time is up", () => {
     let s = startState(braid);
     const [a, b] = choicesAt(braid, s).map((e) => e.id);
     expect(tally(braid, s, { [a]: 3, [b]: 1, nope: 9 })).toMatchObject({
       [a]: 3,
       [b]: 1,
     });
-    expect(decide(braid, s, { [a]: 6 }, 10)).toBeNull();
-    expect(decide(braid, s, { [a]: 7 }, 10)).toBe(a);
+    expect(decide(braid, s, { [a]: 10 }, 10)).toBeNull();
+    expect(decide(braid, s, { [a]: 7 }, 10, { timedOut: true })).toBe(a);
     s = { ...s, weights: { ...s.weights, [a]: 3 } };
-    expect(decide(braid, s, { [a]: 3 }, 10)).toBe(a);
+    expect(decide(braid, s, { [a]: 2, [b]: 5 }, 10, { timedOut: true })).toBe(
+      a
+    );
     expect(decide(braid, s, { [a]: 1, [b]: 4 }, 10, { timedOut: true })).toBe(
       b
     );

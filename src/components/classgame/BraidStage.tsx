@@ -4,8 +4,8 @@
  * The braided path, played by a class (Brain Plasticity): the teacher's screen shows
  * the network, each phone shows the coloured edges the pointer may take next, and the
  * class votes. The rules are `src/lib/learning/braid.ts`'s: a vote counts with its
- * edge's thickness; the pointer moves when the leading edge reaches two thirds of the
- * class, or after `VOTE_SECONDS` to the leader (a tie drawn by thickness); a crossed
+ * edge's thickness; every vote lasts `VOTE_SECONDS`, counted down from 5 to 0 in big
+ * numbers, then the pointer goes to the leader (a tie drawn by thickness); a crossed
  * edge thickens, unused ones thin between rounds; a dead spot is game over for the round
  * and prunes the edge into it. A round is about ten choices; after `ROUNDS` rounds the
  * class is asked what it sees, and can go on for more. There is no starting over: what
@@ -162,7 +162,7 @@ export function BraidStage({ game }: { game: Host }) {
           </p>
         </div>
         {askedAt !== null && (
-          <div className="flex w-48 items-center gap-2" aria-hidden>
+          <div className="flex w-56 items-center gap-3" aria-hidden>
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
               <div
                 className="h-full rounded-full bg-accent transition-[width] duration-200"
@@ -171,7 +171,10 @@ export function BraidStage({ game }: { game: Host }) {
                 }}
               />
             </div>
-            <span className="w-8 text-right text-sm tabular-nums text-ink-2">
+            <span
+              key={Math.max(0, Math.ceil(VOTE_SECONDS - elapsed / 1000))}
+              className="type-display enter-pop w-14 text-right tabular-nums"
+            >
               {Math.max(0, Math.ceil(VOTE_SECONDS - elapsed / 1000))}
             </span>
           </div>

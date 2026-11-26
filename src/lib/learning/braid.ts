@@ -9,9 +9,10 @@
  * class finds itself on the same route, faster and with fewer votes needed: "neurons that
  * fire together wire together", felt rather than told.
  *
- * Rules (Andrea, 2026-11-25): the pointer moves as soon as one edge's weighted votes
- * reach two thirds of the class; after `VOTE_SECONDS` it goes where the votes are; a tie
- * (no votes is a tie too) is broken at random in proportion to thickness. A fog hides what
+ * Rules (Andrea, 2026-11-25, timing 2026-11-26): every vote lasts `VOTE_SECONDS`, with a
+ * countdown on every screen; then voting stops and the pointer goes where the weighted
+ * votes are; a tie (no votes is a tie too) is broken at random in proportion to
+ * thickness. In class there is one network, so the thickening is the same for everyone. A fog hides what
  * is more than `FOG` hops away, so the route is never obvious.
  *
  * Some paths lead to a dead spot (Andrea, 2026-11-26): a short branch beside a node, or a
@@ -32,10 +33,8 @@ export const MIN_WEIGHT = 0.5;
 export const GROW = 0.75;
 /** Unused edges keep this share of their extra thickness after a round. */
 export const DECAY = 0.85;
-export const VOTE_SECONDS = 10;
+export const VOTE_SECONDS = 5;
 export const FOG = 2;
-/** Share of the class an edge's weighted votes must reach to move at once. */
-export const QUORUM = 2 / 3;
 
 export type NodeKind = "start" | "end" | "mid" | "dead";
 
@@ -220,9 +219,10 @@ export function tally(
 }
 
 /**
- * Where the pointer goes now, or null while the class is still voting: the leading edge
- * once its weighted votes reach `QUORUM` of `classSize`; once `timedOut`, the leading
- * edge whatever its votes, a tie drawn with probability proportional to thickness.
+ * Where the pointer goes, or null while the class is still voting: nothing moves before
+ * the vote's time is up (`timedOut`), however the votes stand; then the leading edge, a
+ * tie drawn with probability proportional to thickness. `classSize` is kept for callers
+ * and no longer decides anything.
  */
 export function decide(
   braid: Braid,
@@ -239,11 +239,8 @@ export function decide(
   if (!ids.length) return null;
   const top = Math.max(...ids.map((id) => t[id]));
   const leaders = ids.filter((id) => t[id] === top);
-  if (!timedOut) {
-    if (leaders.length === 1 && top >= QUORUM * Math.max(1, classSize))
-      return leaders[0];
-    return null;
-  }
+  void classSize;
+  if (!timedOut) return null;
   if (leaders.length === 1) return leaders[0];
   return byThickness(leaders, state.weights, rand);
 }
