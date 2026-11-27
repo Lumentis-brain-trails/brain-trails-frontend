@@ -60,7 +60,8 @@
     "under_age": "Brain Trails is for people aged 18 and over.",
     "school_details_required": "A school needs its city, country, your role and your qualification.",
     "already_enrolled": "This account is already in a school.",
-    "profile_required": "Add your name and year of birth in your profile first."
+    "profile_required": "Add your name and year of birth in your profile first.",
+    "minor_no_recording": "Under 18, you use Brain Trails without the headband."
   },
   "application": {
     "step": "Application",
@@ -160,7 +161,8 @@
       "complete": "Session complete",
       "nothing": "The session stopped before anything was recorded.",
       "sync_failed": "No signal arrived from the headband. Check that it is on and paired, then try again.",
-      "dropped": "The headband disconnected, so the session stopped. What was recorded until then has been kept."
+      "dropped": "The headband disconnected, so the session stopped. What was recorded until then has been kept.",
+      "minor": "Under 18, you use Brain Trails without the headband: Learning and your class games are all yours."
     },
     "consent": {
       "title": "Before you begin",
