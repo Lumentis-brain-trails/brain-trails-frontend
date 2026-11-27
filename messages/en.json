@@ -2531,7 +2531,8 @@
       "kindAndSeat": "{kind} · {seat}",
       "pending": "Waiting for approval",
       "rejected": "Not approved",
-      "request": "Request a clinic or a laboratory"
+      "request": "Request a clinic or a laboratory",
+      "requestWithSchool": "Request a clinic, a laboratory or a school"
     },
     "kinds": {
       "personal": "Personal",
@@ -2552,6 +2553,7 @@
   },
   "organisationRequest": {
     "title": "Request a clinic or a laboratory",
+    "titleWithSchool": "Request a clinic, a laboratory or a school",
     "intro": "An organisation is a shared workspace: colleagues build protocols together and each keeps the people they work with. We approve every request by hand during the beta.",
     "unavailable": "Organisations are not available here yet.",
     "kind": "Kind",
