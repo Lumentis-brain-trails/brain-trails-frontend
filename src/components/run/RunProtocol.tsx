@@ -77,6 +77,7 @@ import {
   useContextEnabled,
 } from "@/lib/context";
 import { useFocusMode } from "@/lib/focus";
+import { isMinor } from "@/lib/subjects";
 import {
   BluetoothMuse,
   SimulatedMuse,
@@ -249,6 +250,16 @@ export function RunProtocol({
   const liveOn = useFeature("live");
   const selfRun =
     !client && !remote && !target.subjectId && !target.assignmentId;
+  // Under 18 by the profile's year, a person records no EEG of their own (backend
+  // V4-0012, amended 2026-11-27): the server refuses the start, and the page says so
+  // before the headband is ever paired. A subject run is the clinic's, never refused here.
+  const ownProfile = useQuery({
+    queryKey: ["me-profile"],
+    queryFn: () => api.get<{ birth_year?: number | null }>("auth/me/profile"),
+    enabled: selfRun,
+    retry: false,
+  });
+  const minorBlocked = selfRun && isMinor(ownProfile.data?.birth_year);
   const [selfViewAsked, setSelfView] = useState(false);
   const selfView = liveOn && selfRun && selfViewAsked;
   // a block that trains on the person's landscape hears it through the live service
@@ -460,6 +471,16 @@ export function RunProtocol({
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
         <ErrorBanner message={errorText(protocol.error)} />
+      </main>
+    );
+
+  if (minorBlocked)
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-10">
+        <Card className="mb-6">
+          <p className="text-ink-2">{t("minor")}</p>
+        </Card>
+        <Button onClick={() => router.push(backHref)}>{t("back")}</Button>
       </main>
     );
 
