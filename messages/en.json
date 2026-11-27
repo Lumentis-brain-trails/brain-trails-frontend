@@ -4655,7 +4655,8 @@
       "send": "Send",
       "sent": "Sent. You can change it until the answer is shown.",
       "wrongSent": "Not quite: the answer you sent was different.",
-      "notSent": "You didn't send an answer: here it is."
+      "notSent": "You didn't send an answer: here it is.",
+      "code": "{code}"
     },
     "gallery": {
       "hint": "Nine pictures of one family. Guess the numbers behind them: the codes open once you have answered the questions below.",
@@ -4774,7 +4775,7 @@
           "explain": "<p><b>One</b>: the position x of the dot along the line. Everything else (the line, the ticks) is the same in every picture, so it belongs to the recipe, not to the code.</p>"
         },
         "lineValue": {
-          "prompt": "Encode this picture: move the slider until your dot sits on the target. What is its x?",
+          "prompt": "Encode this picture: move the slider until your dot sits on the target, then pick its code.",
           "explain": "<p>The dot is halfway between 6 and 7, so <b>x = 6.5</b>. Reading the value of a picture is the <b>encoding</b> step.</p>"
         },
         "lineDecode": {
@@ -4833,7 +4834,7 @@
           "explain": "<p><b>Two</b>: the frequency f and the amplitude A. All these waves start at zero going up, so we do not need the phase.</p>"
         },
         "wavesValue": {
-          "prompt": "Encode this wave: move the sliders until your wave lies on the dashed one. What are its f and A? (The axis is in seconds.)",
+          "prompt": "Encode this wave: move the sliders until your wave lies on the dashed one, then pick its code. (The axis is in seconds.)",
           "explain": "<p>In one second there are two full waves, so <b>f = 2</b>; the top reaches 1.5, so <b>A = 1.5</b>.</p>"
         },
         "wavesMatch": {
@@ -4916,27 +4917,27 @@
           "explain": "<p>A point on a line 1, on a plane 2, a bell 3, a beat with two bells 6, a heartbeat 25. The pictures get richer, the codes stay short.</p>"
         },
         "planeValue": {
-          "prompt": "Encode this point: move the two sliders until your dot sits on the target. What are its x and y?",
+          "prompt": "Encode this point: move the two sliders until your dot sits on the target, then pick its code.",
           "explain": "<p>The target is 3 to the right and 7 up: <b>x = 3, y = 7</b>. Two numbers, one per direction, and each slider moves the dot along one of them only.</p>"
         },
         "bellPositionValue": {
-          "prompt": "Move the slider until your bell lies on the dashed one. Where is its centre μ?",
+          "prompt": "Move the slider until your bell lies on the dashed one, then pick its code.",
           "explain": "<p><b>μ = 6.5</b>. Height and width are the same for every bell of this family, so one slider is enough to reach any of them.</p>"
         },
         "bellHeightValue": {
-          "prompt": "Now two sliders: find the centre μ and the height A of the dashed bell.",
+          "prompt": "Now two sliders: find the centre μ and the height A of the dashed bell, then pick its code.",
           "explain": "<p><b>μ = 3.5, A = 1.5</b>. Notice that each slider does one job: μ moves the bell sideways, A stretches it up.</p>"
         },
         "bellWidthValue": {
-          "prompt": "Three sliders: find μ, A and the width σ of the dashed bell.",
+          "prompt": "Three sliders: find μ, A and the width σ of the dashed bell, then pick its code.",
           "explain": "<p><b>μ = 6, A = 1, σ = 0.5</b>. A small σ makes a narrow, sharp bell; a large one a wide, gentle bell.</p>"
         },
         "trainValue": {
-          "prompt": "Rebuild this row of bells: find its frequency f, the height A and the width σ.",
+          "prompt": "Rebuild this row of bells with the sliders (frequency f, height A, width σ), then pick its code.",
           "explain": "<p><b>f = 2, A = 1.5, σ = 0.1</b>: two bells per second, each 1.5 tall and narrow. Three numbers rebuild the whole row, however long it is.</p>"
         },
         "twoBellsValue": {
-          "prompt": "Six sliders for six numbers: rebuild this beat, one bell up and one down.",
+          "prompt": "Six sliders for six numbers: rebuild this beat, one bell up and one down, then pick its code.",
           "explain": "<p><b>f = 1, A₁ = 1, σ₁ = 0.08, A₂ = -0.6, σ₂ = 0.08, d = 0.3</b>. Six sliders, six numbers: one for each thing that can change in the beat.</p>"
         },
         "enTfChanges": {

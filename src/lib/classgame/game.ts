@@ -61,8 +61,10 @@ export function isLiveQuestion(question: Question): question is ChoiceQuestion {
  * read it before the teacher reveals it.
  */
 export function toWire(question: ChoiceQuestion): WireQuestion {
-  const { answer: _answer, ...shown } = question;
+  // the sliders' spec holds the answer's numbers: phones get the options only
+  const { answer: _answer, explore: _explore, ...shown } = question;
   void _answer;
+  void _explore;
   return {
     id: question.id,
     options: question.options.map((o) => o.id),
