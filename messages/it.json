@@ -60,7 +60,8 @@
     "under_age": "Brain Trails è per chi ha almeno 18 anni.",
     "school_details_required": "Una scuola ha bisogno di città, paese, del tuo ruolo e della tua qualifica.",
     "already_enrolled": "Questo account è già in una scuola.",
-    "profile_required": "Prima aggiungi nome e anno di nascita nel tuo profilo."
+    "profile_required": "Prima aggiungi nome e anno di nascita nel tuo profilo.",
+    "minor_no_recording": "Sotto i 18 anni usi Brain Trails senza la fascia."
   },
   "application": {
     "step": "Candidatura",
@@ -160,7 +161,8 @@
       "complete": "Sessione completata",
       "nothing": "La sessione si è interrotta prima che venisse registrato qualcosa.",
       "sync_failed": "Dalla fascia non è arrivato alcun segnale. Controlla che sia accesa e associata, poi riprova.",
-      "dropped": "La fascia si è disconnessa, quindi la sessione si è interrotta. Quello che era stato registrato fino a quel momento è stato conservato."
+      "dropped": "La fascia si è disconnessa, quindi la sessione si è interrotta. Quello che era stato registrato fino a quel momento è stato conservato.",
+      "minor": "Sotto i 18 anni usi Brain Trails senza la fascia: la sezione Impara e i giochi di classe sono tutti tuoi."
     },
     "consent": {
       "title": "Prima di cominciare",
