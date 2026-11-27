@@ -39,6 +39,7 @@ import {
 import { useFeature } from "@/lib/features";
 import {
   FEEDBACKS,
+  GAME_FEEDBACKS,
   type Feedback,
   MINUTES,
   personalProtocol,
@@ -61,6 +62,12 @@ export default function NeurofeedbackPage() {
   const edition = useEdition();
   const nfOn = useFeature("neurofeedback");
   const liveOn = useFeature("live");
+  // the games (V4-0013) are offered only where their own flag is on
+  const gamesOn = useFeature("nf_games");
+  const offered = useMemo(
+    () => (gamesOn ? [...FEEDBACKS, ...GAME_FEEDBACKS] : FEEDBACKS),
+    [gamesOn]
+  );
   // your own map, in your own space: a link or a workspace switch never makes it a
   // clinic's or a lab's protocol
   const enabled = nfOn && liveOn && edition === "personal";
@@ -119,6 +126,7 @@ export default function NeurofeedbackPage() {
           start: t("protocol.start"),
           label: t("protocol.label"),
           warning: t("protocol.warning"),
+          map: t("protocol.map"),
         }
       );
       const id = await saveDraft(draft, t("protocol.title"), workspace);
@@ -226,7 +234,7 @@ export default function NeurofeedbackPage() {
                 aria-labelledby="nf-what"
                 className="grid gap-2"
               >
-                {FEEDBACKS.map((f) => (
+                {offered.map((f) => (
                   <button
                     key={f}
                     type="button"

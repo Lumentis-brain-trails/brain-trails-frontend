@@ -565,6 +565,7 @@ export function RunProtocol({
             onState={live.onState}
             onStepResult={live.onStepResult}
             signal={muse.eegFeed}
+            motion={muse.motionFeed}
             position={
               mapFeedback && positions.available ? positions.feed : undefined
             }

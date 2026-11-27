@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "manifest": {
+    "content_warning": "A warm light that grows and dims slowly with your signal, three times for three minutes. You can stop at any time.",
+    "requires_consent": false,
+    "consent_text": null,
+    "min_quality": 0.6
+  },
+  "root": {
+    "type": "sequence",
+    "id": "root",
+    "order": "fixed",
+    "children": [
+      {
+        "type": "block",
+        "id": "welcome",
+        "kind": "instructions",
+        "label": "Get ready",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "Three rounds: you walk a path with a lantern, then you rest your eyes on the screen.",
+              "holdMs": 5000
+            },
+            {
+              "text": "The calmer and more focused you are, the further the light reaches.\nAt each fork, press the arrow on the side of the mark.",
+              "holdMs": 6000
+            },
+            {
+              "text": "Keep your head still: the light sways when it moves.\nAbout twenty minutes in all.",
+              "holdMs": 5000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Start"
+          }
+        }
+      },
+      {
+        "type": "block",
+        "id": "map_before",
+        "kind": "baseline",
+        "label": "Eyes on the screen",
+        "condition": "map",
+        "config": {
+          "eyes": "open",
+          "duration_s": 120,
+          "end_tone": false
+        }
+      },
+      {
+        "type": "loop",
+        "id": "rounds",
+        "label": "Rounds",
+        "conditions": {
+          "columns": ["round"],
+          "rows": [[1], [2], [3]]
+        },
+        "order": "sequential",
+        "repetitions": 1,
+        "template": {
+          "type": "sequence",
+          "id": "round",
+          "order": "fixed",
+          "children": [
+            {
+              "type": "block",
+              "id": "lantern",
+              "kind": "neurofeedback",
+              "label": "Lantern",
+              "condition": "game",
+              "main": true,
+              "config": {
+                "signal": "alpha",
+                "feedback": "lantern",
+                "duration_s": 180,
+                "baseline_s": 60,
+                "threshold": {
+                  "mode": "carry",
+                  "target_fraction": 0.5
+                },
+                "game": {
+                  "start_level": 1
+                }
+              }
+            },
+            {
+              "type": "block",
+              "id": "map",
+              "kind": "baseline",
+              "label": "Eyes on the screen",
+              "condition": "map",
+              "config": {
+                "eyes": "open",
+                "duration_s": 120,
+                "end_tone": false
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "block",
+        "id": "outro",
+        "kind": "instructions",
+        "label": "Done",
+        "condition": "arrival",
+        "config": {
+          "lines": [
+            {
+              "text": "That's all. Your rounds are on your recording page.",
+              "holdMs": 4000
+            }
+          ],
+          "advance": {
+            "mode": "key",
+            "label": "Finish"
+          }
+        }
+      }
+    ]
+  }
+}

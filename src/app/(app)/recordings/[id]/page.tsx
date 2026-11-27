@@ -46,6 +46,7 @@ import { Sheet } from "@/components/Sheet";
 import type { ApplicationData } from "@/components/account/BetaCard";
 import { BetaPrompt } from "@/components/account/BetaPrompt";
 import { SignalPreview } from "@/components/SignalPreview";
+import { RoundsCard } from "@/components/neurofeedback/RoundsCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TrailPlot } from "@/components/TrailPlot";
 import {
@@ -355,6 +356,8 @@ export default function RecordingDetailPage({
           videoAt={videoAt}
         />
       )}
+
+      {done && <RoundsCard recordingId={id} />}
 
       {(isLive || (done && !loadingComparison && !comparing)) && (
         <section className="space-y-3">

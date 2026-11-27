@@ -14,6 +14,8 @@ import type { ComponentType } from "react";
 import type { ZodType } from "zod";
 import type { EegPacket } from "@/lib/neurofeedback/engine";
 import type { LandscapePoint } from "@/lib/neurofeedback/landscape";
+import type { RunCarry } from "@/lib/neurofeedback/rounds";
+import type { MotionSample } from "@/lib/neurofeedback/stillness";
 import type { MarkerDraft, MarkerMeta } from "./marker";
 import type { TrialRecord } from "./metrics";
 
@@ -34,6 +36,15 @@ export interface EegFeed {
 export interface PositionFeed {
   /** Call `listener` with every window placed from now on; returns the unsubscribe. */
   subscribe(listener: (point: LandscapePoint) => void): () => void;
+}
+
+/**
+ * The headband's gyroscope, reading by reading, for the neurofeedback games' stillness
+ * (V4-0013). Handed to `neurofeedback` only, as `signal` is.
+ */
+export interface MotionFeed {
+  /** Call `listener` with every reading from now on; returns the unsubscribe. */
+  subscribe(listener: (sample: MotionSample) => void): () => void;
 }
 
 /** An operator's adjustment of the kind on screen: `nudge_threshold` (V4-0009). */
@@ -90,6 +101,13 @@ export interface TaskContext<C = unknown> {
   position?: PositionFeed;
   /** The operator's adjustments of this step; absent without a console. */
   adjustments?: AdjustmentPort;
+  /** The head's movement (V4-0013); absent without motion packets. `neurofeedback` only. */
+  motion?: MotionFeed;
+  /**
+   * What the run's earlier neurofeedback blocks leave the next one: a carried threshold,
+   * the stillness limit, a game's level (V4-0013). `neurofeedback` only.
+   */
+  carry?: RunCarry;
 }
 
 export interface TaskKind<C = unknown> {
